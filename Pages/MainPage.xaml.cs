@@ -12,7 +12,6 @@ public partial class MainPage : ContentPage
         InitializeComponent();
         BindingContext = new MainViewModel();
     }
-
     private void OnCanvasViewPaintSurface(object sender, SKPaintSurfaceEventArgs e)
     {
         SKImageInfo info = e.Info;
@@ -34,9 +33,19 @@ public partial class MainPage : ContentPage
                     canvas.DrawPath(path.Path, paint);
                 }
             }
+
+            if (viewModel.CurrentPath != null)
+            {
+                using (var paint = new SKPaint())
+                {
+                    paint.Style = SKPaintStyle.Stroke;
+                    paint.Color = viewModel.CurrentColor;
+                    paint.StrokeWidth = viewModel.StrokeWidth;
+                    canvas.DrawPath(viewModel.CurrentPath, paint);
+                }
+            }
         }
     }
-
     private void OnTouch(object sender, SKTouchEventArgs e)
     {
         var viewModel = BindingContext as MainViewModel;
