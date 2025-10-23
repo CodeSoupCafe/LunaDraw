@@ -46,8 +46,7 @@ namespace LunaDraw.Logic.ViewModels
                 }
             },
             Observable.Return(true)
-            .ObserveOn(RxApp.MainThreadScheduler),
-            outputScheduler: RxApp.MainThreadScheduler);
+            .ObserveOn(RxApp.MainThreadScheduler));
         }
 
         public void ProcessTouch(SKTouchEventArgs e)
