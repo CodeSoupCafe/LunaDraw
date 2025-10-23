@@ -1,0 +1,17 @@
+.vs
+packages
+bin
+obj
+binaries
+Debug
+
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+*.psd
+*.ipa
+*.so
+**/*.so
+/tbsa-burn-calc/tbsa-burn-calc.Android/logcat.txt
+/logcat.txt
