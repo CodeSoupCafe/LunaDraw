@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewModels="clr-namespace:LunaDraw.Logic.ViewModels"
+             xmlns:tools="clr-namespace:LunaDraw.Logic.Tools"
+             xmlns:conv="clr-namespace:LunaDraw.Converters"
+             x:Class="LunaDraw.Views.ToolbarView"
+             x:DataType="viewModels:ToolbarViewModel">
+        <ContentView.Resources>
+                <ResourceDictionary>
+                        <conv:ToolNameToIconConverter x:Key="ToolNameToIconConverter"/>
+                </ResourceDictionary>
+        </ContentView.Resources>
+
+        <ScrollView Orientation="Horizontal">
+                <HorizontalStackLayout Spacing="10"
+                                       Padding="10">
+
+                        <Label Text="Tools:"
+                               VerticalOptions="Center"
+                               FontAttributes="Bold"/>
+
+                        <CollectionView ItemsSource="{Binding AvailableTools}"
+                                        SelectionMode="None">
+                                <CollectionView.ItemsLayout>
+                                        <LinearItemsLayout Orientation="Horizontal"
+                                                           ItemSpacing="5"/>
+                                </CollectionView.ItemsLayout>
+                                <CollectionView.ItemTemplate>
+                                        <DataTemplate x:DataType="tools:IDrawingTool">
+                                                <Button Clicked="OnToolButtonClicked"
+                                                        WidthRequest="56"
+                                                        HeightRequest="56"
+                                                        Padding="8"
+                                                        Text="{Binding Name, Converter={StaticResource ToolNameToIconConverter}}"
+                                                        FontSize="22"
+                                                        AutomationProperties.Name="{Binding Name}"/>
+                                        </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                        </CollectionView>
+
+                        <BoxView WidthRequest="2"
+                                 Color="Gray"
+                                 Margin="5,0"/>
+
+                        <Label Text="Stroke:"
+                               VerticalOptions="Center"
+                               FontAttributes="Bold"/>
+                        <Entry Text="{Binding StrokeColor, Converter={StaticResource ColorToHexConverter}}"
+                               Placeholder="#000000"
+                               WidthRequest="100"
+                               VerticalOptions="Center"/>
+
+                        <Label Text="Width:"
+                               VerticalOptions="Center"/>
+                        <Slider Value="{Binding StrokeWidth}"
+                                Minimum="1"
+                                Maximum="50"
+                                WidthRequest="150"
+                                VerticalOptions="Center"/>
+                        <Label Text="{Binding StrokeWidth, StringFormat='{0:F0}'}"
+                               VerticalOptions="Center"
+                               WidthRequest="30"/>
+
+                        <BoxView WidthRequest="2"
+                                 Color="Gray"
+                                 Margin="5,0"/>
+
+                        <Label Text="Fill:"
+                               VerticalOptions="Center"
+                               FontAttributes="Bold"/>
+                        <Entry Text="{Binding FillColor, Converter={StaticResource ColorToHexConverter}}"
+                               Placeholder="None"
+                               WidthRequest="100"
+                               VerticalOptions="Center"/>
+
+                        <BoxView WidthRequest="2"
+                                 Color="Gray"
+                                 Margin="5,0"/>
+
+                        <Label Text="Opacity:"
+                               VerticalOptions="Center"/>
+                        <Slider Value="{Binding Opacity}"
+                                Minimum="0"
+                                Maximum="255"
+                                WidthRequest="150"
+                                VerticalOptions="Center"/>
+                        <Label Text="{Binding Opacity}"
+                               VerticalOptions="Center"
+                               WidthRequest="30"/>
+
+                        <BoxView WidthRequest="2"
+                                 Color="Gray"
+                                 Margin="5,0"/>
+
+                        <Button Command="{Binding UndoCommand}"
+                                WidthRequest="56"
+                                HeightRequest="56"
+                                Padding="8"
+                                Text="↺"
+                                FontSize="22"
+                                AutomationProperties.Name="Undo"/>
+                        <Button Command="{Binding RedoCommand}"
+                                WidthRequest="56"
+                                HeightRequest="56"
+                                Padding="8"
+                                Text="↻"
+                                FontSize="22"
+                                AutomationProperties.Name="Redo"/>
+
+                        <BoxView WidthRequest="2"
+                                 Color="Gray"
+                                 Margin="5,0"/>
+
+                        <Button Command="{Binding CopyCommand}"
+                                WidthRequest="56"
+                                HeightRequest="56"
+                                Padding="8"
+                                Text="📋"
+                                FontSize="22"
+                                AutomationProperties.Name="Copy"/>
+                        <Button Command="{Binding PasteCommand}"
+                                WidthRequest="56"
+                                HeightRequest="56"
+                                Padding="8"
+                                Text="📥"
+                                FontSize="22"
+                                AutomationProperties.Name="Paste"/>
+                        <Button Command="{Binding DeleteSelectedCommand}"
+                                WidthRequest="56"
+                                HeightRequest="56"
+                                Padding="8"
+                                Text="🗑️"
+                                FontSize="22"
+                                AutomationProperties.Name="Delete"/>
+
+                        <BoxView WidthRequest="2"
+                                 Color="Gray"
+                                 Margin="5,0"/>
+
+                        <Button Command="{Binding GroupSelectedCommand}"
+                                WidthRequest="56"
+                                HeightRequest="56"
+                                Padding="8"
+                                Text="🗂️"
+                                FontSize="22"
+                                AutomationProperties.Name="Group"/>
+                        <Button Command="{Binding UngroupSelectedCommand}"
+                                WidthRequest="56"
+                                HeightRequest="56"
+                                Padding="8"
+                                Text="📂"
+                                FontSize="22"
+                                AutomationProperties.Name="Ungroup"/>
+
+                </HorizontalStackLayout>
+        </ScrollView>
+
+</ContentView>
