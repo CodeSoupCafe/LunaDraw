@@ -9,14 +9,14 @@
              x:Class="LunaDraw.Pages.MainPage">
 
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
 
-        <views:ToolbarView Grid.Row="0" x:Name="toolbarView"/>
+        <views:ToolbarView Grid.Column="0" x:Name="toolbarView"/>
 
-        <skiasharp:SKCanvasView Grid.Row="1"
+        <skiasharp:SKCanvasView Grid.Column="1"
                                 x:Name="canvasView"
                                 PaintSurface="OnCanvasViewPaintSurface"
                                 EnableTouchEvents="True"
