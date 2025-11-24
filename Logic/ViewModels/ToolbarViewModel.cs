@@ -1,7 +1,6 @@
 using LunaDraw.Logic.Tools;
 using ReactiveUI;
 using SkiaSharp;
-using System.Collections.Generic;
 using System.Reactive;
 
 namespace LunaDraw.Logic.ViewModels
@@ -20,11 +19,18 @@ namespace LunaDraw.Logic.ViewModels
         public ReactiveCommand<Unit, Unit> DeleteSelectedCommand => _mainViewModel.DeleteSelectedCommand;
         public ReactiveCommand<Unit, Unit> GroupSelectedCommand => _mainViewModel.GroupSelectedCommand;
         public ReactiveCommand<Unit, Unit> UngroupSelectedCommand => _mainViewModel.UngroupSelectedCommand;
+        public ReactiveCommand<Unit, Unit> ShowSettingsCommand => _mainViewModel.ShowSettingsCommand;
 
         public SKColor StrokeColor
         {
             get => _mainViewModel.StrokeColor;
             set => _mainViewModel.StrokeColor = value;
+        }
+
+        public bool IsSettingsOpen
+        {
+            get => _mainViewModel.IsSettingsOpen;
+            set => _mainViewModel.IsSettingsOpen = value;
         }
 
         public SKColor? FillColor

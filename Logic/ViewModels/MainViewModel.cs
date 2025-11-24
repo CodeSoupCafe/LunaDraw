@@ -5,9 +5,7 @@ using LunaDraw.Logic.Tools;
 using ReactiveUI;
 using SkiaSharp;
 using SkiaSharp.Views.Maui;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
 
@@ -36,6 +34,13 @@ namespace LunaDraw.Logic.ViewModels
         {
             get => _strokeColor;
             set => this.RaiseAndSetIfChanged(ref _strokeColor, value);
+        }
+
+        private bool _isSettingsOpen = false;
+        public bool IsSettingsOpen
+        {
+            get => _isSettingsOpen;
+            set => this.RaiseAndSetIfChanged(ref _isSettingsOpen, value);
         }
 
         private SKColor? _fillColor;
@@ -88,6 +93,7 @@ namespace LunaDraw.Logic.ViewModels
         public ReactiveCommand<Layer, Unit> RemoveLayerCommand { get; }
         public ReactiveCommand<Unit, Unit> UndoCommand { get; }
         public ReactiveCommand<Unit, Unit> RedoCommand { get; }
+        public ReactiveCommand<Unit, Unit> ShowSettingsCommand { get; }
 
         public MainViewModel()
         {
@@ -102,24 +108,30 @@ namespace LunaDraw.Logic.ViewModels
             {
                 ActiveTool = tool;
                 MessageBus.Current.SendMessage(new ToolChangedMessage(tool));
-            });
+            }, outputScheduler: RxApp.MainThreadScheduler);
 
             var canDelete = this.WhenAnyValue(x => x.SelectedElements.Count)
                                  .Select(count => count > 0)
                                  .ObserveOn(RxApp.MainThreadScheduler);
-            DeleteSelectedCommand = ReactiveCommand.Create(() =>
+
+            ShowSettingsCommand = ReactiveCommand.Create(() =>
             {
-                if (CurrentLayer is null || !SelectedElements.Any()) return;
-                
-                SaveState();
-                var elementsToRemove = SelectedElements.ToList();
-                foreach (var element in elementsToRemove)
-                {
-                    CurrentLayer.Elements.Remove(element);
-                }
-                SelectionManager.Clear();
-                MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
-            }, canDelete);
+                IsSettingsOpen = !IsSettingsOpen;
+            }, outputScheduler: RxApp.MainThreadScheduler);
+
+            DeleteSelectedCommand = ReactiveCommand.Create(() =>
+                        {
+                            if (CurrentLayer is null || !SelectedElements.Any()) return;
+
+                            SaveState();
+                            var elementsToRemove = SelectedElements.ToList();
+                            foreach (var element in elementsToRemove)
+                            {
+                                CurrentLayer.Elements.Remove(element);
+                            }
+                            SelectionManager.Clear();
+                            MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+                        }, canDelete, RxApp.MainThreadScheduler);
 
             var canGroup = this.WhenAnyValue(x => x.SelectedElements.Count)
                                 .Select(count => count > 1)
@@ -127,11 +139,11 @@ namespace LunaDraw.Logic.ViewModels
             GroupSelectedCommand = ReactiveCommand.Create(() =>
             {
                 if (CurrentLayer is null || !SelectedElements.Any()) return;
-                
+
                 SaveState();
                 var elementsToGroup = SelectedElements.ToList();
                 var group = new DrawableGroup();
-                
+
                 foreach (var element in elementsToGroup)
                 {
                     CurrentLayer.Elements.Remove(element);
@@ -141,7 +153,7 @@ namespace LunaDraw.Logic.ViewModels
                 SelectionManager.Clear();
                 SelectionManager.Add(group);
                 MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
-            }, canGroup);
+            }, canGroup, RxApp.MainThreadScheduler);
 
             var canUngroup = this.WhenAnyValue(x => x.SelectedElements.Count)
                                  .Select(count => count == 1 && SelectedElements.FirstOrDefault() is DrawableGroup)
@@ -161,12 +173,12 @@ namespace LunaDraw.Logic.ViewModels
                     SelectionManager.Clear();
                     MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
                 }
-            }, canUngroup);
+            }, canUngroup, RxApp.MainThreadScheduler);
 
             CopyCommand = ReactiveCommand.Create(() =>
             {
                 _internalClipboard = SelectedElements.Select(e => e.Clone()).ToList();
-            }, canDelete);
+            }, canDelete, RxApp.MainThreadScheduler);
 
             CutCommand = ReactiveCommand.Create(() =>
             {
@@ -180,7 +192,7 @@ namespace LunaDraw.Logic.ViewModels
                 }
                 SelectionManager.Clear();
                 MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
-            }, canDelete);
+            }, canDelete, RxApp.MainThreadScheduler);
 
             PasteCommand = ReactiveCommand.Create(() =>
             {
@@ -193,7 +205,7 @@ namespace LunaDraw.Logic.ViewModels
                     CurrentLayer.Elements.Add(clone);
                 }
                 MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
-            });
+            }, outputScheduler: RxApp.MainThreadScheduler);
 
             AddLayerCommand = ReactiveCommand.Create(() =>
             {
@@ -201,7 +213,7 @@ namespace LunaDraw.Logic.ViewModels
                 var newLayer = new Layer { Name = $"Layer {Layers.Count + 1}" };
                 Layers.Add(newLayer);
                 CurrentLayer = newLayer;
-            });
+            }, outputScheduler: RxApp.MainThreadScheduler);
 
             RemoveLayerCommand = ReactiveCommand.Create<Layer>(layer =>
             {
@@ -211,21 +223,21 @@ namespace LunaDraw.Logic.ViewModels
                     Layers.Remove(layer);
                     CurrentLayer = Layers.First();
                 }
-            });
+            }, outputScheduler: RxApp.MainThreadScheduler);
 
             UndoCommand = ReactiveCommand.Create(() =>
             {
                 CurrentSnapshot = _historyManager.Undo();
                 UpdateHistoryButtons();
                 MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
-            }, this.WhenAnyValue(x => x._historyManager.CanUndo).ObserveOn(RxApp.MainThreadScheduler));
+            }, this.WhenAnyValue(x => x._historyManager.CanUndo).ObserveOn(RxApp.MainThreadScheduler), RxApp.MainThreadScheduler);
 
             RedoCommand = ReactiveCommand.Create(() =>
             {
                 CurrentSnapshot = _historyManager.Redo();
                 UpdateHistoryButtons();
                 MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
-            }, this.WhenAnyValue(x => x._historyManager.CanRedo).ObserveOn(RxApp.MainThreadScheduler));
+            }, this.WhenAnyValue(x => x._historyManager.CanRedo).ObserveOn(RxApp.MainThreadScheduler), RxApp.MainThreadScheduler);
 
             // Message listener for tools to trigger a state save
             MessageBus.Current.Listen<DrawingStateChangedMessage>().Subscribe(_ => SaveState());
@@ -246,15 +258,15 @@ namespace LunaDraw.Logic.ViewModels
         public void ProcessTouch(SKTouchEventArgs e)
         {
             if (CurrentLayer == null) return;
-            
+
             // Any touch action clears the snapshot, reverting to live drawing
             if (e.ActionType == SKTouchAction.Pressed)
             {
-                 if (CurrentSnapshot != null)
-                 {
-                     CurrentSnapshot = null;
-                     MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
-                 }
+                if (CurrentSnapshot != null)
+                {
+                    CurrentSnapshot = null;
+                    MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+                }
             }
 
             var context = new ToolContext
