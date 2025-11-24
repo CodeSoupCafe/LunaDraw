@@ -1,9 +1,3 @@
-
-
-## **Software Requirements Specification: Child-Centric Drawing Application**
-
-This document outlines the essential features and constraints necessary for developing a free, ad-free drawing application targeting children aged 3–8.
-
 ### **I. Functional Requirements (Core Features)**
 
 | ID | Feature Description | Requirements | Citations |
@@ -34,18 +28,3 @@ This document outlines the essential features and constraints necessary for deve
 | **NF.3** | **Glow/Neon Implementation** | Luminous effects must be implemented using optimized shaders (not standard particles), utilizing **additive blending** and a global screen-space **Bloom filter** to create a convincing soft, light-emitting halo.8 | 8 |
 | **NF.4** | **Glitter/Sparkle Implementation** | Glitter/Sparkle must be implemented using shader-based dynamic reflection simulation (e.g., Dot Product with noise) for high mobile performance.9 The effect must leverage **HDR colors** and the **Bloom filter** to create realistic, dynamic sparkle.9 | 9 |
 | **NF.5** | **Brush Micro-Interactions** | Specific brushes (e.g., Ribbon, Star) should integrate micro-animations or subtle movement (organic animation) to increase the "magic" and sensory engagement.11 | 11 |
-
-#### **Works cited**
-
-1. Kids Doodle \- Paint & Draw \- Apps on Google Play, accessed November 23, 2025, [https://play.google.com/store/apps/details?id=com.doodlejoy.studio.kidsdoojoy\&hl=en\_US](https://play.google.com/store/apps/details?id=com.doodlejoy.studio.kidsdoojoy&hl=en_US)  
-2. ‎Joy Doodle: Movie Color & Draw App \- App Store, accessed November 23, 2025, [https://apps.apple.com/us/app/joy-doodle-movie-color-draw/id460712294](https://apps.apple.com/us/app/joy-doodle-movie-color-draw/id460712294)  
-3. Drawing with Carl \- App Store \- Apple, accessed November 23, 2025, [https://apps.apple.com/us/app/drawing-with-carl/id480645514](https://apps.apple.com/us/app/drawing-with-carl/id480645514)  
-4. Design considerations for kids. Designing UI and UX for young kids | by Sulakshana | Bootcamp | Medium, accessed November 23, 2025, [https://medium.com/design-bootcamp/design-considerations-for-kids-48ec9bf2b18](https://medium.com/design-bootcamp/design-considerations-for-kids-48ec9bf2b18)  
-5. Top 10 UI/UX Design Tips for Child-Friendly Interfaces \- Aufait UX, accessed November 23, 2025, [https://www.aufaitux.com/blog/ui-ux-designing-for-children/](https://www.aufaitux.com/blog/ui-ux-designing-for-children/)  
-6. Designing apps for young kids | by Rubens Cantuni | UX Collective, accessed November 23, 2025, [https://uxdesign.cc/designing-apps-for-young-kids-part-1-ff54c46c773b](https://uxdesign.cc/designing-apps-for-young-kids-part-1-ff54c46c773b)  
-7. How to Design Amazing Apps for Kids – Best Practices \- Cygnis Media, accessed November 23, 2025, [https://cygnis.co/blog/designing-apps-for-kids-best-practices/](https://cygnis.co/blog/designing-apps-for-kids-best-practices/)  
-8. Best way to create that neon glowing look in pixel art? : r/gamedev \- Reddit, accessed November 23, 2025, [https://www.reddit.com/r/gamedev/comments/1oobwrw/best\_way\_to\_create\_that\_neon\_glowing\_look\_in/](https://www.reddit.com/r/gamedev/comments/1oobwrw/best_way_to_create_that_neon_glowing_look_in/)  
-9. I made a glitter effect using Unity Shader Graph : r/Unity3D \- Reddit, accessed November 23, 2025, [https://www.reddit.com/r/Unity3D/comments/p5gmnv/i\_made\_a\_glitter\_effect\_using\_unity\_shader\_graph/](https://www.reddit.com/r/Unity3D/comments/p5gmnv/i_made_a_glitter_effect_using_unity_shader_graph/)  
-10. I made a glitter effect using Shader Graph : r/gamedev \- Reddit, accessed November 23, 2025, [https://www.reddit.com/r/gamedev/comments/p5glw9/i\_made\_a\_glitter\_effect\_using\_shader\_graph/](https://www.reddit.com/r/gamedev/comments/p5glw9/i_made_a_glitter_effect_using_shader_graph/)  
-11. Digital painting and drawing app | Adobe Fresco, accessed November 23, 2025, [https://www.adobe.com/products/fresco.html](https://www.adobe.com/products/fresco.html)  
-12. UX/UI Case Study: I-Track, Productivity Tool for Kids | by Brenda Joan Matos \- Medium, accessed November 23, 2025, [https://medium.com/fluxyeah/ux-ui-case-study-i-track-productivity-tool-for-kids-fbfa87ac0a2a](https://medium.com/fluxyeah/ux-ui-case-study-i-track-productivity-tool-for-kids-fbfa87ac0a2a)

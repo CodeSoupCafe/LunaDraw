@@ -9,6 +9,7 @@ namespace LunaDraw.Logic.Models
     {
         public Guid Id { get; } = Guid.NewGuid();
         public required SKPath Path { get; set; }
+        public SKMatrix TransformMatrix { get; set; } = SKMatrix.CreateIdentity();
 
         public bool IsVisible { get; set; } = true;
         public bool IsSelected { get; set; }
@@ -18,11 +19,28 @@ namespace LunaDraw.Logic.Models
         public SKColor StrokeColor { get; set; }
         public float StrokeWidth { get; set; }
 
-        public SKRect Bounds => Path?.TightBounds ?? SKRect.Empty;
+        public SKRect Bounds => TransformMatrix.MapRect(Path?.TightBounds ?? SKRect.Empty);
 
         public void Draw(SKCanvas canvas)
         {
             if (!IsVisible || Path == null) return;
+
+            canvas.Save();
+            var matrix = TransformMatrix;
+            canvas.Concat(ref matrix);
+
+            // Draw selection highlight
+            if (IsSelected)
+            {
+                using var highlightPaint = new SKPaint
+                {
+                    Style = SKPaintStyle.Stroke,
+                    Color = SKColors.DodgerBlue.WithAlpha(128),
+                    StrokeWidth = StrokeWidth + 4,
+                    IsAntialias = true
+                };
+                canvas.DrawPath(Path, highlightPaint);
+            }
 
             using var paint = new SKPaint
             {
@@ -33,20 +51,20 @@ namespace LunaDraw.Logic.Models
             };
 
             canvas.DrawPath(Path, paint);
-
-            // Draw selection indicator if selected
-            if (IsSelected)
-            {
-                DrawSelectionIndicator(canvas);
-            }
+            canvas.Restore();
         }
 
         public bool HitTest(SKPoint point)
         {
             if (Path == null) return false;
 
+            if (!TransformMatrix.TryInvert(out var inverseMatrix))
+                return false;
+
+            var localPoint = inverseMatrix.MapPoint(point);
+
             // Check if point is within bounds first (faster)
-            if (!Bounds.Contains(point)) return false;
+            if (!Path.TightBounds.Contains(localPoint)) return false;
 
             // Check if path contains point with tolerance
             using var paint = new SKPaint
@@ -56,7 +74,7 @@ namespace LunaDraw.Logic.Models
             };
             using var strokedPath = new SKPath();
             paint.GetFillPath(Path, strokedPath);
-            return strokedPath.Contains(point.X, point.Y);
+            return strokedPath.Contains(localPoint.X, localPoint.Y);
         }
 
         public IDrawableElement Clone()
@@ -64,8 +82,9 @@ namespace LunaDraw.Logic.Models
             return new DrawablePath
             {
                 Path = new SKPath(Path),
+                TransformMatrix = TransformMatrix,
                 IsVisible = IsVisible,
-                IsSelected = false, // Don't clone selection state
+                IsSelected = false,
                 ZIndex = ZIndex,
                 Opacity = Opacity,
                 FillColor = FillColor,
@@ -76,27 +95,13 @@ namespace LunaDraw.Logic.Models
 
         public void Translate(SKPoint offset)
         {
-            if (Path == null) return;
-            Path.Transform(SKMatrix.CreateTranslation(offset.X, offset.Y));
+            var translation = SKMatrix.CreateTranslation(offset.X, offset.Y);
+            TransformMatrix = SKMatrix.Concat(TransformMatrix, translation);
         }
 
         public void Transform(SKMatrix matrix)
         {
-            if (Path == null) return;
-            Path.Transform(matrix);
-        }
-
-        private void DrawSelectionIndicator(SKCanvas canvas)
-        {
-            var bounds = Bounds;
-            using var paint = new SKPaint
-            {
-                Style = SKPaintStyle.Stroke,
-                Color = SKColors.Blue,
-                StrokeWidth = 2,
-                PathEffect = SKPathEffect.CreateDash(new[] { 5f, 5f }, 0)
-            };
-            canvas.DrawRect(bounds, paint);
+            TransformMatrix = SKMatrix.Concat(matrix, TransformMatrix);
         }
     }
 }

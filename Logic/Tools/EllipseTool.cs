@@ -3,6 +3,7 @@ using LunaDraw.Logic.Models;
 using LunaDraw.Logic.ViewModels;
 using ReactiveUI;
 using SkiaSharp;
+using System;
 
 namespace LunaDraw.Logic.Tools
 {
@@ -21,26 +22,25 @@ namespace LunaDraw.Logic.Tools
             _startPoint = point;
             _currentEllipse = new DrawableEllipse
             {
-                Oval = new SKRect(point.X, point.Y, point.X, point.Y),
                 StrokeColor = context.StrokeColor,
                 StrokeWidth = context.StrokeWidth,
                 Opacity = context.Opacity,
                 FillColor = context.FillColor
             };
-            context.CurrentLayer?.Elements.Add(_currentEllipse);
-            MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
         }
 
         public void OnTouchMoved(SKPoint point, ToolContext context)
         {
             if (context.CurrentLayer?.IsLocked == true || _currentEllipse == null) return;
 
-            _currentEllipse.Oval = new SKRect(
-                System.Math.Min(_startPoint.X, point.X),
-                System.Math.Min(_startPoint.Y, point.Y),
-                System.Math.Max(_startPoint.X, point.X),
-                System.Math.Max(_startPoint.Y, point.Y)
-            );
+            var left = Math.Min(_startPoint.X, point.X);
+            var top = Math.Min(_startPoint.Y, point.Y);
+            var right = Math.Max(_startPoint.X, point.X);
+            var bottom = Math.Max(_startPoint.Y, point.Y);
+
+            _currentEllipse.TransformMatrix = SKMatrix.CreateTranslation(left, top);
+            _currentEllipse.Oval = new SKRect(0, 0, right - left, bottom - top);
+
             MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
         }
 
@@ -48,20 +48,22 @@ namespace LunaDraw.Logic.Tools
         {
             if (context.CurrentLayer?.IsLocked == true || _currentEllipse == null) return;
 
-            if (_currentEllipse.Oval.Width == 0 || _currentEllipse.Oval.Height == 0)
+            if (_currentEllipse.Oval.Width > 0 || _currentEllipse.Oval.Height > 0)
             {
-                context.CurrentLayer?.Elements.Remove(_currentEllipse);
+                context.CurrentLayer.Elements.Add(_currentEllipse);
+                MessageBus.Current.SendMessage(new DrawingStateChangedMessage());
             }
-            else if (context.CurrentLayer != null)
-            {
-                MessageBus.Current.SendMessage(new ElementAddedMessage(_currentEllipse, context.CurrentLayer));
-            }
-            MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+            
             _currentEllipse = null;
+            MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
         }
 
         public void DrawPreview(SKCanvas canvas, MainViewModel viewModel)
         {
+            if(_currentEllipse != null)
+            {
+                _currentEllipse.Draw(canvas);
+            }
         }
     }
 }

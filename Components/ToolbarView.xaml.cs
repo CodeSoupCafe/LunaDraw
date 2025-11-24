@@ -12,10 +12,162 @@ namespace LunaDraw.Views;
 
 public partial class ToolbarView : ContentView
 {
+    private IDrawingTool? _currentTool;
+
     public ToolbarView()
     {
         InitializeComponent();
+        // Set default tool to Freehand on initialization
+        Loaded += OnToolbarLoaded;
     }
+
+    private void OnToolbarLoaded(object sender, EventArgs e)
+    {
+        // Set default tool to Freehand and update visual state
+        SelectFreehandTool();
+        UpdateToolButtonStates();
+    }
+
+
+    #region Primary Toolbar Actions
+
+    private void OnSelectButtonClicked(object sender, EventArgs e)
+    {
+        SelectTool<SelectTool>();
+        UpdateToolButtonStates();
+    }
+
+    private void OnBrushButtonClicked(object sender, EventArgs e)
+    {
+        SelectFreehandTool();
+        UpdateToolButtonStates();
+    }
+
+    private void OnEraserButtonClicked(object sender, EventArgs e)
+    {
+        SelectTool<EraserTool>();
+        UpdateToolButtonStates();
+    }
+
+    private void OnShapesButtonClicked(object sender, EventArgs e)
+    {
+        // Toggle shapes flyout visibility
+        ShapesFlyout.IsVisible = !ShapesFlyout.IsVisible;
+    }
+
+    private void OnFillButtonClicked(object sender, EventArgs e)
+    {
+        SelectTool<FillTool>();
+        UpdateToolButtonStates();
+    }
+
+    #endregion
+
+    #region Shape Tool Actions
+
+    private void OnRectangleButtonClicked(object sender, EventArgs e)
+    {
+        SelectTool<RectangleTool>();
+        ShapesFlyout.IsVisible = false;
+        UpdateToolButtonStates();
+    }
+
+    private void OnCircleButtonClicked(object sender, EventArgs e)
+    {
+        SelectTool<EllipseTool>();
+        ShapesFlyout.IsVisible = false;
+        UpdateToolButtonStates();
+    }
+
+    private void OnLineButtonClicked(object sender, EventArgs e)
+    {
+        SelectTool<LineTool>();
+        ShapesFlyout.IsVisible = false;
+        UpdateToolButtonStates();
+    }
+
+    #endregion
+
+    #region Tool Selection Logic
+
+    private void SelectFreehandTool()
+    {
+        SelectTool<FreehandTool>();
+        // Keep default stroke color (no forced color override)
+    }
+
+    private void SelectTool<T>() where T : IDrawingTool, new()
+    {
+        if (this.BindingContext is not ToolbarViewModel vm) return;
+
+        var tool = vm.AvailableTools.OfType<T>().FirstOrDefault();
+        if (tool == null)
+        {
+            tool = new T();
+        }
+
+        _currentTool = tool;
+        
+        if (vm.SelectToolCommand != null)
+        {
+            vm.SelectToolCommand.Execute(tool).Subscribe();
+        }
+    }
+
+    private void UpdateToolButtonStates()
+    {
+        // Reset all tool button styles to default
+        ResetButtonStyle(SelectButton);
+        ResetButtonStyle(BrushButton);
+        ResetButtonStyle(EraserButton);
+        ResetButtonStyle(FillButton);
+        ResetButtonStyle(RectangleButton);
+        ResetButtonStyle(CircleButton);
+        ResetButtonStyle(LineButton);
+
+        // Highlight the active tool button
+        if (_currentTool != null)
+        {
+            if (_currentTool is SelectTool)
+                HighlightButton(SelectButton);
+            else if (_currentTool is FreehandTool)
+                HighlightButton(BrushButton);
+            else if (_currentTool is EraserTool)
+                HighlightButton(EraserButton);
+            else if (_currentTool is FillTool)
+                HighlightButton(FillButton);
+            else if (_currentTool is RectangleTool)
+                HighlightButton(RectangleButton);
+            else if (_currentTool is EllipseTool)
+                HighlightButton(CircleButton);
+            else if (_currentTool is LineTool)
+                HighlightButton(LineButton);
+        }
+    }
+
+    private void HighlightButton(Button button)
+    {
+        button.BackgroundColor = Colors.Orange;
+        button.TextColor = Colors.White;
+        button.BorderColor = Colors.DarkOrange;
+        button.BorderWidth = 3;
+    }
+
+    private void ResetButtonStyle(Button button)
+    {
+        // Reset to default style values
+        button.BackgroundColor = Application.Current?.RequestedTheme == AppTheme.Light 
+            ? Colors.LightGray 
+            : Colors.DarkGray;
+        button.TextColor = Application.Current?.RequestedTheme == AppTheme.Light 
+            ? Colors.Black 
+            : Colors.White;
+        button.BorderWidth = 0;
+    }
+
+    #endregion
+
+    #region Legacy Tool Selection (kept for compatibility)
 
     private void OnToolButtonClicked(object sender, EventArgs e)
     {
@@ -259,4 +411,6 @@ public partial class ToolbarView : ContentView
 
         return false;
     }
+
+    #endregion
 }

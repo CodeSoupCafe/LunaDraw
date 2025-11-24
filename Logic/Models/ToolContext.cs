@@ -1,3 +1,4 @@
+using LunaDraw.Logic.Managers;
 using SkiaSharp;
 using System.Collections.Generic;
 
@@ -14,7 +15,6 @@ namespace LunaDraw.Logic.Models
         public float StrokeWidth { get; set; }
         public byte Opacity { get; set; }
         public required IEnumerable<IDrawableElement> AllElements { get; set; }
-        public IDrawableElement? SelectedElement { get; set; }
-        public List<IDrawableElement> SelectedElements { get; set; } = new List<IDrawableElement>();
+        public required SelectionManager SelectionManager { get; set; }
     }
 }

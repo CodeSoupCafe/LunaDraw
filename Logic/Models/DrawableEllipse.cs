@@ -9,6 +9,7 @@ namespace LunaDraw.Logic.Models
     {
         public Guid Id { get; } = Guid.NewGuid();
         public SKRect Oval { get; set; }
+        public SKMatrix TransformMatrix { get; set; } = SKMatrix.CreateIdentity();
 
         public bool IsVisible { get; set; } = true;
         public bool IsSelected { get; set; }
@@ -18,11 +19,28 @@ namespace LunaDraw.Logic.Models
         public SKColor StrokeColor { get; set; }
         public float StrokeWidth { get; set; }
 
-        public SKRect Bounds => Oval;
+        public SKRect Bounds => TransformMatrix.MapRect(Oval);
 
         public void Draw(SKCanvas canvas)
         {
             if (!IsVisible) return;
+
+            canvas.Save();
+            var matrix = TransformMatrix;
+            canvas.Concat(ref matrix);
+
+            // Draw selection highlight
+            if (IsSelected)
+            {
+                using var highlightPaint = new SKPaint
+                {
+                    Style = SKPaintStyle.Stroke,
+                    Color = SKColors.DodgerBlue.WithAlpha(128),
+                    StrokeWidth = StrokeWidth + 4,
+                    IsAntialias = true
+                };
+                canvas.DrawOval(Oval, highlightPaint);
+            }
 
             // Draw fill if specified
             if (FillColor.HasValue)
@@ -45,35 +63,36 @@ namespace LunaDraw.Logic.Models
                 IsAntialias = true
             };
             canvas.DrawOval(Oval, strokePaint);
-
-            // Draw selection indicator if selected
-            if (IsSelected)
-            {
-                DrawSelectionIndicator(canvas);
-            }
+            
+            canvas.Restore();
         }
 
         public bool HitTest(SKPoint point)
         {
-            // Use path-based hit testing for accuracy
+            if (!TransformMatrix.TryInvert(out var inverseMatrix))
+                return false;
+
+            var localPoint = inverseMatrix.MapPoint(point);
+
             using var path = new SKPath();
             path.AddOval(Oval);
 
-            // Check if filled and point is inside
-            if (FillColor.HasValue && path.Contains(point.X, point.Y))
+            // Check if filled and point is inside the fill path
+            if (FillColor.HasValue && path.Contains(localPoint.X, localPoint.Y))
             {
                 return true;
             }
 
-            // Check if point is near stroke
+            // Check if point is near the stroke
             using var paint = new SKPaint
             {
                 Style = SKPaintStyle.Stroke,
-                StrokeWidth = StrokeWidth + 5 // Add tolerance
+                StrokeWidth = StrokeWidth + 10 // Add tolerance
             };
             using var strokedPath = new SKPath();
             paint.GetFillPath(path, strokedPath);
-            return strokedPath.Contains(point.X, point.Y);
+
+            return strokedPath.Contains(localPoint.X, localPoint.Y);
         }
 
         public IDrawableElement Clone()
@@ -81,6 +100,7 @@ namespace LunaDraw.Logic.Models
             return new DrawableEllipse
             {
                 Oval = Oval,
+                TransformMatrix = TransformMatrix,
                 IsVisible = IsVisible,
                 IsSelected = false,
                 ZIndex = ZIndex,
@@ -93,60 +113,13 @@ namespace LunaDraw.Logic.Models
 
         public void Translate(SKPoint offset)
         {
-            Oval = new SKRect(
-                Oval.Left + offset.X,
-                Oval.Top + offset.Y,
-                Oval.Right + offset.X,
-                Oval.Bottom + offset.Y
-            );
+            var translation = SKMatrix.CreateTranslation(offset.X, offset.Y);
+            TransformMatrix = SKMatrix.Concat(TransformMatrix, translation);
         }
 
         public void Transform(SKMatrix matrix)
         {
-            var points = new[]
-            {
-                new SKPoint(Oval.Left, Oval.Top),
-                new SKPoint(Oval.Right, Oval.Bottom)
-            };
-            matrix.MapPoints(points);
-            Oval = new SKRect(points[0].X, points[0].Y, points[1].X, points[1].Y);
-        }
-
-        private void DrawSelectionIndicator(SKCanvas canvas)
-        {
-            var bounds = Bounds;
-            using var paint = new SKPaint
-            {
-                Style = SKPaintStyle.Stroke,
-                Color = SKColors.Blue,
-                StrokeWidth = 2,
-                PathEffect = SKPathEffect.CreateDash(new[] { 5f, 5f }, 0)
-            };
-            canvas.DrawRect(bounds, paint);
-
-            // Draw corner handles
-            DrawHandle(canvas, new SKPoint(bounds.Left, bounds.Top));
-            DrawHandle(canvas, new SKPoint(bounds.Right, bounds.Top));
-            DrawHandle(canvas, new SKPoint(bounds.Left, bounds.Bottom));
-            DrawHandle(canvas, new SKPoint(bounds.Right, bounds.Bottom));
-        }
-
-        private void DrawHandle(SKCanvas canvas, SKPoint point)
-        {
-            using var paint = new SKPaint
-            {
-                Style = SKPaintStyle.Fill,
-                Color = SKColors.White
-            };
-            canvas.DrawCircle(point, 5, paint);
-
-            using var strokePaint = new SKPaint
-            {
-                Style = SKPaintStyle.Stroke,
-                Color = SKColors.Blue,
-                StrokeWidth = 2
-            };
-            canvas.DrawCircle(point, 5, strokePaint);
+            TransformMatrix = SKMatrix.Concat(matrix, TransformMatrix);
         }
     }
 }

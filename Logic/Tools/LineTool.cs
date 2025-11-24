@@ -21,21 +21,20 @@ namespace LunaDraw.Logic.Tools
             _startPoint = point;
             _currentLine = new DrawableLine
             {
-                StartPoint = point,
-                EndPoint = point,
+                StartPoint = SKPoint.Empty,
+                EndPoint = SKPoint.Empty,
+                TransformMatrix = SKMatrix.CreateTranslation(point.X, point.Y),
                 StrokeColor = context.StrokeColor,
                 StrokeWidth = context.StrokeWidth,
                 Opacity = context.Opacity
             };
-            context.CurrentLayer?.Elements.Add(_currentLine);
-            MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
         }
 
         public void OnTouchMoved(SKPoint point, ToolContext context)
         {
             if (context.CurrentLayer?.IsLocked == true || _currentLine == null) return;
 
-            _currentLine.EndPoint = point;
+            _currentLine.EndPoint = point - _startPoint;
             MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
         }
 
@@ -43,20 +42,22 @@ namespace LunaDraw.Logic.Tools
         {
             if (context.CurrentLayer?.IsLocked == true || _currentLine == null) return;
 
-            if (_currentLine.StartPoint == _currentLine.EndPoint)
+            if (!_currentLine.EndPoint.Equals(SKPoint.Empty))
             {
-                context.CurrentLayer?.Elements.Remove(_currentLine);
+                context.CurrentLayer.Elements.Add(_currentLine);
+                MessageBus.Current.SendMessage(new DrawingStateChangedMessage());
             }
-            else if (context.CurrentLayer != null)
-            {
-                MessageBus.Current.SendMessage(new ElementAddedMessage(_currentLine, context.CurrentLayer));
-            }
-            MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+            
             _currentLine = null;
+            MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
         }
 
         public void DrawPreview(SKCanvas canvas, MainViewModel viewModel)
         {
+            if(_currentLine != null)
+            {
+                _currentLine.Draw(canvas);
+            }
         }
     }
 }

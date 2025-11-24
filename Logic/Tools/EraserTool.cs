@@ -24,7 +24,7 @@ namespace LunaDraw.Logic.Tools
             if (hitElement != null && context.CurrentLayer != null)
             {
                 context.CurrentLayer.Elements.Remove(hitElement);
-                MessageBus.Current.SendMessage(new ElementRemovedMessage(hitElement, context.CurrentLayer));
+                MessageBus.Current.SendMessage(new DrawingStateChangedMessage());
                 MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
             }
         }

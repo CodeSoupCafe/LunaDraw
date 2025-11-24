@@ -11,9 +11,23 @@ namespace LunaDraw.Logic.Models
     {
         public Guid Id { get; } = Guid.NewGuid();
         public List<IDrawableElement> Children { get; } = new List<IDrawableElement>();
+        public SKMatrix TransformMatrix { get; set; } = SKMatrix.CreateIdentity();
 
         public bool IsVisible { get; set; } = true;
-        public bool IsSelected { get; set; }
+        private bool _isSelected;
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set
+            {
+                if (_isSelected == value) return;
+                _isSelected = value;
+                foreach (var child in Children)
+                {
+                    child.IsSelected = value;
+                }
+            }
+        }
         public int ZIndex { get; set; }
         public byte Opacity { get; set; } = 255;
         public SKColor? FillColor { get; set; } // Not directly used
@@ -39,14 +53,10 @@ namespace LunaDraw.Logic.Models
         {
             if (!IsVisible) return;
 
+            // The group's transform is applied to children, not to the canvas here
             foreach (var child in Children)
             {
                 child.Draw(canvas);
-            }
-
-            if (IsSelected)
-            {
-                DrawSelectionIndicator(canvas);
             }
         }
 
@@ -59,6 +69,7 @@ namespace LunaDraw.Logic.Models
         {
             var newGroup = new DrawableGroup
             {
+                TransformMatrix = TransformMatrix,
                 IsVisible = IsVisible,
                 IsSelected = false,
                 ZIndex = ZIndex,
@@ -73,31 +84,18 @@ namespace LunaDraw.Logic.Models
 
         public void Translate(SKPoint offset)
         {
-            foreach (var child in Children)
-            {
-                child.Translate(offset);
-            }
+            var matrix = SKMatrix.CreateTranslation(offset.X, offset.Y);
+            Transform(matrix);
         }
 
         public void Transform(SKMatrix matrix)
         {
+            // Apply the transformation to all children
             foreach (var child in Children)
             {
                 child.Transform(matrix);
             }
         }
 
-        private void DrawSelectionIndicator(SKCanvas canvas)
-        {
-            var bounds = Bounds;
-            using var paint = new SKPaint
-            {
-                Style = SKPaintStyle.Stroke,
-                Color = SKColors.Blue,
-                StrokeWidth = 2,
-                PathEffect = SKPathEffect.CreateDash(new[] { 5f, 5f }, 0)
-            };
-            canvas.DrawRect(bounds, paint);
-        }
     }
 }

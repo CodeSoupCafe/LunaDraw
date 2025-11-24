@@ -14,9 +14,14 @@ namespace LunaDraw.Logic.Models
         Guid Id { get; }
 
         /// <summary>
-        /// Bounding rectangle of the element.
+        /// Bounding rectangle of the element in world coordinates.
         /// </summary>
         SKRect Bounds { get; }
+
+        /// <summary>
+        /// The transformation matrix applied to the element.
+        /// </summary>
+        SKMatrix TransformMatrix { get; set; }
 
         /// <summary>
         /// Whether the element is visible on the canvas.
@@ -62,7 +67,7 @@ namespace LunaDraw.Logic.Models
         /// <summary>
         /// Tests if a point hits this element.
         /// </summary>
-        /// <param name="point">The point to test.</param>
+        /// <param name="point">The point to test in world coordinates.</param>
         /// <returns>True if the point intersects with the element.</returns>
         bool HitTest(SKPoint point);
 

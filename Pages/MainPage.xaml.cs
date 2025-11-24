@@ -18,10 +18,20 @@ public partial class MainPage : ContentPage
         BindingContext = _viewModel;
         toolbarView.BindingContext = new ToolbarViewModel(_viewModel);
 
+        canvasView.Loaded += OnCanvasLoaded;
+        canvasView.PaintSurface += OnCanvasViewPaintSurface;
+        canvasView.Touch += OnTouch;
+
         MessageBus.Current.Listen<CanvasInvalidateMessage>().Subscribe(_ =>
         {
             canvasView?.InvalidateSurface();
         });
+    }
+
+    private void OnCanvasLoaded(object? sender, EventArgs e)
+    {
+        _viewModel.CanvasSize = new SKRect(0, 0, canvasView.CanvasSize.Width, canvasView.CanvasSize.Height);
+        _viewModel.SaveState(); // Save the initial blank state
     }
 
     private void OnCanvasViewPaintSurface(object sender, SKPaintSurfaceEventArgs e)
@@ -31,7 +41,14 @@ public partial class MainPage : ContentPage
 
         canvas.Clear(SKColors.White);
 
-        if (_viewModel != null)
+        if (_viewModel == null) return;
+
+        // If we are in a snapshot state (after undo/redo), draw the picture
+        if (_viewModel.CurrentSnapshot != null)
+        {
+            canvas.DrawPicture(_viewModel.CurrentSnapshot);
+        }
+        else // Otherwise, draw the live elements from the layers
         {
             foreach (var layer in _viewModel.Layers)
             {

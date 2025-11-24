@@ -6,142 +6,343 @@
              xmlns:conv="clr-namespace:LunaDraw.Converters"
              x:Class="LunaDraw.Views.ToolbarView"
              x:DataType="viewModels:ToolbarViewModel">
-        <ContentView.Resources>
-                <ResourceDictionary>
-                        <conv:ToolNameToIconConverter x:Key="ToolNameToIconConverter"/>
-                </ResourceDictionary>
-        </ContentView.Resources>
+    <ContentView.Resources>
+        <ResourceDictionary>
+            <conv:ToolNameToIconConverter x:Key="ToolNameToIconConverter"/>
 
-        <ScrollView Orientation="Vertical"
-                    WidthRequest="80"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}">
-                <VerticalStackLayout Spacing="5"
-                                     Padding="0">
+            <!-- Kid-friendly button style with large hit areas for vertical toolbar -->
+            <Style x:Key="ToolbarButtonStyle" TargetType="Button">
+                <Setter Property="WidthRequest" Value="72" />
+                <Setter Property="HeightRequest" Value="72" />
+                <Setter Property="FontSize" Value="28" />
+                <Setter Property="Padding" Value="8" />
+                <Setter Property="Margin" Value="0,4" />
+                <Setter Property="CornerRadius" Value="12" />
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}" />
+                <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+            </Style>
 
-                        <CollectionView ItemsSource="{Binding AvailableTools}"
-                                        SelectionMode="None"
-                                        ItemSizingStrategy="MeasureAllItems"
-                                        HorizontalOptions="Center">
-                                <CollectionView.ItemsLayout>
-                                        <LinearItemsLayout Orientation="Vertical"
-                                                           ItemSpacing="3"/>
-                                </CollectionView.ItemsLayout>
-                                <CollectionView.ItemTemplate>
-                                        <DataTemplate x:DataType="tools:IDrawingTool">
-                                            <Grid HorizontalOptions="Center">
-                                                <Button Clicked="OnToolButtonClicked"
-                                                        WidthRequest="56"
-                                                        HeightRequest="56"
-                                                        Padding="8"
-                                                        Text="{Binding Name, Converter={StaticResource ToolNameToIconConverter}}"
-                                                        FontSize="20"
-                                                        AutomationProperties.Name="{Binding Name}"/>
-                                            </Grid>
-                                        </DataTemplate>
-                                </CollectionView.ItemTemplate>
-                        </CollectionView>
+            <!-- Style for buttons within fly-outs -->
+            <Style x:Key="FlyoutButtonStyle" TargetType="Button">
+                <Setter Property="WidthRequest" Value="90" />
+                <Setter Property="HeightRequest" Value="90" />
+                <Setter Property="FontSize" Value="32" />
+                <Setter Property="Padding" Value="10" />
+                <Setter Property="Margin" Value="6" />
+                <Setter Property="CornerRadius" Value="16" />
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}" />
+                <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+            </Style>
+        </ResourceDictionary>
+    </ContentView.Resources>
 
-                        <BoxView HeightRequest="2"
-                                 Color="Gray"
-                                 Margin="0,5"/>
+    <Grid>
+        <!-- Main Toolbar - Left docked vertical bar -->
+        <Frame x:Name="MainToolbarFrame"
+               HorizontalOptions="Start"
+               VerticalOptions="Fill"
+               BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
+               Padding="8,12"
+               CornerRadius="0"
+               HasShadow="True">
+            <ScrollView Orientation="Vertical" 
+                       VerticalScrollBarVisibility="Never"
+                       HorizontalScrollBarVisibility="Never">
+                <VerticalStackLayout HorizontalOptions="Center" Spacing="8">
 
-                        <Button Clicked="OnStrokeColorButtonClicked"
-                                WidthRequest="56"
-                                HeightRequest="56"
-                                Padding="8"
-                                Text="🎨"
-                                FontSize="20"
-                                AutomationProperties.Name="Stroke Color"/>
+                <!-- Selection Tool -->
+                <Button x:Name="SelectButton"
+                        Style="{StaticResource ToolbarButtonStyle}"
+                        Text="⬚"
+                        Clicked="OnSelectButtonClicked"
+                        AutomationProperties.Name="Select">
+                    <Button.Resources>
+                        <Style TargetType="Label">
+                            <Setter Property="Text" Value="Select" />
+                            <Setter Property="FontSize" Value="10" />
+                            <Setter Property="HorizontalTextAlignment" Value="Center" />
+                        </Style>
+                    </Button.Resources>
+                </Button>
 
-                        <Button Clicked="OnStrokeWidthButtonClicked"
-                                WidthRequest="56"
-                                HeightRequest="56"
-                                Padding="8"
-                                Text="↕"
-                                FontSize="20"
-                                AutomationProperties.Name="Stroke Width"/>
+                <!-- Brush (Freehand) -->
+                <Button x:Name="BrushButton"
+                        Style="{StaticResource ToolbarButtonStyle}"
+                        Text="🌈"
+                        Clicked="OnBrushButtonClicked"
+                        AutomationProperties.Name="Brush">
+                    <Button.Resources>
+                        <Style TargetType="Label">
+                            <Setter Property="Text" Value="Brush" />
+                            <Setter Property="FontSize" Value="10" />
+                            <Setter Property="HorizontalTextAlignment" Value="Center" />
+                        </Style>
+                    </Button.Resources>
+                </Button>
 
-                        <Button Clicked="OnFillColorButtonClicked"
-                                WidthRequest="56"
-                                HeightRequest="56"
-                                Padding="8"
-                                Text="🪣"
-                                FontSize="20"
-                                AutomationProperties.Name="Fill Color"/>
+                <!-- Eraser -->
+                <Button x:Name="EraserButton"
+                        Style="{StaticResource ToolbarButtonStyle}"
+                        Text="🧽"
+                        Clicked="OnEraserButtonClicked"
+                        AutomationProperties.Name="Eraser">
+                    <Button.Resources>
+                        <Style TargetType="Label">
+                            <Setter Property="Text" Value="Eraser" />
+                            <Setter Property="FontSize" Value="10" />
+                            <Setter Property="HorizontalTextAlignment" Value="Center" />
+                        </Style>
+                    </Button.Resources>
+                </Button>
 
-                        <Button Clicked="OnOpacityButtonClicked"
-                                WidthRequest="56"
-                                HeightRequest="56"
-                                Padding="8"
-                                Text="◐"
-                                FontSize="20"
-                                AutomationProperties.Name="Opacity"/>
 
-                        <BoxView HeightRequest="2"
-                                 Color="Gray"
-                                 Margin="0,5"/>
+                <!-- Shapes -->
+                <Button x:Name="ShapesButton"
+                        Style="{StaticResource ToolbarButtonStyle}"
+                        Text="🔷"
+                        Clicked="OnShapesButtonClicked"
+                        AutomationProperties.Name="Shapes">
+                    <Button.Resources>
+                        <Style TargetType="Label">
+                            <Setter Property="Text" Value="Shapes" />
+                            <Setter Property="FontSize" Value="10" />
+                            <Setter Property="HorizontalTextAlignment" Value="Center" />
+                        </Style>
+                    </Button.Resources>
+                </Button>
 
-                        <Button Command="{Binding UndoCommand}"
-                                WidthRequest="56"
-                                HeightRequest="56"
-                                Padding="8"
-                                Text="↺"
-                                FontSize="20"
-                                AutomationProperties.Name="Undo"/>
-                        <Button Command="{Binding RedoCommand}"
-                                WidthRequest="56"
-                                HeightRequest="56"
-                                Padding="8"
-                                Text="↻"
-                                FontSize="20"
-                                AutomationProperties.Name="Redo"/>
+                <!-- Fill -->
+                <Button x:Name="FillButton"
+                        Style="{StaticResource ToolbarButtonStyle}"
+                        Text="🪣"
+                        Clicked="OnFillButtonClicked"
+                        AutomationProperties.Name="Fill">
+                    <Button.Resources>
+                        <Style TargetType="Label">
+                            <Setter Property="Text" Value="Fill" />
+                            <Setter Property="FontSize" Value="10" />
+                            <Setter Property="HorizontalTextAlignment" Value="Center" />
+                        </Style>
+                    </Button.Resources>
+                </Button>
 
-                        <BoxView HeightRequest="2"
-                                 Color="Gray"
-                                 Margin="0,5"/>
+                <BoxView HeightRequest="2" Color="Gray" Margin="0,4"/>
 
-                        <Button Command="{Binding CopyCommand}"
-                                WidthRequest="56"
-                                HeightRequest="56"
-                                Padding="8"
-                                Text="📋"
-                                FontSize="20"
-                                AutomationProperties.Name="Copy"/>
-                        <Button Command="{Binding PasteCommand}"
-                                WidthRequest="56"
-                                HeightRequest="56"
-                                Padding="8"
-                                Text="📥"
-                                FontSize="20"
-                                AutomationProperties.Name="Paste"/>
-                        <Button Command="{Binding DeleteSelectedCommand}"
-                                WidthRequest="56"
-                                HeightRequest="56"
-                                Padding="8"
-                                Text="🗑️"
-                                FontSize="20"
-                                AutomationProperties.Name="Delete"/>
+                <!-- Color Picker -->
+                <Button x:Name="ColorButton"
+                        Style="{StaticResource ToolbarButtonStyle}"
+                        Text="🎨"
+                        Clicked="OnStrokeColorButtonClicked"
+                        AutomationProperties.Name="Color">
+                    <Button.Resources>
+                        <Style TargetType="Label">
+                            <Setter Property="Text" Value="Color" />
+                            <Setter Property="FontSize" Value="10" />
+                            <Setter Property="HorizontalTextAlignment" Value="Center" />
+                        </Style>
+                    </Button.Resources>
+                </Button>
 
-                        <BoxView HeightRequest="2"
-                                 Color="Gray"
-                                 Margin="0,5"/>
+                <!-- Stroke Width -->
+                <Button x:Name="StrokeWidthButton"
+                        Style="{StaticResource ToolbarButtonStyle}"
+                        Text="↕"
+                        Clicked="OnStrokeWidthButtonClicked"
+                        AutomationProperties.Name="Width">
+                    <Button.Resources>
+                        <Style TargetType="Label">
+                            <Setter Property="Text" Value="Width" />
+                            <Setter Property="FontSize" Value="10" />
+                            <Setter Property="HorizontalTextAlignment" Value="Center" />
+                        </Style>
+                    </Button.Resources>
+                </Button>
 
-                        <Button Command="{Binding GroupSelectedCommand}"
-                                WidthRequest="56"
-                                HeightRequest="56"
-                                Padding="8"
-                                Text="🗂️"
-                                FontSize="20"
-                                AutomationProperties.Name="Group"/>
-                        <Button Command="{Binding UngroupSelectedCommand}"
-                                WidthRequest="56"
-                                HeightRequest="56"
-                                Padding="8"
-                                Text="📂"
-                                FontSize="20"
-                                AutomationProperties.Name="Ungroup"/>
+                <!-- Opacity -->
+                <Button x:Name="OpacityButton"
+                        Style="{StaticResource ToolbarButtonStyle}"
+                        Text="◐"
+                        Clicked="OnOpacityButtonClicked"
+                        AutomationProperties.Name="Opacity">
+                    <Button.Resources>
+                        <Style TargetType="Label">
+                            <Setter Property="Text" Value="Opacity" />
+                            <Setter Property="FontSize" Value="10" />
+                            <Setter Property="HorizontalTextAlignment" Value="Center" />
+                        </Style>
+                    </Button.Resources>
+                </Button>
+
+                <BoxView HeightRequest="2" Color="Gray" Margin="0,4"/>
+
+                <!-- Undo -->
+                <Button x:Name="UndoButton"
+                        Style="{StaticResource ToolbarButtonStyle}"
+                        Text="↺"
+                        Command="{Binding UndoCommand}"
+                        AutomationProperties.Name="Undo">
+                    <Button.Resources>
+                        <Style TargetType="Label">
+                            <Setter Property="Text" Value="Undo" />
+                            <Setter Property="FontSize" Value="10" />
+                            <Setter Property="HorizontalTextAlignment" Value="Center" />
+                        </Style>
+                    </Button.Resources>
+                </Button>
+
+                <!-- Redo -->
+                <Button x:Name="RedoButton"
+                        Style="{StaticResource ToolbarButtonStyle}"
+                        Text="↻"
+                        Command="{Binding RedoCommand}"
+                        AutomationProperties.Name="Redo">
+                    <Button.Resources>
+                        <Style TargetType="Label">
+                            <Setter Property="Text" Value="Redo" />
+                            <Setter Property="FontSize" Value="10" />
+                            <Setter Property="HorizontalTextAlignment" Value="Center" />
+                        </Style>
+                    </Button.Resources>
+                </Button>
+
+                <BoxView HeightRequest="2" Color="Gray" Margin="0,4"/>
+
+                <!-- Copy -->
+                <Button x:Name="CopyButton"
+                        Style="{StaticResource ToolbarButtonStyle}"
+                        Text="📋"
+                        Command="{Binding CopyCommand}"
+                        AutomationProperties.Name="Copy">
+                    <Button.Resources>
+                        <Style TargetType="Label">
+                            <Setter Property="Text" Value="Copy" />
+                            <Setter Property="FontSize" Value="10" />
+                            <Setter Property="HorizontalTextAlignment" Value="Center" />
+                        </Style>
+                    </Button.Resources>
+                </Button>
+
+                <!-- Paste -->
+                <Button x:Name="PasteButton"
+                        Style="{StaticResource ToolbarButtonStyle}"
+                        Text="📥"
+                        Command="{Binding PasteCommand}"
+                        AutomationProperties.Name="Paste">
+                    <Button.Resources>
+                        <Style TargetType="Label">
+                            <Setter Property="Text" Value="Paste" />
+                            <Setter Property="FontSize" Value="10" />
+                            <Setter Property="HorizontalTextAlignment" Value="Center" />
+                        </Style>
+                    </Button.Resources>
+                </Button>
+
+                <!-- Delete -->
+                <Button x:Name="DeleteButton"
+                        Style="{StaticResource ToolbarButtonStyle}"
+                        Text="🗑️"
+                        Command="{Binding DeleteSelectedCommand}"
+                        AutomationProperties.Name="Delete">
+                    <Button.Resources>
+                        <Style TargetType="Label">
+                            <Setter Property="Text" Value="Delete" />
+                            <Setter Property="FontSize" Value="10" />
+                            <Setter Property="HorizontalTextAlignment" Value="Center" />
+                        </Style>
+                    </Button.Resources>
+                </Button>
+
+                <!-- Group -->
+                <Button x:Name="GroupButton"
+                        Style="{StaticResource ToolbarButtonStyle}"
+                        Text="🗂️"
+                        Command="{Binding GroupSelectedCommand}"
+                        AutomationProperties.Name="Group">
+                    <Button.Resources>
+                        <Style TargetType="Label">
+                            <Setter Property="Text" Value="Group" />
+                            <Setter Property="FontSize" Value="10" />
+                            <Setter Property="HorizontalTextAlignment" Value="Center" />
+                        </Style>
+                    </Button.Resources>
+                </Button>
+
+                <!-- Ungroup -->
+                <Button x:Name="UngroupButton"
+                        Style="{StaticResource ToolbarButtonStyle}"
+                        Text="📂"
+                        Command="{Binding UngroupSelectedCommand}"
+                        AutomationProperties.Name="Ungroup">
+                    <Button.Resources>
+                        <Style TargetType="Label">
+                            <Setter Property="Text" Value="Ungroup" />
+                            <Setter Property="FontSize" Value="10" />
+                            <Setter Property="HorizontalTextAlignment" Value="Center" />
+                        </Style>
+                    </Button.Resources>
+                </Button>
 
                 </VerticalStackLayout>
-        </ScrollView>
+            </ScrollView>
+        </Frame>
 
+        <!-- Shapes Flyout - Hidden by default, positioned relative to ShapesButton -->
+        <Frame x:Name="ShapesFlyout"
+               IsVisible="False"
+               HorizontalOptions="Start"
+               VerticalOptions="Start"
+               BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray800}}"
+               Padding="10"
+               CornerRadius="16"
+               HasShadow="True"
+               TranslationX="{Binding Source={x:Reference ShapesButton}, Path=X}"
+               TranslationY="{Binding Source={x:Reference ShapesButton}, Path=Y}">
+            <VerticalStackLayout Spacing="8">
+                <!-- Rectangle -->
+                <Button x:Name="RectangleButton"
+                        Style="{StaticResource FlyoutButtonStyle}"
+                        Text="⬜"
+                        Clicked="OnRectangleButtonClicked"
+                        AutomationProperties.Name="Rectangle">
+                    <Button.Resources>
+                        <Style TargetType="Label">
+                            <Setter Property="Text" Value="Rectangle" />
+                            <Setter Property="FontSize" Value="10" />
+                            <Setter Property="HorizontalTextAlignment" Value="Center" />
+                        </Style>
+                    </Button.Resources>
+                </Button>
+
+                <!-- Circle -->
+                <Button x:Name="CircleButton"
+                        Style="{StaticResource FlyoutButtonStyle}"
+                        Text="⭕"
+                        Clicked="OnCircleButtonClicked"
+                        AutomationProperties.Name="Circle">
+                    <Button.Resources>
+                        <Style TargetType="Label">
+                            <Setter Property="Text" Value="Circle" />
+                            <Setter Property="FontSize" Value="10" />
+                            <Setter Property="HorizontalTextAlignment" Value="Center" />
+                        </Style>
+                    </Button.Resources>
+                </Button>
+
+                <!-- Line -->
+                <Button x:Name="LineButton"
+                        Style="{StaticResource FlyoutButtonStyle}"
+                        Text="➖"
+                        Clicked="OnLineButtonClicked"
+                        AutomationProperties.Name="Line">
+                    <Button.Resources>
+                        <Style TargetType="Label">
+                            <Setter Property="Text" Value="Line" />
+                            <Setter Property="FontSize" Value="10" />
+                            <Setter Property="HorizontalTextAlignment" Value="Center" />
+                        </Style>
+                    </Button.Resources>
+                </Button>
+            </VerticalStackLayout>
+        </Frame>
+    </Grid>
 </ContentView>
