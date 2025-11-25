@@ -57,7 +57,7 @@
           <!-- Only keep one set of toolbar buttons below. -->
           <Button x:Name="SelectButton"
                   Style="{StaticResource ToolbarButtonStyle}"
-                  Text="{Binding Environment.NewLine, StringFormat='⬚{0}Select'}"
+                  Text="⬚"
                   Command="{Binding SelectToolCommand}"
                   CommandParameter="{Binding AvailableTools[0]}"/>
 
