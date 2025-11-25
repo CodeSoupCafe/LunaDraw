@@ -3,24 +3,57 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:local="clr-namespace:LunaDraw.Pages"
              xmlns:views="clr-namespace:LunaDraw.Views"
+             xmlns:components="clr-namespace:LunaDraw.Components"
              xmlns:viewModels="clr-namespace:LunaDraw.Logic.ViewModels"
              xmlns:skiasharp="clr-namespace:SkiaSharp.Views.Maui.Controls;assembly=SkiaSharp.Views.Maui.Controls"
              x:DataType="viewModels:MainViewModel"
              x:Class="LunaDraw.Pages.MainPage">
 
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
+    <AbsoluteLayout>
+        <!-- Main Content Grid -->
+        <Grid AbsoluteLayout.LayoutBounds="0,0,1,1"
+                AbsoluteLayout.LayoutFlags="All">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
 
-        <views:ToolbarView Grid.Column="0" x:Name="toolbarView"/>
+            <views:ToolbarView Grid.Column="0"
+                               x:Name="toolbarView"/>
 
-        <skiasharp:SKCanvasView Grid.Column="1"
-                                x:Name="canvasView"
-                                PaintSurface="OnCanvasViewPaintSurface"
-                                EnableTouchEvents="True"
-                                Touch="OnTouch"/>
-    </Grid>
+            <skiasharp:SKCanvasView Grid.Column="1"
+                                    x:Name="canvasView"
+                                    PaintSurface="OnCanvasViewPaintSurface"
+                                    EnableTouchEvents="True"
+                                    Touch="OnTouch"/>
+        </Grid>
+
+        <!-- Overlay Background for dismissing flyouts -->
+        <BoxView x:Name="FlyoutOverlay"
+                 AbsoluteLayout.LayoutBounds="0,0,1,1"
+                 AbsoluteLayout.LayoutFlags="All"
+                 BackgroundColor="Transparent"
+                 IsVisible="False">
+            <BoxView.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnOverlayTapped"/>
+            </BoxView.GestureRecognizers>
+        </BoxView>
+
+        <!-- Settings Flyout Panel as True Overlay -->
+        <components:FlyoutPanel x:Name="SettingsFlyoutHost"
+                                IsVisible="{Binding IsSettingsOpen}"
+                                TargetElement="{x:Reference toolbarView}"
+                                AbsoluteLayout.LayoutBounds="0,0,AutoSize,AutoSize">
+            <components:SettingsFlyoutPanel x:Name="SettingsFlyoutContent"/>
+        </components:FlyoutPanel>
+
+        <!-- Shapes Flyout Panel as True Overlay -->
+        <components:FlyoutPanel x:Name="ShapesFlyoutHost"
+                                IsVisible="{Binding IsShapesFlyoutOpen}"
+                                TargetElement="{x:Reference toolbarView}"
+                                AbsoluteLayout.LayoutBounds="0,0,AutoSize,AutoSize">
+            <components:ShapesFlyoutPanel x:Name="ShapesFlyoutContent"/>
+        </components:FlyoutPanel>
+    </AbsoluteLayout>
 
 </ContentPage>

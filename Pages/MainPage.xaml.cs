@@ -1,6 +1,7 @@
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.ViewModels;
 using ReactiveUI;
+using System.Reactive.Linq;
 using SkiaSharp;
 using SkiaSharp.Views.Maui;
 using SkiaSharp.Views.Maui.Controls;
@@ -10,13 +11,19 @@ namespace LunaDraw.Pages;
 public partial class MainPage : ContentPage
 {
     private MainViewModel _viewModel;
+    private ToolbarViewModel _toolbarViewModel;
 
     public MainPage()
     {
         InitializeComponent();
         _viewModel = new MainViewModel();
+        _toolbarViewModel = new ToolbarViewModel(_viewModel);
         BindingContext = _viewModel;
-        toolbarView.BindingContext = new ToolbarViewModel(_viewModel);
+        toolbarView.BindingContext = _toolbarViewModel;
+
+        // Set up flyout content binding contexts
+        SettingsFlyoutContent.BindingContext = _toolbarViewModel;
+        ShapesFlyoutContent.BindingContext = _toolbarViewModel;
 
         canvasView.Loaded += OnCanvasLoaded;
         canvasView.PaintSurface += OnCanvasViewPaintSurface;
@@ -26,6 +33,24 @@ public partial class MainPage : ContentPage
         {
             canvasView?.InvalidateSurface();
         });
+
+        // Subscribe to flyout visibility changes to show/hide overlay
+        var settingsObs = _viewModel.WhenAnyValue(x => x.IsSettingsOpen);
+        var shapesObs = _toolbarViewModel.WhenAnyValue(x => x.IsShapesFlyoutOpen);
+        settingsObs.CombineLatest(shapesObs, (isSettingsOpen, isShapesOpen) => (isSettingsOpen, isShapesOpen))
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(tuple =>
+                {
+                    var (isSettingsOpen, isShapesOpen) = tuple;
+                    FlyoutOverlay.IsVisible = isSettingsOpen || isShapesOpen;
+                });
+    }
+
+    private void OnOverlayTapped(object sender, EventArgs e)
+    {
+        // Close any open flyouts when overlay is tapped
+        _viewModel.IsSettingsOpen = false;
+        _toolbarViewModel.IsShapesFlyoutOpen = false;
     }
 
     private void OnCanvasLoaded(object? sender, EventArgs e)

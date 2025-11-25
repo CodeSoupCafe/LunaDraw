@@ -19,7 +19,7 @@ namespace LunaDraw.Logic.ViewModels
         public ReactiveCommand<Unit, Unit> DeleteSelectedCommand => _mainViewModel.DeleteSelectedCommand;
         public ReactiveCommand<Unit, Unit> GroupSelectedCommand => _mainViewModel.GroupSelectedCommand;
         public ReactiveCommand<Unit, Unit> UngroupSelectedCommand => _mainViewModel.UngroupSelectedCommand;
-        public ReactiveCommand<Unit, Unit> ShowSettingsCommand => _mainViewModel.ShowSettingsCommand;
+        public ReactiveCommand<Unit, Unit> ShowSettingsCommand { get; }
 
         public SKColor StrokeColor
         {
@@ -32,6 +32,19 @@ namespace LunaDraw.Logic.ViewModels
             get => _mainViewModel.IsSettingsOpen;
             set => _mainViewModel.IsSettingsOpen = value;
         }
+
+        private bool _isShapesFlyoutOpen = false;
+        public bool IsShapesFlyoutOpen
+        {
+            get => _isShapesFlyoutOpen;
+            set => this.RaiseAndSetIfChanged(ref _isShapesFlyoutOpen, value);
+        }
+
+        public ReactiveCommand<Unit, Unit> ShowShapesFlyoutCommand { get; }
+
+        public ReactiveCommand<Unit, Unit> SelectRectangleCommand { get; }
+        public ReactiveCommand<Unit, Unit> SelectCircleCommand { get; }
+        public ReactiveCommand<Unit, Unit> SelectLineCommand { get; }
 
         public SKColor? FillColor
         {
@@ -64,6 +77,41 @@ namespace LunaDraw.Logic.ViewModels
                 new FillTool(),
                 new EraserTool()
             };
+
+            ShowShapesFlyoutCommand = ReactiveCommand.Create(() =>
+            {
+                // Close settings if open, then toggle shapes
+                _mainViewModel.IsSettingsOpen = false;
+                IsShapesFlyoutOpen = !IsShapesFlyoutOpen;
+            });
+
+            // Settings command — toggle settings and ensure shapes panel closed
+            ShowSettingsCommand = ReactiveCommand.Create(() =>
+            {
+                _mainViewModel.IsSettingsOpen = !_mainViewModel.IsSettingsOpen;
+                IsShapesFlyoutOpen = false;
+            });
+
+            SelectRectangleCommand = ReactiveCommand.Create(() =>
+            {
+                var tool = AvailableTools.FirstOrDefault(t => t is RectangleTool) ?? new RectangleTool();
+                SelectToolCommand.Execute(tool).Subscribe();
+                IsShapesFlyoutOpen = false;
+            });
+
+            SelectCircleCommand = ReactiveCommand.Create(() =>
+            {
+                var tool = AvailableTools.FirstOrDefault(t => t is EllipseTool) ?? new EllipseTool();
+                SelectToolCommand.Execute(tool).Subscribe();
+                IsShapesFlyoutOpen = false;
+            });
+
+            SelectLineCommand = ReactiveCommand.Create(() =>
+            {
+                var tool = AvailableTools.FirstOrDefault(t => t is LineTool) ?? new LineTool();
+                SelectToolCommand.Execute(tool).Subscribe();
+                IsShapesFlyoutOpen = false;
+            });
         }
     }
 }
