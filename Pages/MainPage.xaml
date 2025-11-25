@@ -9,55 +9,42 @@
              x:DataType="viewModels:MainViewModel"
              x:Class="LunaDraw.Pages.MainPage">
 
-    <AbsoluteLayout>
-        <!-- Main Content Grid -->
-        <Grid AbsoluteLayout.LayoutBounds="0,0,1,1"
-              AbsoluteLayout.LayoutFlags="All">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+  <AbsoluteLayout>
+    <!-- Main Content Grid -->
+    <Grid AbsoluteLayout.LayoutBounds="0,0,1,1"
+          AbsoluteLayout.LayoutFlags="All">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="*"/>
+      </Grid.ColumnDefinitions>
 
-            <views:ToolbarView Grid.Column="0"
-                               x:Name="toolbarView"/>
+      <views:ToolbarView Grid.Column="0"
+                         x:Name="toolbarView"/>
 
-            <skiasharp:SKCanvasView Grid.Column="1"
-                                    x:Name="canvasView"
-                                    PaintSurface="OnCanvasViewPaintSurface"
-                                    EnableTouchEvents="True"
-                                    Touch="OnTouch"/>
-        </Grid>
+      <skiasharp:SKCanvasView Grid.Column="1"
+                              x:Name="canvasView"
+                              PaintSurface="OnCanvasViewPaintSurface"
+                              EnableTouchEvents="True"
+                              Touch="OnTouch"/>
+    </Grid>
 
-        <!-- Overlay Background for dismissing flyouts -->
-        <BoxView x:Name="FlyoutOverlay"
-                 AbsoluteLayout.LayoutBounds="0,0,1,1"
-                 AbsoluteLayout.LayoutFlags="All"
-                 BackgroundColor="Transparent"
-                 IsVisible="False">
-            <BoxView.GestureRecognizers>
-                <TapGestureRecognizer Tapped="OnOverlayTapped"/>
-            </BoxView.GestureRecognizers>
-        </BoxView>
+    <!-- Settings Flyout Panel as True Overlay -->
+    <components:FlyoutPanel x:Name="SettingsFlyoutHost"
+                            IsVisible="{Binding IsSettingsOpen}"
+                            TargetElement="{x:Reference toolbarView}"
+                            AnchorName="SettingsButton">
+      <components:SettingsFlyoutPanel x:Name="SettingsFlyoutContent"
+                                      BindingContext="{Binding Source={x:Reference toolbarView}, Path=BindingContext}"/>
+    </components:FlyoutPanel>
 
-        <!-- Settings Flyout Panel as True Overlay -->
-        <components:FlyoutPanel x:Name="SettingsFlyoutHost"
-                                IsOpen="{Binding IsSettingsOpen}"
-                                TargetElement="{x:Reference toolbarView}"
-                                AnchorName="SettingsButton"
-                                AbsoluteLayout.LayoutBounds="0,0,AutoSize,AutoSize">
-            <components:SettingsFlyoutPanel x:Name="SettingsFlyoutContent"
-                                            BindingContext="{Binding Source={x:Reference toolbarView}, Path=BindingContext}"/>
-        </components:FlyoutPanel>
-
-        <!-- Shapes Flyout Panel as True Overlay -->
-        <components:FlyoutPanel x:Name="ShapesFlyoutHost"
-                                IsOpen="{Binding BindingContext.IsShapesFlyoutOpen, Source={x:Reference toolbarView}}"
-                                TargetElement="{x:Reference toolbarView}"
-                                AnchorName="ShapesButton"
-                                AbsoluteLayout.LayoutBounds="0,0,AutoSize,AutoSize">
-            <components:ShapesFlyoutPanel x:Name="ShapesFlyoutContent"
-                                          BindingContext="{Binding Source={x:Reference toolbarView}, Path=BindingContext}"/>
-        </components:FlyoutPanel>
-    </AbsoluteLayout>
+    <!-- Shapes Flyout Panel as True Overlay -->
+    <components:FlyoutPanel x:Name="ShapesFlyoutHost"
+                            IsVisible="{Binding BindingContext.IsShapesFlyoutOpen, Source={x:Reference toolbarView}}"
+                            TargetElement="{x:Reference toolbarView}"
+                            AnchorName="ShapesButton">
+      <components:ShapesFlyoutPanel x:Name="ShapesFlyoutContent"
+                                    BindingContext="{Binding Source={x:Reference toolbarView}, Path=BindingContext}"/>
+    </components:FlyoutPanel>
+  </AbsoluteLayout>
 
 </ContentPage>

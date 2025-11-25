@@ -5,7 +5,7 @@ namespace LunaDraw.Components
   public partial class FlyoutPanel : ContentView
   {
     private bool _isOpen;
-    private View _targetElement;
+    private View? _targetElement;
 
     public static readonly BindableProperty FlyoutContentProperty =
         BindableProperty.Create(
@@ -42,6 +42,10 @@ namespace LunaDraw.Components
     public FlyoutPanel()
     {
       InitializeComponent();
+
+      // Initialize to hidden state
+      // FlyoutContainer.Scale = 0.9;
+      // AbsoluteLayout.SetLayoutBounds(FlyoutContainer, new Rect(-1000, -1000, -1, -1));
     }
 
 
@@ -69,11 +73,11 @@ namespace LunaDraw.Components
       set => SetValue(AnchorNameProperty, value);
     }
 
-    public ICommand CloseCommand { get; private set; }
+    public ICommand? CloseCommand { get; private set; }
 
     private static void OnFlyoutContentChanged(BindableObject bindable, object oldValue, object newValue)
     {
-      var panel = (FlyoutPanel)bindable;
+      // var panel = (FlyoutPanel)bindable;
       // Content is handled by the ContentPresenter in XAML
     }
 
@@ -94,12 +98,10 @@ namespace LunaDraw.Components
     {
       if (_isOpen)
       {
-        // FlyoutContainer.InputTransparent = false; // Enable input when visible
         await ShowFlyout();
       }
       else
       {
-        // FlyoutContainer.InputTransparent = true; // Disable input when hidden
         await HideFlyout();
       }
     }
@@ -108,22 +110,30 @@ namespace LunaDraw.Components
     {
       if (_targetElement != null)
       {
-        await PositionFlyout();
+        // await PositionFlyout();
       }
 
-      // Animate in
-      await FlyoutContainer.FadeToAsync(1, 200, Easing.CubicOut);
-      await FlyoutContainer.ScaleToAsync(1, 200, Easing.CubicOut);
+      FlyoutContainer.IsVisible = true;
+
+      // Animate in - run fade and scale simultaneously
+      // var fadeTask = FlyoutContainer.FadeToAsync(1, 200, Easing.CubicOut);
+      // var scaleTask = FlyoutContainer.ScaleToAsync(1, 200, Easing.CubicOut);
+
+      // await Task.WhenAll(fadeTask, scaleTask);
     }
 
     private async Task HideFlyout()
     {
-      // Animate out
-      await FlyoutContainer.FadeToAsync(0, 150, Easing.CubicIn);
-      await FlyoutContainer.ScaleToAsync(0.9, 150, Easing.CubicIn);
+      FlyoutContainer.IsVisible = false;
+
+      // Animate out - run fade and scale simultaneously
+      // var fadeTask = FlyoutContainer.FadeToAsync(0, 150, Easing.CubicIn);
+      // var scaleTask = FlyoutContainer.ScaleToAsync(0.9, 150, Easing.CubicIn);
+
+      // await Task.WhenAll(fadeTask, scaleTask);
 
       // Move off-screen when hidden
-      AbsoluteLayout.SetLayoutBounds(FlyoutContainer, new Rect(-1000, -1000, -1, -1));
+      // AbsoluteLayout.SetLayoutBounds(FlyoutContainer, new Rect(-1000, -1000, -1, -1));
     }
 
     private async Task PositionFlyout()
