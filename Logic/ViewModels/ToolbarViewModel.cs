@@ -1,7 +1,10 @@
-using LunaDraw.Logic.Tools;
-using ReactiveUI;
-using SkiaSharp;
 using System.Reactive;
+
+using LunaDraw.Logic.Tools;
+
+using ReactiveUI;
+
+using SkiaSharp;
 
 namespace LunaDraw.Logic.ViewModels
 {

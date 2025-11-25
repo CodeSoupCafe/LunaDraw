@@ -10,124 +10,124 @@
              xmlns:pages="clr-namespace:LunaDraw.Pages;assembly=LunaDraw"
              x:Class="LunaDraw.Views.ToolbarView"
              x:DataType="viewModels:ToolbarViewModel">
-        <ContentView.Resources>
-                <ResourceDictionary>
-                        <conv:ToolNameToIconConverter x:Key="ToolNameToIconConverter"/>
+  <ContentView.Resources>
+    <ResourceDictionary>
+      <conv:ToolNameToIconConverter x:Key="ToolNameToIconConverter"/>
 
-                        <!-- Kid-friendly button style with large hit areas for vertical toolbar -->
-                        <Style x:Key="ToolbarButtonStyle"
-                               TargetType="Button">
-                                <Setter Property="WidthRequest"
-                                        Value="72"/>
-                                <Setter Property="HeightRequest"
-                                        Value="72"/>
-                                <Setter Property="FontSize"
-                                        Value="28"/>
-                                <Setter Property="Padding"
-                                        Value="8"/>
-                                <Setter Property="Margin"
-                                        Value="0,4"/>
-                                <Setter Property="CornerRadius"
-                                        Value="12"/>
-                                <Setter Property="BackgroundColor"
-                                        Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"/>
-                                <Setter Property="TextColor"
-                                        Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"/>
-                        </Style>
-                </ResourceDictionary>
-        </ContentView.Resources>
+      <!-- Kid-friendly button style with large hit areas for vertical toolbar -->
+      <Style x:Key="ToolbarButtonStyle"
+             TargetType="Button">
+        <Setter Property="WidthRequest"
+                Value="72"/>
+        <Setter Property="HeightRequest"
+                Value="72"/>
+        <Setter Property="FontSize"
+                Value="28"/>
+        <Setter Property="Padding"
+                Value="8"/>
+        <Setter Property="Margin"
+                Value="0,4"/>
+        <Setter Property="CornerRadius"
+                Value="12"/>
+        <Setter Property="BackgroundColor"
+                Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"/>
+        <Setter Property="TextColor"
+                Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"/>
+      </Style>
+    </ResourceDictionary>
+  </ContentView.Resources>
 
-        <AbsoluteLayout>
-                <!-- Main Toolbar - Left docked vertical bar -->
-                <Border x:Name="MainToolbarFrame"
-                        HorizontalOptions="Start"
-                        VerticalOptions="Fill"
-                        Background="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
-                        Padding="8,12"
-                        StrokeShape="RoundRectangle"
-                        AbsoluteLayout.LayoutBounds="0,0,AutoSize,AutoSize">
-                        <ScrollView Orientation="Vertical"
-                                    VerticalScrollBarVisibility="Never"
-                                    HorizontalScrollBarVisibility="Never">
-                                <VerticalStackLayout HorizontalOptions="Center"
-                                                     Spacing="8">
-                                        <!-- Modern toolbar controls -->
-                                        <!-- Only keep one set of toolbar buttons below. -->
-                                        <Button x:Name="SelectButton"
-                                                Style="{StaticResource ToolbarButtonStyle}"
-                                                Text="⬚"
-                                                Command="{Binding SelectToolCommand}"
-                                                CommandParameter="{Binding AvailableTools[0]}"
-                                                AutomationProperties.Name="Select"/>
+  <AbsoluteLayout>
+    <!-- Main Toolbar - Left docked vertical bar -->
+    <Border x:Name="MainToolbarFrame"
+            HorizontalOptions="Start"
+            VerticalOptions="Fill"
+            Background="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
+            Padding="8,12"
+            StrokeShape="RoundRectangle"
+            AbsoluteLayout.LayoutBounds="0,0,AutoSize,AutoSize">
+      <ScrollView Orientation="Vertical"
+                  VerticalScrollBarVisibility="Never"
+                  HorizontalScrollBarVisibility="Never">
+        <VerticalStackLayout HorizontalOptions="Center"
+                             Spacing="8">
+          <!-- Modern toolbar controls -->
+          <!-- Only keep one set of toolbar buttons below. -->
+          <Button x:Name="SelectButton"
+                  Style="{StaticResource ToolbarButtonStyle}"
+                  Text="⬚"
+                  Command="{Binding SelectToolCommand}"
+                  CommandParameter="{Binding AvailableTools[0]}"
+                  AutomationProperties.Name="Select"/>
 
-                                        <Button x:Name="BrushButton"
-                                                Style="{StaticResource ToolbarButtonStyle}"
-                                                Text="🌈"
-                                                Command="{Binding SelectToolCommand}"
-                                                CommandParameter="{Binding AvailableTools[1]}"
-                                                AutomationProperties.Name="Brush"/>
+          <Button x:Name="BrushButton"
+                  Style="{StaticResource ToolbarButtonStyle}"
+                  Text="🌈"
+                  Command="{Binding SelectToolCommand}"
+                  CommandParameter="{Binding AvailableTools[1]}"
+                  AutomationProperties.Name="Brush"/>
 
-                                        <Button x:Name="EraserButton"
-                                                Style="{StaticResource ToolbarButtonStyle}"
-                                                Text="🧽"
-                                                Command="{Binding SelectToolCommand}"
-                                                CommandParameter="{Binding AvailableTools[6]}"
-                                                AutomationProperties.Name="Eraser"/>
+          <Button x:Name="EraserButton"
+                  Style="{StaticResource ToolbarButtonStyle}"
+                  Text="🧽"
+                  Command="{Binding SelectToolCommand}"
+                  CommandParameter="{Binding AvailableTools[6]}"
+                  AutomationProperties.Name="Eraser"/>
 
-                                        <Button x:Name="ShapesButton"
-                                                Style="{StaticResource ToolbarButtonStyle}"
-                                                Text="🔷"
-                                                Command="{Binding ShowShapesFlyoutCommand}"
-                                                AutomationProperties.Name="Shapes"/>
+          <Button x:Name="ShapesButton"
+                  Style="{StaticResource ToolbarButtonStyle}"
+                  Text="🔷"
+                  Command="{Binding ShowShapesFlyoutCommand}"
+                  AutomationProperties.Name="Shapes"/>
 
-                                        <Button x:Name="SettingsButton"
-                                                Style="{StaticResource ToolbarButtonStyle}"
-                                                Text="⚙️"
-                                                Command="{Binding ShowSettingsCommand}"
-                                                AutomationProperties.Name="Settings"/>
+          <Button x:Name="SettingsButton"
+                  Style="{StaticResource ToolbarButtonStyle}"
+                  Text="⚙️"
+                  Command="{Binding ShowSettingsCommand}"
+                  AutomationProperties.Name="Settings"/>
 
-                                        <BoxView HeightRequest="2"
-                                                 Color="Gray"
-                                                 Margin="0,4"/>
+          <BoxView HeightRequest="2"
+                   Color="Gray"
+                   Margin="0,4"/>
 
-                                        <!-- Undo -->
-                                        <Button x:Name="UndoButton"
-                                                Style="{StaticResource ToolbarButtonStyle}"
-                                                Text="↺"
-                                                Command="{Binding UndoCommand}"
-                                                AutomationProperties.Name="Undo">
-                                                <Button.Resources>
-                                                        <Style TargetType="Label">
-                                                                <Setter Property="Text"
-                                                                        Value="Undo"/>
-                                                                <Setter Property="FontSize"
-                                                                        Value="10"/>
-                                                                <Setter Property="HorizontalTextAlignment"
-                                                                        Value="Center"/>
-                                                        </Style>
-                                                </Button.Resources>
-                                        </Button>
+          <!-- Undo -->
+          <Button x:Name="UndoButton"
+                  Style="{StaticResource ToolbarButtonStyle}"
+                  Text="↺"
+                  Command="{Binding UndoCommand}"
+                  AutomationProperties.Name="Undo">
+            <Button.Resources>
+              <Style TargetType="Label">
+                <Setter Property="Text"
+                        Value="Undo"/>
+                <Setter Property="FontSize"
+                        Value="10"/>
+                <Setter Property="HorizontalTextAlignment"
+                        Value="Center"/>
+              </Style>
+            </Button.Resources>
+          </Button>
 
-                                        <!-- Redo -->
-                                        <Button x:Name="RedoButton"
-                                                Style="{StaticResource ToolbarButtonStyle}"
-                                                Text="↻"
-                                                Command="{Binding RedoCommand}"
-                                                AutomationProperties.Name="Redo">
-                                                <Button.Resources>
-                                                        <Style TargetType="Label">
-                                                                <Setter Property="Text"
-                                                                        Value="Redo"/>
-                                                                <Setter Property="FontSize"
-                                                                        Value="10"/>
-                                                                <Setter Property="HorizontalTextAlignment"
-                                                                        Value="Center"/>
-                                                        </Style>
-                                                </Button.Resources>
-                                        </Button>
-                                </VerticalStackLayout>
-                        </ScrollView>
-                </Border>
+          <!-- Redo -->
+          <Button x:Name="RedoButton"
+                  Style="{StaticResource ToolbarButtonStyle}"
+                  Text="↻"
+                  Command="{Binding RedoCommand}"
+                  AutomationProperties.Name="Redo">
+            <Button.Resources>
+              <Style TargetType="Label">
+                <Setter Property="Text"
+                        Value="Redo"/>
+                <Setter Property="FontSize"
+                        Value="10"/>
+                <Setter Property="HorizontalTextAlignment"
+                        Value="Center"/>
+              </Style>
+            </Button.Resources>
+          </Button>
+        </VerticalStackLayout>
+      </ScrollView>
+    </Border>
 
-        </AbsoluteLayout>
+  </AbsoluteLayout>
 </ContentView>

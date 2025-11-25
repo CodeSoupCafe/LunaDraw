@@ -3,12 +3,13 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="LunaDraw.Components.FlyoutPanel"
              x:Name="FlyoutRoot">
+  <Border x:Name="FlyoutContainer"
+          Style="{StaticResource FlyoutBorderStyle}"
+          Opacity="0"
+          Scale="0.9">
     <AbsoluteLayout>
-        <Border x:Name="FlyoutContainer"
-                Style="{StaticResource FlyoutBorderStyle}"
-                Opacity="0"
-                Scale="0.9">
-            <ContentPresenter Content="{Binding Source={x:Reference FlyoutRoot}, Path=FlyoutContent}"/>
-        </Border>
+      <ContentPresenter Content="{Binding Source={x:Reference FlyoutRoot}, Path=FlyoutContent}"
+                        AbsoluteLayout.LayoutFlags="PositionProportional"/>
     </AbsoluteLayout>
+  </Border>
 </ContentView>
