@@ -4,12 +4,9 @@
              x:Class="LunaDraw.Components.FlyoutPanel"
              x:Name="FlyoutRoot">
   <Border x:Name="FlyoutContainer"
-          Style="{StaticResource FlyoutBorderStyle}"
-          Opacity="0"
-          Scale="0.9">
+          Style="{StaticResource FlyoutBorderStyle}">
     <AbsoluteLayout>
-      <ContentPresenter Content="{Binding Source={x:Reference FlyoutRoot}, Path=FlyoutContent}"
-                        AbsoluteLayout.LayoutFlags="PositionProportional"/>
+      <ContentPresenter Content="{Binding Source={x:Reference FlyoutRoot}, Path=FlyoutContent}"/>
     </AbsoluteLayout>
   </Border>
 </ContentView>

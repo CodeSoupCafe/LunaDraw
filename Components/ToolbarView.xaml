@@ -55,36 +55,49 @@
           <!-- Only keep one set of toolbar buttons below. -->
           <Button x:Name="SelectButton"
                   Style="{StaticResource ToolbarButtonStyle}"
-                  Text="⬚"
+                  Text="{Binding Environment.NewLine, StringFormat='⬚{0}Select'}"
                   Command="{Binding SelectToolCommand}"
                   CommandParameter="{Binding AvailableTools[0]}"
                   AutomationProperties.Name="Select"/>
 
-          <Button x:Name="BrushButton"
-                  Style="{StaticResource ToolbarButtonStyle}"
-                  Text="🌈"
-                  Command="{Binding SelectToolCommand}"
-                  CommandParameter="{Binding AvailableTools[1]}"
-                  AutomationProperties.Name="Brush"/>
-
-          <Button x:Name="EraserButton"
-                  Style="{StaticResource ToolbarButtonStyle}"
-                  Text="🧽"
-                  Command="{Binding SelectToolCommand}"
-                  CommandParameter="{Binding AvailableTools[6]}"
-                  AutomationProperties.Name="Eraser"/>
-
-          <Button x:Name="ShapesButton"
-                  Style="{StaticResource ToolbarButtonStyle}"
-                  Text="🔷"
-                  Command="{Binding ShowShapesFlyoutCommand}"
-                  AutomationProperties.Name="Shapes"/>
-
-          <Button x:Name="SettingsButton"
-                  Style="{StaticResource ToolbarButtonStyle}"
-                  Text="⚙️"
-                  Command="{Binding ShowSettingsCommand}"
-                  AutomationProperties.Name="Settings"/>
+          <StackLayout HorizontalOptions="Center">
+            <Button x:Name="BrushButton"
+                    Style="{StaticResource ToolbarButtonStyle}"
+                    Text="🖌️"
+                    Command="{Binding SelectToolCommand}"
+                    CommandParameter="{Binding AvailableTools[1]}"
+                    AutomationProperties.Name="Brush"/>
+            <Label Text="Brush"
+                   HorizontalTextAlignment="Center"/>
+          </StackLayout>
+          <StackLayout HorizontalOptions="Center">
+            <Button x:Name="EraserButton"
+                    Style="{StaticResource ToolbarButtonStyle}"
+                    Text="🧽"
+                    Command="{Binding SelectToolCommand}"
+                    CommandParameter="{Binding AvailableTools[6]}"
+                    AutomationProperties.Name="Eraser"/>
+            <Label Text="Eraser"
+                   HorizontalTextAlignment="Center"/>
+          </StackLayout>
+          <StackLayout HorizontalOptions="Center">
+            <Button x:Name="ShapesButton"
+                    Style="{StaticResource ToolbarButtonStyle}"
+                    Text="🔷"
+                    Command="{Binding ShowShapesFlyoutCommand}"
+                    AutomationProperties.Name="Shapes"/>
+            <Label Text="Shapes"
+                   HorizontalTextAlignment="Center"/>
+          </StackLayout>
+          <StackLayout HorizontalOptions="Center">
+            <Button x:Name="SettingsButton"
+                    Style="{StaticResource ToolbarButtonStyle}"
+                    Text="🌈"
+                    Command="{Binding ShowSettingsCommand}"
+                    AutomationProperties.Name="Colors"/>
+            <Label Text="Colors"
+                   HorizontalTextAlignment="Center"/>
+          </StackLayout>
 
           <BoxView HeightRequest="2"
                    Color="Gray"

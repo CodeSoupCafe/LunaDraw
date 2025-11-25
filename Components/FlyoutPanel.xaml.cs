@@ -131,7 +131,6 @@ namespace LunaDraw.Components
       if (_targetElement == null) return;
 
       // Fallback: compute absolute position by walking the visual tree and summing bounds.
-      // Fallback: compute absolute position by walking the visual tree and summing bounds.
       Rect GetAbsoluteBounds(View v)
       {
         var r = v.Bounds;

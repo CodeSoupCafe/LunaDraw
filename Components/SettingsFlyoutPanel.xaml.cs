@@ -39,7 +39,7 @@ namespace LunaDraw.Components
       this.Loaded += SettingsFlyoutPanel_Loaded;
     }
 
-    private void SettingsFlyoutPanel_Loaded(object sender, EventArgs e)
+    private void SettingsFlyoutPanel_Loaded(object? sender, EventArgs e)
     {
       if (BindingContext is ToolbarViewModel toolbarViewModel)
       {
