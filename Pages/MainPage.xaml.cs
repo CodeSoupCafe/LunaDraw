@@ -42,7 +42,11 @@ public partial class MainPage : ContentPage
                 .Subscribe(tuple =>
                 {
                     var (isSettingsOpen, isShapesOpen) = tuple;
-                    FlyoutOverlay.IsVisible = isSettingsOpen || isShapesOpen;
+                    var shouldShowOverlay = isSettingsOpen || isShapesOpen;
+                    FlyoutOverlay.IsVisible = shouldShowOverlay;
+
+                    // Ensure canvas can receive touch events when flyouts are closed
+                    canvasView.InputTransparent = shouldShowOverlay;
                 });
     }
 

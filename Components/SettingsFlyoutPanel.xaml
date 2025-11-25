@@ -26,7 +26,8 @@
                                            ColorSpectrumStyle="ShadeToHueStyle"
                                            PointerRingBorderUnits="0.3"
                                            PointerRingDiameterUnits="0.7"
-                                           HeightRequest="40"/>
+                                           HeightRequest="40"
+                                           PropertyChanged="OnStrokeColorChanged"/>
 
                      <Label Text="Fill Color"
                             FontAttributes="Bold"
@@ -36,15 +37,17 @@
                                            ColorSpectrumStyle="ShadeToHueStyle"
                                            PointerRingBorderUnits="0.3"
                                            PointerRingDiameterUnits="0.7"
-                                           HeightRequest="40"/>
+                                           HeightRequest="40"
+                                           PropertyChanged="OnFillColorChanged"/>
 
                      <Label Text="Transparency"
                             FontAttributes="Bold"
                             FontSize="14"/>
                      <Slider x:Name="TransparencySlider"
                              Minimum="0"
-                             Maximum="1"
-                             HeightRequest="30"/>
+                             Maximum="255"
+                             HeightRequest="30"
+                             ValueChanged="OnTransparencyChanged"/>
 
               </StackLayout>
        </Border>

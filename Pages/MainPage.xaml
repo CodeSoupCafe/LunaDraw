@@ -12,7 +12,7 @@
     <AbsoluteLayout>
         <!-- Main Content Grid -->
         <Grid AbsoluteLayout.LayoutBounds="0,0,1,1"
-                AbsoluteLayout.LayoutFlags="All">
+              AbsoluteLayout.LayoutFlags="All">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
@@ -41,18 +41,22 @@
 
         <!-- Settings Flyout Panel as True Overlay -->
         <components:FlyoutPanel x:Name="SettingsFlyoutHost"
-                                IsVisible="{Binding IsSettingsOpen}"
+                                IsOpen="{Binding IsSettingsOpen}"
                                 TargetElement="{x:Reference toolbarView}"
+                                AnchorName="SettingsButton"
                                 AbsoluteLayout.LayoutBounds="0,0,AutoSize,AutoSize">
-            <components:SettingsFlyoutPanel x:Name="SettingsFlyoutContent"/>
+            <components:SettingsFlyoutPanel x:Name="SettingsFlyoutContent"
+                                            BindingContext="{Binding Source={x:Reference toolbarView}, Path=BindingContext}"/>
         </components:FlyoutPanel>
 
         <!-- Shapes Flyout Panel as True Overlay -->
         <components:FlyoutPanel x:Name="ShapesFlyoutHost"
-                                IsVisible="{Binding IsShapesFlyoutOpen}"
+                                IsOpen="{Binding BindingContext.IsShapesFlyoutOpen, Source={x:Reference toolbarView}}"
                                 TargetElement="{x:Reference toolbarView}"
+                                AnchorName="ShapesButton"
                                 AbsoluteLayout.LayoutBounds="0,0,AutoSize,AutoSize">
-            <components:ShapesFlyoutPanel x:Name="ShapesFlyoutContent"/>
+            <components:ShapesFlyoutPanel x:Name="ShapesFlyoutContent"
+                                          BindingContext="{Binding Source={x:Reference toolbarView}, Path=BindingContext}"/>
         </components:FlyoutPanel>
     </AbsoluteLayout>
 

@@ -43,6 +43,13 @@ namespace LunaDraw.Logic.ViewModels
             set => this.RaiseAndSetIfChanged(ref _isSettingsOpen, value);
         }
 
+        private bool _isAnyFlyoutOpen = false;
+        public bool IsAnyFlyoutOpen
+        {
+            get => _isAnyFlyoutOpen;
+            set => this.RaiseAndSetIfChanged(ref _isAnyFlyoutOpen, value);
+        }
+
         private SKColor? _fillColor;
         public SKColor? FillColor
         {
@@ -241,6 +248,17 @@ namespace LunaDraw.Logic.ViewModels
 
             // Message listener for tools to trigger a state save
             MessageBus.Current.Listen<DrawingStateChangedMessage>().Subscribe(_ => SaveState());
+
+            // Message listener for brush settings changes
+            MessageBus.Current.Listen<BrushSettingsChangedMessage>().Subscribe(msg =>
+            {
+                if (msg.StrokeColor.HasValue)
+                    StrokeColor = msg.StrokeColor.Value;
+                if (msg.FillColor.HasValue)
+                    FillColor = msg.FillColor.Value;
+                if (msg.Transparency.HasValue)
+                    Opacity = msg.Transparency.Value;
+            });
         }
 
         public void SaveState()

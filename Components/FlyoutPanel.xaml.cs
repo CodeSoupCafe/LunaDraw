@@ -5,7 +5,7 @@ namespace LunaDraw.Components
 {
     public partial class FlyoutPanel : ContentView
     {
-        private bool _isVisible;
+        private bool _isOpen;
         private View _targetElement;
 
         public static readonly BindableProperty FlyoutContentProperty =
@@ -16,13 +16,13 @@ namespace LunaDraw.Components
                 default(View),
                 propertyChanged: OnFlyoutContentChanged);
 
-        public static readonly BindableProperty IsVisibleProperty =
+        public static readonly BindableProperty IsOpenProperty =
             BindableProperty.Create(
-                nameof(IsVisible),
+                nameof(IsOpen),
                 typeof(bool),
                 typeof(FlyoutPanel),
                 default(bool),
-                propertyChanged: OnIsVisibleChanged);
+                propertyChanged: OnIsOpenChanged);
 
         public static readonly BindableProperty TargetElementProperty =
             BindableProperty.Create(
@@ -31,6 +31,14 @@ namespace LunaDraw.Components
                 typeof(FlyoutPanel),
                 default(View),
                 propertyChanged: OnTargetElementChanged);
+
+        // Optional: name of a child inside TargetElement to use as the anchor (e.g., a specific button inside the toolbar)
+        public static readonly BindableProperty AnchorNameProperty =
+            BindableProperty.Create(
+                nameof(AnchorName),
+                typeof(string),
+                typeof(FlyoutPanel),
+                default(string));
 
         public FlyoutPanel()
         {
@@ -44,10 +52,10 @@ namespace LunaDraw.Components
             set => SetValue(FlyoutContentProperty, value);
         }
 
-        public bool IsVisible
+        public bool IsOpen
         {
-            get => (bool)GetValue(IsVisibleProperty);
-            set => SetValue(IsVisibleProperty, value);
+            get => (bool)GetValue(IsOpenProperty);
+            set => SetValue(IsOpenProperty, value);
         }
 
         public View TargetElement
@@ -56,7 +64,13 @@ namespace LunaDraw.Components
             set => SetValue(TargetElementProperty, value);
         }
 
-        public ICommand CloseCommand { get; }
+        public string AnchorName
+        {
+            get => (string)GetValue(AnchorNameProperty);
+            set => SetValue(AnchorNameProperty, value);
+        }
+
+        public ICommand CloseCommand { get; private set; }
 
         private static void OnFlyoutContentChanged(BindableObject bindable, object oldValue, object newValue)
         {
@@ -64,10 +78,10 @@ namespace LunaDraw.Components
             // Content is handled by the ContentPresenter in XAML
         }
 
-        private static void OnIsVisibleChanged(BindableObject bindable, object oldValue, object newValue)
+        private static void OnIsOpenChanged(BindableObject bindable, object oldValue, object newValue)
         {
             var panel = (FlyoutPanel)bindable;
-            panel._isVisible = (bool)newValue;
+            panel._isOpen = (bool)newValue;
             panel.UpdateVisibility();
         }
 
@@ -79,12 +93,14 @@ namespace LunaDraw.Components
 
         private async void UpdateVisibility()
         {
-            if (_isVisible)
+            if (_isOpen)
             {
+                FlyoutContainer.InputTransparent = false; // Enable input when visible
                 await ShowFlyout();
             }
             else
             {
+                FlyoutContainer.InputTransparent = true; // Disable input when hidden
                 await HideFlyout();
             }
         }
@@ -117,40 +133,62 @@ namespace LunaDraw.Components
         {
             if (_targetElement == null) return;
 
-            // Get the target element's position relative to the parent
-            var parent = (VisualElement)this.Parent;
-            if (parent == null) return;
+            // Fallback: compute absolute position by walking the visual tree and summing bounds.
+            // Fallback: compute absolute position by walking the visual tree and summing bounds.
+            Rect GetAbsoluteBounds(View v)
+            {
+                var r = v.Bounds;
+                Element parent = v.Parent;
+                while (parent is VisualElement ve)
+                {
+                    r = new Rect(r.X + ve.X, r.Y + ve.Y, r.Width, r.Height);
+                    parent = ve.Parent;
+                }
+                return r;
+            }
 
-            // Get target element's bounds in parent coordinates
-            var targetBounds = _targetElement.Bounds;
+            // Find the actual element to anchor to, if an AnchorName is provided
+            View anchorElement = _targetElement;
+            if (!string.IsNullOrEmpty(AnchorName) && _targetElement is Layout targetLayout)
+            {
+                anchorElement = targetLayout.FindByName(AnchorName) as View ?? _targetElement;
+            }
 
-            // Calculate position (to the right of the target element)
-            var x = targetBounds.Right + 10; // 10px gap
+            // Compute target bounds relative to the page
+            var targetBounds = GetAbsoluteBounds(anchorElement); // Changed to use anchorElement
+            if (targetBounds == Rect.Zero) return;
+
+            // Position to the right of the target element with a small gap
+            var x = targetBounds.Right + 10;
             var y = targetBounds.Top;
 
-            // Get screen dimensions
-            var screenWidth = parent.Width;
-            var screenHeight = parent.Height;
+            // Set initial bounds using -1 to indicate AutoSize for width/height
+            AbsoluteLayout.SetLayoutBounds(FlyoutContainer, new Rect(x, y, -1, -1));
 
-            // Get flyout dimensions (measure if needed)
-            var flyoutWidth = FlyoutContainer.WidthRequest > 0 ? FlyoutContainer.WidthRequest : 250;
-            var flyoutHeight = FlyoutContainer.HeightRequest > 0 ? FlyoutContainer.HeightRequest : 300;
+            // Wait one layout cycle so the FlyoutContainer can size itself
+            await Task.Yield();
 
-            // Adjust for screen boundaries
-            if (x + flyoutWidth > screenWidth)
+            var flyoutBounds = FlyoutContainer.Bounds;
+
+            // Get parent page dimensions (assume top-level layout fills the page)
+            if (!(this.Parent is VisualElement parentPage)) return;
+            var screenWidth = parentPage.Width;
+            var screenHeight = parentPage.Height;
+
+            // If the flyout would overflow the right edge, move it to the left of the target
+            if (flyoutBounds.Right > screenWidth)
             {
-                // Position to the left of the target if it would go off screen
-                x = targetBounds.Left - flyoutWidth - 10;
+                x = targetBounds.Left - flyoutBounds.Width - 10;
             }
 
-            if (y + flyoutHeight > screenHeight)
+            // If the flyout would overflow the bottom edge, move it up to fit
+            if (flyoutBounds.Bottom > screenHeight)
             {
-                // Adjust to fit on screen
-                y = Math.Max(0, screenHeight - flyoutHeight);
+                y = Math.Max(0, screenHeight - flyoutBounds.Height);
             }
 
-            // Set the position using AbsoluteLayout
-            AbsoluteLayout.SetLayoutBounds(FlyoutContainer, new Rect(x, y, flyoutWidth, flyoutHeight));
+            // Re-apply the adjusted bounds (still use -1 for AutoSize)
+            AbsoluteLayout.SetLayoutBounds(FlyoutContainer, new Rect(x, y, -1, -1));
         }
     }
 }
