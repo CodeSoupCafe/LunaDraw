@@ -37,7 +37,9 @@
     </ResourceDictionary>
   </ContentView.Resources>
 
-  <AbsoluteLayout>
+  <ScrollView Orientation="Vertical"
+              VerticalScrollBarVisibility="Never"
+              HorizontalScrollBarVisibility="Never">
     <!-- Main Toolbar - Left docked vertical bar -->
     <Border x:Name="MainToolbarFrame"
             HorizontalOptions="Start"
@@ -57,16 +59,14 @@
                   Style="{StaticResource ToolbarButtonStyle}"
                   Text="{Binding Environment.NewLine, StringFormat='⬚{0}Select'}"
                   Command="{Binding SelectToolCommand}"
-                  CommandParameter="{Binding AvailableTools[0]}"
-                  AutomationProperties.Name="Select"/>
+                  CommandParameter="{Binding AvailableTools[0]}"/>
 
           <StackLayout HorizontalOptions="Center">
             <Button x:Name="BrushButton"
                     Style="{StaticResource ToolbarButtonStyle}"
                     Text="🖌️"
                     Command="{Binding SelectToolCommand}"
-                    CommandParameter="{Binding AvailableTools[1]}"
-                    AutomationProperties.Name="Brush"/>
+                    CommandParameter="{Binding AvailableTools[1]}"/>
             <Label Text="Brush"
                    HorizontalTextAlignment="Center"/>
           </StackLayout>
@@ -75,8 +75,7 @@
                     Style="{StaticResource ToolbarButtonStyle}"
                     Text="🧽"
                     Command="{Binding SelectToolCommand}"
-                    CommandParameter="{Binding AvailableTools[6]}"
-                    AutomationProperties.Name="Eraser"/>
+                    CommandParameter="{Binding AvailableTools[6]}"/>
             <Label Text="Eraser"
                    HorizontalTextAlignment="Center"/>
           </StackLayout>
@@ -84,8 +83,7 @@
             <Button x:Name="ShapesButton"
                     Style="{StaticResource ToolbarButtonStyle}"
                     Text="🔷"
-                    Command="{Binding ShowShapesFlyoutCommand}"
-                    AutomationProperties.Name="Shapes"/>
+                    Command="{Binding ShowShapesFlyoutCommand}"/>
             <Label Text="Shapes"
                    HorizontalTextAlignment="Center"/>
           </StackLayout>
@@ -93,8 +91,7 @@
             <Button x:Name="SettingsButton"
                     Style="{StaticResource ToolbarButtonStyle}"
                     Text="🌈"
-                    Command="{Binding ShowSettingsCommand}"
-                    AutomationProperties.Name="Colors"/>
+                    Command="{Binding ShowSettingsCommand}"/>
             <Label Text="Colors"
                    HorizontalTextAlignment="Center"/>
           </StackLayout>
@@ -107,8 +104,7 @@
           <Button x:Name="UndoButton"
                   Style="{StaticResource ToolbarButtonStyle}"
                   Text="↺"
-                  Command="{Binding UndoCommand}"
-                  AutomationProperties.Name="Undo">
+                  Command="{Binding UndoCommand}">
             <Button.Resources>
               <Style TargetType="Label">
                 <Setter Property="Text"
@@ -125,8 +121,7 @@
           <Button x:Name="RedoButton"
                   Style="{StaticResource ToolbarButtonStyle}"
                   Text="↻"
-                  Command="{Binding RedoCommand}"
-                  AutomationProperties.Name="Redo">
+                  Command="{Binding RedoCommand}">
             <Button.Resources>
               <Style TargetType="Label">
                 <Setter Property="Text"
@@ -141,6 +136,5 @@
         </VerticalStackLayout>
       </ScrollView>
     </Border>
-
-  </AbsoluteLayout>
+  </ScrollView>
 </ContentView>

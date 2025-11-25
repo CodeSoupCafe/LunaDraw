@@ -30,7 +30,7 @@
 
     <!-- Settings Flyout Panel as True Overlay -->
     <components:FlyoutPanel x:Name="SettingsFlyoutHost"
-                            IsVisible="{Binding IsSettingsOpen}"
+                            IsOpen="{Binding IsSettingsOpen}"
                             TargetElement="{x:Reference toolbarView}"
                             AnchorName="SettingsButton">
       <components:SettingsFlyoutPanel x:Name="SettingsFlyoutContent"
@@ -39,7 +39,7 @@
 
     <!-- Shapes Flyout Panel as True Overlay -->
     <components:FlyoutPanel x:Name="ShapesFlyoutHost"
-                            IsVisible="{Binding BindingContext.IsShapesFlyoutOpen, Source={x:Reference toolbarView}}"
+                            IsOpen="{Binding BindingContext.IsShapesFlyoutOpen, Source={x:Reference toolbarView}}"
                             TargetElement="{x:Reference toolbarView}"
                             AnchorName="ShapesButton">
       <components:ShapesFlyoutPanel x:Name="ShapesFlyoutContent"

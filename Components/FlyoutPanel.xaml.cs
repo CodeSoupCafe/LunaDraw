@@ -44,8 +44,8 @@ namespace LunaDraw.Components
       InitializeComponent();
 
       // Initialize to hidden state
-      // FlyoutContainer.Scale = 0.9;
-      // AbsoluteLayout.SetLayoutBounds(FlyoutContainer, new Rect(-1000, -1000, -1, -1));
+      FlyoutContainer.Scale = 0.9;
+      AbsoluteLayout.SetLayoutBounds(FlyoutContainer, new Rect(-1000, -1000, -1, -1));
     }
 
 
@@ -77,7 +77,7 @@ namespace LunaDraw.Components
 
     private static void OnFlyoutContentChanged(BindableObject bindable, object oldValue, object newValue)
     {
-      // var panel = (FlyoutPanel)bindable;
+      var panel = (FlyoutPanel)bindable;
       // Content is handled by the ContentPresenter in XAML
     }
 
@@ -110,58 +110,78 @@ namespace LunaDraw.Components
     {
       if (_targetElement != null)
       {
-        // await PositionFlyout();
+        await PositionFlyout();
       }
 
-      FlyoutContainer.IsVisible = true;
-
       // Animate in - run fade and scale simultaneously
-      // var fadeTask = FlyoutContainer.FadeToAsync(1, 200, Easing.CubicOut);
-      // var scaleTask = FlyoutContainer.ScaleToAsync(1, 200, Easing.CubicOut);
+      var fadeTask = FlyoutRoot.FadeToAsync(1, 200, Easing.CubicOut);
+      var scaleTask = FlyoutRoot.ScaleToAsync(1, 200, Easing.CubicOut);
 
-      // await Task.WhenAll(fadeTask, scaleTask);
+      await Task.WhenAll(fadeTask, scaleTask);
     }
 
     private async Task HideFlyout()
     {
-      FlyoutContainer.IsVisible = false;
-
       // Animate out - run fade and scale simultaneously
-      // var fadeTask = FlyoutContainer.FadeToAsync(0, 150, Easing.CubicIn);
-      // var scaleTask = FlyoutContainer.ScaleToAsync(0.9, 150, Easing.CubicIn);
+      var fadeTask = FlyoutRoot.FadeToAsync(0, 150, Easing.CubicIn);
+      var scaleTask = FlyoutRoot.ScaleToAsync(0.9, 150, Easing.CubicIn);
 
-      // await Task.WhenAll(fadeTask, scaleTask);
+      await Task.WhenAll(fadeTask, scaleTask);
 
       // Move off-screen when hidden
-      // AbsoluteLayout.SetLayoutBounds(FlyoutContainer, new Rect(-1000, -1000, -1, -1));
+      AbsoluteLayout.SetLayoutBounds(FlyoutRoot, new Rect(-1000, -1000, -1, -1));
+    }
+
+    public static Rect GetCoordinatesWithinPage(VisualElement element)
+    {
+      double x = 0;
+      double y = 0;
+
+      VisualElement? currentElement = element;
+
+      // Traverse up the visual tree until a Page or null is encountered
+      while (currentElement != null && !(currentElement is Page))
+      {
+        x += currentElement.X;
+        y += currentElement.Y;
+        currentElement = currentElement.Parent as VisualElement;
+
+        if (currentElement is ScrollView scrollView)
+        {
+          if (scrollView.Orientation == ScrollOrientation.Both || scrollView.Orientation == ScrollOrientation.Horizontal)
+          {
+            x -= scrollView.ScrollX;
+          }
+          if (scrollView.Orientation == ScrollOrientation.Both || scrollView.Orientation == ScrollOrientation.Vertical)
+          {
+            y -= scrollView.ScrollY;
+          }
+        }
+      }
+
+      // If the element is within a Page, add the Page's X and Y
+      if (currentElement is Page page)
+      {
+        x += page.X;
+        y += page.Y;
+      }
+
+      return new Rect(x, y, element.Width, element.Height);
     }
 
     private async Task PositionFlyout()
     {
       if (_targetElement == null) return;
 
-      // Fallback: compute absolute position by walking the visual tree and summing bounds.
-      Rect GetAbsoluteBounds(View v)
-      {
-        var r = v.Bounds;
-        Element parent = v.Parent;
-        while (parent is VisualElement ve)
-        {
-          r = new Rect(r.X + ve.X, r.Y + ve.Y, r.Width, r.Height);
-          parent = ve.Parent;
-        }
-        return r;
-      }
-
       // Find the actual element to anchor to, if an AnchorName is provided
       View anchorElement = _targetElement;
-      if (!string.IsNullOrEmpty(AnchorName) && _targetElement is Layout targetLayout)
+      if (!string.IsNullOrEmpty(AnchorName))
       {
-        anchorElement = targetLayout.FindByName(AnchorName) as View ?? _targetElement;
+        anchorElement = anchorElement.FindByName(AnchorName) as View ?? _targetElement;
       }
 
       // Compute target bounds relative to the page
-      var targetBounds = GetAbsoluteBounds(anchorElement); // Changed to use anchorElement
+      var targetBounds = GetCoordinatesWithinPage(anchorElement); // Changed to use anchorElement
       if (targetBounds == Rect.Zero) return;
 
       // Position to the right of the target element with a small gap
@@ -169,12 +189,12 @@ namespace LunaDraw.Components
       var y = targetBounds.Top;
 
       // Set initial bounds using -1 to indicate AutoSize for width/height
-      AbsoluteLayout.SetLayoutBounds(FlyoutContainer, new Rect(x, y, -1, -1));
+      AbsoluteLayout.SetLayoutBounds(FlyoutRoot, new Rect(x, y, -1, -1));
 
       // Wait one layout cycle so the FlyoutContainer can size itself
       await Task.Yield();
 
-      var flyoutBounds = FlyoutContainer.Bounds;
+      var flyoutBounds = FlyoutRoot.Bounds;
 
       // Get parent page dimensions (assume top-level layout fills the page)
       if (!(this.Parent is VisualElement parentPage)) return;
@@ -194,7 +214,7 @@ namespace LunaDraw.Components
       }
 
       // Re-apply the adjusted bounds (still use -1 for AutoSize)
-      AbsoluteLayout.SetLayoutBounds(FlyoutContainer, new Rect(x, y, -1, -1));
+      AbsoluteLayout.SetLayoutBounds(FlyoutRoot, new Rect(x, y, -1, -1));
     }
   }
 }

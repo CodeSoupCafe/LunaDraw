@@ -2,12 +2,11 @@
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="LunaDraw.Components.FlyoutPanel"
-             x:Name="FlyoutRoot">
+             x:Name="FlyoutRoot"
+    Opacity="0"
+    Scale="0.9">
   <Border x:Name="FlyoutContainer"
-          Style="{StaticResource FlyoutBorderStyle}"
-          Opacity="0">
-    <!-- <AbsoluteLayout> -->
+          Style="{StaticResource FlyoutBorderStyle}">
     <ContentPresenter Content="{Binding Source={x:Reference FlyoutRoot}, Path=FlyoutContent}"/>
-    <!-- </AbsoluteLayout> -->
   </Border>
 </ContentView>

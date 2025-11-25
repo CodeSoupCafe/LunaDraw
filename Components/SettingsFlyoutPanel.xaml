@@ -3,52 +3,50 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:controls="clr-namespace:Maui.ColorPicker;assembly=Maui.ColorPicker"
              x:Class="LunaDraw.Components.SettingsFlyoutPanel">
-       <Border Background="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray800}}"
-               Padding="15"
-               StrokeShape="RoundRectangle"
-               Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
-               StrokeThickness="1">
-              <StackLayout Spacing="12">
-                     <Label Text="Brush Settings"
-                            FontAttributes="Bold"
-                            FontSize="16"
-                            HorizontalTextAlignment="Center"/>
+  <Border Background="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray800}}"
+          Padding="15"
+          StrokeShape="RoundRectangle"
+          Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
+          StrokeThickness="1">
+    <StackLayout Spacing="12">
+      <Label Text="Brush Settings"
+             FontAttributes="Bold"
+             HorizontalTextAlignment="Center"/>
 
-                     <BoxView HeightRequest="1"
-                              Color="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
-                              Margin="0,5"/>
+      <BoxView HeightRequest="1"
+               Color="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
+               Margin="0,5"/>
 
-                     <Label Text="Brush Color"
-                            FontAttributes="Bold"
-                            FontSize="14"/>
-                     <controls:ColorPicker x:Name="StrokeColorPicker"
-                                           ColorFlowDirection="Horizontal"
-                                           ColorSpectrumStyle="ShadeToHueStyle"
-                                           PointerRingBorderUnits="0.3"
-                                           PointerRingDiameterUnits="0.7"
-                                           HeightRequest="40"
-                                           PropertyChanged="OnStrokeColorChanged"/>
+      <Label Text="Brush Color"
+             FontAttributes="Bold"/>
+      <controls:ColorPicker x:Name="StrokeColorPicker"
+                            ColorFlowDirection="Horizontal"
+                            ColorSpectrumStyle="ShadeToHueStyle"
+                            PointerRingBorderUnits="0.3"
+                            PointerRingDiameterUnits="0.7"
+                            HeightRequest="80"
+                            WidthRequest="250"
+                            PropertyChanged="OnStrokeColorChanged"/>
 
-                     <Label Text="Fill Color"
-                            FontAttributes="Bold"
-                            FontSize="14"/>
-                     <controls:ColorPicker x:Name="FillColorPicker"
-                                           ColorFlowDirection="Horizontal"
-                                           ColorSpectrumStyle="ShadeToHueStyle"
-                                           PointerRingBorderUnits="0.3"
-                                           PointerRingDiameterUnits="0.7"
-                                           HeightRequest="40"
-                                           PropertyChanged="OnFillColorChanged"/>
+      <Label Text="Fill Color"
+             FontAttributes="Bold"/>
+      <controls:ColorPicker x:Name="FillColorPicker"
+                            ColorFlowDirection="Horizontal"
+                            ColorSpectrumStyle="ShadeToHueStyle"
+                            PointerRingBorderUnits="0.3"
+                            PointerRingDiameterUnits="0.7"
+                            HeightRequest="80"
+                            WidthRequest="250"
+                            PropertyChanged="OnFillColorChanged"/>
 
-                     <Label Text="Transparency"
-                            FontAttributes="Bold"
-                            FontSize="14"/>
-                     <Slider x:Name="TransparencySlider"
-                             Minimum="0"
-                             Maximum="255"
-                             HeightRequest="30"
-                             ValueChanged="OnTransparencyChanged"/>
+      <Label Text="Transparency"
+             FontAttributes="Bold"/>
+      <Slider x:Name="TransparencySlider"
+              Minimum="0"
+              Maximum="255"
+              HeightRequest="30"
+              ValueChanged="OnTransparencyChanged"/>
 
-              </StackLayout>
-       </Border>
+    </StackLayout>
+  </Border>
 </ContentView>
