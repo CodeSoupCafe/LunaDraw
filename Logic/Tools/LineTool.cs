@@ -1,7 +1,9 @@
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.ViewModels;
+
 using ReactiveUI;
+
 using SkiaSharp;
 
 namespace LunaDraw.Logic.Tools

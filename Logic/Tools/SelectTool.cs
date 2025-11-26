@@ -1,10 +1,9 @@
-using System.Collections.Generic;
-using System.Linq;
-using LunaDraw.Logic.Managers;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.ViewModels;
+
 using ReactiveUI;
+
 using SkiaSharp;
 
 namespace LunaDraw.Logic.Tools
@@ -28,6 +27,28 @@ namespace LunaDraw.Logic.Tools
     {
       if (context.CurrentLayer?.IsLocked == true) return;
 
+      _lastPoint = point;
+
+      // Check for resize handles if we have a selection
+      if (context.SelectionManager.Selected.Any())
+      {
+        var bounds = context.SelectionManager.GetBounds();
+        var handle = GetResizeHandle(point, bounds);
+
+        if (handle != ResizeHandle.None)
+        {
+          _currentState = SelectionState.Resizing;
+          _activeHandle = handle;
+          _resizeStartPoint = point;
+          _originalBounds = bounds;
+          _originalTransforms = context.SelectionManager.GetAll()
+            .ToDictionary(e => e, e => e.TransformMatrix);
+
+          MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+          return;
+        }
+      }
+
       var hitElement = context.AllElements
                               .Where(e => e.IsVisible)
                               .OrderByDescending(e => e.ZIndex)
@@ -40,14 +61,14 @@ namespace LunaDraw.Logic.Tools
           context.SelectionManager.Clear();
           context.SelectionManager.Add(hitElement);
         }
-        // If the element is already selected, we do nothing, allowing it to be dragged.
+        _currentState = SelectionState.Dragging;
       }
       else
       {
         context.SelectionManager.Clear();
+        _currentState = SelectionState.None;
       }
 
-      _lastPoint = point;
       MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
     }
 
