@@ -12,7 +12,28 @@ namespace LunaDraw.Logic.Tools
     public string Name => "Eraser";
     public ToolType Type => ToolType.Eraser;
 
+    private bool _isErasing;
+
     public void OnTouchPressed(SKPoint point, ToolContext context)
+    {
+      _isErasing = true;
+      Erase(point, context);
+    }
+
+    public void OnTouchMoved(SKPoint point, ToolContext context)
+    {
+      if (_isErasing)
+      {
+        Erase(point, context);
+      }
+    }
+
+    public void OnTouchReleased(SKPoint point, ToolContext context)
+    {
+      _isErasing = false;
+    }
+
+    private void Erase(SKPoint point, ToolContext context)
     {
       if (context.CurrentLayer?.IsLocked == true) return;
 
@@ -27,15 +48,6 @@ namespace LunaDraw.Logic.Tools
         MessageBus.Current.SendMessage(new DrawingStateChangedMessage());
         MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
       }
-    }
-
-    public void OnTouchMoved(SKPoint point, ToolContext context)
-    {
-      OnTouchPressed(point, context);
-    }
-
-    public void OnTouchReleased(SKPoint point, ToolContext context)
-    {
     }
 
     public void DrawPreview(SKCanvas canvas, MainViewModel viewModel)
