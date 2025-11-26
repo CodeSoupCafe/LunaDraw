@@ -1,5 +1,3 @@
-using System.Reactive.Linq;
-
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.ViewModels;
 
@@ -34,9 +32,9 @@ public partial class MainPage : ContentPage
     MessageBus.Current.Listen<CanvasInvalidateMessage>().Subscribe(_ =>
     {
       canvasView?.InvalidateSurface();
+      CheckHideFlyouts();
     });
   }
-
 
   private void OnCanvasLoaded(object? sender, EventArgs e)
   {
@@ -82,5 +80,19 @@ public partial class MainPage : ContentPage
   {
     _viewModel?.ProcessTouch(e);
     e.Handled = true;
+  }
+
+  private void OnCanvasTapped(object? sender, TappedEventArgs e)
+  {
+    CheckHideFlyouts();
+  }
+
+  private void CheckHideFlyouts()
+  {
+    if (_toolbarViewModel.IsAnyFlyoutOpen)
+    {
+      _toolbarViewModel.IsSettingsOpen = false;
+      _toolbarViewModel.IsShapesFlyoutOpen = false;
+    }
   }
 }

@@ -21,16 +21,20 @@
       <views:ToolbarView Grid.Column="0"
                          x:Name="toolbarView"/>
 
-      <skiasharp:SKCanvasView Grid.Column="1"
+            <skiasharp:SKCanvasView Grid.Column="1"
                               x:Name="canvasView"
                               PaintSurface="OnCanvasViewPaintSurface"
                               EnableTouchEvents="True"
-                              Touch="OnTouch"/>
+                              Touch="OnTouch">
+        <skiasharp:SKCanvasView.GestureRecognizers>
+          <TapGestureRecognizer Tapped="OnCanvasTapped" />
+        </skiasharp:SKCanvasView.GestureRecognizers>
+      </skiasharp:SKCanvasView>
     </Grid>
 
     <!-- Settings Flyout Panel as True Overlay -->
     <components:FlyoutPanel x:Name="SettingsFlyoutHost"
-                            IsOpen="{Binding IsSettingsOpen}"
+                            IsOpen="{Binding BindingContext.IsSettingsOpen, Source={x:Reference toolbarView}}"
                             TargetElement="{x:Reference toolbarView}"
                             AnchorName="SettingsButton">
       <components:SettingsFlyoutPanel x:Name="SettingsFlyoutContent"

@@ -53,30 +53,22 @@
                   HorizontalScrollBarVisibility="Never">
         <VerticalStackLayout HorizontalOptions="Center"
                              Spacing="8">
-          <!-- Modern toolbar controls -->
-          <!-- Only keep one set of toolbar buttons below. -->
-          <Button x:Name="SelectButton"
-                  Style="{StaticResource ToolbarButtonStyle}"
-                  Text="⬚"
-                  Command="{Binding SelectToolCommand}"
-                  CommandParameter="{Binding AvailableTools[0]}"/>
-
+          <StackLayout HorizontalOptions="Center">
+            <Button x:Name="SelectButton"
+                    Style="{StaticResource ToolbarButtonStyle}"
+                    Text="⬚"
+                    Command="{Binding SelectToolCommand}"
+                    CommandParameter="{Binding AvailableTools[0]}"/>
+            <Label Text="{Binding AvailableTools[0].Name}"
+                   HorizontalTextAlignment="Center"/>
+          </StackLayout>
           <StackLayout HorizontalOptions="Center">
             <Button x:Name="BrushButton"
                     Style="{StaticResource ToolbarButtonStyle}"
                     Text="🖌️"
                     Command="{Binding SelectToolCommand}"
                     CommandParameter="{Binding AvailableTools[1]}"/>
-            <Label Text="Brush"
-                   HorizontalTextAlignment="Center"/>
-          </StackLayout>
-          <StackLayout HorizontalOptions="Center">
-            <Button x:Name="EraserButton"
-                    Style="{StaticResource ToolbarButtonStyle}"
-                    Text="🧽"
-                    Command="{Binding SelectToolCommand}"
-                    CommandParameter="{Binding AvailableTools[6]}"/>
-            <Label Text="Eraser"
+            <Label Text="{Binding AvailableTools[1].Name}"
                    HorizontalTextAlignment="Center"/>
           </StackLayout>
           <StackLayout HorizontalOptions="Center">
@@ -95,44 +87,38 @@
             <Label Text="Colors"
                    HorizontalTextAlignment="Center"/>
           </StackLayout>
+          <StackLayout HorizontalOptions="Center">
+            <Button x:Name="EraserButton"
+                    Style="{StaticResource ToolbarButtonStyle}"
+                    Text="🧽"
+                    Command="{Binding SelectToolCommand}"
+                    CommandParameter="{Binding AvailableTools[6]}"/>
+            <Label Text="{Binding AvailableTools[6].Name}"
+                   HorizontalTextAlignment="Center"/>
+          </StackLayout>
 
           <BoxView HeightRequest="2"
                    Color="Gray"
                    Margin="0,4"/>
 
-          <!-- Undo -->
-          <Button x:Name="UndoButton"
-                  Style="{StaticResource ToolbarButtonStyle}"
-                  Text="↺"
-                  Command="{Binding UndoCommand}">
-            <Button.Resources>
-              <Style TargetType="Label">
-                <Setter Property="Text"
-                        Value="Undo"/>
-                <Setter Property="FontSize"
-                        Value="10"/>
-                <Setter Property="HorizontalTextAlignment"
-                        Value="Center"/>
-              </Style>
-            </Button.Resources>
-          </Button>
-
-          <!-- Redo -->
-          <Button x:Name="RedoButton"
-                  Style="{StaticResource ToolbarButtonStyle}"
-                  Text="↻"
-                  Command="{Binding RedoCommand}">
-            <Button.Resources>
-              <Style TargetType="Label">
-                <Setter Property="Text"
-                        Value="Redo"/>
-                <Setter Property="FontSize"
-                        Value="10"/>
-                <Setter Property="HorizontalTextAlignment"
-                        Value="Center"/>
-              </Style>
-            </Button.Resources>
-          </Button>
+          <StackLayout HorizontalOptions="Center">
+            <Button x:Name="UndoButton"
+                    Style="{StaticResource ToolbarButtonStyle}"
+                    Text="↺"
+                    Command="{Binding UndoCommand}">
+            </Button>
+            <Label Text="Undo"
+                   HorizontalTextAlignment="Center"/>
+          </StackLayout>
+          <StackLayout HorizontalOptions="Center">
+            <Button x:Name="RedoButton"
+                    Style="{StaticResource ToolbarButtonStyle}"
+                    Text="↻"
+                    Command="{Binding RedoCommand}">
+            </Button>
+            <Label Text="Redo"
+                   HorizontalTextAlignment="Center"/>
+          </StackLayout>
         </VerticalStackLayout>
       </ScrollView>
     </Border>

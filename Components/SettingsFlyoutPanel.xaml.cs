@@ -74,7 +74,7 @@ namespace LunaDraw.Components
       var panel = (SettingsFlyoutPanel)bindable;
       if (panel.BindingContext is ToolbarViewModel toolbarViewModel && newValue is SKColor color)
       {
-        toolbarViewModel.StrokeColor = color;
+        MessageBus.Current.SendMessage(new BrushSettingsChangedMessage(strokeColor: color));
         panel.StrokeColorPicker.PickedColor = SKColorToMauiColor(color);
       }
     }
@@ -84,7 +84,8 @@ namespace LunaDraw.Components
       var panel = (SettingsFlyoutPanel)bindable;
       if (panel.BindingContext is ToolbarViewModel toolbarViewModel)
       {
-        toolbarViewModel.FillColor = newValue as SKColor?;
+        var fill = newValue as SKColor?;
+        MessageBus.Current.SendMessage(new BrushSettingsChangedMessage(fillColor: fill));
         if (newValue is SKColor fillColor)
           panel.FillColorPicker.PickedColor = SKColorToMauiColor(fillColor);
       }
@@ -95,7 +96,7 @@ namespace LunaDraw.Components
       var panel = (SettingsFlyoutPanel)bindable;
       if (panel.BindingContext is ToolbarViewModel toolbarViewModel && newValue is byte transparency)
       {
-        toolbarViewModel.Opacity = transparency;
+        MessageBus.Current.SendMessage(new BrushSettingsChangedMessage(transparency: transparency));
         panel.TransparencySlider.Value = transparency;
       }
     }

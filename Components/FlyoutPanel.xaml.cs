@@ -44,8 +44,9 @@ namespace LunaDraw.Components
       InitializeComponent();
 
       // Initialize to hidden state
-      FlyoutContainer.Scale = 0.9;
-      AbsoluteLayout.SetLayoutBounds(FlyoutContainer, new Rect(-1000, -1000, -1, -1));
+      this.Opacity = 0;
+      this.Scale = 0.9;
+      AbsoluteLayout.SetLayoutBounds(this, new Rect(-1000, -1000, -1, -1));
     }
 
 
@@ -114,8 +115,8 @@ namespace LunaDraw.Components
       }
 
       // Animate in - run fade and scale simultaneously
-      var fadeTask = FlyoutRoot.FadeToAsync(1, 200, Easing.CubicOut);
-      var scaleTask = FlyoutRoot.ScaleToAsync(1, 200, Easing.CubicOut);
+      var fadeTask = this.FadeTo(1, 200, Easing.CubicOut);
+      var scaleTask = this.ScaleTo(1, 200, Easing.CubicOut);
 
       await Task.WhenAll(fadeTask, scaleTask);
     }
@@ -123,13 +124,13 @@ namespace LunaDraw.Components
     private async Task HideFlyout()
     {
       // Animate out - run fade and scale simultaneously
-      var fadeTask = FlyoutRoot.FadeToAsync(0, 150, Easing.CubicIn);
-      var scaleTask = FlyoutRoot.ScaleToAsync(0.9, 150, Easing.CubicIn);
+      var fadeTask = this.FadeTo(0, 150, Easing.CubicIn);
+      var scaleTask = this.ScaleTo(0.9, 150, Easing.CubicIn);
 
       await Task.WhenAll(fadeTask, scaleTask);
 
       // Move off-screen when hidden
-      AbsoluteLayout.SetLayoutBounds(FlyoutRoot, new Rect(-1000, -1000, -1, -1));
+      AbsoluteLayout.SetLayoutBounds(this, new Rect(-1000, -1000, -1, -1));
     }
 
     public static Rect GetCoordinatesWithinPage(VisualElement element)
@@ -189,12 +190,12 @@ namespace LunaDraw.Components
       var y = targetBounds.Top;
 
       // Set initial bounds using -1 to indicate AutoSize for width/height
-      AbsoluteLayout.SetLayoutBounds(FlyoutRoot, new Rect(x, y, -1, -1));
+      AbsoluteLayout.SetLayoutBounds(this, new Rect(x, y, -1, -1));
 
       // Wait one layout cycle so the FlyoutContainer can size itself
       await Task.Yield();
 
-      var flyoutBounds = FlyoutRoot.Bounds;
+      var flyoutBounds = this.Bounds;
 
       // Get parent page dimensions (assume top-level layout fills the page)
       if (!(this.Parent is VisualElement parentPage)) return;
@@ -214,7 +215,7 @@ namespace LunaDraw.Components
       }
 
       // Re-apply the adjusted bounds (still use -1 for AutoSize)
-      AbsoluteLayout.SetLayoutBounds(FlyoutRoot, new Rect(x, y, -1, -1));
+      AbsoluteLayout.SetLayoutBounds(this, new Rect(x, y, -1, -1));
     }
   }
 }
