@@ -6,6 +6,7 @@ using LunaDraw.Logic.Managers;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Tools;
+using LunaDraw.Logic.Utils;
 
 using ReactiveUI;
 
@@ -16,6 +17,14 @@ namespace LunaDraw.Logic.ViewModels
 {
   public class MainViewModel : ReactiveObject
   {
+    // Navigation
+    public NavigationModel NavigationModel { get; } = new NavigationModel();
+    private readonly TouchManipulationManager _touchManipulationManager = new TouchManipulationManager
+    {
+      Mode = TouchManipulationMode.ScaleRotate
+    };
+    private readonly Dictionary<long, SKPoint> _activeTouches = new Dictionary<long, SKPoint>();
+
     // Current State
     public ObservableCollection<Layer> Layers { get; } = new ObservableCollection<Layer>();
     public List<IDrawingTool> AvailableTools { get; }
@@ -124,7 +133,7 @@ namespace LunaDraw.Logic.ViewModels
         new EllipseTool(),
         new LineTool(),
         new FillTool(),
-        new EraserTool()
+        new EraserBrushTool()
       ];
 
       // Initialize with a default layer
@@ -305,38 +314,92 @@ namespace LunaDraw.Logic.ViewModels
     {
       if (CurrentLayer == null) return;
 
-      // Any touch action clears the snapshot, reverting to live drawing
-      if (e.ActionType == SKTouchAction.Pressed)
-      {
-        if (CurrentSnapshot != null)
-        {
-          CurrentSnapshot = null;
-          MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
-        }
-      }
-
-      var context = new ToolContext
-      {
-        CurrentLayer = CurrentLayer,
-        StrokeColor = StrokeColor,
-        FillColor = FillColor,
-        StrokeWidth = StrokeWidth,
-        Opacity = Opacity,
-        AllElements = Layers.SelectMany(l => l.Elements),
-        SelectionManager = SelectionManager
-      };
-
       switch (e.ActionType)
       {
         case SKTouchAction.Pressed:
-          HandleTouchPressed(e.Location, context);
-          break;
-        case SKTouchAction.Moved:
-          ActiveTool.OnTouchMoved(e.Location, context);
+          _activeTouches[e.Id] = e.Location;
+          // Clear snapshot if we start interacting
+          if (_activeTouches.Count == 1 && CurrentSnapshot != null)
+          {
+            CurrentSnapshot = null;
+            MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+          }
           break;
         case SKTouchAction.Released:
-          ActiveTool.OnTouchReleased(e.Location, context);
+        case SKTouchAction.Cancelled:
+          _activeTouches.Remove(e.Id);
           break;
+      }
+
+      // Handle Navigation (Multi-touch)
+      if (_activeTouches.Count >= 2 && e.ActionType == SKTouchAction.Moved)
+      {
+        // Find the pivot (any other finger)
+        var pivotId = _activeTouches.Keys.FirstOrDefault(k => k != e.Id);
+        if (pivotId != 0 && _activeTouches.TryGetValue(pivotId, out var pivotPoint))
+        {
+          var prevPoint = _activeTouches[e.Id];
+          var newPoint = e.Location;
+
+          float rotation = 0;
+          var touchMatrix = _touchManipulationManager.TwoFingerManipulate(prevPoint, newPoint, pivotPoint, ref rotation);
+
+          // Apply transform
+          NavigationModel.TotalMatrix = SKMatrix.Concat(touchMatrix, NavigationModel.TotalMatrix);
+          
+          // Update stored location
+          _activeTouches[e.Id] = newPoint;
+          
+          MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+          return; // Do not pass to tools
+        }
+      }
+
+      // Handle Drawing/Tools (Single touch)
+      if (_activeTouches.Count <= 1)
+      {
+          // If we just released the last finger, we might want to let the tool know
+          // But if we were navigating, we shouldn't draw. 
+          // For now, simple logic: if 1 finger, pass to tool.
+
+          // Transform point to World Coordinates
+          SKMatrix inverse = SKMatrix.CreateIdentity();
+          if (NavigationModel.TotalMatrix.TryInvert(out inverse))
+          {
+              var worldPoint = inverse.MapPoint(e.Location);
+
+              var context = new ToolContext
+              {
+                  CurrentLayer = CurrentLayer,
+                  StrokeColor = StrokeColor,
+                  FillColor = FillColor,
+                  StrokeWidth = StrokeWidth,
+                  Opacity = Opacity,
+                  AllElements = Layers.SelectMany(l => l.Elements),
+                  SelectionManager = SelectionManager
+              };
+
+              switch (e.ActionType)
+              {
+                  case SKTouchAction.Pressed:
+                      HandleTouchPressed(worldPoint, context);
+                      break;
+                  case SKTouchAction.Moved:
+                      ActiveTool.OnTouchMoved(worldPoint, context);
+                      // Update stored location
+                      if (_activeTouches.ContainsKey(e.Id)) _activeTouches[e.Id] = e.Location; 
+                      break;
+                  case SKTouchAction.Released:
+                      ActiveTool.OnTouchReleased(worldPoint, context);
+                      break;
+              }
+          }
+      }
+      
+      // Update stored location for Moved events if not handled by navigation
+      if (e.ActionType == SKTouchAction.Moved && _activeTouches.ContainsKey(e.Id))
+      {
+           _activeTouches[e.Id] = e.Location;
       }
     }
 

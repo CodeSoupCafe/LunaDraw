@@ -1,19 +1,21 @@
-using System.Reactive;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
+using SkiaSharp;
 
-public class NavigationModel : ReactiveObject, IActivatableViewModel
+namespace LunaDraw.Logic.Models
 {
-    public NavigationModel()
+    public class NavigationModel : ReactiveObject
     {
-        // Configuration of CounterButtonText and ButtonClickedCommand
+        public NavigationModel()
+        {
+            TotalMatrix = SKMatrix.CreateIdentity();
+        }
+
+        [Reactive] public SKMatrix TotalMatrix { get; set; }
+
+        public void Reset()
+        {
+            TotalMatrix = SKMatrix.CreateIdentity();
+        }
     }
-    
-    // [Reactive] public int Count { get; set; }
-    // [ObservableAsProperty] public string CounterButtonText { get; }
-    // public ReactiveCommand<Unit,Unit> ButtonClickedCommand { get; }
-
-    public ViewModelActivator Activator => throw new NotImplementedException();
-
-    // ...
 }

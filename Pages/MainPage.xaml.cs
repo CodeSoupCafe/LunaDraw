@@ -51,6 +51,9 @@ public partial class MainPage : ContentPage
 
     if (_viewModel == null) return;
 
+    // Apply Navigation Transformation (Zoom/Pan)
+    canvas.Concat(_viewModel.NavigationModel.TotalMatrix);
+
     // If we are in a snapshot state (after undo/redo), draw the picture
     if (_viewModel.CurrentSnapshot != null)
     {
@@ -62,6 +65,15 @@ public partial class MainPage : ContentPage
       {
         if (layer.IsVisible)
         {
+          // Save layer to support blend modes (like Clear) working within the layer context
+          // This ensures erasing works as expected (making things transparent relative to the layer start)
+          // However, for simple erasing to white background, just drawing is often enough if the clear mode punches through.
+          // But to be safe for potential transparency features, we use SaveLayer.
+          // Actually, standard SaveLayer might be expensive.
+          // Let's use it for now as requested for "ClearPath".
+          var paint = new SKPaint();
+          canvas.SaveLayer(paint);
+
           foreach (var element in layer.Elements)
           {
             if (element.IsVisible)
@@ -69,6 +81,8 @@ public partial class MainPage : ContentPage
               element.Draw(canvas);
             }
           }
+          
+          canvas.Restore();
         }
       }
 

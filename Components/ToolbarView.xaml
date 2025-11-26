@@ -97,6 +97,15 @@
                    HorizontalTextAlignment="Center"/>
           </StackLayout>
 
+          <StackLayout HorizontalOptions="Center">
+            <Button x:Name="DeleteButton"
+                    Style="{StaticResource ToolbarButtonStyle}"
+                    Text="🗑️"
+                    Command="{Binding DeleteSelectedCommand}"/>
+            <Label Text="Delete"
+                   HorizontalTextAlignment="Center"/>
+          </StackLayout>
+
           <BoxView HeightRequest="2"
                    Color="Gray"
                    Margin="0,4"/>

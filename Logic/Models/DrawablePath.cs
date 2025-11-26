@@ -18,6 +18,7 @@ namespace LunaDraw.Logic.Models
         public SKColor? FillColor { get; set; }
         public SKColor StrokeColor { get; set; }
         public float StrokeWidth { get; set; }
+        public SKBlendMode BlendMode { get; set; } = SKBlendMode.SrcOver;
 
         public SKRect Bounds => TransformMatrix.MapRect(Path?.TightBounds ?? SKRect.Empty);
 
@@ -47,7 +48,8 @@ namespace LunaDraw.Logic.Models
                 Style = SKPaintStyle.Stroke,
                 Color = StrokeColor.WithAlpha(Opacity),
                 StrokeWidth = StrokeWidth,
-                IsAntialias = true
+                IsAntialias = true,
+                BlendMode = BlendMode
             };
 
             canvas.DrawPath(Path, paint);
@@ -89,7 +91,8 @@ namespace LunaDraw.Logic.Models
                 Opacity = Opacity,
                 FillColor = FillColor,
                 StrokeColor = StrokeColor,
-                StrokeWidth = StrokeWidth
+                StrokeWidth = StrokeWidth,
+                BlendMode = BlendMode
             };
         }
 
