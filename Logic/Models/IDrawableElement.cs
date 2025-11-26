@@ -88,5 +88,11 @@ namespace LunaDraw.Logic.Models
         /// </summary>
         /// <param name="matrix">The transformation matrix.</param>
         void Transform(SKMatrix matrix);
+
+        /// <summary>
+        /// Gets the geometric path of the element in world coordinates.
+        /// </summary>
+        /// <returns>The SKPath representing the element.</returns>
+        SKPath GetPath();
     }
 }

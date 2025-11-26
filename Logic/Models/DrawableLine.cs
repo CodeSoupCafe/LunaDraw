@@ -115,5 +115,30 @@ namespace LunaDraw.Logic.Models
         {
             TransformMatrix = SKMatrix.Concat(matrix, TransformMatrix);
         }
+
+        public SKPath GetPath()
+        {
+            var path = new SKPath();
+            path.MoveTo(StartPoint);
+            path.LineTo(EndPoint);
+
+            // Lines are always stroked (no fill)
+            if (StrokeWidth > 0)
+            {
+                using var paint = new SKPaint
+                {
+                    Style = SKPaintStyle.Stroke,
+                    StrokeWidth = StrokeWidth,
+                    StrokeCap = SKStrokeCap.Round 
+                };
+                var strokePath = new SKPath();
+                paint.GetFillPath(path, strokePath);
+                path.Dispose();
+                path = strokePath;
+            }
+
+            path.Transform(TransformMatrix);
+            return path;
+        }
     }
 }

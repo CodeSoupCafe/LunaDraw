@@ -53,10 +53,24 @@ namespace LunaDraw.Logic.Models
         {
             if (!IsVisible) return;
 
+            // Check if isolation is needed (if any child uses Clear blend mode)
+            var needsIsolation = Children.OfType<DrawablePath>().Any(dp => dp.BlendMode == SKBlendMode.Clear);
+
+            if (needsIsolation)
+            {
+                using var paint = new SKPaint { Color = SKColors.White.WithAlpha(Opacity) };
+                canvas.SaveLayer(paint);
+            }
+
             // The group's transform is applied to children, not to the canvas here
             foreach (var child in Children)
             {
                 child.Draw(canvas);
+            }
+
+            if (needsIsolation)
+            {
+                canvas.Restore();
             }
         }
 
@@ -97,5 +111,32 @@ namespace LunaDraw.Logic.Models
             }
         }
 
+        public SKPath GetPath()
+        {
+            var path = new SKPath();
+            foreach (var child in Children)
+            {
+                using var childPath = child.GetPath();
+                if (child is DrawablePath dp && dp.BlendMode == SKBlendMode.Clear)
+                {
+                    var result = new SKPath();
+                    if (path.Op(childPath, SKPathOp.Difference, result))
+                    {
+                        path.Dispose();
+                        path = result;
+                    }
+                }
+                else
+                {
+                    var result = new SKPath();
+                    if (path.Op(childPath, SKPathOp.Union, result))
+                    {
+                        path.Dispose();
+                        path = result;
+                    }
+                }
+            }
+            return path;
+        }
     }
 }

@@ -32,7 +32,6 @@ public partial class MainPage : ContentPage
     MessageBus.Current.Listen<CanvasInvalidateMessage>().Subscribe(_ =>
     {
       canvasView?.InvalidateSurface();
-      CheckHideFlyouts();
     });
   }
 
@@ -65,15 +64,6 @@ public partial class MainPage : ContentPage
       {
         if (layer.IsVisible)
         {
-          // Save layer to support blend modes (like Clear) working within the layer context
-          // This ensures erasing works as expected (making things transparent relative to the layer start)
-          // However, for simple erasing to white background, just drawing is often enough if the clear mode punches through.
-          // But to be safe for potential transparency features, we use SaveLayer.
-          // Actually, standard SaveLayer might be expensive.
-          // Let's use it for now as requested for "ClearPath".
-          var paint = new SKPaint();
-          canvas.SaveLayer(paint);
-
           foreach (var element in layer.Elements)
           {
             if (element.IsVisible)
@@ -81,8 +71,6 @@ public partial class MainPage : ContentPage
               element.Draw(canvas);
             }
           }
-          
-          canvas.Restore();
         }
       }
 
@@ -92,12 +80,17 @@ public partial class MainPage : ContentPage
 
   private void OnTouch(object? sender, SKTouchEventArgs e)
   {
+    if (e.ActionType == SKTouchAction.Pressed)
+    {
+         CheckHideFlyouts();
+    }
     _viewModel?.ProcessTouch(e);
     e.Handled = true;
   }
 
   private void OnCanvasTapped(object? sender, TappedEventArgs e)
   {
+    // CheckHideFlyouts(); // Redundant if handled in OnTouch, but keeping for safety if Touch doesn't fire for Tap
     CheckHideFlyouts();
   }
 

@@ -84,6 +84,7 @@ namespace LunaDraw.Logic.Tools.Tests
       };
       public void Translate(SKPoint offset) { }
       public void Transform(SKMatrix matrix) { }
+      public SKPath GetPath() => new SKPath();
     }
   }
 }

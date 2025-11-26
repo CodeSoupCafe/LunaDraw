@@ -19,6 +19,7 @@ namespace LunaDraw.Logic.Models
         public SKColor StrokeColor { get; set; }
         public float StrokeWidth { get; set; }
         public SKBlendMode BlendMode { get; set; } = SKBlendMode.SrcOver;
+        public bool IsFilled { get; set; }
 
         public SKRect Bounds => TransformMatrix.MapRect(Path?.TightBounds ?? SKRect.Empty);
 
@@ -45,7 +46,7 @@ namespace LunaDraw.Logic.Models
 
             using var paint = new SKPaint
             {
-                Style = SKPaintStyle.Stroke,
+                Style = IsFilled ? SKPaintStyle.Fill : SKPaintStyle.Stroke,
                 Color = StrokeColor.WithAlpha(Opacity),
                 StrokeWidth = StrokeWidth,
                 IsAntialias = true,
@@ -69,14 +70,21 @@ namespace LunaDraw.Logic.Models
             if (!Path.TightBounds.Contains(localPoint)) return false;
 
             // Check if path contains point with tolerance
-            using var paint = new SKPaint
+            if (IsFilled)
             {
-                Style = SKPaintStyle.Stroke,
-                StrokeWidth = StrokeWidth + 5 // Add tolerance
-            };
-            using var strokedPath = new SKPath();
-            paint.GetFillPath(Path, strokedPath);
-            return strokedPath.Contains(localPoint.X, localPoint.Y);
+                return Path.Contains(localPoint.X, localPoint.Y);
+            }
+            else
+            {
+                using var paint = new SKPaint
+                {
+                    Style = SKPaintStyle.Stroke,
+                    StrokeWidth = StrokeWidth + 5 // Add tolerance
+                };
+                using var strokedPath = new SKPath();
+                paint.GetFillPath(Path, strokedPath);
+                return strokedPath.Contains(localPoint.X, localPoint.Y);
+            }
         }
 
         public IDrawableElement Clone()
@@ -92,7 +100,8 @@ namespace LunaDraw.Logic.Models
                 FillColor = FillColor,
                 StrokeColor = StrokeColor,
                 StrokeWidth = StrokeWidth,
-                BlendMode = BlendMode
+                BlendMode = BlendMode,
+                IsFilled = IsFilled
             };
         }
 
@@ -105,6 +114,33 @@ namespace LunaDraw.Logic.Models
         public void Transform(SKMatrix matrix)
         {
             TransformMatrix = SKMatrix.Concat(matrix, TransformMatrix);
+        }
+
+        public SKPath GetPath()
+        {
+            var path = new SKPath(Path);
+
+            if (!IsFilled && StrokeWidth > 0)
+            {
+                using var paint = new SKPaint
+                {
+                    Style = SKPaintStyle.Stroke,
+                    StrokeWidth = StrokeWidth,
+                    StrokeCap = SKStrokeCap.Round,
+                    StrokeJoin = SKStrokeJoin.Round
+                };
+                var strokePath = new SKPath();
+                paint.GetFillPath(path, strokePath);
+                path.Dispose();
+                path = strokePath;
+            }
+            // If IsFilled is true, we assume the path itself is the shape.
+            // If it has a stroke AND fill, we should technically union them, 
+            // but for freehand paths, usually it's either stroke or fill.
+            // If we support both later, we can add the union logic here.
+
+            path.Transform(TransformMatrix);
+            return path;
         }
     }
 }

@@ -40,6 +40,8 @@ namespace LunaDraw.Tests
       {
         TransformMatrix = matrix;
       }
+      
+      public SKPath GetPath() => new SKPath();
     }
 
     [Fact]

@@ -121,5 +121,41 @@ namespace LunaDraw.Logic.Models
         {
             TransformMatrix = SKMatrix.Concat(matrix, TransformMatrix);
         }
+
+        public SKPath GetPath()
+        {
+            var path = new SKPath();
+            path.AddRect(Rectangle);
+
+            if (StrokeWidth > 0)
+            {
+                using var paint = new SKPaint
+                {
+                    Style = SKPaintStyle.Stroke,
+                    StrokeWidth = StrokeWidth,
+                    StrokeJoin = SKStrokeJoin.Miter
+                };
+                var strokePath = new SKPath();
+                paint.GetFillPath(path, strokePath);
+
+                if (FillColor.HasValue)
+                {
+                    var combined = new SKPath();
+                    // Union the fill (original path) and the stroke
+                    // path OP strokePath -> combined
+                    path.Op(strokePath, SKPathOp.Union, combined);
+                    path.Dispose();
+                    path = combined;
+                }
+                else
+                {
+                    path.Dispose();
+                    path = strokePath;
+                }
+            }
+
+            path.Transform(TransformMatrix);
+            return path;
+        }
     }
 }
