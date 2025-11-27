@@ -20,7 +20,7 @@ namespace LunaDraw.Logic.Tools
     private SelectionState _currentState = SelectionState.None;
     private ResizeHandle _activeHandle = ResizeHandle.None;
     private SKRect _originalBounds;
-    private Dictionary<IDrawableElement, SKMatrix> _originalTransforms;
+    private Dictionary<IDrawableElement, SKMatrix> _originalTransforms = [];
     private SKPoint _resizeStartPoint;
 
     public void OnTouchPressed(SKPoint point, ToolContext context)

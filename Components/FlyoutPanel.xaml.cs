@@ -115,8 +115,8 @@ namespace LunaDraw.Components
       }
 
       // Animate in - run fade and scale simultaneously
-      var fadeTask = this.FadeTo(1, 200, Easing.CubicOut);
-      var scaleTask = this.ScaleTo(1, 200, Easing.CubicOut);
+      var fadeTask = this.FadeToAsync(1, 200, Easing.CubicOut);
+      var scaleTask = this.ScaleToAsync(1, 200, Easing.CubicOut);
 
       await Task.WhenAll(fadeTask, scaleTask);
     }
@@ -124,8 +124,8 @@ namespace LunaDraw.Components
     private async Task HideFlyout()
     {
       // Animate out - run fade and scale simultaneously
-      var fadeTask = this.FadeTo(0, 150, Easing.CubicIn);
-      var scaleTask = this.ScaleTo(0.9, 150, Easing.CubicIn);
+      var fadeTask = this.FadeToAsync(0, 150, Easing.CubicIn);
+      var scaleTask = this.ScaleToAsync(0.9, 150, Easing.CubicIn);
 
       await Task.WhenAll(fadeTask, scaleTask);
 

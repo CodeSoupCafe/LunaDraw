@@ -29,7 +29,7 @@ namespace LunaDraw.Logic.Models
 
       canvas.Save();
       var matrix = TransformMatrix;
-      canvas.Concat(ref matrix);
+      canvas.Concat(in matrix);
 
       // Draw selection highlight
       if (IsSelected)
@@ -44,14 +44,14 @@ namespace LunaDraw.Logic.Models
         canvas.DrawPath(Path, highlightPaint);
       }
 
-                  using var paint = new SKPaint
-                  {
-                      Style = IsFilled ? SKPaintStyle.Fill : SKPaintStyle.Stroke,
-                      Color = StrokeColor.WithAlpha(Opacity),
-                      StrokeWidth = StrokeWidth,
-                      IsAntialias = true,
-                      BlendMode = BlendMode
-                  };
+      using var paint = new SKPaint
+      {
+        Style = IsFilled ? SKPaintStyle.Fill : SKPaintStyle.Stroke,
+        Color = StrokeColor.WithAlpha(Opacity),
+        StrokeWidth = StrokeWidth,
+        IsAntialias = true,
+        BlendMode = BlendMode
+      };
       canvas.DrawPath(Path, paint);
       canvas.Restore();
     }
