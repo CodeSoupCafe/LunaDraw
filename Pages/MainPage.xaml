@@ -58,7 +58,15 @@
       <components:BrushesFlyoutPanel x:Name="BrushesFlyoutContent"
                                      BindingContext="{Binding Source={x:Reference toolbarView}, Path=BindingContext}"/>
     </components:FlyoutPanel>
+
+    <!-- Mini Map -->
+    <Border AbsoluteLayout.LayoutBounds="1,0, 200, 200"
+            AbsoluteLayout.LayoutFlags="PositionProportional"
+            Margin="20"
+            Stroke="Gray"
+            StrokeThickness="1"
+            BackgroundColor="White">
+            <components:MiniMapView BindingContext="{Binding}" />
+    </Border>
   </AbsoluteLayout>
-
-
 </ContentPage>

@@ -10,20 +10,22 @@ namespace LunaDraw.Pages;
 
 public partial class MainPage : ContentPage
 {
-  private MainViewModel _viewModel;
-  private ToolbarViewModel _toolbarViewModel;
+  private readonly MainViewModel _viewModel;
+  private readonly ToolbarViewModel _toolbarViewModel;
 
-  public MainPage()
+  public MainPage(MainViewModel viewModel, ToolbarViewModel toolbarViewModel)
   {
     InitializeComponent();
-    _viewModel = new MainViewModel();
-    _toolbarViewModel = new ToolbarViewModel(_viewModel);
+    _viewModel = viewModel;
+    _toolbarViewModel = toolbarViewModel;
+    
     BindingContext = _viewModel;
     toolbarView.BindingContext = _toolbarViewModel;
 
     // Set up flyout content binding contexts
     SettingsFlyoutContent.BindingContext = _toolbarViewModel;
     ShapesFlyoutContent.BindingContext = _toolbarViewModel;
+    BrushesFlyoutContent.BindingContext = _toolbarViewModel;
 
     canvasView.Loaded += OnCanvasLoaded;
     canvasView.PaintSurface += OnCanvasViewPaintSurface;
@@ -66,7 +68,8 @@ public partial class MainPage : ContentPage
       }
     }
 
-    _viewModel.ActiveTool.DrawPreview(canvas, _viewModel);
+    _viewModel.ActiveTool.DrawPreview(canvas, _viewModel); // Pass ViewModel as ToolContext provider if needed, or refactor DrawPreview to take context
+    // Note: ActiveTool.DrawPreview currently takes 'object context'. In MainViewModel refactor, we ensured properties are there.
   }
 
   private void OnTouch(object? sender, SKTouchEventArgs e)
@@ -81,7 +84,6 @@ public partial class MainPage : ContentPage
 
   private void OnCanvasTapped(object? sender, TappedEventArgs e)
   {
-    // CheckHideFlyouts(); // Redundant if handled in OnTouch, but keeping for safety if Touch doesn't fire for Tap
     CheckHideFlyouts();
   }
 
@@ -91,6 +93,7 @@ public partial class MainPage : ContentPage
     {
       _toolbarViewModel.IsSettingsOpen = false;
       _toolbarViewModel.IsShapesFlyoutOpen = false;
+      _toolbarViewModel.IsBrushesFlyoutOpen = false;
     }
   }
 }

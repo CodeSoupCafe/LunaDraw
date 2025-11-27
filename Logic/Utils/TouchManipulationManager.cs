@@ -42,62 +42,61 @@ namespace LunaDraw.Logic.Utils
                 }
             }
 
-            // Multiply the rotation matrix by a translation matrix
-            var translation = SKMatrix.CreateTranslation(delta.X, delta.Y);
-            touchMatrix = SKMatrix.Concat(touchMatrix, translation);
-
-            return touchMatrix;
-        }
-
-        public SKMatrix TwoFingerManipulate(SKPoint prevPoint, SKPoint newPoint, SKPoint pivotPoint, ref float returnAngle)
-        {
-            SKMatrix touchMatrix = SKMatrix.CreateIdentity();
-            SKPoint oldVector = prevPoint - pivotPoint;
-            SKPoint newVector = newPoint - pivotPoint;
-
-            if (Mode == TouchManipulationMode.ScaleRotate ||
-                Mode == TouchManipulationMode.ScaleDualRotate)
-            {
-                // Find angles from pivot point to touch points
-                float oldAngle = (float)Math.Atan2(oldVector.Y, oldVector.X);
-                float newAngle = (float)Math.Atan2(newVector.Y, newVector.X);
-
-                // Calculate rotation matrix
-                float angle = newAngle - oldAngle;
-                touchMatrix = SKMatrix.CreateRotation(angle, pivotPoint.X, pivotPoint.Y);
-                returnAngle = angle;
-
-                // Effectively rotate the old vector
-                float magnitudeRatio = Magnitude(oldVector) / Magnitude(newVector);
-                oldVector.X = magnitudeRatio * newVector.X;
-                oldVector.Y = magnitudeRatio * newVector.Y;
-            }
-
-            float scaleX = 1;
-            float scaleY = 1;
-
-            if (Mode == TouchManipulationMode.AnisotropicScale)
-            {
-                scaleX = newVector.X / oldVector.X;
-                scaleY = newVector.Y / oldVector.Y;
-            }
-            else if (Mode == TouchManipulationMode.IsotropicScale ||
-                     Mode == TouchManipulationMode.ScaleRotate ||
-                     Mode == TouchManipulationMode.ScaleDualRotate)
-            {
-                scaleX = scaleY = Magnitude(newVector) / Magnitude(oldVector);
-            }
-
-            if (!float.IsNaN(scaleX) && !float.IsInfinity(scaleX) &&
-                !float.IsNaN(scaleY) && !float.IsInfinity(scaleY))
-            {
-                var scale = SKMatrix.CreateScale(scaleX, scaleY, pivotPoint.X, pivotPoint.Y);
-                touchMatrix = SKMatrix.Concat(touchMatrix, scale);
-            }
-
-            return touchMatrix;
-        }
-
+                  // Multiply the rotation matrix by a translation matrix
+                  var translation = SKMatrix.CreateTranslation(delta.X, delta.Y);
+                  touchMatrix = SKMatrix.Concat(touchMatrix, translation);
+            
+                  return touchMatrix;
+                }
+            
+                public SKMatrix TwoFingerManipulate(SKPoint prevPoint, SKPoint newPoint, SKPoint pivotPoint, ref float returnAngle)
+                {
+                  SKMatrix touchMatrix = SKMatrix.CreateIdentity();
+                  SKPoint oldVector = prevPoint - pivotPoint;
+                  SKPoint newVector = newPoint - pivotPoint;
+            
+                  if (Mode == TouchManipulationMode.ScaleRotate ||
+                      Mode == TouchManipulationMode.ScaleDualRotate)
+                  {
+                    // Find angles from pivot point to touch points
+                    float oldAngle = (float)Math.Atan2(oldVector.Y, oldVector.X);
+                    float newAngle = (float)Math.Atan2(newVector.Y, newVector.X);
+            
+                    // Calculate rotation matrix
+                    float angle = newAngle - oldAngle;
+                    touchMatrix = SKMatrix.CreateRotation(angle, pivotPoint.X, pivotPoint.Y);
+                    returnAngle = angle;
+            
+                    // Effectively rotate the old vector
+                    float magnitudeRatio = Magnitude(oldVector) / Magnitude(newVector);
+                    oldVector.X = magnitudeRatio * newVector.X;
+                    oldVector.Y = magnitudeRatio * newVector.Y;
+                  }
+            
+                  float scaleX = 1;
+                  float scaleY = 1;
+            
+                  if (Mode == TouchManipulationMode.AnisotropicScale)
+                  {
+                    scaleX = newVector.X / oldVector.X;
+                    scaleY = newVector.Y / oldVector.Y;
+                  }
+                  else if (Mode == TouchManipulationMode.IsotropicScale ||
+                           Mode == TouchManipulationMode.ScaleRotate ||
+                           Mode == TouchManipulationMode.ScaleDualRotate)
+                  {
+                    scaleX = scaleY = Magnitude(newVector) / Magnitude(oldVector);
+                  }
+            
+                  if (!float.IsNaN(scaleX) && !float.IsInfinity(scaleX) &&
+                      !float.IsNaN(scaleY) && !float.IsInfinity(scaleY))
+                  {
+                    var scale = SKMatrix.CreateScale(scaleX, scaleY, pivotPoint.X, pivotPoint.Y);
+                    touchMatrix = SKMatrix.Concat(touchMatrix, scale);
+                  }
+            
+                  return touchMatrix;
+                }
         private static float Magnitude(SKPoint point)
         {
             return (float)Math.Sqrt(Math.Pow(point.X, 2) + Math.Pow(point.Y, 2));
