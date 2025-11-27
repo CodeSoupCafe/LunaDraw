@@ -1,0 +1,1 @@
+Read files in .clinerules

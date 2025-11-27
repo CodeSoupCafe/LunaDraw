@@ -55,7 +55,7 @@ namespace LunaDraw.Logic.Services
             }
 
             // Handle Navigation (Multi-touch)
-            if (_activeTouches.Count >= 2 && e.ActionType == SKTouchAction.Moved)
+            if (_activeTouches.Count >= 2 && e.ActionType == SKTouchAction.Moved && _activeTouches.ContainsKey(e.Id))
             {
                 HandleMultiTouch(e);
                 return;
@@ -76,11 +76,25 @@ namespace LunaDraw.Logic.Services
 
         private void HandleMultiTouch(SKTouchEventArgs e)
         {
+            // Ensure the current finger is tracked
+            if (!_activeTouches.TryGetValue(e.Id, out var prevPoint))
+                return;
+
             // Find the pivot (any other finger)
-            var pivotId = _activeTouches.Keys.FirstOrDefault(k => k != e.Id);
-            if (pivotId != 0 && _activeTouches.TryGetValue(pivotId, out var pivotPoint))
+            long pivotId = -1;
+            bool hasPivot = false;
+            foreach (var id in _activeTouches.Keys)
             {
-                var prevPoint = _activeTouches[e.Id];
+                if (id != e.Id)
+                {
+                    pivotId = id;
+                    hasPivot = true;
+                    break;
+                }
+            }
+
+            if (hasPivot && _activeTouches.TryGetValue(pivotId, out var pivotPoint))
+            {
                 var newPoint = e.Location;
 
                 float rotation = 0;

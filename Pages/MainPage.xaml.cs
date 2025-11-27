@@ -47,6 +47,12 @@ public partial class MainPage : ContentPage
     SKSurface surface = e.Surface;
     SKCanvas canvas = surface.Canvas;
 
+    // Ensure ViewModel knows the current canvas size (pixels)
+    if (_viewModel != null)
+    {
+        _viewModel.CanvasSize = new SKRect(0, 0, e.Info.Width, e.Info.Height);
+    }
+
     canvas.Clear(SKColors.White);
 
     if (_viewModel == null) return;
