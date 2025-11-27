@@ -76,8 +76,7 @@
             <Button x:Name="BrushButton"
                     Style="{StaticResource ToolbarButtonStyle}"
                     Text="🖌️"
-                    Command="{Binding SelectToolCommand}"
-                    CommandParameter="{Binding AvailableTools[1]}"
+                    Command="{Binding ShowBrushesFlyoutCommand}"
                     BackgroundColor="{Binding ActiveTool, Mode=OneWay, Converter={StaticResource ToolToColorConverter}, ConverterParameter='FreehandTool'}">
             </Button>
             <Label Text="{Binding AvailableTools[1].Name}"

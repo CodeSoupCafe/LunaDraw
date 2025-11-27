@@ -27,6 +27,10 @@ namespace LunaDraw.Logic.ViewModels
     public ReactiveCommand<Unit, Unit> SelectRectangleCommand { get; }
     public ReactiveCommand<Unit, Unit> SelectCircleCommand { get; }
     public ReactiveCommand<Unit, Unit> SelectLineCommand { get; }
+    public ReactiveCommand<Unit, Unit> ShowBrushesFlyoutCommand { get; }
+    public ReactiveCommand<LunaDraw.Logic.Models.BrushShape, Unit> SelectBrushShapeCommand { get; }
+
+    public List<LunaDraw.Logic.Models.BrushShape> AvailableBrushShapes => _mainViewModel.AvailableBrushShapes;
 
     // OAPH properties for reactive binding to MainViewModel
     private IDrawingTool _activeTool;
@@ -48,6 +52,12 @@ namespace LunaDraw.Logic.ViewModels
     private readonly ObservableAsPropertyHelper<byte> _opacity;
     public byte Opacity => _opacity.Value;
 
+    private readonly ObservableAsPropertyHelper<byte> _flow;
+    public byte Flow => _flow.Value;
+
+    private readonly ObservableAsPropertyHelper<float> _spacing;
+    public float Spacing => _spacing.Value;
+
     // UI state properties
     private bool _isSettingsOpen = false;
     public bool IsSettingsOpen
@@ -61,6 +71,13 @@ namespace LunaDraw.Logic.ViewModels
     {
       get => _isShapesFlyoutOpen;
       set => this.RaiseAndSetIfChanged(ref _isShapesFlyoutOpen, value);
+    }
+
+    private bool _isBrushesFlyoutOpen = false;
+    public bool IsBrushesFlyoutOpen
+    {
+      get => _isBrushesFlyoutOpen;
+      set => this.RaiseAndSetIfChanged(ref _isBrushesFlyoutOpen, value);
     }
 
     // Derived property using OAPH
@@ -96,9 +113,15 @@ namespace LunaDraw.Logic.ViewModels
       _opacity = _mainViewModel.WhenAnyValue(x => x.Opacity)
         .ToProperty(this, x => x.Opacity);
 
+      _flow = _mainViewModel.WhenAnyValue(x => x.Flow)
+        .ToProperty(this, x => x.Flow);
+
+      _spacing = _mainViewModel.WhenAnyValue(x => x.Spacing)
+        .ToProperty(this, x => x.Spacing);
+
       // Derived property for any flyout open
-      _isAnyFlyoutOpen = this.WhenAnyValue(x => x.IsSettingsOpen, x => x.IsShapesFlyoutOpen)
-        .Select(values => values.Item1 || values.Item2)
+      _isAnyFlyoutOpen = this.WhenAnyValue(x => x.IsSettingsOpen, x => x.IsShapesFlyoutOpen, x => x.IsBrushesFlyoutOpen)
+        .Select(values => values.Item1 || values.Item2 || values.Item3)
         .ToProperty(this, x => x.IsAnyFlyoutOpen);
 
       // Initialize last active shape (default to Rectangle or first available shape)
@@ -109,8 +132,9 @@ namespace LunaDraw.Logic.ViewModels
 
       ShowShapesFlyoutCommand = ReactiveCommand.Create(() =>
       {
-        // Close settings if open
+        // Close other flyouts
         IsSettingsOpen = false;
+        IsBrushesFlyoutOpen = false;
 
         // If the active tool is ALREADY the last shape tool, toggle the flyout
         // (or if the flyout is already open, close it)
@@ -126,11 +150,45 @@ namespace LunaDraw.Logic.ViewModels
         }
       });
 
+      ShowBrushesFlyoutCommand = ReactiveCommand.Create(() =>
+      {
+          IsSettingsOpen = false;
+          IsShapesFlyoutOpen = false;
+          
+          var freehandTool = AvailableTools.FirstOrDefault(t => t.Type == ToolType.Freehand);
+          
+          if (ActiveTool == freehandTool)
+          {
+              IsBrushesFlyoutOpen = !IsBrushesFlyoutOpen;
+          }
+          else
+          {
+              if (freehandTool != null)
+                  SelectToolCommand.Execute(freehandTool).Subscribe();
+              IsBrushesFlyoutOpen = false;
+          }
+      });
+
+      SelectBrushShapeCommand = ReactiveCommand.Create<LunaDraw.Logic.Models.BrushShape>(shape =>
+      {
+          // Use MessageBus to send update (similar to color picker)
+          ReactiveUI.MessageBus.Current.SendMessage(new LunaDraw.Logic.Messages.BrushShapeChangedMessage(shape));
+          IsBrushesFlyoutOpen = false;
+          
+          // Ensure tool is selected
+          var freehandTool = AvailableTools.FirstOrDefault(t => t.Type == ToolType.Freehand);
+          if (freehandTool != null && ActiveTool != freehandTool)
+          {
+              SelectToolCommand.Execute(freehandTool).Subscribe();
+          }
+      });
+
       // Settings command — toggle settings and ensure shapes panel closed
       ShowSettingsCommand = ReactiveCommand.Create(() =>
       {
         IsSettingsOpen = !IsSettingsOpen;
         IsShapesFlyoutOpen = false;
+        IsBrushesFlyoutOpen = false;
       });
 
       SelectRectangleCommand = ReactiveCommand.Create(() =>

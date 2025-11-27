@@ -47,7 +47,7 @@ namespace LunaDraw.Logic.Tools
 
     public void OnTouchReleased(SKPoint point, ToolContext context)
     {
-      if (context.CurrentLayer?.IsLocked == true || _currentRectangle == null) return;
+      if (context.CurrentLayer == null || context.CurrentLayer.IsLocked || _currentRectangle == null) return;
 
       if (_currentRectangle.Rectangle.Width > 0 || _currentRectangle.Rectangle.Height > 0)
       {

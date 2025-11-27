@@ -71,6 +71,35 @@ namespace LunaDraw.Logic.ViewModels
       set => this.RaiseAndSetIfChanged(ref _opacity, value);
     }
 
+    // Brush Settings
+    private byte _flow = 255;
+    public byte Flow
+    {
+      get => _flow;
+      set => this.RaiseAndSetIfChanged(ref _flow, value);
+    }
+
+    private float _spacing = 0.25f;
+    public float Spacing
+    {
+      get => _spacing;
+      set => this.RaiseAndSetIfChanged(ref _spacing, value);
+    }
+
+    public List<BrushShape> AvailableBrushShapes { get; } = new List<BrushShape>
+    {
+        BrushShape.Circle(),
+        BrushShape.Square(),
+        BrushShape.Star()
+    };
+
+    private BrushShape _currentBrushShape;
+    public BrushShape CurrentBrushShape
+    {
+        get => _currentBrushShape;
+        set => this.RaiseAndSetIfChanged(ref _currentBrushShape, value);
+    }
+
     // Selection State
     public SelectionManager SelectionManager { get; } = new SelectionManager();
     public ReadOnlyObservableCollection<IDrawableElement> SelectedElements => SelectionManager.Selected;
@@ -130,6 +159,8 @@ namespace LunaDraw.Logic.ViewModels
         new FillTool(),
         new EraserBrushTool()
       ];
+      
+      _currentBrushShape = AvailableBrushShapes.First();
 
       // Initialize with a default layer
       var initialLayer = new Layer { Name = "Layer 1" };
@@ -296,6 +327,17 @@ namespace LunaDraw.Logic.ViewModels
           FillColor = msg.FillColor.Value;
         if (msg.Transparency.HasValue)
           Opacity = msg.Transparency.Value;
+        if (msg.Flow.HasValue)
+          Flow = msg.Flow.Value;
+        if (msg.Spacing.HasValue)
+          Spacing = msg.Spacing.Value;
+        if (msg.StrokeWidth.HasValue)
+          StrokeWidth = msg.StrokeWidth.Value;
+      });
+
+      MessageBus.Current.Listen<BrushShapeChangedMessage>().Subscribe(msg =>
+      {
+          CurrentBrushShape = msg.Shape;
       });
 
       // Save initial state
@@ -381,6 +423,9 @@ namespace LunaDraw.Logic.ViewModels
                   FillColor = FillColor,
                   StrokeWidth = StrokeWidth,
                   Opacity = Opacity,
+                  Flow = Flow,
+                  Spacing = Spacing,
+                  BrushShape = CurrentBrushShape,
                   AllElements = Layers.SelectMany(l => l.Elements),
                   SelectionManager = SelectionManager
               };

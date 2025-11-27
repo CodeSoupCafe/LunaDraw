@@ -49,6 +49,16 @@
       <components:ShapesFlyoutPanel x:Name="ShapesFlyoutContent"
                                     BindingContext="{Binding Source={x:Reference toolbarView}, Path=BindingContext}"/>
     </components:FlyoutPanel>
+
+    <!-- Brushes Flyout Panel as True Overlay -->
+    <components:FlyoutPanel x:Name="BrushesFlyoutHost"
+                            IsOpen="{Binding BindingContext.IsBrushesFlyoutOpen, Source={x:Reference toolbarView}}"
+                            TargetElement="{x:Reference toolbarView}"
+                            AnchorName="BrushButton">
+      <components:BrushesFlyoutPanel x:Name="BrushesFlyoutContent"
+                                     BindingContext="{Binding Source={x:Reference toolbarView}, Path=BindingContext}"/>
+    </components:FlyoutPanel>
   </AbsoluteLayout>
+
 
 </ContentPage>

@@ -21,7 +21,8 @@ namespace LunaDraw.Tests
             {
                 CurrentLayer = new Layer(),
                 AllElements = elements,
-                SelectionManager = selectionManager
+                SelectionManager = selectionManager,
+                BrushShape = BrushShape.Circle()
             };
             var tool = new SelectTool();
             var point = new SKPoint(10, 10);
@@ -46,7 +47,8 @@ namespace LunaDraw.Tests
             {
                 CurrentLayer = new Layer(),
                 AllElements = elements,
-                SelectionManager = selectionManager
+                SelectionManager = selectionManager,
+                BrushShape = BrushShape.Circle()
             };
             var tool = new SelectTool();
             var point = new SKPoint(100, 100);

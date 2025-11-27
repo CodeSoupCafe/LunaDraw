@@ -39,6 +39,14 @@
                             WidthRequest="250"
                             PropertyChanged="OnFillColorChanged"/>
 
+      <Label Text="Size"
+             FontAttributes="Bold"/>
+      <Slider x:Name="SizeSlider"
+              Minimum="1"
+              Maximum="100"
+              HeightRequest="30"
+              ValueChanged="OnSizeChanged"/>
+
       <Label Text="Transparency"
              FontAttributes="Bold"/>
       <Slider x:Name="TransparencySlider"
@@ -46,6 +54,22 @@
               Maximum="255"
               HeightRequest="30"
               ValueChanged="OnTransparencyChanged"/>
+
+      <Label Text="Flow"
+             FontAttributes="Bold"/>
+      <Slider x:Name="FlowSlider"
+              Minimum="0"
+              Maximum="255"
+              HeightRequest="30"
+              ValueChanged="OnFlowChanged"/>
+
+      <Label Text="Spacing"
+             FontAttributes="Bold"/>
+      <Slider x:Name="SpacingSlider"
+              Minimum="0.1"
+              Maximum="2.0"
+              HeightRequest="30"
+              ValueChanged="OnSpacingChanged"/>
 
     </StackLayout>
   </Border>

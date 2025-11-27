@@ -47,7 +47,7 @@ namespace LunaDraw.Logic.Tools
 
     public void OnTouchReleased(SKPoint point, ToolContext context)
     {
-      if (context.CurrentLayer?.IsLocked == true || _currentEllipse == null) return;
+      if (context.CurrentLayer == null || context.CurrentLayer.IsLocked || _currentEllipse == null) return;
 
       if (_currentEllipse.Oval.Width > 0 || _currentEllipse.Oval.Height > 0)
       {

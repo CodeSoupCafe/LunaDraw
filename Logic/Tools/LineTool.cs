@@ -42,7 +42,7 @@ namespace LunaDraw.Logic.Tools
 
     public void OnTouchReleased(SKPoint point, ToolContext context)
     {
-      if (context.CurrentLayer?.IsLocked == true || _currentLine == null) return;
+      if (context.CurrentLayer == null || context.CurrentLayer.IsLocked || _currentLine == null) return;
 
       if (!_currentLine.EndPoint.Equals(SKPoint.Empty))
       {

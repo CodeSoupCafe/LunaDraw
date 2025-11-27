@@ -55,7 +55,8 @@ namespace LunaDraw.Tests
       {
         CurrentLayer = new Layer(),
         AllElements = elements,
-        SelectionManager = selectionManager
+        SelectionManager = selectionManager,
+        BrushShape = BrushShape.Circle()
       };
       var tool = new SelectTool();
 
@@ -85,7 +86,8 @@ namespace LunaDraw.Tests
       {
         CurrentLayer = new Layer(),
         AllElements = elements,
-        SelectionManager = selectionManager
+        SelectionManager = selectionManager,
+        BrushShape = BrushShape.Circle()
       };
       var tool = new SelectTool();
 
