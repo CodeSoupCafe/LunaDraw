@@ -33,5 +33,22 @@ namespace LunaDraw.Logic.Models
             get => _isLocked;
             set => this.RaiseAndSetIfChanged(ref _isLocked, value);
         }
+
+        public Layer Clone()
+        {
+            var clone = new Layer
+            {
+                Name = Name,
+                IsVisible = IsVisible,
+                IsLocked = IsLocked
+            };
+
+            foreach (var element in Elements)
+            {
+                clone.Elements.Add(element.Clone());
+            }
+
+            return clone;
+        }
     }
 }

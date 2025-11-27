@@ -81,12 +81,6 @@ namespace LunaDraw.Logic.ViewModels
     // New Snapshot History
     private readonly HistoryManager _historyManager;
     public SKRect CanvasSize { get; set; }
-    private SKPicture? _currentSnapshot;
-    public SKPicture? CurrentSnapshot
-    {
-      get => _currentSnapshot;
-      private set => this.RaiseAndSetIfChanged(ref _currentSnapshot, value);
-    }
 
     // OAPH properties for command states
     private readonly ObservableAsPropertyHelper<bool> _canDelete;
@@ -175,7 +169,6 @@ namespace LunaDraw.Logic.ViewModels
       {
         if (CurrentLayer is null || !SelectedElements.Any()) return;
 
-        SaveState();
         var elementsToRemove = SelectedElements.ToList();
         foreach (var element in elementsToRemove)
         {
@@ -183,13 +176,13 @@ namespace LunaDraw.Logic.ViewModels
         }
         SelectionManager.Clear();
         MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+        SaveState();
       }, this.WhenAnyValue(x => x.CanDelete), RxApp.MainThreadScheduler);
 
       GroupSelectedCommand = ReactiveCommand.Create(() =>
       {
         if (CurrentLayer is null || !SelectedElements.Any()) return;
 
-        SaveState();
         var elementsToGroup = SelectedElements.ToList();
         var group = new DrawableGroup();
 
@@ -202,6 +195,7 @@ namespace LunaDraw.Logic.ViewModels
         SelectionManager.Clear();
         SelectionManager.Add(group);
         MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+        SaveState();
       }, this.WhenAnyValue(x => x.CanGroup), RxApp.MainThreadScheduler);
 
       UngroupSelectedCommand = ReactiveCommand.Create(() =>
@@ -210,7 +204,6 @@ namespace LunaDraw.Logic.ViewModels
         var group = SelectedElements.First() as DrawableGroup;
         if (group != null)
         {
-          SaveState();
           CurrentLayer.Elements.Remove(group);
           foreach (var child in group.Children)
           {
@@ -218,6 +211,7 @@ namespace LunaDraw.Logic.ViewModels
           }
           SelectionManager.Clear();
           MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+          SaveState();
         }
       }, this.WhenAnyValue(x => x.CanUngroup), RxApp.MainThreadScheduler);
 
@@ -229,7 +223,6 @@ namespace LunaDraw.Logic.ViewModels
       CutCommand = ReactiveCommand.Create(() =>
       {
         if (CurrentLayer is null || !SelectedElements.Any()) return;
-        SaveState();
         _internalClipboard = SelectedElements.Select(e => e.Clone()).ToList();
         var elementsToRemove = SelectedElements.ToList();
         foreach (var element in elementsToRemove)
@@ -238,12 +231,12 @@ namespace LunaDraw.Logic.ViewModels
         }
         SelectionManager.Clear();
         MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+        SaveState();
       }, this.WhenAnyValue(x => x.CanDelete), RxApp.MainThreadScheduler);
 
       PasteCommand = ReactiveCommand.Create(() =>
       {
         if (CurrentLayer is null || !_internalClipboard.Any()) return;
-        SaveState();
         foreach (var element in _internalClipboard)
         {
           var clone = element.Clone();
@@ -251,36 +244,43 @@ namespace LunaDraw.Logic.ViewModels
           CurrentLayer.Elements.Add(clone);
         }
         MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+        SaveState();
       }, this.WhenAnyValue(x => x.CanPaste), RxApp.MainThreadScheduler);
 
       AddLayerCommand = ReactiveCommand.Create(() =>
       {
-        SaveState();
         var newLayer = new Layer { Name = $"Layer {Layers.Count + 1}" };
         Layers.Add(newLayer);
         CurrentLayer = newLayer;
+        SaveState();
       }, outputScheduler: RxApp.MainThreadScheduler);
 
       RemoveLayerCommand = ReactiveCommand.Create<Layer>(layer =>
       {
         if (Layers.Count > 1)
         {
-          SaveState();
           Layers.Remove(layer);
           CurrentLayer = Layers.First();
+          SaveState();
         }
       }, outputScheduler: RxApp.MainThreadScheduler);
 
       UndoCommand = ReactiveCommand.Create(() =>
       {
-        CurrentSnapshot = _historyManager.Undo();
-        MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+        var state = _historyManager.Undo();
+        if (state != null)
+        {
+            RestoreState(state);
+        }
       }, this.WhenAnyValue(x => x.CanUndo), RxApp.MainThreadScheduler);
 
       RedoCommand = ReactiveCommand.Create(() =>
       {
-        CurrentSnapshot = _historyManager.Redo();
-        MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+        var state = _historyManager.Redo();
+        if (state != null)
+        {
+            RestoreState(state);
+        }
       }, this.WhenAnyValue(x => x.CanRedo), RxApp.MainThreadScheduler);
 
       // Message listener for tools to trigger a state save
@@ -296,18 +296,29 @@ namespace LunaDraw.Logic.ViewModels
         if (msg.Transparency.HasValue)
           Opacity = msg.Transparency.Value;
       });
+
+      // Save initial state
+      SaveState();
     }
 
     public void SaveState()
     {
-      _historyManager.SaveSnapshot(Layers, CanvasSize);
-      UpdateHistoryButtons();
+      _historyManager.SaveState(Layers);
     }
 
-    public void UpdateHistoryButtons()
+    private void RestoreState(List<Layer> state)
     {
-      this.RaisePropertyChanged(nameof(UndoCommand));
-      this.RaisePropertyChanged(nameof(RedoCommand));
+        Layers.Clear();
+        foreach (var layer in state)
+        {
+            Layers.Add(layer);
+        }
+        
+        // Try to find the previously selected layer by ID, or default to first
+        var currentLayerId = CurrentLayer?.Id;
+        CurrentLayer = Layers.FirstOrDefault(l => l.Id == currentLayerId) ?? Layers.FirstOrDefault();
+        
+        MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
     }
 
     public void ProcessTouch(SKTouchEventArgs e)
@@ -318,12 +329,6 @@ namespace LunaDraw.Logic.ViewModels
       {
         case SKTouchAction.Pressed:
           _activeTouches[e.Id] = e.Location;
-          // Clear snapshot if we start interacting
-          if (_activeTouches.Count == 1 && CurrentSnapshot != null)
-          {
-            CurrentSnapshot = null;
-            MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
-          }
           break;
         case SKTouchAction.Released:
         case SKTouchAction.Cancelled:

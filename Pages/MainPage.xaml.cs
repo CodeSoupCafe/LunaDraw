@@ -38,7 +38,6 @@ public partial class MainPage : ContentPage
   private void OnCanvasLoaded(object? sender, EventArgs e)
   {
     _viewModel.CanvasSize = new SKRect(0, 0, canvasView.CanvasSize.Width, canvasView.CanvasSize.Height);
-    _viewModel.SaveState(); // Save the initial blank state
   }
 
   private void OnCanvasViewPaintSurface(object? sender, SKPaintSurfaceEventArgs e)
@@ -53,29 +52,21 @@ public partial class MainPage : ContentPage
     // Apply Navigation Transformation (Zoom/Pan)
     canvas.Concat(_viewModel.NavigationModel.TotalMatrix);
 
-    // If we are in a snapshot state (after undo/redo), draw the picture
-    if (_viewModel.CurrentSnapshot != null)
+    foreach (var layer in _viewModel.Layers)
     {
-      canvas.DrawPicture(_viewModel.CurrentSnapshot);
-    }
-    else // Otherwise, draw the live elements from the layers
-    {
-      foreach (var layer in _viewModel.Layers)
+      if (layer.IsVisible)
       {
-        if (layer.IsVisible)
+        foreach (var element in layer.Elements)
         {
-          foreach (var element in layer.Elements)
+          if (element.IsVisible)
           {
-            if (element.IsVisible)
-            {
-              element.Draw(canvas);
-            }
+            element.Draw(canvas);
           }
         }
       }
-
-      _viewModel.ActiveTool.DrawPreview(canvas, _viewModel);
     }
+
+    _viewModel.ActiveTool.DrawPreview(canvas, _viewModel);
   }
 
   private void OnTouch(object? sender, SKTouchEventArgs e)

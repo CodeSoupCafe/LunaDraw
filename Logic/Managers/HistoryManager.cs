@@ -1,87 +1,64 @@
 using LunaDraw.Logic.Models;
-
-using SkiaSharp;
+using ReactiveUI;
 
 namespace LunaDraw.Logic.Managers
 {
-  public class HistoryManager
-  {
-    private readonly List<SKPicture> _history = new();
-    private int _historyIndex = -1;
-
-    public bool CanUndo => _historyIndex > 0;
-    public bool CanRedo => _historyIndex < _history.Count - 1;
-
-    public void SaveSnapshot(IEnumerable<Layer> layers, SKRect canvasBounds)
+    public class HistoryManager : ReactiveObject
     {
-      if (canvasBounds.Width <= 0 || canvasBounds.Height <= 0) return;
+        private readonly List<List<Layer>> _history = new();
+        private int _historyIndex = -1;
 
-      // If we have undone, and then make a new action, we clear the 'redo' history
-      if (_historyIndex < _history.Count - 1)
-      {
-        // Dispose pictures that are being cleared
-        for (int i = _historyIndex + 1; i < _history.Count; i++)
+        public bool CanUndo => _historyIndex > 0;
+        public bool CanRedo => _historyIndex < _history.Count - 1;
+
+        public void SaveState(IEnumerable<Layer> layers)
         {
-          _history[i].Dispose();
+            // If we have undone, and then make a new action, we clear the 'redo' history
+            if (_historyIndex < _history.Count - 1)
+            {
+                _history.RemoveRange(_historyIndex + 1, _history.Count - (_historyIndex + 1));
+            }
+
+            // Deep copy the layers
+            var stateSnapshot = layers.Select(l => l.Clone()).ToList();
+            _history.Add(stateSnapshot);
+            _historyIndex++;
+
+            this.RaisePropertyChanged(nameof(CanUndo));
+            this.RaisePropertyChanged(nameof(CanRedo));
         }
-        _history.RemoveRange(_historyIndex + 1, _history.Count - (_historyIndex + 1));
-      }
 
-      using var recorder = new SKPictureRecorder();
-      var canvas = recorder.BeginRecording(canvasBounds);
-
-      // Draw a background
-      using var backgroundPaint = new SKPaint { Color = SKColors.White };
-      canvas.DrawRect(canvasBounds, backgroundPaint);
-
-      foreach (var layer in layers.Where(l => l.IsVisible))
-      {
-        foreach (var element in layer.Elements.Where(e => e.IsVisible))
+        public List<Layer>? Undo()
         {
-          element.Draw(canvas);
+            if (!CanUndo) return null;
+            _historyIndex--;
+            
+            this.RaisePropertyChanged(nameof(CanUndo));
+            this.RaisePropertyChanged(nameof(CanRedo));
+
+            // Return a deep copy of the state to ensure history integrity
+            return _history[_historyIndex].Select(l => l.Clone()).ToList();
         }
-      }
 
-      var snapshot = recorder.EndRecording();
-      _history.Add(snapshot);
-      _historyIndex++;
+        public List<Layer>? Redo()
+        {
+            if (!CanRedo) return null;
+            _historyIndex++;
+
+            this.RaisePropertyChanged(nameof(CanUndo));
+            this.RaisePropertyChanged(nameof(CanRedo));
+
+            // Return a deep copy of the state
+            return _history[_historyIndex].Select(l => l.Clone()).ToList();
+        }
+
+        public void Clear()
+        {
+            _history.Clear();
+            _historyIndex = -1;
+            
+            this.RaisePropertyChanged(nameof(CanUndo));
+            this.RaisePropertyChanged(nameof(CanRedo));
+        }
     }
-
-    public SKPicture? Undo()
-    {
-      if (!CanUndo) return null;
-      _historyIndex--;
-      return _history[_historyIndex];
-    }
-
-    public SKPicture? Redo()
-    {
-      if (!CanRedo) return null;
-      _historyIndex++;
-      return _history[_historyIndex];
-    }
-
-    public void Clear()
-    {
-      foreach (var picture in _history)
-      {
-        picture.Dispose();
-      }
-      _history.Clear();
-      _historyIndex = -1;
-    }
-
-    public void SaveInitialState(SKRect canvasBounds)
-    {
-      if (_history.Any() || canvasBounds.Width <= 0 || canvasBounds.Height <= 0) return;
-
-      using var recorder = new SKPictureRecorder();
-      var canvas = recorder.BeginRecording(canvasBounds);
-      using var backgroundPaint = new SKPaint { Color = SKColors.White };
-      canvas.DrawRect(canvasBounds, backgroundPaint);
-      var snapshot = recorder.EndRecording();
-      _history.Add(snapshot);
-      _historyIndex = 0;
-    }
-  }
 }

@@ -26,6 +26,7 @@ namespace LunaDraw.Logic.Tools
       {
         hitElement.FillColor = context.FillColor;
         MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+        MessageBus.Current.SendMessage(new DrawingStateChangedMessage());
       }
     }
 
