@@ -55,7 +55,7 @@ namespace LunaDraw.Logic.Tools
                 context.CurrentLayer.Elements.Remove(_currentDrawablePath);
             }
 
-            // Convert stroke to fill path (outline) for intersection
+            // Convert stroke to fill path (outline) for operations
             using var strokePaint = new SKPaint
             {
                 Style = SKPaintStyle.Stroke,
@@ -68,6 +68,8 @@ namespace LunaDraw.Logic.Tools
 
             var elements = context.CurrentLayer.Elements.ToList();
             var modified = false;
+            var elementsToRemove = new List<IDrawableElement>();
+            var elementsToAdd = new List<IDrawableElement>();
 
             foreach (var element in elements)
             {
@@ -75,49 +77,75 @@ namespace LunaDraw.Logic.Tools
                 if (!element.IsVisible) continue;
 
                 // Get element geometry
+                // Note: GetPath() returns the fill-path (outline) for stroked elements
                 using var elementPath = element.GetPath();
 
-                // Calculate intersection
+                // Check for intersection first (optimization)
                 using var intersection = new SKPath();
                 if (eraserOutline.Op(elementPath, SKPathOp.Intersect, intersection) && !intersection.IsEmpty)
                 {
-                    // Create the per-element eraser path
-                    var perElementEraser = new DrawablePath
+                    // Calculate the difference (Element - Eraser)
+                    var resultPath = new SKPath();
+                    if (elementPath.Op(eraserOutline, SKPathOp.Difference, resultPath))
                     {
-                        Path = new SKPath(intersection),
-                        StrokeColor = SKColors.Transparent,
-                        StrokeWidth = 0,
-                        IsFilled = true,
-                        BlendMode = SKBlendMode.Clear,
-                        Opacity = 255,
-                        ZIndex = int.MaxValue 
-                    };
-
-                    if (element is DrawableGroup group)
-                    {
-                        group.Children.Add(perElementEraser);
-                    }
-                    else
-                    {
-                        var newGroup = new DrawableGroup
+                        if (resultPath.IsEmpty)
                         {
-                            ZIndex = element.ZIndex,
-                            IsSelected = element.IsSelected
-                        };
-                        
-                        context.CurrentLayer.Elements.Remove(element);
-                        
-                        newGroup.Children.Add(element);
-                        newGroup.Children.Add(perElementEraser);
-                        
-                        context.CurrentLayer.Elements.Add(newGroup);
+                            // Element completely erased
+                            elementsToRemove.Add(element);
+                        }
+                        else
+                        {
+                            // Create new element with the remaining geometry
+                            var newElement = new DrawablePath
+                            {
+                                Path = resultPath,
+                                StrokeWidth = 0,
+                                IsFilled = true,
+                                BlendMode = SKBlendMode.SrcOver,
+                                Opacity = element.Opacity,
+                                ZIndex = element.ZIndex,
+                                IsSelected = element.IsSelected
+                            };
+
+                            // Try to get a better color match
+                            SKColor finalColor = SKColors.Black;
+                            if (element is DrawablePath p)
+                            {
+                                // If the source was filled, use its fill-driving color (which is StrokeColor in this codebase).
+                                // If it was a stroke, use its StrokeColor.
+                                finalColor = p.StrokeColor;
+                            }
+                            else if (element.GetType().GetProperty("StrokeColor")?.GetValue(element) is SKColor sc)
+                            {
+                                finalColor = sc;
+                            }
+                            else if (element.GetType().GetProperty("FillColor")?.GetValue(element) is SKColor fc)
+                            {
+                                finalColor = fc;
+                            }
+                            
+                            // DrawablePath uses StrokeColor property for drawing, even when IsFilled is true.
+                            newElement.StrokeColor = finalColor;
+
+                            elementsToRemove.Add(element);
+                            elementsToAdd.Add(newElement);
+                        }
+                        modified = true;
                     }
-                    modified = true;
                 }
             }
-            
+
             if (modified)
             {
+                foreach (var item in elementsToRemove)
+                {
+                    context.CurrentLayer.Elements.Remove(item);
+                }
+                foreach (var item in elementsToAdd)
+                {
+                    context.CurrentLayer.Elements.Add(item);
+                }
+
                 MessageBus.Current.SendMessage(new DrawingStateChangedMessage());
             }
             MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
