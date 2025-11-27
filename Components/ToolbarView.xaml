@@ -13,6 +13,9 @@
   <ContentView.Resources>
     <ResourceDictionary>
       <conv:ToolNameToIconConverter x:Key="ToolNameToIconConverter"/>
+      <conv:IsToolActiveConverter x:Key="IsToolActiveConverter"/>
+      <conv:ActiveShapeIconConverter x:Key="ActiveShapeIconConverter"/>
+      <conv:ToolToColorConverter x:Key="ToolToColorConverter"/>
 
       <!-- Kid-friendly button style with large hit areas for vertical toolbar -->
       <Style x:Key="ToolbarButtonStyle"
@@ -33,6 +36,11 @@
                 Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"/>
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"/>
+        <Style.Triggers>
+             <Trigger TargetType="Button" Property="IsEnabled" Value="False">
+                 <Setter Property="Opacity" Value="0.3" />
+             </Trigger>
+        </Style.Triggers>
       </Style>
     </ResourceDictionary>
   </ContentView.Resources>
@@ -58,7 +66,9 @@
                     Style="{StaticResource ToolbarButtonStyle}"
                     Text="⬚"
                     Command="{Binding SelectToolCommand}"
-                    CommandParameter="{Binding AvailableTools[0]}"/>
+                    CommandParameter="{Binding AvailableTools[0]}"
+                    BackgroundColor="{Binding ActiveTool, Mode=OneWay, Converter={StaticResource ToolToColorConverter}, ConverterParameter='SelectTool'}">
+            </Button>
             <Label Text="{Binding AvailableTools[0].Name}"
                    HorizontalTextAlignment="Center"/>
           </StackLayout>
@@ -67,15 +77,19 @@
                     Style="{StaticResource ToolbarButtonStyle}"
                     Text="🖌️"
                     Command="{Binding SelectToolCommand}"
-                    CommandParameter="{Binding AvailableTools[1]}"/>
+                    CommandParameter="{Binding AvailableTools[1]}"
+                    BackgroundColor="{Binding ActiveTool, Mode=OneWay, Converter={StaticResource ToolToColorConverter}, ConverterParameter='FreehandTool'}">
+            </Button>
             <Label Text="{Binding AvailableTools[1].Name}"
                    HorizontalTextAlignment="Center"/>
           </StackLayout>
           <StackLayout HorizontalOptions="Center">
             <Button x:Name="ShapesButton"
                     Style="{StaticResource ToolbarButtonStyle}"
-                    Text="🔷"
-                    Command="{Binding ShowShapesFlyoutCommand}"/>
+                    Text="{Binding LastActiveShapeTool, Converter={StaticResource ActiveShapeIconConverter}}"
+                    Command="{Binding ShowShapesFlyoutCommand}"
+                    BackgroundColor="{Binding ActiveTool, Mode=OneWay, Converter={StaticResource ToolToColorConverter}, ConverterParameter='Shapes'}">
+            </Button>
             <Label Text="Shapes"
                    HorizontalTextAlignment="Center"/>
           </StackLayout>
@@ -92,7 +106,9 @@
                     Style="{StaticResource ToolbarButtonStyle}"
                     Text="🧽"
                     Command="{Binding SelectToolCommand}"
-                    CommandParameter="{Binding AvailableTools[6]}"/>
+                    CommandParameter="{Binding AvailableTools[6]}"
+                    BackgroundColor="{Binding ActiveTool, Mode=OneWay, Converter={StaticResource ToolToColorConverter}, ConverterParameter='EraserBrushTool'}">
+            </Button>
             <Label Text="{Binding AvailableTools[6].Name}"
                    HorizontalTextAlignment="Center"/>
           </StackLayout>

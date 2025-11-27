@@ -80,6 +80,7 @@ namespace LunaDraw.Logic.ViewModels
 
     // New Snapshot History
     private readonly HistoryManager _historyManager;
+    public HistoryManager HistoryManager => _historyManager;
     public SKRect CanvasSize { get; set; }
 
     // OAPH properties for command states
@@ -148,10 +149,10 @@ namespace LunaDraw.Logic.ViewModels
         .Select(count => count == 1 && SelectedElements.FirstOrDefault() is DrawableGroup)
         .ToProperty(this, x => x.CanUngroup);
 
-      _canUndo = this.WhenAnyValue(x => x._historyManager.CanUndo)
+      _canUndo = this.WhenAnyValue(x => x.HistoryManager.CanUndo)
         .ToProperty(this, x => x.CanUndo);
 
-      _canRedo = this.WhenAnyValue(x => x._historyManager.CanRedo)
+      _canRedo = this.WhenAnyValue(x => x.HistoryManager.CanRedo)
         .ToProperty(this, x => x.CanRedo);
 
       _canPaste = this.WhenAnyValue(x => x._internalClipboard)

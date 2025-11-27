@@ -29,6 +29,13 @@ namespace LunaDraw.Logic.ViewModels
     public ReactiveCommand<Unit, Unit> SelectLineCommand { get; }
 
     // OAPH properties for reactive binding to MainViewModel
+    private IDrawingTool _activeTool;
+    public IDrawingTool ActiveTool
+    {
+        get => _activeTool;
+        set => this.RaiseAndSetIfChanged(ref _activeTool, value);
+    }
+
     private readonly ObservableAsPropertyHelper<SKColor> _strokeColor;
     public SKColor StrokeColor => _strokeColor.Value;
 
@@ -60,11 +67,23 @@ namespace LunaDraw.Logic.ViewModels
     private readonly ObservableAsPropertyHelper<bool> _isAnyFlyoutOpen;
     public bool IsAnyFlyoutOpen => _isAnyFlyoutOpen.Value;
 
+    private IDrawingTool _lastActiveShapeTool;
+    public IDrawingTool LastActiveShapeTool
+    {
+        get => _lastActiveShapeTool;
+        set => this.RaiseAndSetIfChanged(ref _lastActiveShapeTool, value);
+    }
+
     public ToolbarViewModel(MainViewModel mainViewModel)
     {
       _mainViewModel = mainViewModel;
 
-      // Initialize OAPH properties to observe MainViewModel
+      // Initialize ActiveTool and subscribe to changes
+      _activeTool = _mainViewModel.ActiveTool;
+      _mainViewModel.WhenAnyValue(x => x.ActiveTool)
+          .ObserveOn(RxApp.MainThreadScheduler)
+          .Subscribe(tool => ActiveTool = tool);
+
       _strokeColor = _mainViewModel.WhenAnyValue(x => x.StrokeColor)
         .ToProperty(this, x => x.StrokeColor);
 
@@ -82,11 +101,29 @@ namespace LunaDraw.Logic.ViewModels
         .Select(values => values.Item1 || values.Item2)
         .ToProperty(this, x => x.IsAnyFlyoutOpen);
 
+      // Initialize last active shape (default to Rectangle or first available shape)
+      _lastActiveShapeTool = _mainViewModel.AvailableTools.FirstOrDefault(t => t is RectangleTool) 
+                             ?? _mainViewModel.AvailableTools.FirstOrDefault(t => t is EllipseTool)
+                             ?? _mainViewModel.AvailableTools.FirstOrDefault(t => t is LineTool)
+                             ?? new RectangleTool();
+
       ShowShapesFlyoutCommand = ReactiveCommand.Create(() =>
       {
-        // Close settings if open, then toggle shapes
+        // Close settings if open
         IsSettingsOpen = false;
-        IsShapesFlyoutOpen = !IsShapesFlyoutOpen;
+
+        // If the active tool is ALREADY the last shape tool, toggle the flyout
+        // (or if the flyout is already open, close it)
+        if (ActiveTool == LastActiveShapeTool)
+        {
+            IsShapesFlyoutOpen = !IsShapesFlyoutOpen;
+        }
+        else
+        {
+            // Switch to the last shape tool and ensure flyout is closed
+            SelectToolCommand.Execute(LastActiveShapeTool).Subscribe();
+            IsShapesFlyoutOpen = false;
+        }
       });
 
       // Settings command — toggle settings and ensure shapes panel closed
@@ -99,6 +136,7 @@ namespace LunaDraw.Logic.ViewModels
       SelectRectangleCommand = ReactiveCommand.Create(() =>
       {
         var tool = _mainViewModel.AvailableTools.FirstOrDefault(t => t is RectangleTool) ?? new RectangleTool();
+        LastActiveShapeTool = tool;
         SelectToolCommand.Execute(tool).Subscribe();
         IsShapesFlyoutOpen = false;
       });
@@ -106,6 +144,7 @@ namespace LunaDraw.Logic.ViewModels
       SelectCircleCommand = ReactiveCommand.Create(() =>
       {
         var tool = _mainViewModel.AvailableTools.FirstOrDefault(t => t is EllipseTool) ?? new EllipseTool();
+        LastActiveShapeTool = tool;
         SelectToolCommand.Execute(tool).Subscribe();
         IsShapesFlyoutOpen = false;
       });
@@ -113,6 +152,7 @@ namespace LunaDraw.Logic.ViewModels
       SelectLineCommand = ReactiveCommand.Create(() =>
       {
         var tool = _mainViewModel.AvailableTools.FirstOrDefault(t => t is LineTool) ?? new LineTool();
+        LastActiveShapeTool = tool;
         SelectToolCommand.Execute(tool).Subscribe();
         IsShapesFlyoutOpen = false;
       });
