@@ -7,8 +7,7 @@
     Title="LunaDraw">
 
     <ShellContent
-        Title="Home"
         ContentTemplate="{DataTemplate pages:MainPage}"
-        Route="MainPage" />
+        Route="MainPage"/>
 
 </Shell>

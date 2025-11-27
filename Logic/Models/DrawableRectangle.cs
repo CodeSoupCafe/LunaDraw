@@ -3,12 +3,12 @@ using SkiaSharp;
 namespace LunaDraw.Logic.Models
 {
     /// <summary>
-    /// Represents a freehand drawn path on the canvas.
+    /// Represents a rectangle shape on the canvas.
     /// </summary>
-    public class DrawablePath : IDrawableElement
+    public class DrawableRectangle : IDrawableElement
     {
         public Guid Id { get; } = Guid.NewGuid();
-        public required SKPath Path { get; set; }
+        public SKRect Rectangle { get; set; }
         public SKMatrix TransformMatrix { get; set; } = SKMatrix.CreateIdentity();
 
         public bool IsVisible { get; set; } = true;
@@ -18,14 +18,12 @@ namespace LunaDraw.Logic.Models
         public SKColor? FillColor { get; set; }
         public SKColor StrokeColor { get; set; }
         public float StrokeWidth { get; set; }
-        public SKBlendMode BlendMode { get; set; } = SKBlendMode.SrcOver;
-        public bool IsFilled { get; set; }
 
-        public SKRect Bounds => TransformMatrix.MapRect(Path?.TightBounds ?? SKRect.Empty);
+        public SKRect Bounds => TransformMatrix.MapRect(Rectangle);
 
         public void Draw(SKCanvas canvas)
         {
-            if (!IsVisible || Path == null) return;
+            if (!IsVisible) return;
 
             canvas.Save();
             var matrix = TransformMatrix;
@@ -41,57 +39,67 @@ namespace LunaDraw.Logic.Models
                     StrokeWidth = StrokeWidth + 4,
                     IsAntialias = true
                 };
-                canvas.DrawPath(Path, highlightPaint);
+                canvas.DrawRect(Rectangle, highlightPaint);
             }
 
-            using var paint = new SKPaint
+            // Draw fill if specified
+            if (FillColor.HasValue)
             {
-                Style = IsFilled ? SKPaintStyle.Fill : SKPaintStyle.Stroke,
+                using var fillPaint = new SKPaint
+                {
+                    Style = SKPaintStyle.Fill,
+                    Color = FillColor.Value.WithAlpha(Opacity),
+                    IsAntialias = true
+                };
+                canvas.DrawRect(Rectangle, fillPaint);
+            }
+
+            // Draw stroke
+            using var strokePaint = new SKPaint
+            {
+                Style = SKPaintStyle.Stroke,
                 Color = StrokeColor.WithAlpha(Opacity),
                 StrokeWidth = StrokeWidth,
-                IsAntialias = true,
-                BlendMode = BlendMode
+                IsAntialias = true
             };
+            canvas.DrawRect(Rectangle, strokePaint);
 
-            canvas.DrawPath(Path, paint);
             canvas.Restore();
         }
 
         public bool HitTest(SKPoint point)
         {
-            if (Path == null) return false;
-
             if (!TransformMatrix.TryInvert(out var inverseMatrix))
                 return false;
 
             var localPoint = inverseMatrix.MapPoint(point);
 
-            // Check if point is within bounds first (faster)
-            if (!Path.TightBounds.Contains(localPoint)) return false;
+            using var path = new SKPath();
+            path.AddRect(Rectangle);
 
-            // Check if path contains point with tolerance
-            if (IsFilled)
+            // Check if filled and point is inside the fill path
+            if (FillColor.HasValue && path.Contains(localPoint.X, localPoint.Y))
             {
-                return Path.Contains(localPoint.X, localPoint.Y);
+                return true;
             }
-            else
+
+            // Check if point is near the stroke
+            using var paint = new SKPaint
             {
-                using var paint = new SKPaint
-                {
-                    Style = SKPaintStyle.Stroke,
-                    StrokeWidth = StrokeWidth + 5 // Add tolerance
-                };
-                using var strokedPath = new SKPath();
-                paint.GetFillPath(Path, strokedPath);
-                return strokedPath.Contains(localPoint.X, localPoint.Y);
-            }
+                Style = SKPaintStyle.Stroke,
+                StrokeWidth = StrokeWidth + 10 // Add tolerance
+            };
+            using var strokedPath = new SKPath();
+            paint.GetFillPath(path, strokedPath);
+            
+            return strokedPath.Contains(localPoint.X, localPoint.Y);
         }
 
         public IDrawableElement Clone()
         {
-            return new DrawablePath
+            return new DrawableRectangle
             {
-                Path = new SKPath(Path),
+                Rectangle = Rectangle,
                 TransformMatrix = TransformMatrix,
                 IsVisible = IsVisible,
                 IsSelected = false,
@@ -99,9 +107,7 @@ namespace LunaDraw.Logic.Models
                 Opacity = Opacity,
                 FillColor = FillColor,
                 StrokeColor = StrokeColor,
-                StrokeWidth = StrokeWidth,
-                BlendMode = BlendMode,
-                IsFilled = IsFilled
+                StrokeWidth = StrokeWidth
             };
         }
 
@@ -118,26 +124,35 @@ namespace LunaDraw.Logic.Models
 
         public SKPath GetPath()
         {
-            var path = new SKPath(Path);
+            var path = new SKPath();
+            path.AddRect(Rectangle);
 
-            if (!IsFilled && StrokeWidth > 0)
+            if (StrokeWidth > 0)
             {
                 using var paint = new SKPaint
                 {
                     Style = SKPaintStyle.Stroke,
                     StrokeWidth = StrokeWidth,
-                    StrokeCap = SKStrokeCap.Round,
-                    StrokeJoin = SKStrokeJoin.Round
+                    StrokeJoin = SKStrokeJoin.Miter
                 };
                 var strokePath = new SKPath();
                 paint.GetFillPath(path, strokePath);
-                path.Dispose();
-                path = strokePath;
+
+                if (FillColor.HasValue)
+                {
+                    var combined = new SKPath();
+                    // Union the fill (original path) and the stroke
+                    // path OP strokePath -> combined
+                    path.Op(strokePath, SKPathOp.Union, combined);
+                    path.Dispose();
+                    path = combined;
+                }
+                else
+                {
+                    path.Dispose();
+                    path = strokePath;
+                }
             }
-            // If IsFilled is true, we assume the path itself is the shape.
-            // If it has a stroke AND fill, we should technically union them, 
-            // but for freehand paths, usually it's either stroke or fill.
-            // If we support both later, we can add the union logic here.
 
             path.Transform(TransformMatrix);
             return path;

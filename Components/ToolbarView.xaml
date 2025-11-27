@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewModels="clr-namespace:LunaDraw.Logic.ViewModels"
+             xmlns:tools="clr-namespace:LunaDraw.Logic.Tools"
+             xmlns:conv="clr-namespace:LunaDraw.Converters"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             xmlns:controls="clr-namespace:Maui.ColorPicker;assembly=Maui.ColorPicker"
+             xmlns:local="clr-namespace:LunaDraw.Components"
+             xmlns:pages="clr-namespace:LunaDraw.Pages;assembly=LunaDraw"
+             x:Class="LunaDraw.Views.ToolbarView"
+             x:DataType="viewModels:ToolbarViewModel">
+  <ContentView.Resources>
+    <ResourceDictionary>
+      <conv:ToolNameToIconConverter x:Key="ToolNameToIconConverter"/>
+      <conv:IsToolActiveConverter x:Key="IsToolActiveConverter"/>
+      <conv:ActiveShapeIconConverter x:Key="ActiveShapeIconConverter"/>
+      <conv:ToolToColorConverter x:Key="ToolToColorConverter"/>
+
+      <!-- Kid-friendly button style with large hit areas for vertical toolbar -->
+      <Style x:Key="ToolbarButtonStyle"
+             TargetType="Button">
+        <Setter Property="WidthRequest"
+                Value="72"/>
+        <Setter Property="HeightRequest"
+                Value="72"/>
+        <Setter Property="FontSize"
+                Value="28"/>
+        <Setter Property="Padding"
+                Value="8"/>
+        <Setter Property="Margin"
+                Value="0,4"/>
+        <Setter Property="CornerRadius"
+                Value="12"/>
+        <Setter Property="BackgroundColor"
+                Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"/>
+        <Setter Property="TextColor"
+                Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"/>
+        <Style.Triggers>
+             <Trigger TargetType="Button" Property="IsEnabled" Value="False">
+                 <Setter Property="Opacity" Value="0.3" />
+             </Trigger>
+        </Style.Triggers>
+      </Style>
+    </ResourceDictionary>
+  </ContentView.Resources>
+
+  <ScrollView Orientation="Vertical"
+              VerticalScrollBarVisibility="Never"
+              HorizontalScrollBarVisibility="Never">
+    <!-- Main Toolbar - Left docked vertical bar -->
+    <Border x:Name="MainToolbarFrame"
+            HorizontalOptions="Start"
+            VerticalOptions="Fill"
+            Background="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
+            Padding="8,12"
+            StrokeShape="RoundRectangle"
+            AbsoluteLayout.LayoutBounds="0,0,AutoSize,AutoSize">
+      <ScrollView Orientation="Vertical"
+                  VerticalScrollBarVisibility="Never"
+                  HorizontalScrollBarVisibility="Never">
+        <VerticalStackLayout HorizontalOptions="Center"
+                             Spacing="8">
+          <StackLayout HorizontalOptions="Center">
+            <Button x:Name="SelectButton"
+                    Style="{StaticResource ToolbarButtonStyle}"
+                    Text="⬚"
+                    Command="{Binding SelectToolCommand}"
+                    CommandParameter="{Binding AvailableTools[0]}"
+                    BackgroundColor="{Binding ActiveTool, Mode=OneWay, Converter={StaticResource ToolToColorConverter}, ConverterParameter='SelectTool'}">
+            </Button>
+            <Label Text="{Binding AvailableTools[0].Name}"
+                   HorizontalTextAlignment="Center"/>
+          </StackLayout>
+          <StackLayout HorizontalOptions="Center">
+            <Button x:Name="BrushButton"
+                    Style="{StaticResource ToolbarButtonStyle}"
+                    Text="🖌️"
+                    Command="{Binding SelectToolCommand}"
+                    CommandParameter="{Binding AvailableTools[1]}"
+                    BackgroundColor="{Binding ActiveTool, Mode=OneWay, Converter={StaticResource ToolToColorConverter}, ConverterParameter='FreehandTool'}">
+            </Button>
+            <Label Text="{Binding AvailableTools[1].Name}"
+                   HorizontalTextAlignment="Center"/>
+          </StackLayout>
+          <StackLayout HorizontalOptions="Center">
+            <Button x:Name="ShapesButton"
+                    Style="{StaticResource ToolbarButtonStyle}"
+                    Text="{Binding LastActiveShapeTool, Converter={StaticResource ActiveShapeIconConverter}}"
+                    Command="{Binding ShowShapesFlyoutCommand}"
+                    BackgroundColor="{Binding ActiveTool, Mode=OneWay, Converter={StaticResource ToolToColorConverter}, ConverterParameter='Shapes'}">
+            </Button>
+            <Label Text="Shapes"
+                   HorizontalTextAlignment="Center"/>
+          </StackLayout>
+          <StackLayout HorizontalOptions="Center">
+            <Button x:Name="SettingsButton"
+                    Style="{StaticResource ToolbarButtonStyle}"
+                    Text="🌈"
+                    Command="{Binding ShowSettingsCommand}"/>
+            <Label Text="Colors"
+                   HorizontalTextAlignment="Center"/>
+          </StackLayout>
+          <StackLayout HorizontalOptions="Center">
+            <Button x:Name="EraserButton"
+                    Style="{StaticResource ToolbarButtonStyle}"
+                    Text="🧽"
+                    Command="{Binding SelectToolCommand}"
+                    CommandParameter="{Binding AvailableTools[6]}"
+                    BackgroundColor="{Binding ActiveTool, Mode=OneWay, Converter={StaticResource ToolToColorConverter}, ConverterParameter='EraserBrushTool'}">
+            </Button>
+            <Label Text="{Binding AvailableTools[6].Name}"
+                   HorizontalTextAlignment="Center"/>
+          </StackLayout>
+
+          <StackLayout HorizontalOptions="Center">
+            <Button x:Name="DeleteButton"
+                    Style="{StaticResource ToolbarButtonStyle}"
+                    Text="🗑️"
+                    Command="{Binding DeleteSelectedCommand}"/>
+            <Label Text="Delete"
+                   HorizontalTextAlignment="Center"/>
+          </StackLayout>
+
+          <BoxView HeightRequest="2"
+                   Color="Gray"
+                   Margin="0,4"/>
+
+          <StackLayout HorizontalOptions="Center">
+            <Button x:Name="UndoButton"
+                    Style="{StaticResource ToolbarButtonStyle}"
+                    Text="↺"
+                    Command="{Binding UndoCommand}">
+            </Button>
+            <Label Text="Undo"
+                   HorizontalTextAlignment="Center"/>
+          </StackLayout>
+          <StackLayout HorizontalOptions="Center">
+            <Button x:Name="RedoButton"
+                    Style="{StaticResource ToolbarButtonStyle}"
+                    Text="↻"
+                    Command="{Binding RedoCommand}">
+            </Button>
+            <Label Text="Redo"
+                   HorizontalTextAlignment="Center"/>
+          </StackLayout>
+        </VerticalStackLayout>
+      </ScrollView>
+    </Border>
+  </ScrollView>
+</ContentView>
