@@ -52,13 +52,13 @@ namespace LunaDraw.Logic.Extensions
         var headerSize = 8;
         //var imageDataFlipped = ReadFully2(imageStream, image.Height, 4);
         var buffer = new byte[imageStream.Length];
-        imageStream.Read(buffer, 0, (int)imageStream.Length);
+        imageStream.ReadExactly(buffer, 0, (int)imageStream.Length);
         var imageDataFlipped = FlipBytesHorizontal(4, buffer.Skip(headerSize).ToArray());
 
         return SKImage.FromEncodedData(buffer.Take(headerSize).Concat(imageDataFlipped).ToArray());
       }
 
-      return default;
+      return default!;
     }
 
     private static byte[] FlipBytesVertical(int size, byte[] inputArray)
@@ -92,7 +92,7 @@ namespace LunaDraw.Logic.Extensions
 
       while (i >= 0)
       {
-        stream.Read(imageInfo, i, bytesPerRow);
+        stream.ReadExactly(imageInfo, i, bytesPerRow);
         i -= bytesPerRow;
       }
 

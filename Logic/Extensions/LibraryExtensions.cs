@@ -53,9 +53,9 @@ namespace LunaDraw.Logic.Extensions
       StrokeJoin = SKStrokeJoin.Round
     };
 
-    public static SKPaint HighlightPaint => new SKPaint
+    public static SKPaint HighlightPaint => new()
     {
-      PathEffect = SKPathEffect.CreateDash(new[] { 20f, 30f }, 30),
+      PathEffect = SKPathEffect.CreateDash([20f, 30f], 30),
       Style = SKPaintStyle.Stroke,
       Color = SKColors.Blue,
       StrokeWidth = 25,
@@ -64,9 +64,9 @@ namespace LunaDraw.Logic.Extensions
       IsAntialias = true
     };
 
-    public static SKPaint RegionPaint => new SKPaint
+    public static SKPaint RegionPaint => new()
     {
-      PathEffect = SKPathEffect.CreateDash(new[] { 10f, 20f }, 30),
+      PathEffect = SKPathEffect.CreateDash([10f, 20f], 30),
       Style = SKPaintStyle.Stroke,
       Color = SKColors.White,
       StrokeWidth = 5,
@@ -118,24 +118,25 @@ namespace LunaDraw.Logic.Extensions
         canvas.Clear();
 
         using SKPaint paint = new SKPaint();
+        using SKFont font = new SKFont(SKTypeface.FromFamilyName("Arial"));
         // Set text color
         paint.Color = textColor?.ToSKColor() ?? SKColors.WhiteSmoke;
 
         if (textSize == 0)
         {
           // Set text size to fill 90% of width
-          float width = paint.MeasureText(textToDraw);
+          float width = font.MeasureText(textToDraw);
           float scale = 0.9f * info.Width / width;
-          paint.TextSize *= scale;
+          font.Size *= scale;
         }
         else
         {
-          paint.TextSize = textSize;
+          font.Size = textSize;
         }
 
         // Get text bounds
         SKRect textBounds = new SKRect();
-        paint.MeasureText(textToDraw, ref textBounds);
+        font.MeasureText(textToDraw, paint);
 
         if (centerText)
         {
@@ -146,7 +147,7 @@ namespace LunaDraw.Logic.Extensions
         yText = info.Height / 4 * 3;
 
         // Draw unreflected text
-        canvas.DrawText(textToDraw, xText, yText, paint);
+        canvas.DrawText(textToDraw, xText, yText, font, paint);
 
         // Shift textBounds to match displayed text
         textBounds.Offset(xText, yText);
@@ -157,22 +158,22 @@ namespace LunaDraw.Logic.Extensions
         paint.Shader = SKShader.CreateLinearGradient(
                             new SKPoint(0, textBounds.Top),
                             new SKPoint(0, textBounds.Bottom),
-                            new SKColor[] {
+                            [
                                 blurTextSKColor.WithAlpha(0),
                                 blurTextSKColor.WithAlpha(horizontalBlurSize)
-                            },
+                            ],
                             null,
                             SKShaderTileMode.Clamp);
 
         // Create a blur mask filter
         paint.MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, overallBlurSize);
-        paint.TextSkewX = blurSkewX;
+        font.SkewX = blurSkewX;
 
         // Scale the canvas to flip upside-down around the vertical center
         canvas.Scale(1, -0.9f, 0, yText);
 
         // Draw reflected text
-        canvas.DrawText(textToDraw, xText, yText, paint);
+        canvas.DrawText(textToDraw, xText, yText, font, paint);
       }
       ;
 
