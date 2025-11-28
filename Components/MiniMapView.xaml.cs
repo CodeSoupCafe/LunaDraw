@@ -167,18 +167,13 @@ namespace LunaDraw.Components
         case SKTouchAction.Moved:
           // Convert DIPs (Touch Location) to Pixels (Canvas Coordinates)
           // _fitMatrix is calculated based on Pixels (e.Info in OnPaintSurface)
-          double scaleFactor = 1.0;
-          if (canvasView.Width > 0)
-          {
-            scaleFactor = canvasView.CanvasSize.Width / canvasView.Width;
-          }
-
-          var touchPixels = new SKPoint((float)(e.Location.X * scaleFactor), (float)(e.Location.Y * scaleFactor));
+          // Removed scaleFactor conversion as e.Location is already in logical pixels, consistent with CanvasSize.
+          var touchPointLogical = e.Location; 
 
           // Move main view to this location
           if (_fitMatrix.TryInvert(out var inverseFit))
           {
-            var worldPoint = inverseFit.MapPoint(touchPixels);
+            var worldPoint = inverseFit.MapPoint(touchPointLogical);
 
             // We want to center the Main View on this worldPoint.
             // Main View Matrix: Scale * Translation.

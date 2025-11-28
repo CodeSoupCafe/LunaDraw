@@ -18,7 +18,7 @@ public partial class MainPage : ContentPage
     InitializeComponent();
     _viewModel = viewModel;
     _toolbarViewModel = toolbarViewModel;
-    
+
     BindingContext = _viewModel;
     toolbarView.BindingContext = _toolbarViewModel;
 
@@ -39,7 +39,8 @@ public partial class MainPage : ContentPage
 
   private void OnCanvasLoaded(object? sender, EventArgs e)
   {
-    _viewModel.CanvasSize = new SKRect(0, 0, canvasView.CanvasSize.Width, canvasView.CanvasSize.Height);
+    // Use logical size
+    _viewModel.CanvasSize = new SKRect(0, 0, (float)canvasView.Width, (float)canvasView.Height);
   }
 
   private void OnCanvasViewPaintSurface(object? sender, SKPaintSurfaceEventArgs e)
@@ -47,10 +48,11 @@ public partial class MainPage : ContentPage
     SKSurface surface = e.Surface;
     SKCanvas canvas = surface.Canvas;
 
-    // Ensure ViewModel knows the current canvas size (pixels)
+    // Ensure ViewModel knows the current canvas size (logical pixels)
     if (_viewModel != null)
     {
-        _viewModel.CanvasSize = new SKRect(0, 0, e.Info.Width, e.Info.Height);
+        // Use logical size
+        _viewModel.CanvasSize = new SKRect(0, 0, (float)canvasView.Width, (float)canvasView.Height);
     }
 
     canvas.Clear(SKColors.White);

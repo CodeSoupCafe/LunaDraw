@@ -45,7 +45,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Compile Remove="legacy\**\*" />
+		<Compile Remove="Legacy\**\*" />
 	</ItemGroup>
 
 	<ItemGroup>
