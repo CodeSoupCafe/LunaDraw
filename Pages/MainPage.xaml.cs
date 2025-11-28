@@ -1,5 +1,6 @@
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.ViewModels;
+using LunaDraw.Logic.Extensions;
 
 using ReactiveUI;
 
@@ -59,8 +60,16 @@ public partial class MainPage : ContentPage
 
     if (_viewModel == null) return;
 
-    // Apply Navigation Transformation (Zoom/Pan)
-    canvas.Concat(_viewModel.NavigationModel.TotalMatrix);
+    canvas.Save();
+
+    // Apply Navigation Transformation (User Transforms)
+    canvas.Concat(_viewModel.NavigationModel.UserMatrix);
+
+    // Apply Fit-To-Screen logic and capture Total Matrix (Legacy Pipeline)
+    // We use the current surface size as the bounds to center, effectively maintaining a 1:1 aspect initially
+    // but allowing the legacy MaxScaleCentered logic to calculate the final TotalMatrix.
+    var bounds = new SKRect(0, 0, e.Info.Width, e.Info.Height);
+    _viewModel.NavigationModel.TotalMatrix = canvas.MaxScaleCentered(e.Info.Width, e.Info.Height, bounds);
 
     foreach (var layer in _viewModel.Layers)
     {
@@ -76,8 +85,9 @@ public partial class MainPage : ContentPage
       }
     }
 
-    _viewModel.ActiveTool.DrawPreview(canvas, _viewModel); // Pass ViewModel as ToolContext provider if needed, or refactor DrawPreview to take context
-    // Note: ActiveTool.DrawPreview currently takes 'object context'. In MainViewModel refactor, we ensured properties are there.
+    _viewModel.ActiveTool.DrawPreview(canvas, _viewModel);
+    
+    canvas.Restore();
   }
 
   private void OnTouch(object? sender, SKTouchEventArgs e)

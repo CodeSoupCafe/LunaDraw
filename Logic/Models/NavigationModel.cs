@@ -6,16 +6,18 @@ namespace LunaDraw.Logic.Models
 {
     public class NavigationModel : ReactiveObject
     {
+        private SKMatrix _userMatrix;
         private SKMatrix _totalMatrix;
 
         public NavigationModel()
         {
+            _userMatrix = SKMatrix.CreateIdentity();
             _totalMatrix = SKMatrix.CreateIdentity();
         }
 
-        public SKMatrix TotalMatrix
+        public SKMatrix UserMatrix
         {
-            get => _totalMatrix;
+            get => _userMatrix;
             set
             {
                 // Check if the matrix is very close to identity
@@ -31,15 +33,22 @@ namespace LunaDraw.Logic.Models
                     value = SKMatrix.CreateIdentity();
                 }
 
-                if (!EqualityComparer<SKMatrix>.Default.Equals(_totalMatrix, value))
+                if (!EqualityComparer<SKMatrix>.Default.Equals(_userMatrix, value))
                 {
-                    this.RaiseAndSetIfChanged(ref _totalMatrix, value);
+                    this.RaiseAndSetIfChanged(ref _userMatrix, value);
                 }
             }
         }
 
+        public SKMatrix TotalMatrix
+        {
+            get => _totalMatrix;
+            set => this.RaiseAndSetIfChanged(ref _totalMatrix, value);
+        }
+
         public void Reset()
         {
+            UserMatrix = SKMatrix.CreateIdentity();
             TotalMatrix = SKMatrix.CreateIdentity();
         }
     }

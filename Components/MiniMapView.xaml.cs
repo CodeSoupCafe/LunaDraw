@@ -211,7 +211,8 @@ namespace LunaDraw.Components
 
             // Translate the view by delta
             var translation = SKMatrix.CreateTranslation(delta.X, delta.Y);
-            _viewModel.NavigationModel.TotalMatrix = SKMatrix.Concat(translation, _viewModel.NavigationModel.TotalMatrix);
+            // Update UserMatrix using PostConcat to accumulate transformations (Legacy style)
+            _viewModel.NavigationModel.UserMatrix = _viewModel.NavigationModel.UserMatrix.PostConcat(translation);
 
             MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
           }

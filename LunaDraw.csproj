@@ -84,4 +84,8 @@
 		  <PrivateAssets>all</PrivateAssets>
 		</PackageReference>
 	</ItemGroup>		
+
+	<ItemGroup>
+	  <Folder Include="Logic\Extensions\" />
+	</ItemGroup>		
 </Project>

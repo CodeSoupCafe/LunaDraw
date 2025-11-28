@@ -177,9 +177,9 @@ namespace LunaDraw.Logic.Services
         }
         else
         {
-          // Apply transform to View using PreConcat (Touch * Total) to apply Screen Space transformation
-          // This ensures the zoom/pan follows the finger in Screen Space.
-          _navigationModel.TotalMatrix = SKMatrix.Concat(touchMatrix, _navigationModel.TotalMatrix);
+          // Apply transform to UserMatrix using PostConcat to accumulate transformations
+          // This matches the legacy behavior where TranslateMatrix = TranslateMatrix.PostConcat(touchMatrix)
+          _navigationModel.UserMatrix = _navigationModel.UserMatrix.PostConcat(touchMatrix);
         }
 
         // Update stored location
@@ -191,7 +191,7 @@ namespace LunaDraw.Logic.Services
 
     private void HandleSingleTouch(SKPoint location, SKTouchAction actionType)
     {
-      // Transform point to World Coordinates
+      // Transform point to World Coordinates using the TotalMatrix (which includes FitToScreen + User transforms)
       SKMatrix inverse = SKMatrix.CreateIdentity();
 
       if (_navigationModel.TotalMatrix.TryInvert(out inverse))
