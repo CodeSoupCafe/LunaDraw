@@ -15,6 +15,7 @@ namespace LunaDraw.Components
   {
     private MainViewModel? _viewModel;
     private SKMatrix _fitMatrix;
+    private float _density = 1.0f;
 
     public MiniMapView()
     {
@@ -39,6 +40,11 @@ namespace LunaDraw.Components
 
       var canvas = e.Surface.Canvas;
       var info = e.Info;
+
+      if (sender is SKCanvasView view && view.Width > 0)
+      {
+        _density = (float)(info.Width / view.Width);
+      }
 
       canvas.Clear(SKColors.White);
 
@@ -96,7 +102,7 @@ namespace LunaDraw.Components
           foreach (var element in layer.Elements)
           {
             if (element.IsVisible)
-            {
+            { 
               element.Draw(canvas);
             }
           }
@@ -162,18 +168,18 @@ namespace LunaDraw.Components
       if (canvasView == null) return;
 
       switch (e.ActionType)
-      {
+      { 
         case SKTouchAction.Pressed:
         case SKTouchAction.Moved:
           // Convert DIPs (Touch Location) to Pixels (Canvas Coordinates)
           // _fitMatrix is calculated based on Pixels (e.Info in OnPaintSurface)
-          // Removed scaleFactor conversion as e.Location is already in logical pixels, consistent with CanvasSize.
-          var touchPointLogical = e.Location; 
+          var touchPointLogical = e.Location;
+          var touchPointPixels = new SKPoint(touchPointLogical.X * _density, touchPointLogical.Y * _density);
 
           // Move main view to this location
           if (_fitMatrix.TryInvert(out var inverseFit))
           {
-            var worldPoint = inverseFit.MapPoint(touchPointLogical);
+            var worldPoint = inverseFit.MapPoint(touchPointPixels);
 
             // We want to center the Main View on this worldPoint.
             // Main View Matrix: Scale * Translation.

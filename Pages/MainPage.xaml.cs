@@ -86,7 +86,7 @@ public partial class MainPage : ContentPage
     {
          CheckHideFlyouts();
     }
-    _viewModel?.ProcessTouch(e);
+    _viewModel?.ProcessTouch(e, canvasView);
     e.Handled = true;
   }
 

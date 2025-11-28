@@ -38,6 +38,10 @@ namespace LunaDraw.Logic.Tools
     {
     }
 
+    public void OnTouchCancelled(ToolContext context)
+    {
+    }
+
     public void DrawPreview(SKCanvas canvas, MainViewModel viewModel)
     {
     }

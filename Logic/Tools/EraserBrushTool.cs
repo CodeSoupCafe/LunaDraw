@@ -156,6 +156,18 @@ namespace LunaDraw.Logic.Tools
       _currentDrawablePath = null;
     }
 
+    public void OnTouchCancelled(ToolContext context)
+    {
+      if (_currentDrawablePath != null && context.CurrentLayer != null)
+      {
+        context.CurrentLayer.Elements.Remove(_currentDrawablePath);
+      }
+
+      _currentPath = null;
+      _currentDrawablePath = null;
+      MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+    }
+
     public void DrawPreview(SKCanvas canvas, MainViewModel viewModel)
     {
       // Optional: Draw a circle cursor for eraser size

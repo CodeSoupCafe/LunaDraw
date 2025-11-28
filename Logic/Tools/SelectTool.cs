@@ -108,6 +108,14 @@ namespace LunaDraw.Logic.Tools
       MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
     }
 
+    public void OnTouchCancelled(ToolContext context)
+    {
+        _currentState = SelectionState.None;
+        _activeHandle = ResizeHandle.None;
+        _originalTransforms?.Clear();
+        MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+    }
+
     public void DrawPreview(SKCanvas canvas, MainViewModel viewModel)
     {
       if (viewModel.SelectionManager.Selected.Any())
@@ -143,7 +151,7 @@ namespace LunaDraw.Logic.Tools
 
     private ResizeHandle GetResizeHandle(SKPoint point, SKRect bounds, float scale)
     {
-      const float baseHandleSize = 8f; // Size in screen pixels at 1:1 scale
+      const float baseHandleSize = 24f; // Size in screen pixels at 1:1 scale
       float scaledHandleSize = baseHandleSize / scale; // Adjust based on current zoom level
       if (IsPointNear(point, new SKPoint(bounds.Left, bounds.Top), scaledHandleSize)) return ResizeHandle.TopLeft;
       if (IsPointNear(point, new SKPoint(bounds.Right, bounds.Top), scaledHandleSize)) return ResizeHandle.TopRight;
@@ -181,7 +189,9 @@ namespace LunaDraw.Logic.Tools
       {
         if (_originalTransforms.TryGetValue(element, out var originalMatrix))
         {
-          element.TransformMatrix = SKMatrix.Concat(originalMatrix, transformFromOriginal);
+          // Apply the resize transformation (calculated in world space) AFTER the original matrix
+          // New = Resize * Original
+          element.TransformMatrix = SKMatrix.Concat(transformFromOriginal, originalMatrix);
         }
       }
     }

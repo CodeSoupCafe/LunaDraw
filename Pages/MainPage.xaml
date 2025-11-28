@@ -25,7 +25,8 @@
                               x:Name="canvasView"
                               PaintSurface="OnCanvasViewPaintSurface"
                               EnableTouchEvents="True"
-                              Touch="OnTouch">
+                              Touch="OnTouch"
+                              IgnorePixelScaling="False">
         <skiasharp:SKCanvasView.GestureRecognizers>
           <TapGestureRecognizer Tapped="OnCanvasTapped" />
         </skiasharp:SKCanvasView.GestureRecognizers>
