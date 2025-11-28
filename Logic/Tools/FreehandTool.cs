@@ -90,9 +90,9 @@ namespace LunaDraw.Logic.Tools
 
     public void OnTouchCancelled(ToolContext context)
     {
-        _currentPoints = null;
-        _isDrawing = false;
-        MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+      _currentPoints = null;
+      _isDrawing = false;
+      MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
     }
 
     public void DrawPreview(SKCanvas canvas, MainViewModel viewModel)

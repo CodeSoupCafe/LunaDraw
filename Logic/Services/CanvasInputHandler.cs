@@ -3,9 +3,12 @@ using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Tools;
 using LunaDraw.Logic.Utils;
+
 // For SKCanvasView
 using Microsoft.Maui.Devices;
+
 using ReactiveUI;
+
 using SkiaSharp;
 using SkiaSharp.Views.Maui;
 using SkiaSharp.Views.Maui.Controls;
@@ -43,7 +46,7 @@ namespace LunaDraw.Logic.Services
       _touchManipulationManager = new TouchManipulationManager();
     }
 
-    public void ProcessTouch(SKTouchEventArgs e, SKRect canvasViewPort, SKCanvasView canvasView)
+    public void ProcessTouch(SKTouchEventArgs e, SKRect canvasViewPort, SKCanvasView? canvasView)
     {
       if (_layerStateManager.CurrentLayer == null) return;
 
@@ -67,7 +70,7 @@ namespace LunaDraw.Logic.Services
         if (!_isMultiTouching)
         {
           _isMultiTouching = true;
-          
+
           // Cancel any active drawing tool
           if (_toolStateManager.ActiveTool is IDrawingTool tool)
           {
@@ -88,7 +91,7 @@ namespace LunaDraw.Logic.Services
       // Handle Navigation (Multi-touch)
       if (_activeTouches.Count >= 2 && e.ActionType == SKTouchAction.Moved && _activeTouches.ContainsKey(e.Id))
       {
-        HandleMultiTouch(adjustedLocation, e.Id); 
+        HandleMultiTouch(adjustedLocation, e.Id);
         return;
       }
 
@@ -114,16 +117,16 @@ namespace LunaDraw.Logic.Services
       {
         if (_navigationModel.TotalMatrix.TryInvert(out var inverseView))
         {
-           // Check if ANY active touch is on a selected element
-           foreach (var touchPoint in _activeTouches.Values)
-           {
-             var worldPoint = inverseView.MapPoint(touchPoint);
-             if (selectedElements.Any(el => el.HitTest(worldPoint)))
-             {
-               _isManipulatingSelection = true;
-               return;
-             }
-           }
+          // Check if ANY active touch is on a selected element
+          foreach (var touchPoint in _activeTouches.Values)
+          {
+            var worldPoint = inverseView.MapPoint(touchPoint);
+            if (selectedElements.Any(el => el.HitTest(worldPoint)))
+            {
+              _isManipulatingSelection = true;
+              return;
+            }
+          }
         }
       }
     }
@@ -190,11 +193,11 @@ namespace LunaDraw.Logic.Services
     {
       // Transform point to World Coordinates
       SKMatrix inverse = SKMatrix.CreateIdentity();
-      
+
       if (_navigationModel.TotalMatrix.TryInvert(out inverse))
       {
         var worldPoint = inverse.MapPoint(location);
-        
+
         var context = CreateToolContext();
 
         switch (actionType)

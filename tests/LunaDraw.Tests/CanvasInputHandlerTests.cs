@@ -59,7 +59,7 @@ namespace LunaDraw.Tests
       public byte Opacity { get; set; }
       public byte Flow { get; set; }
       public float Spacing { get; set; }
-      public BrushShape CurrentBrushShape { get; set; }
+      public BrushShape CurrentBrushShape { get; set; } = default!;
       public List<IDrawingTool> AvailableTools { get; } = new List<IDrawingTool>();
       public List<BrushShape> AvailableBrushShapes { get; } = new List<BrushShape>();
     }
@@ -68,7 +68,7 @@ namespace LunaDraw.Tests
     {
       public ObservableCollection<Layer> Layers { get; } = new ObservableCollection<Layer>();
       public Layer? CurrentLayer { get; set; }
-      public HistoryManager HistoryManager { get; }
+      public HistoryManager HistoryManager { get; } = default!;
       public void AddLayer() { }
       public void RemoveLayer(Layer layer) { }
       public void SaveState() { }

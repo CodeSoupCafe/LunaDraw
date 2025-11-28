@@ -61,8 +61,8 @@ namespace LunaDraw.Logic.Tools
 
     public void OnTouchCancelled(ToolContext context)
     {
-        _currentEllipse = null;
-        MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+      _currentEllipse = null;
+      MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
     }
 
     public void DrawPreview(SKCanvas canvas, MainViewModel viewModel)

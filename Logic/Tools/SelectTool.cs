@@ -110,10 +110,10 @@ namespace LunaDraw.Logic.Tools
 
     public void OnTouchCancelled(ToolContext context)
     {
-        _currentState = SelectionState.None;
-        _activeHandle = ResizeHandle.None;
-        _originalTransforms?.Clear();
-        MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+      _currentState = SelectionState.None;
+      _activeHandle = ResizeHandle.None;
+      _originalTransforms?.Clear();
+      MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
     }
 
     public void DrawPreview(SKCanvas canvas, MainViewModel viewModel)

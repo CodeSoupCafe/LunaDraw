@@ -36,7 +36,7 @@ namespace LunaDraw.Logic.Tools
 
     public void OnTouchCancelled(ToolContext context)
     {
-        _isErasing = false;
+      _isErasing = false;
     }
 
     private void Erase(SKPoint point, ToolContext context)

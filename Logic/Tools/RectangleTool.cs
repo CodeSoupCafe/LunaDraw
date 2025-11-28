@@ -61,8 +61,8 @@ namespace LunaDraw.Logic.Tools
 
     public void OnTouchCancelled(ToolContext context)
     {
-        _currentRectangle = null;
-        MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+      _currentRectangle = null;
+      MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
     }
 
     public void DrawPreview(SKCanvas canvas, MainViewModel viewModel)
