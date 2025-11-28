@@ -1,5 +1,6 @@
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.ViewModels;
+using LunaDraw.Logic.Extensions;
 
 using ReactiveUI;
 
@@ -10,20 +11,22 @@ namespace LunaDraw.Pages;
 
 public partial class MainPage : ContentPage
 {
-  private MainViewModel _viewModel;
-  private ToolbarViewModel _toolbarViewModel;
+  private readonly MainViewModel _viewModel;
+  private readonly ToolbarViewModel _toolbarViewModel;
 
-  public MainPage()
+  public MainPage(MainViewModel viewModel, ToolbarViewModel toolbarViewModel)
   {
     InitializeComponent();
-    _viewModel = new MainViewModel();
-    _toolbarViewModel = new ToolbarViewModel(_viewModel);
+    _viewModel = viewModel;
+    _toolbarViewModel = toolbarViewModel;
+
     BindingContext = _viewModel;
     toolbarView.BindingContext = _toolbarViewModel;
 
     // Set up flyout content binding contexts
     SettingsFlyoutContent.BindingContext = _toolbarViewModel;
     ShapesFlyoutContent.BindingContext = _toolbarViewModel;
+    BrushesFlyoutContent.BindingContext = _toolbarViewModel;
 
     canvasView.Loaded += OnCanvasLoaded;
     canvasView.PaintSurface += OnCanvasViewPaintSurface;
@@ -37,7 +40,8 @@ public partial class MainPage : ContentPage
 
   private void OnCanvasLoaded(object? sender, EventArgs e)
   {
-    _viewModel.CanvasSize = new SKRect(0, 0, canvasView.CanvasSize.Width, canvasView.CanvasSize.Height);
+    // Use logical size
+    _viewModel.CanvasSize = new SKRect(0, 0, (float)canvasView.Width, (float)canvasView.Height);
   }
 
   private void OnCanvasViewPaintSurface(object? sender, SKPaintSurfaceEventArgs e)
@@ -45,12 +49,27 @@ public partial class MainPage : ContentPage
     SKSurface surface = e.Surface;
     SKCanvas canvas = surface.Canvas;
 
+    // Ensure ViewModel knows the current canvas size (logical pixels)
+    if (_viewModel != null)
+    {
+        // Use logical size
+        _viewModel.CanvasSize = new SKRect(0, 0, (float)canvasView.Width, (float)canvasView.Height);
+    }
+
     canvas.Clear(SKColors.White);
 
     if (_viewModel == null) return;
 
-    // Apply Navigation Transformation (Zoom/Pan)
-    canvas.Concat(_viewModel.NavigationModel.TotalMatrix);
+    canvas.Save();
+
+    // Apply Navigation Transformation (User Transforms)
+    canvas.Concat(_viewModel.NavigationModel.UserMatrix);
+
+    // Apply Fit-To-Screen logic and capture Total Matrix (Legacy Pipeline)
+    // We use the current surface size as the bounds to center, effectively maintaining a 1:1 aspect initially
+    // but allowing the legacy MaxScaleCentered logic to calculate the final TotalMatrix.
+    var bounds = new SKRect(0, 0, e.Info.Width, e.Info.Height);
+    _viewModel.NavigationModel.TotalMatrix = canvas.MaxScaleCentered(e.Info.Width, e.Info.Height, bounds);
 
     foreach (var layer in _viewModel.Layers)
     {
@@ -67,6 +86,8 @@ public partial class MainPage : ContentPage
     }
 
     _viewModel.ActiveTool.DrawPreview(canvas, _viewModel);
+    
+    canvas.Restore();
   }
 
   private void OnTouch(object? sender, SKTouchEventArgs e)
@@ -75,13 +96,12 @@ public partial class MainPage : ContentPage
     {
          CheckHideFlyouts();
     }
-    _viewModel?.ProcessTouch(e);
+    _viewModel?.ProcessTouch(e, canvasView);
     e.Handled = true;
   }
 
   private void OnCanvasTapped(object? sender, TappedEventArgs e)
   {
-    // CheckHideFlyouts(); // Redundant if handled in OnTouch, but keeping for safety if Touch doesn't fire for Tap
     CheckHideFlyouts();
   }
 
@@ -91,6 +111,7 @@ public partial class MainPage : ContentPage
     {
       _toolbarViewModel.IsSettingsOpen = false;
       _toolbarViewModel.IsShapesFlyoutOpen = false;
+      _toolbarViewModel.IsBrushesFlyoutOpen = false;
     }
   }
 }

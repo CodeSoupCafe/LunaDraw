@@ -13,70 +13,119 @@ namespace LunaDraw.Logic.Tools
     public string Name => "Freehand";
     public ToolType Type => ToolType.Freehand;
 
-    private SKPath? _currentPath;
-    private SKPoint _pathOrigin;
+    private List<SKPoint>? _currentPoints;
+    private SKPoint _lastStampPoint;
+    private bool _isDrawing;
 
     public void OnTouchPressed(SKPoint point, ToolContext context)
     {
       if (context.CurrentLayer?.IsLocked == true) return;
 
-      _pathOrigin = point;
-      _currentPath = new SKPath();
-      _currentPath.MoveTo(0, 0); // Path starts at local origin
+      _currentPoints = new List<SKPoint>();
+      // Add initial point
+      _currentPoints.Add(point);
+      _lastStampPoint = point;
+      _isDrawing = true;
+
+      MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
     }
 
     public void OnTouchMoved(SKPoint point, ToolContext context)
     {
-      if (context.CurrentLayer?.IsLocked == true || _currentPath == null) return;
+      if (!_isDrawing || context.CurrentLayer?.IsLocked == true || _currentPoints == null) return;
 
-      var localPoint = point - _pathOrigin;
-      _currentPath.LineTo(localPoint);
-      MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+      float spacingPixels = context.Spacing * context.StrokeWidth;
+      if (spacingPixels < 1) spacingPixels = 1;
+
+      var vector = point - _lastStampPoint;
+      float distance = vector.Length;
+
+      if (distance >= spacingPixels)
+      {
+        var direction = vector;
+        // Normalize manually to avoid issues with zero length
+        if (distance > 0)
+        {
+          float invLength = 1.0f / distance;
+          direction = new SKPoint(direction.X * invLength, direction.Y * invLength);
+        }
+
+        int steps = (int)(distance / spacingPixels);
+        for (int i = 0; i < steps; i++)
+        {
+          var newPoint = _lastStampPoint + new SKPoint(direction.X * spacingPixels, direction.Y * spacingPixels);
+          _currentPoints.Add(newPoint);
+          _lastStampPoint = newPoint;
+        }
+
+        MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+
+      }
     }
 
     public void OnTouchReleased(SKPoint point, ToolContext context)
     {
-      if (context.CurrentLayer?.IsLocked == true || _currentPath == null) return;
+      if (!_isDrawing || context.CurrentLayer == null || context.CurrentLayer.IsLocked || _currentPoints == null) return;
 
-      var localPoint = point - _pathOrigin;
-      _currentPath.LineTo(localPoint);
-
-      if (!context.CurrentLayer.IsLocked && !_currentPath.IsEmpty)
+      if (_currentPoints.Count > 0)
       {
-        var drawablePath = new DrawablePath
+        var element = new DrawableStamps
         {
-          Path = _currentPath,
-          TransformMatrix = SKMatrix.CreateTranslation(_pathOrigin.X, _pathOrigin.Y),
-          StrokeColor = context.StrokeColor,
-          StrokeWidth = context.StrokeWidth,
+          Points = new List<SKPoint>(_currentPoints),
+          Shape = context.BrushShape,
+          Size = context.StrokeWidth,
+          Flow = context.Flow,
           Opacity = context.Opacity,
-          FillColor = context.FillColor
+          StrokeColor = context.StrokeColor,
         };
-        context.CurrentLayer.Elements.Add(drawablePath);
+
+        context.CurrentLayer.Elements.Add(element);
         MessageBus.Current.SendMessage(new DrawingStateChangedMessage());
       }
 
-      _currentPath = null;
+      _currentPoints = null;
+      _isDrawing = false;
+      MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+    }
+
+    public void OnTouchCancelled(ToolContext context)
+    {
+      _currentPoints = null;
+      _isDrawing = false;
       MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
     }
 
     public void DrawPreview(SKCanvas canvas, MainViewModel viewModel)
     {
-      if (_currentPath == null) return;
+      if (_currentPoints == null || _currentPoints.Count == 0) return;
 
-      canvas.Save();
-      canvas.Translate(_pathOrigin.X, _pathOrigin.Y);
+      // Get current shape from viewModel
+      var shape = viewModel.CurrentBrushShape;
+      if (shape?.Path == null) return;
+
+      float size = viewModel.StrokeWidth;
+      float scale = size / 20f;
+      byte flow = viewModel.Flow;
+      byte opacity = viewModel.Opacity;
 
       using var paint = new SKPaint
       {
-        Style = SKPaintStyle.Stroke,
-        Color = viewModel.StrokeColor.WithAlpha(viewModel.Opacity),
-        StrokeWidth = viewModel.StrokeWidth,
+        Style = SKPaintStyle.Fill,
+        Color = viewModel.StrokeColor.WithAlpha((byte)(flow * (opacity / 255f))),
         IsAntialias = true
       };
 
-      canvas.DrawPath(_currentPath, paint);
-      canvas.Restore();
+      using var scaledPath = new SKPath(shape.Path);
+      var scaleMatrix = SKMatrix.CreateScale(scale, scale);
+      scaledPath.Transform(scaleMatrix);
+
+      foreach (var point in _currentPoints)
+      {
+        canvas.Save();
+        canvas.Translate(point.X, point.Y);
+        canvas.DrawPath(scaledPath, paint);
+        canvas.Restore();
+      }
     }
   }
 }

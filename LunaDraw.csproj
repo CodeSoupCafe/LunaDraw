@@ -45,7 +45,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Compile Remove="legacy\**\*" />
+		<Compile Remove="Legacy\**\*" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -83,5 +83,9 @@
 		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		  <PrivateAssets>all</PrivateAssets>
 		</PackageReference>
+	</ItemGroup>		
+
+	<ItemGroup>
+	  <Folder Include="Logic\Extensions\" />
 	</ItemGroup>		
 </Project>

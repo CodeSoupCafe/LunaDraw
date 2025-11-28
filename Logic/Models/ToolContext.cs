@@ -14,7 +14,11 @@ namespace LunaDraw.Logic.Models
         public SKColor? FillColor { get; set; }
         public float StrokeWidth { get; set; }
         public byte Opacity { get; set; }
+        public byte Flow { get; set; }
+        public float Spacing { get; set; }
+        public required BrushShape BrushShape { get; set; }
         public required IEnumerable<IDrawableElement> AllElements { get; set; }
         public required SelectionManager SelectionManager { get; set; }
+        public float Scale { get; set; } = 1.0f;
     }
 }

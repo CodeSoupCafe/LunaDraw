@@ -33,7 +33,8 @@ namespace LunaDraw.Tests
             {
                 CurrentLayer = layer,
                 AllElements = new List<IDrawableElement> { element },
-                SelectionManager = new SelectionManager()
+                SelectionManager = new SelectionManager(),
+                BrushShape = BrushShape.Circle()
             };
             
             var tool = new EraserTool();
@@ -58,7 +59,8 @@ namespace LunaDraw.Tests
             {
                 CurrentLayer = layer,
                 AllElements = new List<IDrawableElement> { element },
-                SelectionManager = new SelectionManager()
+                SelectionManager = new SelectionManager(),
+                BrushShape = BrushShape.Circle()
             };
             
             var tool = new EraserTool();
@@ -86,7 +88,8 @@ namespace LunaDraw.Tests
             {
                 CurrentLayer = layer,
                 AllElements = new List<IDrawableElement> { element },
-                SelectionManager = new SelectionManager()
+                SelectionManager = new SelectionManager(),
+                BrushShape = BrushShape.Circle()
             };
             
             var tool = new EraserTool();
@@ -112,7 +115,8 @@ namespace LunaDraw.Tests
             {
                 CurrentLayer = layer,
                 AllElements = new List<IDrawableElement> { element },
-                SelectionManager = new SelectionManager()
+                SelectionManager = new SelectionManager(),
+                BrushShape = BrushShape.Circle()
             };
             
             var tool = new EraserTool();

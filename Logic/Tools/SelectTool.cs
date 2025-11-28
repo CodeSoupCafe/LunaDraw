@@ -20,7 +20,7 @@ namespace LunaDraw.Logic.Tools
     private SelectionState _currentState = SelectionState.None;
     private ResizeHandle _activeHandle = ResizeHandle.None;
     private SKRect _originalBounds;
-    private Dictionary<IDrawableElement, SKMatrix> _originalTransforms;
+    private Dictionary<IDrawableElement, SKMatrix> _originalTransforms = [];
     private SKPoint _resizeStartPoint;
 
     public void OnTouchPressed(SKPoint point, ToolContext context)
@@ -33,7 +33,7 @@ namespace LunaDraw.Logic.Tools
       if (context.SelectionManager.Selected.Any())
       {
         var bounds = context.SelectionManager.GetBounds();
-        var handle = GetResizeHandle(point, bounds);
+        var handle = GetResizeHandle(point, bounds, context.Scale);
 
         if (handle != ResizeHandle.None)
         {
@@ -108,6 +108,14 @@ namespace LunaDraw.Logic.Tools
       MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
     }
 
+    public void OnTouchCancelled(ToolContext context)
+    {
+      _currentState = SelectionState.None;
+      _activeHandle = ResizeHandle.None;
+      _originalTransforms?.Clear();
+      MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+    }
+
     public void DrawPreview(SKCanvas canvas, MainViewModel viewModel)
     {
       if (viewModel.SelectionManager.Selected.Any())
@@ -128,29 +136,31 @@ namespace LunaDraw.Logic.Tools
         // Draw resize handles
         if (_currentState != SelectionState.Resizing)
         {
-          DrawResizeHandle(canvas, new SKPoint(bounds.Left, bounds.Top));
-          DrawResizeHandle(canvas, new SKPoint(bounds.Right, bounds.Top));
-          DrawResizeHandle(canvas, new SKPoint(bounds.Left, bounds.Bottom));
-          DrawResizeHandle(canvas, new SKPoint(bounds.Right, bounds.Bottom));
-          DrawResizeHandle(canvas, new SKPoint(bounds.MidX, bounds.Top));
-          DrawResizeHandle(canvas, new SKPoint(bounds.Right, bounds.MidY));
-          DrawResizeHandle(canvas, new SKPoint(bounds.MidX, bounds.Bottom));
-          DrawResizeHandle(canvas, new SKPoint(bounds.Left, bounds.MidY));
+          float handleDrawScale = 1.0f / viewModel.NavigationModel.TotalMatrix.ScaleX; // Inverse of canvas scale
+          DrawResizeHandle(canvas, new SKPoint(bounds.Left, bounds.Top), handleDrawScale);
+          DrawResizeHandle(canvas, new SKPoint(bounds.Right, bounds.Top), handleDrawScale);
+          DrawResizeHandle(canvas, new SKPoint(bounds.Left, bounds.Bottom), handleDrawScale);
+          DrawResizeHandle(canvas, new SKPoint(bounds.Right, bounds.Bottom), handleDrawScale);
+          DrawResizeHandle(canvas, new SKPoint(bounds.MidX, bounds.Top), handleDrawScale);
+          DrawResizeHandle(canvas, new SKPoint(bounds.Right, bounds.MidY), handleDrawScale);
+          DrawResizeHandle(canvas, new SKPoint(bounds.MidX, bounds.Bottom), handleDrawScale);
+          DrawResizeHandle(canvas, new SKPoint(bounds.Left, bounds.MidY), handleDrawScale);
         }
       }
     }
 
-    private ResizeHandle GetResizeHandle(SKPoint point, SKRect bounds)
+    private ResizeHandle GetResizeHandle(SKPoint point, SKRect bounds, float scale)
     {
-      const float handleSize = 8f;
-      if (IsPointNear(point, new SKPoint(bounds.Left, bounds.Top), handleSize)) return ResizeHandle.TopLeft;
-      if (IsPointNear(point, new SKPoint(bounds.Right, bounds.Top), handleSize)) return ResizeHandle.TopRight;
-      if (IsPointNear(point, new SKPoint(bounds.Left, bounds.Bottom), handleSize)) return ResizeHandle.BottomLeft;
-      if (IsPointNear(point, new SKPoint(bounds.Right, bounds.Bottom), handleSize)) return ResizeHandle.BottomRight;
-      if (IsPointNear(point, new SKPoint(bounds.MidX, bounds.Top), handleSize)) return ResizeHandle.Top;
-      if (IsPointNear(point, new SKPoint(bounds.Right, bounds.MidY), handleSize)) return ResizeHandle.Right;
-      if (IsPointNear(point, new SKPoint(bounds.MidX, bounds.Bottom), handleSize)) return ResizeHandle.Bottom;
-      if (IsPointNear(point, new SKPoint(bounds.Left, bounds.MidY), handleSize)) return ResizeHandle.Left;
+      const float baseHandleSize = 24f; // Size in screen pixels at 1:1 scale
+      float scaledHandleSize = baseHandleSize / scale; // Adjust based on current zoom level
+      if (IsPointNear(point, new SKPoint(bounds.Left, bounds.Top), scaledHandleSize)) return ResizeHandle.TopLeft;
+      if (IsPointNear(point, new SKPoint(bounds.Right, bounds.Top), scaledHandleSize)) return ResizeHandle.TopRight;
+      if (IsPointNear(point, new SKPoint(bounds.Left, bounds.Bottom), scaledHandleSize)) return ResizeHandle.BottomLeft;
+      if (IsPointNear(point, new SKPoint(bounds.Right, bounds.Bottom), scaledHandleSize)) return ResizeHandle.BottomRight;
+      if (IsPointNear(point, new SKPoint(bounds.MidX, bounds.Top), scaledHandleSize)) return ResizeHandle.Top;
+      if (IsPointNear(point, new SKPoint(bounds.Right, bounds.MidY), scaledHandleSize)) return ResizeHandle.Right;
+      if (IsPointNear(point, new SKPoint(bounds.MidX, bounds.Bottom), scaledHandleSize)) return ResizeHandle.Bottom;
+      if (IsPointNear(point, new SKPoint(bounds.Left, bounds.MidY), scaledHandleSize)) return ResizeHandle.Left;
       return ResizeHandle.None;
     }
 
@@ -179,7 +189,9 @@ namespace LunaDraw.Logic.Tools
       {
         if (_originalTransforms.TryGetValue(element, out var originalMatrix))
         {
-          element.TransformMatrix = SKMatrix.Concat(originalMatrix, transformFromOriginal);
+          // Apply the resize transformation (calculated in world space) AFTER the original matrix
+          // New = Resize * Original
+          element.TransformMatrix = SKMatrix.Concat(transformFromOriginal, originalMatrix);
         }
       }
     }
@@ -206,9 +218,10 @@ namespace LunaDraw.Logic.Tools
       return new SKRect(left, top, right, bottom);
     }
 
-    private void DrawResizeHandle(SKCanvas canvas, SKPoint point)
+    private void DrawResizeHandle(SKCanvas canvas, SKPoint point, float scale)
     {
-      const float handleSize = 4f;
+      const float baseHandleSize = 4f;
+      float handleSize = baseHandleSize * scale;
       using var paint = new SKPaint
       {
         Style = SKPaintStyle.Fill,

@@ -25,6 +25,7 @@ namespace LunaDraw.Logic.Tools
     void OnTouchPressed(SKPoint point, ToolContext context);
     void OnTouchMoved(SKPoint point, ToolContext context);
     void OnTouchReleased(SKPoint point, ToolContext context);
+    void OnTouchCancelled(ToolContext context);
     void DrawPreview(SKCanvas canvas, MainViewModel viewModel);
   }
 }
