@@ -10,7 +10,7 @@ namespace LunaDraw.Logic.Managers
 {
   public class SelectionManager : ReactiveObject
   {
-    private readonly ObservableCollection<IDrawableElement> _selected = new();
+    private readonly ObservableCollection<IDrawableElement> _selected = [];
     public ReadOnlyObservableCollection<IDrawableElement> Selected { get; }
 
     public SelectionManager()

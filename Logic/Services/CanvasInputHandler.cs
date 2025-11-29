@@ -26,7 +26,7 @@ namespace LunaDraw.Logic.Services
     private readonly IMessageBus _messageBus;
 
     private readonly TouchManipulationManager _touchManipulationManager;
-    private readonly Dictionary<long, SKPoint> _activeTouches = new Dictionary<long, SKPoint>();
+    private readonly Dictionary<long, SKPoint> _activeTouches = [];
     private bool _isMultiTouching = false;
     private bool _isManipulatingSelection = false;
 

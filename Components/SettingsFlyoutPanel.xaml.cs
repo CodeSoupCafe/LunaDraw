@@ -69,8 +69,10 @@ namespace LunaDraw.Components
       {
         // Set initial values from ViewModel
         StrokeColorPicker.PickedColor = SKColorToMauiColor(toolbarViewModel.StrokeColor);
+
         if (toolbarViewModel.FillColor.HasValue)
           FillColorPicker.PickedColor = SKColorToMauiColor(toolbarViewModel.FillColor.Value);
+
         TransparencySlider.Value = toolbarViewModel.Opacity;
         SizeSlider.Value = toolbarViewModel.StrokeWidth;
         FlowSlider.Value = toolbarViewModel.Flow;
@@ -98,20 +100,20 @@ namespace LunaDraw.Components
 
     public float Size
     {
-        get => (float)GetValue(SizeProperty);
-        set => SetValue(SizeProperty, value);
+      get => (float)GetValue(SizeProperty);
+      set => SetValue(SizeProperty, value);
     }
 
     public byte Flow
     {
-        get => (byte)GetValue(FlowProperty);
-        set => SetValue(FlowProperty, value);
+      get => (byte)GetValue(FlowProperty);
+      set => SetValue(FlowProperty, value);
     }
 
     public float Spacing
     {
-        get => (float)GetValue(SpacingProperty);
-        set => SetValue(SpacingProperty, value);
+      get => (float)GetValue(SpacingProperty);
+      set => SetValue(SpacingProperty, value);
     }
 
     private static void OnStrokeColorPropertyChanged(BindableObject bindable, object oldValue, object newValue)
@@ -202,26 +204,26 @@ namespace LunaDraw.Components
 
     private void OnSizeChanged(object sender, ValueChangedEventArgs e)
     {
-        var size = (float)e.NewValue;
-        MessageBus.Current.SendMessage(new BrushSettingsChangedMessage(strokeWidth: size));
+      var size = (float)e.NewValue;
+      MessageBus.Current.SendMessage(new BrushSettingsChangedMessage(strokeWidth: size));
     }
 
     private void OnFlowChanged(object sender, ValueChangedEventArgs e)
     {
-        var flow = (byte)e.NewValue;
-        MessageBus.Current.SendMessage(new BrushSettingsChangedMessage(flow: flow));
+      var flow = (byte)e.NewValue;
+      MessageBus.Current.SendMessage(new BrushSettingsChangedMessage(flow: flow));
     }
 
     private void OnSpacingChanged(object sender, ValueChangedEventArgs e)
     {
-        var spacing = (float)e.NewValue;
-        MessageBus.Current.SendMessage(new BrushSettingsChangedMessage(spacing: spacing));
+      var spacing = (float)e.NewValue;
+      MessageBus.Current.SendMessage(new BrushSettingsChangedMessage(spacing: spacing));
     }
 
     private void OnNoFillClicked(object sender, EventArgs e)
     {
-        MessageBus.Current.SendMessage(new BrushSettingsChangedMessage(fillColor: null));
-        FillColorPicker.PickedColor = Colors.Transparent; // Clear the color picker visually
+      MessageBus.Current.SendMessage(new BrushSettingsChangedMessage(fillColor: null));
+      FillColorPicker.PickedColor = Colors.Transparent; // Clear the color picker visually
     }
 
     private static Color SKColorToMauiColor(SKColor skColor)

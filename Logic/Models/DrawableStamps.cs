@@ -8,7 +8,7 @@ namespace LunaDraw.Logic.Models
   public class DrawableStamps : IDrawableElement
   {
     public Guid Id { get; } = Guid.NewGuid();
-    public List<SKPoint> Points { get; set; } = new List<SKPoint>();
+    public List<SKPoint> Points { get; set; } = [];
     public BrushShape Shape { get; set; } = BrushShape.Circle();
     public float Size { get; set; } = 10f;
 

@@ -21,9 +21,11 @@ namespace LunaDraw.Logic.Tools
     {
       if (context.CurrentLayer?.IsLocked == true) return;
 
-      _currentPoints = new List<SKPoint>();
-      // Add initial point
-      _currentPoints.Add(point);
+      _currentPoints =
+      [
+        // Add initial point
+        point,
+      ];
       _lastStampPoint = point;
       _isDrawing = true;
 
