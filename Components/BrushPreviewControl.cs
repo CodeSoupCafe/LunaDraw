@@ -35,6 +35,42 @@ namespace LunaDraw.Components
       set => SetValue(StrokeColorProperty, value);
     }
 
+    public static readonly BindableProperty FillColorProperty =
+         BindableProperty.Create(nameof(FillColor), typeof(SKColor?), typeof(BrushPreviewControl), null, propertyChanged: OnPropertyChanged);
+
+    public SKColor? FillColor
+    {
+      get => (SKColor?)GetValue(FillColorProperty);
+      set => SetValue(FillColorProperty, value);
+    }
+
+    public static readonly BindableProperty IsGlowEnabledProperty =
+        BindableProperty.Create(nameof(IsGlowEnabled), typeof(bool), typeof(BrushPreviewControl), false, propertyChanged: OnPropertyChanged);
+
+    public bool IsGlowEnabled
+    {
+      get => (bool)GetValue(IsGlowEnabledProperty);
+      set => SetValue(IsGlowEnabledProperty, value);
+    }
+
+    public static readonly BindableProperty GlowColorProperty =
+        BindableProperty.Create(nameof(GlowColor), typeof(SKColor), typeof(BrushPreviewControl), SKColors.Yellow, propertyChanged: OnPropertyChanged);
+
+    public SKColor GlowColor
+    {
+      get => (SKColor)GetValue(GlowColorProperty);
+      set => SetValue(GlowColorProperty, value);
+    }
+
+    public static readonly BindableProperty GlowRadiusProperty =
+        BindableProperty.Create(nameof(GlowRadius), typeof(float), typeof(BrushPreviewControl), 10f, propertyChanged: OnPropertyChanged);
+
+    public float GlowRadius
+    {
+      get => (float)GetValue(GlowRadiusProperty);
+      set => SetValue(GlowRadiusProperty, value);
+    }
+
     private static void OnPropertyChanged(BindableObject bindable, object oldValue, object newValue)
     {
       ((BrushPreviewControl)bindable).InvalidateSurface();
@@ -70,18 +106,31 @@ namespace LunaDraw.Components
         drawColor = new SKColor((byte)(Color.Red * 255), (byte)(Color.Green * 255), (byte)(Color.Blue * 255), (byte)(Color.Alpha * 255));
       }
 
+      canvas.Save();
+      canvas.Translate(center.X, center.Y);
+      canvas.Scale(scale);
+      // Center the shape itself (if not centered at 0,0)
+      canvas.Translate(-bounds.MidX, -bounds.MidY);
+
+      // Draw Glow if enabled
+      if (IsGlowEnabled)
+      {
+          using var glowPaint = new SKPaint
+          {
+              Style = SKPaintStyle.StrokeAndFill,
+              Color = GlowColor,
+              IsAntialias = true,
+              MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, GlowRadius)
+          };
+          canvas.DrawPath(BrushShape.Path, glowPaint);
+      }
+
       using var paint = new SKPaint
       {
         Style = SKPaintStyle.Fill,
         Color = drawColor,
         IsAntialias = true
       };
-
-      canvas.Save();
-      canvas.Translate(center.X, center.Y);
-      canvas.Scale(scale);
-      // Center the shape itself (if not centered at 0,0)
-      canvas.Translate(-bounds.MidX, -bounds.MidY);
 
       canvas.DrawPath(BrushShape.Path, paint);
       canvas.Restore();
