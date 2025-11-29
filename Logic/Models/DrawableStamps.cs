@@ -165,6 +165,62 @@ namespace LunaDraw.Logic.Models
         }
     }
 
+    private bool _isRainbowEnabled;
+    public bool IsRainbowEnabled
+    {
+        get => _isRainbowEnabled;
+        set
+        {
+            if (_isRainbowEnabled != value)
+            {
+                _isRainbowEnabled = value;
+                InvalidateCache();
+            }
+        }
+    }
+
+    private float _sizeJitter;
+    public float SizeJitter
+    {
+        get => _sizeJitter;
+        set
+        {
+            if (Math.Abs(_sizeJitter - value) > 0.001f)
+            {
+                _sizeJitter = value;
+                InvalidateCache();
+            }
+        }
+    }
+
+    private float _angleJitter;
+    public float AngleJitter
+    {
+        get => _angleJitter;
+        set
+        {
+            if (Math.Abs(_angleJitter - value) > 0.001f)
+            {
+                _angleJitter = value;
+                InvalidateCache();
+            }
+        }
+    }
+
+    private float _hueJitter;
+    public float HueJitter
+    {
+        get => _hueJitter;
+        set
+        {
+            if (Math.Abs(_hueJitter - value) > 0.001f)
+            {
+                _hueJitter = value;
+                InvalidateCache();
+            }
+        }
+    }
+
     private void InvalidateCache()
     {
         _isCacheDirty = true;
@@ -175,7 +231,11 @@ namespace LunaDraw.Logic.Models
     private SKRect GetLocalBounds()
     {
         if (Points == null || !Points.Any()) return SKRect.Empty;
-        float halfSize = Size;
+        
+        // Conservative bounds with jitter
+        float maxScale = 1.0f + SizeJitter; // Assuming SizeJitter is 0-1 relative addition
+        float halfSize = Size * maxScale;
+        
         float minX = Points.Min(p => p.X);
         float minY = Points.Min(p => p.Y);
         float maxX = Points.Max(p => p.X);
@@ -222,10 +282,14 @@ namespace LunaDraw.Logic.Models
     {
         if (Points == null || !Points.Any() || Shape?.Path == null) return;
 
-        float scale = Size / 20f;
+        float baseScale = Size / 20f;
         using var scaledPath = new SKPath(Shape.Path);
-        var scaleMatrix = SKMatrix.CreateScale(scale, scale);
+        var scaleMatrix = SKMatrix.CreateScale(baseScale, baseScale);
         scaledPath.Transform(scaleMatrix);
+
+        // Pre-calculate or deterministically generate variations
+        // Using a simple random generator seeded with a constant for stability if needed,
+        // but here we might just use index-based hashing for stateless drawing.
 
         // Glow pass (Optimized with SaveLayer)
         if (IsGlowEnabled && GlowRadius > 0)
@@ -238,41 +302,95 @@ namespace LunaDraw.Logic.Models
             
             canvas.SaveLayer(glowLayerPaint);
 
-            using var glowContentPaint = new SKPaint
-            {
-               Style = SKPaintStyle.Fill,
-               Color = GlowColor.WithAlpha((byte)(Flow * (Opacity / 255f))),
-               IsAntialias = true,
-               BlendMode = BlendMode
-            };
-
+            int index = 0;
             foreach (var point in Points)
             {
-                canvas.Save();
-                canvas.Translate(point.X, point.Y);
-                canvas.DrawPath(scaledPath, glowContentPaint);
-                canvas.Restore();
+                DrawSingleStamp(canvas, scaledPath, point, index, true);
+                index++;
             }
             
             canvas.Restore(); // Apply blur
         }
 
         // Main pass
+        int i = 0;
+        foreach (var point in Points)
+        {
+            DrawSingleStamp(canvas, scaledPath, point, i, false);
+            i++;
+        }
+    }
+
+    private void DrawSingleStamp(SKCanvas canvas, SKPath basePath, SKPoint point, int index, bool isGlowPass)
+    {
+        // Deterministic Random based on index
+        var random = new Random(index * 1337); // Simple seed
+
+        // Size Jitter
+        float scaleFactor = 1.0f;
+        if (SizeJitter > 0)
+        {
+            float jitter = (float)random.NextDouble() * SizeJitter; // 0 to SizeJitter
+            // e.g. if SizeJitter is 0.5, scale varies from 0.5 to 1.5
+            // Let's make it: 1.0 + (jitter - SizeJitter/2) -> +/- range
+            // Or just variance: 1.0 - jitter? 
+            // Let's do: 1.0 + (random - 0.5) * 2 * SizeJitter
+            scaleFactor = 1.0f + ((float)random.NextDouble() - 0.5f) * 2.0f * SizeJitter;
+            if (scaleFactor < 0.1f) scaleFactor = 0.1f;
+        }
+
+        // Angle Jitter
+        float rotation = 0f;
+        if (AngleJitter > 0)
+        {
+            rotation = ((float)random.NextDouble() - 0.5f) * 2.0f * AngleJitter; // +/- AngleJitter
+        }
+
+        // Color Jitter / Rainbow
+        SKColor color = isGlowPass ? GlowColor : StrokeColor;
+        
+        if (IsRainbowEnabled)
+        {
+            // Rainbow cycles through Hue based on index
+            float hue = (index * 10) % 360; // 10 degrees per stamp
+            color = SKColor.FromHsl(hue, 100, 50);
+        }
+        else if (HueJitter > 0 && !isGlowPass)
+        {
+            // Apply Hue Jitter
+            color.ToHsl(out float h, out float s, out float l);
+            float jitter = ((float)random.NextDouble() - 0.5f) * 2.0f * HueJitter * 360f; // +/- HueJitter (0-1 -> 0-360)
+            h = (h + jitter) % 360f;
+            if (h < 0) h += 360f;
+            color = SKColor.FromHsl(h, s, l);
+        }
+
+        // Apply opacity and flow
+        color = color.WithAlpha((byte)(Flow * (Opacity / 255f)));
+
         using var paint = new SKPaint
         {
             Style = SKPaintStyle.Fill,
-            Color = StrokeColor.WithAlpha((byte)(Flow * (Opacity / 255f))),
+            Color = color,
             IsAntialias = true,
             BlendMode = BlendMode
         };
 
-        foreach (var point in Points)
+        canvas.Save();
+        canvas.Translate(point.X, point.Y);
+        
+        if (rotation != 0)
         {
-            canvas.Save();
-            canvas.Translate(point.X, point.Y);
-            canvas.DrawPath(scaledPath, paint);
-            canvas.Restore();
+            canvas.RotateDegrees(rotation);
         }
+        
+        if (scaleFactor != 1.0f)
+        {
+            canvas.Scale(scaleFactor);
+        }
+
+        canvas.DrawPath(basePath, paint);
+        canvas.Restore();
     }
 
     public void Draw(SKCanvas canvas)
@@ -356,7 +474,11 @@ namespace LunaDraw.Logic.Models
         IsFilled = IsFilled,
         IsGlowEnabled = IsGlowEnabled,
         GlowColor = GlowColor,
-        GlowRadius = GlowRadius
+        GlowRadius = GlowRadius,
+        IsRainbowEnabled = IsRainbowEnabled,
+        SizeJitter = SizeJitter,
+        AngleJitter = AngleJitter,
+        HueJitter = HueJitter
       };
     }
 

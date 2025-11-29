@@ -23,5 +23,10 @@ namespace LunaDraw.Logic.Models
         public bool IsGlowEnabled { get; init; }
         public SKColor GlowColor { get; init; }
         public float GlowRadius { get; init; }
+        public bool IsRainbowEnabled { get; init; }
+        public float ScatterRadius { get; init; }
+        public float SizeJitter { get; init; }
+        public float AngleJitter { get; init; }
+        public float HueJitter { get; init; }
     }
 }

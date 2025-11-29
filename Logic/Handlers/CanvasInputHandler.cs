@@ -253,7 +253,12 @@ namespace LunaDraw.Logic.Services
         Scale = _navigationModel.TotalMatrix.ScaleX,
         IsGlowEnabled = _toolStateManager.IsGlowEnabled,
         GlowColor = _toolStateManager.GlowColor,
-        GlowRadius = _toolStateManager.GlowRadius
+        GlowRadius = _toolStateManager.GlowRadius,
+        IsRainbowEnabled = _toolStateManager.IsRainbowEnabled,
+        ScatterRadius = _toolStateManager.ScatterRadius,
+        SizeJitter = _toolStateManager.SizeJitter,
+        AngleJitter = _toolStateManager.AngleJitter,
+        HueJitter = _toolStateManager.HueJitter
       };
     }
   }

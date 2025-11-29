@@ -77,6 +77,21 @@ namespace LunaDraw.Logic.ViewModels
         private readonly ObservableAsPropertyHelper<float> _glowRadius;
         public float GlowRadius => _glowRadius.Value;
 
+        private readonly ObservableAsPropertyHelper<bool> _isRainbowEnabled;
+        public bool IsRainbowEnabled => _isRainbowEnabled.Value;
+
+        private readonly ObservableAsPropertyHelper<float> _scatterRadius;
+        public float ScatterRadius => _scatterRadius.Value;
+
+        private readonly ObservableAsPropertyHelper<float> _sizeJitter;
+        public float SizeJitter => _sizeJitter.Value;
+
+        private readonly ObservableAsPropertyHelper<float> _angleJitter;
+        public float AngleJitter => _angleJitter.Value;
+
+        private readonly ObservableAsPropertyHelper<float> _hueJitter;
+        public float HueJitter => _hueJitter.Value;
+
         // UI state properties
         private bool _isSettingsOpen = false;
         public bool IsSettingsOpen
@@ -157,6 +172,21 @@ namespace LunaDraw.Logic.ViewModels
 
             _glowRadius = _mainViewModel.WhenAnyValue(x => x.GlowRadius)
               .ToProperty(this, x => x.GlowRadius, initialValue: _mainViewModel.GlowRadius);
+
+            _isRainbowEnabled = _mainViewModel.WhenAnyValue(x => x.IsRainbowEnabled)
+              .ToProperty(this, x => x.IsRainbowEnabled, initialValue: _mainViewModel.IsRainbowEnabled);
+
+            _scatterRadius = _mainViewModel.WhenAnyValue(x => x.ScatterRadius)
+              .ToProperty(this, x => x.ScatterRadius, initialValue: _mainViewModel.ScatterRadius);
+
+            _sizeJitter = _mainViewModel.WhenAnyValue(x => x.SizeJitter)
+              .ToProperty(this, x => x.SizeJitter, initialValue: _mainViewModel.SizeJitter);
+
+            _angleJitter = _mainViewModel.WhenAnyValue(x => x.AngleJitter)
+              .ToProperty(this, x => x.AngleJitter, initialValue: _mainViewModel.AngleJitter);
+
+            _hueJitter = _mainViewModel.WhenAnyValue(x => x.HueJitter)
+              .ToProperty(this, x => x.HueJitter, initialValue: _mainViewModel.HueJitter);
 
             _isAnyFlyoutOpen = this.WhenAnyValue(x => x.IsSettingsOpen, x => x.IsShapesFlyoutOpen, x => x.IsBrushesFlyoutOpen)
               .Select(values => values.Item1 || values.Item2 || values.Item3)

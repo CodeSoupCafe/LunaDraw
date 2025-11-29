@@ -102,6 +102,36 @@ namespace LunaDraw.Logic.ViewModels
       set => _toolStateManager.GlowRadius = value;
     }
 
+    public bool IsRainbowEnabled
+    {
+        get => _toolStateManager.IsRainbowEnabled;
+        set => _toolStateManager.IsRainbowEnabled = value;
+    }
+
+    public float ScatterRadius
+    {
+        get => _toolStateManager.ScatterRadius;
+        set => _toolStateManager.ScatterRadius = value;
+    }
+
+    public float SizeJitter
+    {
+        get => _toolStateManager.SizeJitter;
+        set => _toolStateManager.SizeJitter = value;
+    }
+
+    public float AngleJitter
+    {
+        get => _toolStateManager.AngleJitter;
+        set => _toolStateManager.AngleJitter = value;
+    }
+
+    public float HueJitter
+    {
+        get => _toolStateManager.HueJitter;
+        set => _toolStateManager.HueJitter = value;
+    }
+
     public HistoryManager HistoryManager => _layerStateManager.HistoryManager;
 
     // Selection State
@@ -169,6 +199,11 @@ namespace LunaDraw.Logic.ViewModels
       _toolStateManager.WhenAnyValue(x => x.IsGlowEnabled).Subscribe(_ => this.RaisePropertyChanged(nameof(IsGlowEnabled)));
       _toolStateManager.WhenAnyValue(x => x.GlowColor).Subscribe(_ => this.RaisePropertyChanged(nameof(GlowColor)));
       _toolStateManager.WhenAnyValue(x => x.GlowRadius).Subscribe(_ => this.RaisePropertyChanged(nameof(GlowRadius)));
+      _toolStateManager.WhenAnyValue(x => x.IsRainbowEnabled).Subscribe(_ => this.RaisePropertyChanged(nameof(IsRainbowEnabled)));
+      _toolStateManager.WhenAnyValue(x => x.ScatterRadius).Subscribe(_ => this.RaisePropertyChanged(nameof(ScatterRadius)));
+      _toolStateManager.WhenAnyValue(x => x.SizeJitter).Subscribe(_ => this.RaisePropertyChanged(nameof(SizeJitter)));
+      _toolStateManager.WhenAnyValue(x => x.AngleJitter).Subscribe(_ => this.RaisePropertyChanged(nameof(AngleJitter)));
+      _toolStateManager.WhenAnyValue(x => x.HueJitter).Subscribe(_ => this.RaisePropertyChanged(nameof(HueJitter)));
 
       // Layer State subscriptions
       _layerStateManager.WhenAnyValue(x => x.CurrentLayer).Subscribe(_ => this.RaisePropertyChanged(nameof(CurrentLayer)));

@@ -89,6 +89,41 @@ namespace LunaDraw.Logic.Services
       set => this.RaiseAndSetIfChanged(ref _glowRadius, value);
     }
 
+    private bool _isRainbowEnabled;
+    public bool IsRainbowEnabled
+    {
+        get => _isRainbowEnabled;
+        set => this.RaiseAndSetIfChanged(ref _isRainbowEnabled, value);
+    }
+
+    private float _scatterRadius;
+    public float ScatterRadius
+    {
+        get => _scatterRadius;
+        set => this.RaiseAndSetIfChanged(ref _scatterRadius, value);
+    }
+
+    private float _sizeJitter;
+    public float SizeJitter
+    {
+        get => _sizeJitter;
+        set => this.RaiseAndSetIfChanged(ref _sizeJitter, value);
+    }
+
+    private float _angleJitter;
+    public float AngleJitter
+    {
+        get => _angleJitter;
+        set => this.RaiseAndSetIfChanged(ref _angleJitter, value);
+    }
+
+    private float _hueJitter;
+    public float HueJitter
+    {
+        get => _hueJitter;
+        set => this.RaiseAndSetIfChanged(ref _hueJitter, value);
+    }
+
     public List<IDrawingTool> AvailableTools { get; }
     public List<BrushShape> AvailableBrushShapes { get; }
 
@@ -111,8 +146,16 @@ namespace LunaDraw.Logic.Services
       AvailableBrushShapes =
       [
           BrushShape.Circle(),
-                BrushShape.Square(),
-                BrushShape.Star()
+          BrushShape.Square(),
+          BrushShape.Star(),
+          BrushShape.Heart(),
+          BrushShape.Sparkle(),
+          BrushShape.Cloud(),
+          BrushShape.Moon(),
+          BrushShape.Lightning(),
+          BrushShape.Diamond(),
+          BrushShape.Triangle(),
+          BrushShape.Hexagon()
       ];
 
       _activeTool = new FreehandTool();
@@ -130,6 +173,11 @@ namespace LunaDraw.Logic.Services
         if (msg.IsGlowEnabled.HasValue) IsGlowEnabled = msg.IsGlowEnabled.Value;
         if (msg.GlowColor.HasValue) GlowColor = msg.GlowColor.Value;
         if (msg.GlowRadius.HasValue) GlowRadius = msg.GlowRadius.Value;
+        if (msg.IsRainbowEnabled.HasValue) IsRainbowEnabled = msg.IsRainbowEnabled.Value;
+        if (msg.ScatterRadius.HasValue) ScatterRadius = msg.ScatterRadius.Value;
+        if (msg.SizeJitter.HasValue) SizeJitter = msg.SizeJitter.Value;
+        if (msg.AngleJitter.HasValue) AngleJitter = msg.AngleJitter.Value;
+        if (msg.HueJitter.HasValue) HueJitter = msg.HueJitter.Value;
       });
 
       _messageBus.Listen<BrushShapeChangedMessage>().Subscribe(msg =>

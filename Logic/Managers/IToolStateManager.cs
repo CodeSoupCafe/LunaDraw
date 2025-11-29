@@ -17,6 +17,11 @@ namespace LunaDraw.Logic.Services
         bool IsGlowEnabled { get; set; }
         SKColor GlowColor { get; set; }
         float GlowRadius { get; set; }
+        bool IsRainbowEnabled { get; set; }
+        float ScatterRadius { get; set; }
+        float SizeJitter { get; set; }
+        float AngleJitter { get; set; }
+        float HueJitter { get; set; }
         List<IDrawingTool> AvailableTools { get; }
         List<BrushShape> AvailableBrushShapes { get; }
     }
