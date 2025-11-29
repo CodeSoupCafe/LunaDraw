@@ -26,7 +26,7 @@ namespace LunaDraw.Logic.Services
     private readonly IMessageBus _messageBus;
 
     private readonly TouchManipulationManager _touchManipulationManager;
-    private readonly Dictionary<long, SKPoint> _activeTouches = new Dictionary<long, SKPoint>();
+    private readonly Dictionary<long, SKPoint> _activeTouches = [];
     private bool _isMultiTouching = false;
     private bool _isManipulatingSelection = false;
 
@@ -46,7 +46,7 @@ namespace LunaDraw.Logic.Services
       _touchManipulationManager = new TouchManipulationManager();
     }
 
-    public void ProcessTouch(SKTouchEventArgs e, SKRect canvasViewPort, SKCanvasView? canvasView)
+    public void ProcessTouch(SKTouchEventArgs e, SKRect canvasViewPort)
     {
       if (_layerStateManager.CurrentLayer == null) return;
 
@@ -250,7 +250,15 @@ namespace LunaDraw.Logic.Services
         BrushShape = _toolStateManager.CurrentBrushShape,
         AllElements = _layerStateManager.Layers.SelectMany(l => l.Elements),
         SelectionManager = _selectionManager,
-        Scale = _navigationModel.TotalMatrix.ScaleX
+        Scale = _navigationModel.TotalMatrix.ScaleX,
+        IsGlowEnabled = _toolStateManager.IsGlowEnabled,
+        GlowColor = _toolStateManager.GlowColor,
+        GlowRadius = _toolStateManager.GlowRadius,
+        IsRainbowEnabled = _toolStateManager.IsRainbowEnabled,
+        ScatterRadius = _toolStateManager.ScatterRadius,
+        SizeJitter = _toolStateManager.SizeJitter,
+        AngleJitter = _toolStateManager.AngleJitter,
+        HueJitter = _toolStateManager.HueJitter
       };
     }
   }

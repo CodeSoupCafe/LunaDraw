@@ -21,16 +21,16 @@
       <views:ToolbarView Grid.Column="0"
                          x:Name="toolbarView"/>
 
-            <skiasharp:SKCanvasView Grid.Column="1"
+            <skiasharp:SKGLView Grid.Column="1"
                               x:Name="canvasView"
                               PaintSurface="OnCanvasViewPaintSurface"
                               EnableTouchEvents="True"
                               Touch="OnTouch"
                               IgnorePixelScaling="False">
-        <skiasharp:SKCanvasView.GestureRecognizers>
+        <skiasharp:SKGLView.GestureRecognizers>
           <TapGestureRecognizer Tapped="OnCanvasTapped" />
-        </skiasharp:SKCanvasView.GestureRecognizers>
-      </skiasharp:SKCanvasView>
+        </skiasharp:SKGLView.GestureRecognizers>
+      </skiasharp:SKGLView>
     </Grid>
 
     <!-- Settings Flyout Panel as True Overlay -->

@@ -57,6 +57,9 @@ namespace LunaDraw.Logic.Models
         /// Width of the stroke/border.
         /// </summary>
         float StrokeWidth { get; set; }
+        bool IsGlowEnabled { get; set; }
+        SKColor GlowColor { get; set; }
+        float GlowRadius { get; set; }
 
         /// <summary>
         /// Draws the element on the provided canvas.

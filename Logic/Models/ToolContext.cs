@@ -20,5 +20,13 @@ namespace LunaDraw.Logic.Models
         public required IEnumerable<IDrawableElement> AllElements { get; set; }
         public required SelectionManager SelectionManager { get; set; }
         public float Scale { get; set; } = 1.0f;
+        public bool IsGlowEnabled { get; init; }
+        public SKColor GlowColor { get; init; }
+        public float GlowRadius { get; init; }
+        public bool IsRainbowEnabled { get; init; }
+        public float ScatterRadius { get; init; }
+        public float SizeJitter { get; init; }
+        public float AngleJitter { get; init; }
+        public float HueJitter { get; init; }
     }
 }

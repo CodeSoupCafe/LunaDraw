@@ -73,22 +73,40 @@
                    HorizontalTextAlignment="Center"/>
           </StackLayout>
           <StackLayout HorizontalOptions="Center">
-            <Button x:Name="BrushButton"
-                    Style="{StaticResource ToolbarButtonStyle}"
-                    Text="🖌️"
-                    Command="{Binding ShowBrushesFlyoutCommand}"
+            <Border WidthRequest="72"
+                    HeightRequest="72"
+                    Padding="8"
+                    Margin="0,4"
+                    StrokeShape="RoundRectangle 12"
                     BackgroundColor="{Binding ActiveTool, Mode=OneWay, Converter={StaticResource ToolToColorConverter}, ConverterParameter='FreehandTool'}">
-            </Button>
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding ShowBrushesFlyoutCommand}"/>
+                </Border.GestureRecognizers>
+                <local:BrushPreviewControl BrushShape="{Binding CurrentBrushShape}"
+                                           StrokeColor="{Binding StrokeColor}"
+                                           HorizontalOptions="Fill"
+                                           VerticalOptions="Fill"/>
+            </Border>
             <Label Text="{Binding AvailableTools[1].Name}"
                    HorizontalTextAlignment="Center"/>
           </StackLayout>
           <StackLayout HorizontalOptions="Center">
-            <Button x:Name="ShapesButton"
-                    Style="{StaticResource ToolbarButtonStyle}"
-                    Text="{Binding LastActiveShapeTool, Converter={StaticResource ActiveShapeIconConverter}}"
-                    Command="{Binding ShowShapesFlyoutCommand}"
+            <Border WidthRequest="72"
+                    HeightRequest="72"
+                    Padding="8"
+                    Margin="0,4"
+                    StrokeShape="RoundRectangle 12"
                     BackgroundColor="{Binding ActiveTool, Mode=OneWay, Converter={StaticResource ToolToColorConverter}, ConverterParameter='Shapes'}">
-            </Button>
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding ShowShapesFlyoutCommand}"/>
+                </Border.GestureRecognizers>
+                <local:ShapePreviewControl ActiveTool="{Binding LastActiveShapeTool}"
+                                           StrokeColor="{Binding StrokeColor}"
+                                           FillColor="{Binding FillColor}"
+                                           StrokeWidth="{Binding StrokeWidth}"
+                                           HorizontalOptions="Fill"
+                                           VerticalOptions="Fill"/>
+            </Border>
             <Label Text="Shapes"
                    HorizontalTextAlignment="Center"/>
           </StackLayout>

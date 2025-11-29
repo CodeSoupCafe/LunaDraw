@@ -84,6 +84,54 @@ namespace LunaDraw.Logic.ViewModels
       set => _toolStateManager.CurrentBrushShape = value;
     }
 
+    public bool IsGlowEnabled
+    {
+      get => _toolStateManager.IsGlowEnabled;
+      set => _toolStateManager.IsGlowEnabled = value;
+    }
+
+    public SKColor GlowColor
+    {
+      get => _toolStateManager.GlowColor;
+      set => _toolStateManager.GlowColor = value;
+    }
+
+    public float GlowRadius
+    {
+      get => _toolStateManager.GlowRadius;
+      set => _toolStateManager.GlowRadius = value;
+    }
+
+    public bool IsRainbowEnabled
+    {
+        get => _toolStateManager.IsRainbowEnabled;
+        set => _toolStateManager.IsRainbowEnabled = value;
+    }
+
+    public float ScatterRadius
+    {
+        get => _toolStateManager.ScatterRadius;
+        set => _toolStateManager.ScatterRadius = value;
+    }
+
+    public float SizeJitter
+    {
+        get => _toolStateManager.SizeJitter;
+        set => _toolStateManager.SizeJitter = value;
+    }
+
+    public float AngleJitter
+    {
+        get => _toolStateManager.AngleJitter;
+        set => _toolStateManager.AngleJitter = value;
+    }
+
+    public float HueJitter
+    {
+        get => _toolStateManager.HueJitter;
+        set => _toolStateManager.HueJitter = value;
+    }
+
     public HistoryManager HistoryManager => _layerStateManager.HistoryManager;
 
     // Selection State
@@ -148,10 +196,26 @@ namespace LunaDraw.Logic.ViewModels
       _toolStateManager.WhenAnyValue(x => x.Flow).Subscribe(_ => this.RaisePropertyChanged(nameof(Flow)));
       _toolStateManager.WhenAnyValue(x => x.Spacing).Subscribe(_ => this.RaisePropertyChanged(nameof(Spacing)));
       _toolStateManager.WhenAnyValue(x => x.CurrentBrushShape).Subscribe(_ => this.RaisePropertyChanged(nameof(CurrentBrushShape)));
+      _toolStateManager.WhenAnyValue(x => x.IsGlowEnabled).Subscribe(_ => this.RaisePropertyChanged(nameof(IsGlowEnabled)));
+      _toolStateManager.WhenAnyValue(x => x.GlowColor).Subscribe(_ => this.RaisePropertyChanged(nameof(GlowColor)));
+      _toolStateManager.WhenAnyValue(x => x.GlowRadius).Subscribe(_ => this.RaisePropertyChanged(nameof(GlowRadius)));
+      _toolStateManager.WhenAnyValue(x => x.IsRainbowEnabled).Subscribe(_ => this.RaisePropertyChanged(nameof(IsRainbowEnabled)));
+      _toolStateManager.WhenAnyValue(x => x.ScatterRadius).Subscribe(_ => this.RaisePropertyChanged(nameof(ScatterRadius)));
+      _toolStateManager.WhenAnyValue(x => x.SizeJitter).Subscribe(_ => this.RaisePropertyChanged(nameof(SizeJitter)));
+      _toolStateManager.WhenAnyValue(x => x.AngleJitter).Subscribe(_ => this.RaisePropertyChanged(nameof(AngleJitter)));
+      _toolStateManager.WhenAnyValue(x => x.HueJitter).Subscribe(_ => this.RaisePropertyChanged(nameof(HueJitter)));
 
       // Layer State subscriptions
       _layerStateManager.WhenAnyValue(x => x.CurrentLayer).Subscribe(_ => this.RaisePropertyChanged(nameof(CurrentLayer)));
 
+      // Invalidate all layers when selection changes to ensure proper cached/live transition
+      SelectionManager.SelectionChanged += (s, e) =>
+      {
+          foreach (var layer in Layers)
+          {
+              layer.InvalidateCache();
+          }
+      };
 
       // Initialize OAPH properties for command states
       _canDelete = this.WhenAnyValue(x => x.SelectedElements.Count)
@@ -308,9 +372,9 @@ namespace LunaDraw.Logic.ViewModels
       MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
     }
 
-    public void ProcessTouch(SKTouchEventArgs e, SKCanvasView canvasView)
+    public void ProcessTouch(SKTouchEventArgs e)
     {
-      _canvasInputHandler.ProcessTouch(e, CanvasSize, canvasView);
+      _canvasInputHandler.ProcessTouch(e, CanvasSize);
     }
   }
 }

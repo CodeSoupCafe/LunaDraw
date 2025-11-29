@@ -28,7 +28,6 @@ public partial class MainPage : ContentPage
     ShapesFlyoutContent.BindingContext = _toolbarViewModel;
     BrushesFlyoutContent.BindingContext = _toolbarViewModel;
 
-    canvasView.Loaded += OnCanvasLoaded;
     canvasView.PaintSurface += OnCanvasViewPaintSurface;
     canvasView.Touch += OnTouch;
 
@@ -38,23 +37,15 @@ public partial class MainPage : ContentPage
     });
   }
 
-  private void OnCanvasLoaded(object? sender, EventArgs e)
-  {
-    // Use logical size
-    _viewModel.CanvasSize = new SKRect(0, 0, (float)canvasView.Width, (float)canvasView.Height);
-  }
-
-  private void OnCanvasViewPaintSurface(object? sender, SKPaintSurfaceEventArgs e)
+  private void OnCanvasViewPaintSurface(object? sender, SKPaintGLSurfaceEventArgs e)
   {
     SKSurface surface = e.Surface;
     SKCanvas canvas = surface.Canvas;
 
     // Ensure ViewModel knows the current canvas size (logical pixels)
-    if (_viewModel != null)
-    {
-        // Use logical size
-        _viewModel.CanvasSize = new SKRect(0, 0, (float)canvasView.Width, (float)canvasView.Height);
-    }
+    int width = e.BackendRenderTarget.Width;
+    int height = e.BackendRenderTarget.Height;
+    _viewModel.CanvasSize = new SKRect(0, 0, width, height);
 
     canvas.Clear(SKColors.White);
 
@@ -66,22 +57,14 @@ public partial class MainPage : ContentPage
     canvas.Concat(_viewModel.NavigationModel.UserMatrix);
 
     // Apply Fit-To-Screen logic and capture Total Matrix (Legacy Pipeline)
-    // We use the current surface size as the bounds to center, effectively maintaining a 1:1 aspect initially
-    // but allowing the legacy MaxScaleCentered logic to calculate the final TotalMatrix.
-    var bounds = new SKRect(0, 0, e.Info.Width, e.Info.Height);
-    _viewModel.NavigationModel.TotalMatrix = canvas.MaxScaleCentered(e.Info.Width, e.Info.Height, bounds);
+    var bounds = new SKRect(0, 0, width, height);
+    _viewModel.NavigationModel.TotalMatrix = canvas.MaxScaleCentered(width, height, bounds);
 
     foreach (var layer in _viewModel.Layers)
     {
       if (layer.IsVisible)
       {
-        foreach (var element in layer.Elements)
-        {
-          if (element.IsVisible)
-          {
-            element.Draw(canvas);
-          }
-        }
+        layer.Draw(canvas);
       }
     }
 
@@ -96,7 +79,7 @@ public partial class MainPage : ContentPage
     {
          CheckHideFlyouts();
     }
-    _viewModel?.ProcessTouch(e, canvasView);
+    _viewModel?.ProcessTouch(e);
     e.Handled = true;
   }
 

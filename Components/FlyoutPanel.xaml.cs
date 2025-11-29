@@ -201,21 +201,65 @@ namespace LunaDraw.Components
       if (!(this.Parent is VisualElement parentPage)) return;
       var screenWidth = parentPage.Width;
       var screenHeight = parentPage.Height;
+      var margin = 10.0;
 
-      // If the flyout would overflow the right edge, move it to the left of the target
-      if (flyoutBounds.Right > screenWidth)
+      double finalX = x;
+      double finalY = y;
+      double finalWidth = -1;
+      double finalHeight = -1;
+
+      // --- Horizontal Positioning Strategy ---
+
+      // 1. Try positioning to the right of the target (preferred)
+      if (flyoutBounds.Right > screenWidth - margin)
       {
-        x = targetBounds.Left - flyoutBounds.Width - 10;
+          // It overflows right. Try positioning to the left of the target.
+          double leftX = targetBounds.Left - flyoutBounds.Width - 10;
+          if (leftX >= margin)
+          {
+              finalX = leftX;
+          }
+          else
+          {
+              // Neither side fits perfectly.
+              // Position at the left-most valid position or right-most valid position?
+              // Let's constrain to the screen width.
+              finalX = Math.Max(margin, Math.Min(x, screenWidth - flyoutBounds.Width - margin));
+              
+              // If the flyout is wider than the screen (minus margins), constrain width.
+              if (flyoutBounds.Width > screenWidth - 2 * margin)
+              {
+                  finalX = margin;
+                  finalWidth = screenWidth - 2 * margin;
+              }
+          }
       }
 
-      // If the flyout would overflow the bottom edge, move it up to fit
-      if (flyoutBounds.Bottom > screenHeight)
+      // --- Vertical Positioning Strategy ---
+      
+      // If the flyout overflows the bottom edge
+      if (flyoutBounds.Bottom > screenHeight - margin)
       {
-        y = Math.Max(0, screenHeight - flyoutBounds.Height);
+          // Try moving it up
+          double diff = flyoutBounds.Bottom - (screenHeight - margin);
+          double newY = y - diff;
+
+          if (newY >= margin)
+          {
+              finalY = newY;
+          }
+          else
+          {
+              // Moving up hits the top edge. Constrain Height.
+              finalY = margin;
+              finalHeight = screenHeight - 2 * margin;
+          }
       }
 
-      // Re-apply the adjusted bounds (still use -1 for AutoSize)
-      AbsoluteLayout.SetLayoutBounds(this, new Rect(x, y, -1, -1));
+      // Re-apply the adjusted bounds
+      // Note: AbsoluteLayout in MAUI handles -1 as AutoSize.
+      // If we set a specific width/height, it will respect it.
+      AbsoluteLayout.SetLayoutBounds(this, new Rect(finalX, finalY, finalWidth, finalHeight));
     }
   }
 }

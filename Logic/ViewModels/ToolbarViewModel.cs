@@ -65,6 +65,33 @@ namespace LunaDraw.Logic.ViewModels
         private readonly ObservableAsPropertyHelper<float> _spacing;
         public float Spacing => _spacing.Value;
 
+        private readonly ObservableAsPropertyHelper<BrushShape> _currentBrushShape;
+        public BrushShape CurrentBrushShape => _currentBrushShape.Value;
+
+        private readonly ObservableAsPropertyHelper<bool> _isGlowEnabled;
+        public bool IsGlowEnabled => _isGlowEnabled.Value;
+
+        private readonly ObservableAsPropertyHelper<SKColor> _glowColor;
+        public SKColor GlowColor => _glowColor.Value;
+
+        private readonly ObservableAsPropertyHelper<float> _glowRadius;
+        public float GlowRadius => _glowRadius.Value;
+
+        private readonly ObservableAsPropertyHelper<bool> _isRainbowEnabled;
+        public bool IsRainbowEnabled => _isRainbowEnabled.Value;
+
+        private readonly ObservableAsPropertyHelper<float> _scatterRadius;
+        public float ScatterRadius => _scatterRadius.Value;
+
+        private readonly ObservableAsPropertyHelper<float> _sizeJitter;
+        public float SizeJitter => _sizeJitter.Value;
+
+        private readonly ObservableAsPropertyHelper<float> _angleJitter;
+        public float AngleJitter => _angleJitter.Value;
+
+        private readonly ObservableAsPropertyHelper<float> _hueJitter;
+        public float HueJitter => _hueJitter.Value;
+
         // UI state properties
         private bool _isSettingsOpen = false;
         public bool IsSettingsOpen
@@ -117,22 +144,49 @@ namespace LunaDraw.Logic.ViewModels
                 .Subscribe(tool => ActiveTool = tool);
 
             _strokeColor = _mainViewModel.WhenAnyValue(x => x.StrokeColor)
-              .ToProperty(this, x => x.StrokeColor);
+              .ToProperty(this, x => x.StrokeColor, _mainViewModel.StrokeColor);
 
             _fillColor = _mainViewModel.WhenAnyValue(x => x.FillColor)
-              .ToProperty(this, x => x.FillColor);
+              .ToProperty(this, x => x.FillColor, _mainViewModel.FillColor);
 
             _strokeWidth = _mainViewModel.WhenAnyValue(x => x.StrokeWidth)
-              .ToProperty(this, x => x.StrokeWidth);
+              .ToProperty(this, x => x.StrokeWidth, _mainViewModel.StrokeWidth);
 
             _opacity = _mainViewModel.WhenAnyValue(x => x.Opacity)
-              .ToProperty(this, x => x.Opacity);
+              .ToProperty(this, x => x.Opacity, _mainViewModel.Opacity);
 
             _flow = _mainViewModel.WhenAnyValue(x => x.Flow)
-              .ToProperty(this, x => x.Flow);
+              .ToProperty(this, x => x.Flow, _mainViewModel.Flow);
 
             _spacing = _mainViewModel.WhenAnyValue(x => x.Spacing)
-              .ToProperty(this, x => x.Spacing);
+              .ToProperty(this, x => x.Spacing, _mainViewModel.Spacing);
+
+            _currentBrushShape = _mainViewModel.WhenAnyValue(x => x.CurrentBrushShape)
+              .ToProperty(this, x => x.CurrentBrushShape, _mainViewModel.CurrentBrushShape);
+
+            _isGlowEnabled = _mainViewModel.WhenAnyValue(x => x.IsGlowEnabled)
+              .ToProperty(this, x => x.IsGlowEnabled, initialValue: _mainViewModel.IsGlowEnabled);
+
+            _glowColor = _mainViewModel.WhenAnyValue(x => x.GlowColor)
+              .ToProperty(this, x => x.GlowColor, initialValue: _mainViewModel.GlowColor);
+
+            _glowRadius = _mainViewModel.WhenAnyValue(x => x.GlowRadius)
+              .ToProperty(this, x => x.GlowRadius, initialValue: _mainViewModel.GlowRadius);
+
+            _isRainbowEnabled = _mainViewModel.WhenAnyValue(x => x.IsRainbowEnabled)
+              .ToProperty(this, x => x.IsRainbowEnabled, initialValue: _mainViewModel.IsRainbowEnabled);
+
+            _scatterRadius = _mainViewModel.WhenAnyValue(x => x.ScatterRadius)
+              .ToProperty(this, x => x.ScatterRadius, initialValue: _mainViewModel.ScatterRadius);
+
+            _sizeJitter = _mainViewModel.WhenAnyValue(x => x.SizeJitter)
+              .ToProperty(this, x => x.SizeJitter, initialValue: _mainViewModel.SizeJitter);
+
+            _angleJitter = _mainViewModel.WhenAnyValue(x => x.AngleJitter)
+              .ToProperty(this, x => x.AngleJitter, initialValue: _mainViewModel.AngleJitter);
+
+            _hueJitter = _mainViewModel.WhenAnyValue(x => x.HueJitter)
+              .ToProperty(this, x => x.HueJitter, initialValue: _mainViewModel.HueJitter);
 
             _isAnyFlyoutOpen = this.WhenAnyValue(x => x.IsSettingsOpen, x => x.IsShapesFlyoutOpen, x => x.IsBrushesFlyoutOpen)
               .Select(values => values.Item1 || values.Item2 || values.Item3)

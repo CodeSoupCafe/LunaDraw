@@ -10,7 +10,8 @@
           Padding="12"
           StrokeShape="RoundRectangle"
           Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
-          StrokeThickness="1">
+          StrokeThickness="1"
+          MaximumWidthRequest="400">
     <StackLayout Spacing="10">
       <Label Text="Choose a Brush"
              FontAttributes="Bold"
@@ -21,38 +22,48 @@
                Color="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
                Margin="0,5"/>
                
-      <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
-          <StackLayout BindableLayout.ItemsSource="{Binding AvailableBrushShapes}"
-                       Orientation="Horizontal"
-                       Spacing="10"
-                       HorizontalOptions="Center">
-            <BindableLayout.ItemTemplate>
-              <DataTemplate x:DataType="models:BrushShape">
-                <StackLayout>
-                    <Border StrokeShape="RoundRectangle 10"
-                            StrokeThickness="1"
-                            Stroke="Gray"
-                            WidthRequest="60"
-                            HeightRequest="60"
-                            Padding="0">
-                         <Border.GestureRecognizers>
-                             <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:ToolbarViewModel}}, Path=SelectBrushShapeCommand}"
-                                                   CommandParameter="{Binding .}"/>
-                         </Border.GestureRecognizers>
-                         <components:BrushPreviewControl BrushShape="{Binding .}"
-                                                         Color="{AppThemeBinding Light=Black, Dark=White}"
-                                                         HorizontalOptions="Fill"
-                                                         VerticalOptions="Fill"/>
-                    </Border>
-                    <Label Text="{Binding Name}"
-                           FontSize="12"
-                           HorizontalTextAlignment="Center"
-                           LineBreakMode="TailTruncation"/>
-                </StackLayout>
-              </DataTemplate>
-            </BindableLayout.ItemTemplate>
-          </StackLayout>
-      </ScrollView>
+      <CollectionView ItemsSource="{Binding AvailableBrushShapes}"
+                      HeightRequest="420"
+                      HorizontalOptions="Fill"
+                      SelectionMode="None">
+        <CollectionView.ItemsLayout>
+          <GridItemsLayout Orientation="Vertical"
+                           Span="4"
+                           VerticalItemSpacing="10"
+                           HorizontalItemSpacing="10" />
+        </CollectionView.ItemsLayout>
+        <CollectionView.ItemTemplate>
+          <DataTemplate x:DataType="models:BrushShape">
+            <StackLayout HorizontalOptions="Center">
+              <Border StrokeShape="RoundRectangle 10"
+                      StrokeThickness="1"
+                      Stroke="Gray"
+                      WidthRequest="60"
+                      HeightRequest="60"
+                      Padding="4"
+                      Margin="1">
+                <Border.GestureRecognizers>
+                  <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:ToolbarViewModel}}, Path=SelectBrushShapeCommand}"
+                                        CommandParameter="{Binding .}" />
+                </Border.GestureRecognizers>
+                <components:BrushPreviewControl BrushShape="{Binding .}"
+                                                StrokeColor="{Binding Source={RelativeSource AncestorType={x:Type viewModels:ToolbarViewModel}}, Path=StrokeColor}"
+                                                FillColor="{Binding Source={RelativeSource AncestorType={x:Type viewModels:ToolbarViewModel}}, Path=FillColor}"
+                                                IsGlowEnabled="{Binding Source={RelativeSource AncestorType={x:Type viewModels:ToolbarViewModel}}, Path=IsGlowEnabled}"
+                                                GlowColor="{Binding Source={RelativeSource AncestorType={x:Type viewModels:ToolbarViewModel}}, Path=GlowColor}"
+                                                GlowRadius="{Binding Source={RelativeSource AncestorType={x:Type viewModels:ToolbarViewModel}}, Path=GlowRadius}"
+                                                Color="{AppThemeBinding Light=Black, Dark=White}"
+                                                HorizontalOptions="Fill"
+                                                VerticalOptions="Fill" />
+              </Border>
+              <Label Text="{Binding Name}"
+                     FontSize="12"
+                     HorizontalTextAlignment="Center"
+                     LineBreakMode="TailTruncation" />
+            </StackLayout>
+          </DataTemplate>
+        </CollectionView.ItemTemplate>
+      </CollectionView>
     </StackLayout>
   </Border>
 </ContentView>

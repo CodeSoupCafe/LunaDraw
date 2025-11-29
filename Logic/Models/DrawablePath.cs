@@ -21,6 +21,10 @@ namespace LunaDraw.Logic.Models
     public SKBlendMode BlendMode { get; set; } = SKBlendMode.SrcOver;
     public bool IsFilled { get; set; }
 
+    public bool IsGlowEnabled { get; set; } = false;
+    public SKColor GlowColor { get; set; } = SKColors.Transparent;
+    public float GlowRadius { get; set; } = 0f;
+
     public SKRect Bounds => TransformMatrix.MapRect(Path?.TightBounds ?? SKRect.Empty);
 
     public void Draw(SKCanvas canvas)
@@ -30,6 +34,19 @@ namespace LunaDraw.Logic.Models
       canvas.Save();
       var matrix = TransformMatrix;
       canvas.Concat(in matrix);
+
+      if (IsGlowEnabled && GlowRadius > 0)
+      {
+        using var glowPaint = new SKPaint
+        {
+          Style = IsFilled ? SKPaintStyle.Fill : SKPaintStyle.Stroke,
+          Color = GlowColor.WithAlpha(Opacity),
+          StrokeWidth = StrokeWidth,
+          IsAntialias = true,
+          MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, GlowRadius)
+        };
+        canvas.DrawPath(Path, glowPaint);
+      }
 
       // Draw selection highlight
       if (IsSelected)
@@ -52,6 +69,17 @@ namespace LunaDraw.Logic.Models
         IsAntialias = true,
         BlendMode = BlendMode
       };
+      if (FillColor.HasValue && IsFilled)
+      {
+        using var fillPaint = new SKPaint
+        {
+          Style = SKPaintStyle.Fill,
+          Color = FillColor.Value.WithAlpha(Opacity),
+          IsAntialias = true,
+          BlendMode = BlendMode
+        };
+        canvas.DrawPath(Path, fillPaint);
+      }
       canvas.DrawPath(Path, paint);
       canvas.Restore();
     }
