@@ -40,6 +40,7 @@
                                                    CommandParameter="{Binding .}"/>
                          </Border.GestureRecognizers>
                          <components:BrushPreviewControl BrushShape="{Binding .}"
+                                                         StrokeColor="{Binding Source={RelativeSource AncestorType={x:Type viewModels:ToolbarViewModel}}, Path=StrokeColor}"
                                                          Color="{AppThemeBinding Light=Black, Dark=White}"
                                                          HorizontalOptions="Fill"
                                                          VerticalOptions="Fill"/>

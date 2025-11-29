@@ -65,6 +65,9 @@ namespace LunaDraw.Logic.ViewModels
         private readonly ObservableAsPropertyHelper<float> _spacing;
         public float Spacing => _spacing.Value;
 
+        private readonly ObservableAsPropertyHelper<BrushShape> _currentBrushShape;
+        public BrushShape CurrentBrushShape => _currentBrushShape.Value;
+
         // UI state properties
         private bool _isSettingsOpen = false;
         public bool IsSettingsOpen
@@ -117,22 +120,25 @@ namespace LunaDraw.Logic.ViewModels
                 .Subscribe(tool => ActiveTool = tool);
 
             _strokeColor = _mainViewModel.WhenAnyValue(x => x.StrokeColor)
-              .ToProperty(this, x => x.StrokeColor);
+              .ToProperty(this, x => x.StrokeColor, _mainViewModel.StrokeColor);
 
             _fillColor = _mainViewModel.WhenAnyValue(x => x.FillColor)
-              .ToProperty(this, x => x.FillColor);
+              .ToProperty(this, x => x.FillColor, _mainViewModel.FillColor);
 
             _strokeWidth = _mainViewModel.WhenAnyValue(x => x.StrokeWidth)
-              .ToProperty(this, x => x.StrokeWidth);
+              .ToProperty(this, x => x.StrokeWidth, _mainViewModel.StrokeWidth);
 
             _opacity = _mainViewModel.WhenAnyValue(x => x.Opacity)
-              .ToProperty(this, x => x.Opacity);
+              .ToProperty(this, x => x.Opacity, _mainViewModel.Opacity);
 
             _flow = _mainViewModel.WhenAnyValue(x => x.Flow)
-              .ToProperty(this, x => x.Flow);
+              .ToProperty(this, x => x.Flow, _mainViewModel.Flow);
 
             _spacing = _mainViewModel.WhenAnyValue(x => x.Spacing)
-              .ToProperty(this, x => x.Spacing);
+              .ToProperty(this, x => x.Spacing, _mainViewModel.Spacing);
+
+            _currentBrushShape = _mainViewModel.WhenAnyValue(x => x.CurrentBrushShape)
+              .ToProperty(this, x => x.CurrentBrushShape, _mainViewModel.CurrentBrushShape);
 
             _isAnyFlyoutOpen = this.WhenAnyValue(x => x.IsSettingsOpen, x => x.IsShapesFlyoutOpen, x => x.IsBrushesFlyoutOpen)
               .Select(values => values.Item1 || values.Item2 || values.Item3)

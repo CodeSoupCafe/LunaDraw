@@ -28,8 +28,16 @@
                             WidthRequest="250"
                             PropertyChanged="OnStrokeColorChanged"/>
 
-      <Label Text="Fill Color"
-             FontAttributes="Bold"/>
+      <StackLayout Orientation="Horizontal">
+        <Label Text="Fill Color"
+               FontAttributes="Bold"
+               VerticalOptions="Center"/>
+        <Button Text="No Fill"
+                HorizontalOptions="EndAndExpand"
+                Padding="10,0"
+                HeightRequest="30"
+                Clicked="OnNoFillClicked"/>
+      </StackLayout>
       <controls:ColorPicker x:Name="FillColorPicker"
                             ColorFlowDirection="Horizontal"
                             ColorSpectrumStyle="ShadeToHueStyle"

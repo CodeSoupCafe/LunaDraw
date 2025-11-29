@@ -218,6 +218,12 @@ namespace LunaDraw.Components
         MessageBus.Current.SendMessage(new BrushSettingsChangedMessage(spacing: spacing));
     }
 
+    private void OnNoFillClicked(object sender, EventArgs e)
+    {
+        MessageBus.Current.SendMessage(new BrushSettingsChangedMessage(fillColor: null));
+        FillColorPicker.PickedColor = Colors.Transparent; // Clear the color picker visually
+    }
+
     private static Color SKColorToMauiColor(SKColor skColor)
     {
       return Color.FromRgba(skColor.Red, skColor.Green, skColor.Blue, skColor.Alpha);

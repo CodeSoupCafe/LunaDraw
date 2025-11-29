@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:components="clr-namespace:LunaDraw.Components"
              x:Class="LunaDraw.Components.ShapesFlyoutPanel">
   <Border Background="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray800}}"
           Padding="12"
@@ -21,12 +22,22 @@
                    Spacing="8">
         <!-- Rectangle -->
         <StackLayout>
-          <Button Style="{StaticResource FlyoutButtonStyle}"
-                  Text="▭"
-                  WidthRequest="80"
+          <Border WidthRequest="80"
                   HeightRequest="80"
-                  FontSize="36"
-                  Command="{Binding SelectRectangleCommand}"/>
+                  StrokeShape="RoundRectangle 12"
+                  Stroke="Gray"
+                  StrokeThickness="1"
+                  Padding="8">
+              <Border.GestureRecognizers>
+                  <TapGestureRecognizer Command="{Binding SelectRectangleCommand}"/>
+              </Border.GestureRecognizers>
+              <components:ShapePreviewControl ShapeName="Rectangle"
+                                              StrokeColor="{Binding StrokeColor}"
+                                              FillColor="{Binding FillColor}"
+                                              StrokeWidth="{Binding StrokeWidth}"
+                                              HorizontalOptions="Fill"
+                                              VerticalOptions="Fill"/>
+          </Border>
           <Label Text="Rectangle"
                  FontSize="12"
                  HorizontalTextAlignment="Center"/>
@@ -34,12 +45,22 @@
 
         <!-- Circle -->
         <StackLayout>
-          <Button Style="{StaticResource FlyoutButtonStyle}"
-                  Text="◯"
-                  WidthRequest="80"
+          <Border WidthRequest="80"
                   HeightRequest="80"
-                  FontSize="36"
-                  Command="{Binding SelectCircleCommand}"/>
+                  StrokeShape="RoundRectangle 12"
+                  Stroke="Gray"
+                  StrokeThickness="1"
+                  Padding="8">
+              <Border.GestureRecognizers>
+                  <TapGestureRecognizer Command="{Binding SelectCircleCommand}"/>
+              </Border.GestureRecognizers>
+              <components:ShapePreviewControl ShapeName="Circle"
+                                              StrokeColor="{Binding StrokeColor}"
+                                              FillColor="{Binding FillColor}"
+                                              StrokeWidth="{Binding StrokeWidth}"
+                                              HorizontalOptions="Fill"
+                                              VerticalOptions="Fill"/>
+          </Border>
           <Label Text="Circle"
                  FontSize="12"
                  HorizontalTextAlignment="Center"/>
@@ -47,12 +68,22 @@
 
         <!-- Line -->
         <StackLayout>
-          <Button Style="{StaticResource FlyoutButtonStyle}"
-                  Text="／"
-                  WidthRequest="80"
+          <Border WidthRequest="80"
                   HeightRequest="80"
-                  FontSize="36"
-                  Command="{Binding SelectLineCommand}"/>
+                  StrokeShape="RoundRectangle 12"
+                  Stroke="Gray"
+                  StrokeThickness="1"
+                  Padding="8">
+              <Border.GestureRecognizers>
+                  <TapGestureRecognizer Command="{Binding SelectLineCommand}"/>
+              </Border.GestureRecognizers>
+              <components:ShapePreviewControl ShapeName="Line"
+                                              StrokeColor="{Binding StrokeColor}"
+                                              FillColor="{Binding FillColor}"
+                                              StrokeWidth="{Binding StrokeWidth}"
+                                              HorizontalOptions="Fill"
+                                              VerticalOptions="Fill"/>
+          </Border>
           <Label Text="Line"
                  FontSize="12"
                  HorizontalTextAlignment="Center"/>

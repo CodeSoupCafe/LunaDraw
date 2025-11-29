@@ -25,6 +25,15 @@ namespace LunaDraw.Components
             set => SetValue(ColorProperty, value);
         }
 
+        public static readonly BindableProperty StrokeColorProperty =
+             BindableProperty.Create(nameof(StrokeColor), typeof(SKColor), typeof(BrushPreviewControl), SKColors.Empty, propertyChanged: OnColorChanged);
+
+        public SKColor StrokeColor
+        {
+            get => (SKColor)GetValue(StrokeColorProperty);
+            set => SetValue(StrokeColorProperty, value);
+        }
+
         private static void OnBrushShapeChanged(BindableObject bindable, object oldValue, object newValue)
         {
             ((BrushPreviewControl)bindable).InvalidateSurface();
@@ -55,10 +64,20 @@ namespace LunaDraw.Components
             float availableSize = Math.Min(info.Width, info.Height) * 0.6f; // 60% padding
             float scale = availableSize / maxDim;
 
+            SKColor drawColor;
+            if (StrokeColor != SKColors.Empty)
+            {
+                drawColor = StrokeColor;
+            }
+            else
+            {
+                drawColor = new SKColor((byte)(Color.Red * 255), (byte)(Color.Green * 255), (byte)(Color.Blue * 255), (byte)(Color.Alpha * 255));
+            }
+
             using var paint = new SKPaint
             {
                 Style = SKPaintStyle.Fill,
-                Color = new SKColor((byte)(Color.Red * 255), (byte)(Color.Green * 255), (byte)(Color.Blue * 255), (byte)(Color.Alpha * 255)),
+                Color = drawColor,
                 IsAntialias = true
             };
 
