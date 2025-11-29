@@ -19,6 +19,9 @@ namespace LunaDraw.Logic.Models
     public SKColor? FillColor { get; set; } // Not used for line
     public SKColor StrokeColor { get; set; }
     public float StrokeWidth { get; set; }
+    public bool IsGlowEnabled { get; set; } = false;
+    public SKColor GlowColor { get; set; } = SKColors.Transparent;
+    public float GlowRadius { get; set; } = 0f;
 
     public SKRect Bounds
     {
@@ -53,6 +56,20 @@ namespace LunaDraw.Logic.Models
           IsAntialias = true
         };
         canvas.DrawLine(StartPoint, EndPoint, highlightPaint);
+      }
+
+      // Draw glow if enabled
+      if (IsGlowEnabled && GlowRadius > 0)
+      {
+        using var glowPaint = new SKPaint
+        {
+          Style = SKPaintStyle.Stroke,
+          Color = GlowColor.WithAlpha(Opacity),
+          StrokeWidth = StrokeWidth,
+          IsAntialias = true,
+          MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, GlowRadius)
+        };
+        canvas.DrawLine(StartPoint, EndPoint, glowPaint);
       }
 
       using var paint = new SKPaint
@@ -101,7 +118,10 @@ namespace LunaDraw.Logic.Models
         ZIndex = ZIndex,
         Opacity = Opacity,
         StrokeColor = StrokeColor,
-        StrokeWidth = StrokeWidth
+        StrokeWidth = StrokeWidth,
+        IsGlowEnabled = IsGlowEnabled,
+        GlowColor = GlowColor,
+        GlowRadius = GlowRadius
       };
     }
 

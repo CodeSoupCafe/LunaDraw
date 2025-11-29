@@ -29,6 +29,10 @@ namespace LunaDraw.Logic.Models
     public SKBlendMode BlendMode { get; set; } = SKBlendMode.SrcOver;
     public bool IsFilled { get; set; } = true; // Stamps are usually filled shapes
 
+    public bool IsGlowEnabled { get; set; } = false;
+    public SKColor GlowColor { get; set; } = SKColors.Transparent;
+    public float GlowRadius { get; set; } = 0f;
+
     public SKRect Bounds
     {
       get
@@ -57,8 +61,13 @@ namespace LunaDraw.Logic.Models
       // Draw selection highlight
       if (IsSelected)
       {
-        // Simplified highlight: bounding box or just dots?
-        // Let's draw a bounding box for simplicity
+        float halfSize = Size;
+        float minX = Points.Min(p => p.X);
+        float minY = Points.Min(p => p.Y);
+        float maxX = Points.Max(p => p.X);
+        float maxY = Points.Max(p => p.Y);
+        var localBounds = new SKRect(minX - halfSize, minY - halfSize, maxX + halfSize, maxY + halfSize);
+
         using var highlightPaint = new SKPaint
         {
           Style = SKPaintStyle.Stroke,
@@ -66,45 +75,56 @@ namespace LunaDraw.Logic.Models
           StrokeWidth = 2,
           IsAntialias = true
         };
-        // Calculating bounds again is expensive, maybe cache?
-        // For now, just draw the path of points?
-        // Drawing individual highlights is too much.
-        // Let's skip detailed highlight for now or do a simple path connect.
-        var bounds = Bounds; // This uses Transformed bounds, so we need to inverse?
-                             // Actually Bounds property maps the rect.
-                             // Inside here we are already transformed.
-                             // So we need local bounds.
-        float halfSize = Size;
-        float minX = Points.Min(p => p.X);
-        float minY = Points.Min(p => p.Y);
-        float maxX = Points.Max(p => p.X);
-        float maxY = Points.Max(p => p.Y);
-        var localBounds = new SKRect(minX - halfSize, minY - halfSize, maxX + halfSize, maxY + halfSize);
         canvas.DrawRect(localBounds, highlightPaint);
       }
 
-      using var paint = new SKPaint
-      {
-        Style = SKPaintStyle.Fill, // Stamps are usually filled
-        Color = StrokeColor.WithAlpha((byte)(Flow * (Opacity / 255f))), // Combine Flow and Opacity
-        IsAntialias = true,
-        BlendMode = BlendMode
-      };
-
-      // Scale factor: standard shape is ~20 units wide (-10 to 10).
-      // If Size is 20, scale is 1.
-      // If Size is 10, scale is 0.5.
+      // Scale factor
       float scale = Size / 20f;
-
-      // Optimize: Create a scaled path once
       using var scaledPath = new SKPath(Shape.Path);
       var scaleMatrix = SKMatrix.CreateScale(scale, scale);
       scaledPath.Transform(scaleMatrix);
 
+      // Glow pass (Optimized with SaveLayer)
+      if (IsGlowEnabled && GlowRadius > 0)
+      {
+        using var glowLayerPaint = new SKPaint
+        {
+          ImageFilter = SKImageFilter.CreateBlur(GlowRadius, GlowRadius),
+          IsAntialias = true
+        };
+        
+        canvas.SaveLayer(glowLayerPaint);
+
+        using var glowContentPaint = new SKPaint
+        {
+           Style = SKPaintStyle.Fill,
+           Color = GlowColor.WithAlpha((byte)(Flow * (Opacity / 255f))),
+           IsAntialias = true,
+           BlendMode = BlendMode
+        };
+
+        foreach (var point in Points)
+        {
+          canvas.Save();
+          canvas.Translate(point.X, point.Y);
+          canvas.DrawPath(scaledPath, glowContentPaint);
+          canvas.Restore();
+        }
+        
+        canvas.Restore(); // Apply blur
+      }
+
+      // Main pass
+      using var paint = new SKPaint
+      {
+        Style = SKPaintStyle.Fill,
+        Color = StrokeColor.WithAlpha((byte)(Flow * (Opacity / 255f))),
+        IsAntialias = true,
+        BlendMode = BlendMode
+      };
+
       foreach (var point in Points)
       {
-        // Translate path to point
-        // efficient way:
         canvas.Save();
         canvas.Translate(point.X, point.Y);
         canvas.DrawPath(scaledPath, paint);

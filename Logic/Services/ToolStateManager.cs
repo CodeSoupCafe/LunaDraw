@@ -68,6 +68,27 @@ namespace LunaDraw.Logic.Services
       set => this.RaiseAndSetIfChanged(ref _currentBrushShape, value);
     }
 
+    private bool _isGlowEnabled = false;
+    public bool IsGlowEnabled
+    {
+      get => _isGlowEnabled;
+      set => this.RaiseAndSetIfChanged(ref _isGlowEnabled, value);
+    }
+
+    private SKColor _glowColor = SKColors.Yellow; // Default glow color
+    public SKColor GlowColor
+    {
+      get => _glowColor;
+      set => this.RaiseAndSetIfChanged(ref _glowColor, value);
+    }
+
+    private float _glowRadius = 10f; // Default glow radius
+    public float GlowRadius
+    {
+      get => _glowRadius;
+      set => this.RaiseAndSetIfChanged(ref _glowRadius, value);
+    }
+
     public List<IDrawingTool> AvailableTools { get; }
     public List<BrushShape> AvailableBrushShapes { get; }
 
@@ -106,6 +127,9 @@ namespace LunaDraw.Logic.Services
         if (msg.Flow.HasValue) Flow = msg.Flow.Value;
         if (msg.Spacing.HasValue) Spacing = msg.Spacing.Value;
         if (msg.StrokeWidth.HasValue) StrokeWidth = msg.StrokeWidth.Value;
+        if (msg.IsGlowEnabled.HasValue) IsGlowEnabled = msg.IsGlowEnabled.Value;
+        if (msg.GlowColor.HasValue) GlowColor = msg.GlowColor.Value;
+        if (msg.GlowRadius.HasValue) GlowRadius = msg.GlowRadius.Value;
       });
 
       _messageBus.Listen<BrushShapeChangedMessage>().Subscribe(msg =>

@@ -68,6 +68,15 @@ namespace LunaDraw.Logic.ViewModels
         private readonly ObservableAsPropertyHelper<BrushShape> _currentBrushShape;
         public BrushShape CurrentBrushShape => _currentBrushShape.Value;
 
+        private readonly ObservableAsPropertyHelper<bool> _isGlowEnabled;
+        public bool IsGlowEnabled => _isGlowEnabled.Value;
+
+        private readonly ObservableAsPropertyHelper<SKColor> _glowColor;
+        public SKColor GlowColor => _glowColor.Value;
+
+        private readonly ObservableAsPropertyHelper<float> _glowRadius;
+        public float GlowRadius => _glowRadius.Value;
+
         // UI state properties
         private bool _isSettingsOpen = false;
         public bool IsSettingsOpen
@@ -139,6 +148,15 @@ namespace LunaDraw.Logic.ViewModels
 
             _currentBrushShape = _mainViewModel.WhenAnyValue(x => x.CurrentBrushShape)
               .ToProperty(this, x => x.CurrentBrushShape, _mainViewModel.CurrentBrushShape);
+
+            _isGlowEnabled = _mainViewModel.WhenAnyValue(x => x.IsGlowEnabled)
+              .ToProperty(this, x => x.IsGlowEnabled, initialValue: _mainViewModel.IsGlowEnabled);
+
+            _glowColor = _mainViewModel.WhenAnyValue(x => x.GlowColor)
+              .ToProperty(this, x => x.GlowColor, initialValue: _mainViewModel.GlowColor);
+
+            _glowRadius = _mainViewModel.WhenAnyValue(x => x.GlowRadius)
+              .ToProperty(this, x => x.GlowRadius, initialValue: _mainViewModel.GlowRadius);
 
             _isAnyFlyoutOpen = this.WhenAnyValue(x => x.IsSettingsOpen, x => x.IsShapesFlyoutOpen, x => x.IsBrushesFlyoutOpen)
               .Select(values => values.Item1 || values.Item2 || values.Item3)

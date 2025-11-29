@@ -79,6 +79,9 @@ namespace LunaDraw.Logic.Tools
           Flow = context.Flow,
           Opacity = context.Opacity,
           StrokeColor = context.StrokeColor,
+          IsGlowEnabled = context.IsGlowEnabled,
+          GlowColor = context.GlowColor,
+          GlowRadius = context.GlowRadius,
         };
 
         context.CurrentLayer.Elements.Add(element);

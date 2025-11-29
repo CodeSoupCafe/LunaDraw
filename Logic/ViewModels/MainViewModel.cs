@@ -84,6 +84,24 @@ namespace LunaDraw.Logic.ViewModels
       set => _toolStateManager.CurrentBrushShape = value;
     }
 
+    public bool IsGlowEnabled
+    {
+      get => _toolStateManager.IsGlowEnabled;
+      set => _toolStateManager.IsGlowEnabled = value;
+    }
+
+    public SKColor GlowColor
+    {
+      get => _toolStateManager.GlowColor;
+      set => _toolStateManager.GlowColor = value;
+    }
+
+    public float GlowRadius
+    {
+      get => _toolStateManager.GlowRadius;
+      set => _toolStateManager.GlowRadius = value;
+    }
+
     public HistoryManager HistoryManager => _layerStateManager.HistoryManager;
 
     // Selection State
@@ -148,6 +166,9 @@ namespace LunaDraw.Logic.ViewModels
       _toolStateManager.WhenAnyValue(x => x.Flow).Subscribe(_ => this.RaisePropertyChanged(nameof(Flow)));
       _toolStateManager.WhenAnyValue(x => x.Spacing).Subscribe(_ => this.RaisePropertyChanged(nameof(Spacing)));
       _toolStateManager.WhenAnyValue(x => x.CurrentBrushShape).Subscribe(_ => this.RaisePropertyChanged(nameof(CurrentBrushShape)));
+      _toolStateManager.WhenAnyValue(x => x.IsGlowEnabled).Subscribe(_ => this.RaisePropertyChanged(nameof(IsGlowEnabled)));
+      _toolStateManager.WhenAnyValue(x => x.GlowColor).Subscribe(_ => this.RaisePropertyChanged(nameof(GlowColor)));
+      _toolStateManager.WhenAnyValue(x => x.GlowRadius).Subscribe(_ => this.RaisePropertyChanged(nameof(GlowRadius)));
 
       // Layer State subscriptions
       _layerStateManager.WhenAnyValue(x => x.CurrentLayer).Subscribe(_ => this.RaisePropertyChanged(nameof(CurrentLayer)));

@@ -54,6 +54,67 @@
             </BindableLayout.ItemTemplate>
           </StackLayout>
       </ScrollView>
+
+      <BoxView HeightRequest="1"
+               Color="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
+               Margin="0,5"/>
+
+      <StackLayout Orientation="Horizontal" Spacing="10">
+          <Label Text="Glow Effect"
+                 VerticalOptions="Center"
+                 FontAttributes="Bold"/>
+          <Switch x:Name="GlowSwitch"
+                  Toggled="OnGlowSwitchToggled"
+                  HorizontalOptions="EndAndExpand"/>
+      </StackLayout>
+
+      <Label Text="Glow Radius"
+             FontAttributes="Bold"/>
+      <Slider x:Name="GlowRadiusSlider"
+              Minimum="1"
+              Maximum="50"
+              ValueChanged="OnGlowRadiusChanged"/>
+
+      <Label Text="Glow Color"
+             FontAttributes="Bold"/>
+      <StackLayout x:Name="GlowColorContainer" Orientation="Horizontal" Spacing="10" HorizontalOptions="Center">
+          <!-- Preset Colors -->
+          <Border Stroke="Gray" StrokeShape="RoundRectangle 15" StrokeThickness="1" HeightRequest="30" WidthRequest="30">
+               <BoxView Color="#FFFF00" HorizontalOptions="Fill" VerticalOptions="Fill">
+                   <BoxView.GestureRecognizers>
+                       <TapGestureRecognizer Tapped="OnGlowColorTapped" CommandParameter="#FFFF00"/>
+                   </BoxView.GestureRecognizers>
+               </BoxView>
+          </Border>
+          <Border Stroke="Gray" StrokeShape="RoundRectangle 15" StrokeThickness="1" HeightRequest="30" WidthRequest="30">
+               <BoxView Color="#00FFFF" HorizontalOptions="Fill" VerticalOptions="Fill">
+                   <BoxView.GestureRecognizers>
+                       <TapGestureRecognizer Tapped="OnGlowColorTapped" CommandParameter="#00FFFF"/>
+                   </BoxView.GestureRecognizers>
+               </BoxView>
+          </Border>
+          <Border Stroke="Gray" StrokeShape="RoundRectangle 15" StrokeThickness="1" HeightRequest="30" WidthRequest="30">
+               <BoxView Color="#FF00FF" HorizontalOptions="Fill" VerticalOptions="Fill">
+                   <BoxView.GestureRecognizers>
+                       <TapGestureRecognizer Tapped="OnGlowColorTapped" CommandParameter="#FF00FF"/>
+                   </BoxView.GestureRecognizers>
+               </BoxView>
+          </Border>
+           <Border Stroke="Gray" StrokeShape="RoundRectangle 15" StrokeThickness="1" HeightRequest="30" WidthRequest="30">
+               <BoxView Color="#00FF00" HorizontalOptions="Fill" VerticalOptions="Fill">
+                   <BoxView.GestureRecognizers>
+                       <TapGestureRecognizer Tapped="OnGlowColorTapped" CommandParameter="#00FF00"/>
+                   </BoxView.GestureRecognizers>
+               </BoxView>
+          </Border>
+          <Border Stroke="Gray" StrokeShape="RoundRectangle 15" StrokeThickness="1" HeightRequest="30" WidthRequest="30">
+               <BoxView Color="#FFFFFF" HorizontalOptions="Fill" VerticalOptions="Fill">
+                   <BoxView.GestureRecognizers>
+                       <TapGestureRecognizer Tapped="OnGlowColorTapped" CommandParameter="#FFFFFF"/>
+                   </BoxView.GestureRecognizers>
+               </BoxView>
+          </Border>
+      </StackLayout>
     </StackLayout>
   </Border>
 </ContentView>

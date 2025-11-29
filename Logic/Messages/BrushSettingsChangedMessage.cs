@@ -13,8 +13,11 @@ namespace LunaDraw.Logic.Messages
         public byte? Flow { get; }
         public float? Spacing { get; }
         public float? StrokeWidth { get; }
+        public bool? IsGlowEnabled { get; }
+        public SKColor? GlowColor { get; }
+        public float? GlowRadius { get; }
 
-        public BrushSettingsChangedMessage(SKColor? strokeColor = null, SKColor? fillColor = null, byte? transparency = null, byte? flow = null, float? spacing = null, float? strokeWidth = null)
+        public BrushSettingsChangedMessage(SKColor? strokeColor = null, SKColor? fillColor = null, byte? transparency = null, byte? flow = null, float? spacing = null, float? strokeWidth = null, bool? isGlowEnabled = null, SKColor? glowColor = null, float? glowRadius = null)
         {
             StrokeColor = strokeColor;
             FillColor = fillColor;
@@ -22,6 +25,9 @@ namespace LunaDraw.Logic.Messages
             Flow = flow;
             Spacing = spacing;
             StrokeWidth = strokeWidth;
+            IsGlowEnabled = isGlowEnabled;
+            GlowColor = glowColor;
+            GlowRadius = glowRadius;
         }
     }
 }

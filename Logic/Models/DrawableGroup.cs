@@ -34,6 +34,10 @@ namespace LunaDraw.Logic.Models
     public SKColor StrokeColor { get; set; } // Not directly used
     public float StrokeWidth { get; set; } // Not directly used
 
+    public bool IsGlowEnabled { get; set; } = false;
+    public SKColor GlowColor { get; set; } = SKColors.Transparent;
+    public float GlowRadius { get; set; } = 0f;
+
     public SKRect Bounds
     {
       get
@@ -87,7 +91,10 @@ namespace LunaDraw.Logic.Models
         IsVisible = IsVisible,
         IsSelected = false,
         ZIndex = ZIndex,
-        Opacity = Opacity
+        Opacity = Opacity,
+        IsGlowEnabled = IsGlowEnabled,
+        GlowColor = GlowColor,
+        GlowRadius = GlowRadius
       };
       foreach (var child in Children)
       {

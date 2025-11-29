@@ -14,6 +14,9 @@ namespace LunaDraw.Logic.Services
         byte Flow { get; set; }
         float Spacing { get; set; }
         BrushShape CurrentBrushShape { get; set; }
+        bool IsGlowEnabled { get; set; }
+        SKColor GlowColor { get; set; }
+        float GlowRadius { get; set; }
         List<IDrawingTool> AvailableTools { get; }
         List<BrushShape> AvailableBrushShapes { get; }
     }

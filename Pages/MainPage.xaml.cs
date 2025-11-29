@@ -28,7 +28,6 @@ public partial class MainPage : ContentPage
     ShapesFlyoutContent.BindingContext = _toolbarViewModel;
     BrushesFlyoutContent.BindingContext = _toolbarViewModel;
 
-    canvasView.Loaded += OnCanvasLoaded;
     canvasView.PaintSurface += OnCanvasViewPaintSurface;
     canvasView.Touch += OnTouch;
 
@@ -38,23 +37,14 @@ public partial class MainPage : ContentPage
     });
   }
 
-  private void OnCanvasLoaded(object? sender, EventArgs e)
-  {
-    // Use logical size
-    _viewModel.CanvasSize = new SKRect(0, 0, (float)canvasView.Width, (float)canvasView.Height);
-  }
-
   private void OnCanvasViewPaintSurface(object? sender, SKPaintSurfaceEventArgs e)
   {
     SKSurface surface = e.Surface;
     SKCanvas canvas = surface.Canvas;
 
     // Ensure ViewModel knows the current canvas size (logical pixels)
-    if (_viewModel != null)
-    {
-        // Use logical size
-        _viewModel.CanvasSize = new SKRect(0, 0, (float)canvasView.Width, (float)canvasView.Height);
-    }
+    // Use pixel size (e.Info.Width, e.Info.Height) for consistency.
+    _viewModel.CanvasSize = new SKRect(0, 0, e.Info.Width, e.Info.Height);
 
     canvas.Clear(SKColors.White);
 

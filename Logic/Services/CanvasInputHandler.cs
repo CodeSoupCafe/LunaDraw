@@ -250,7 +250,10 @@ namespace LunaDraw.Logic.Services
         BrushShape = _toolStateManager.CurrentBrushShape,
         AllElements = _layerStateManager.Layers.SelectMany(l => l.Elements),
         SelectionManager = _selectionManager,
-        Scale = _navigationModel.TotalMatrix.ScaleX
+        Scale = _navigationModel.TotalMatrix.ScaleX,
+        IsGlowEnabled = _toolStateManager.IsGlowEnabled,
+        GlowColor = _toolStateManager.GlowColor,
+        GlowRadius = _toolStateManager.GlowRadius
       };
     }
   }

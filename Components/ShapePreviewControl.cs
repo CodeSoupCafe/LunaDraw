@@ -8,6 +8,10 @@ namespace LunaDraw.Components
 {
   public class ShapePreviewControl : SKCanvasView
   {
+    public ShapePreviewControl()
+    {
+      Loaded += (s, e) => InvalidateSurface();
+    }
     public static readonly BindableProperty ActiveToolProperty =
         BindableProperty.Create(nameof(ActiveTool), typeof(IDrawingTool), typeof(ShapePreviewControl), null, propertyChanged: OnPropertyChanged);
 
