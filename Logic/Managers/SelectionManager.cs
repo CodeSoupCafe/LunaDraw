@@ -110,7 +110,10 @@ namespace LunaDraw.Logic.Managers
     {
       this.RaisePropertyChanged(nameof(Bounds));
       this.RaisePropertyChanged(nameof(HasSelection));
+      SelectionChanged?.Invoke(this, EventArgs.Empty);
     }
+
+    public event EventHandler? SelectionChanged;
 
     public SKRect Bounds => GetBounds();
     public bool HasSelection => _selected.Count > 0;

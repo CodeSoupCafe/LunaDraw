@@ -208,6 +208,14 @@ namespace LunaDraw.Logic.ViewModels
       // Layer State subscriptions
       _layerStateManager.WhenAnyValue(x => x.CurrentLayer).Subscribe(_ => this.RaisePropertyChanged(nameof(CurrentLayer)));
 
+      // Invalidate all layers when selection changes to ensure proper cached/live transition
+      SelectionManager.SelectionChanged += (s, e) =>
+      {
+          foreach (var layer in Layers)
+          {
+              layer.InvalidateCache();
+          }
+      };
 
       // Initialize OAPH properties for command states
       _canDelete = this.WhenAnyValue(x => x.SelectedElements.Count)
@@ -364,9 +372,9 @@ namespace LunaDraw.Logic.ViewModels
       MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
     }
 
-    public void ProcessTouch(SKTouchEventArgs e, SKCanvasView canvasView)
+    public void ProcessTouch(SKTouchEventArgs e)
     {
-      _canvasInputHandler.ProcessTouch(e, CanvasSize, canvasView);
+      _canvasInputHandler.ProcessTouch(e, CanvasSize);
     }
   }
 }

@@ -46,7 +46,7 @@ namespace LunaDraw.Logic.Services
       _touchManipulationManager = new TouchManipulationManager();
     }
 
-    public void ProcessTouch(SKTouchEventArgs e, SKRect canvasViewPort, SKCanvasView? canvasView)
+    public void ProcessTouch(SKTouchEventArgs e, SKRect canvasViewPort)
     {
       if (_layerStateManager.CurrentLayer == null) return;
 

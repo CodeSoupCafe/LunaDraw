@@ -132,6 +132,12 @@ namespace LunaDraw.Logic.Tools
       var scaleMatrix = SKMatrix.CreateScale(baseScale, baseScale);
       scaledPath.Transform(scaleMatrix);
 
+      using var paint = new SKPaint
+      {
+          Style = SKPaintStyle.Fill,
+          IsAntialias = true
+      };
+
       int index = 0;
       foreach (var point in _currentPoints)
       {
@@ -154,12 +160,7 @@ namespace LunaDraw.Logic.Tools
             color = SKColor.FromHsl(h, s, l);
         }
         
-        using var paint = new SKPaint
-        {
-          Style = SKPaintStyle.Fill,
-          Color = color.WithAlpha((byte)(flow * (opacity / 255f))),
-          IsAntialias = true
-        };
+        paint.Color = color.WithAlpha((byte)(flow * (opacity / 255f)));
 
         canvas.Save();
         canvas.Translate(point.X, point.Y);

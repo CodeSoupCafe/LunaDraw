@@ -287,6 +287,13 @@ namespace LunaDraw.Logic.Models
         var scaleMatrix = SKMatrix.CreateScale(baseScale, baseScale);
         scaledPath.Transform(scaleMatrix);
 
+        using var sharedPaint = new SKPaint
+        {
+            Style = SKPaintStyle.Fill,
+            IsAntialias = true,
+            BlendMode = BlendMode
+        };
+
         // Pre-calculate or deterministically generate variations
         // Using a simple random generator seeded with a constant for stability if needed,
         // but here we might just use index-based hashing for stateless drawing.
@@ -305,7 +312,7 @@ namespace LunaDraw.Logic.Models
             int index = 0;
             foreach (var point in Points)
             {
-                DrawSingleStamp(canvas, scaledPath, point, index, true);
+                DrawSingleStamp(canvas, scaledPath, point, index, true, sharedPaint);
                 index++;
             }
             
@@ -316,12 +323,12 @@ namespace LunaDraw.Logic.Models
         int i = 0;
         foreach (var point in Points)
         {
-            DrawSingleStamp(canvas, scaledPath, point, i, false);
+            DrawSingleStamp(canvas, scaledPath, point, i, false, sharedPaint);
             i++;
         }
     }
 
-    private void DrawSingleStamp(SKCanvas canvas, SKPath basePath, SKPoint point, int index, bool isGlowPass)
+    private void DrawSingleStamp(SKCanvas canvas, SKPath basePath, SKPoint point, int index, bool isGlowPass, SKPaint paint)
     {
         // Deterministic Random based on index
         var random = new Random(index * 1337); // Simple seed
@@ -331,10 +338,6 @@ namespace LunaDraw.Logic.Models
         if (SizeJitter > 0)
         {
             float jitter = (float)random.NextDouble() * SizeJitter; // 0 to SizeJitter
-            // e.g. if SizeJitter is 0.5, scale varies from 0.5 to 1.5
-            // Let's make it: 1.0 + (jitter - SizeJitter/2) -> +/- range
-            // Or just variance: 1.0 - jitter? 
-            // Let's do: 1.0 + (random - 0.5) * 2 * SizeJitter
             scaleFactor = 1.0f + ((float)random.NextDouble() - 0.5f) * 2.0f * SizeJitter;
             if (scaleFactor < 0.1f) scaleFactor = 0.1f;
         }
@@ -366,15 +369,7 @@ namespace LunaDraw.Logic.Models
         }
 
         // Apply opacity and flow
-        color = color.WithAlpha((byte)(Flow * (Opacity / 255f)));
-
-        using var paint = new SKPaint
-        {
-            Style = SKPaintStyle.Fill,
-            Color = color,
-            IsAntialias = true,
-            BlendMode = BlendMode
-        };
+        paint.Color = color.WithAlpha((byte)(Flow * (Opacity / 255f)));
 
         canvas.Save();
         canvas.Translate(point.X, point.Y);

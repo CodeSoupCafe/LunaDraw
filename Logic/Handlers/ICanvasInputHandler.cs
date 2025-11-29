@@ -8,6 +8,6 @@ namespace LunaDraw.Logic.Services
 {
   public interface ICanvasInputHandler
   {
-    void ProcessTouch(SKTouchEventArgs e, SKRect canvasViewPort, SKCanvasView canvasView);
+    void ProcessTouch(SKTouchEventArgs e, SKRect canvasViewPort);
   }
 }
