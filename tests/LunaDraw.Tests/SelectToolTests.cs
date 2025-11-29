@@ -10,39 +10,22 @@ namespace LunaDraw.Tests
 {
     public class SelectToolTests
     {
-        [Fact]
-        public void OnTouchPressed_SelectsElement_WhenHitTestTrue()
+        [Theory]
+        [InlineData(false, true, true)]  // Initially not selected, Hit -> Selected
+        [InlineData(true, false, false)] // Initially selected, No Hit -> Deselected
+        public void OnTouchPressed_UpdatesSelection_Correctly(bool initiallySelected, bool hit, bool expectedSelected)
         {
             // Arrange
             var element = new TestDrawableElement { IsVisible = true, ZIndex = 1 };
+            element.HitTestResult = hit;
+
             var elements = new List<IDrawableElement> { element };
             var selectionManager = new SelectionManager();
-            var context = new ToolContext
+            if (initiallySelected)
             {
-                CurrentLayer = new Layer(),
-                AllElements = elements,
-                SelectionManager = selectionManager,
-                BrushShape = BrushShape.Circle()
-            };
-            var tool = new SelectTool();
-            var point = new SKPoint(10, 10);
-            element.HitTestResult = true;
+                selectionManager.Add(element);
+            }
 
-            // Act
-            tool.OnTouchPressed(point, context);
-
-            // Assert
-            Assert.True(selectionManager.Contains(element));
-        }
-
-        [Fact]
-        public void OnTouchPressed_ClearsSelection_WhenNoElementHit()
-        {
-            // Arrange
-            var element = new TestDrawableElement { IsVisible = true, ZIndex = 1 };
-            var elements = new List<IDrawableElement> { element };
-            var selectionManager = new SelectionManager();
-            selectionManager.Add(element);
             var context = new ToolContext
             {
                 CurrentLayer = new Layer(),
@@ -52,13 +35,12 @@ namespace LunaDraw.Tests
             };
             var tool = new SelectTool();
             var point = new SKPoint(100, 100);
-            element.HitTestResult = false;
 
             // Act
             tool.OnTouchPressed(point, context);
 
             // Assert
-            Assert.False(selectionManager.Contains(element));
+            Assert.Equal(expectedSelected, selectionManager.Contains(element));
         }
 
         private class TestDrawableElement : IDrawableElement

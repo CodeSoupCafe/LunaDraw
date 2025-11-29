@@ -1,99 +1,59 @@
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
-
-using LunaDraw.Logic.Managers;
-using LunaDraw.Logic.Models;
-using LunaDraw.Logic.Services;
-using LunaDraw.Logic.Tools;
-
-using ReactiveUI;
-
+using Moq;
+using Xunit;
 using SkiaSharp;
 using SkiaSharp.Views.Maui;
+using ReactiveUI;
+using LunaDraw.Logic.Services;
+using LunaDraw.Logic.Managers;
+using LunaDraw.Logic.Models;
+using LunaDraw.Logic.Tools;
 
 namespace LunaDraw.Tests
 {
-  public class CanvasInputHandlerTests
-  {
-    [Fact]
-    public void HandleMultiTouch_MissingTouchKey_ThrowsKeyNotFoundException()
+    public class CanvasInputHandlerTests
     {
-      // Arrange
-      var toolStateManager = new StubToolStateManager();
-      var layerStateManager = new StubLayerStateManager();
-      layerStateManager.CurrentLayer = new Layer(); // Ensure we have a layer
+        [Fact]
+        public void HandleMultiTouch_MissingTouchKey_IgnoresTouch()
+        {
+            // Arrange
+            var mockToolStateManager = new Mock<IToolStateManager>();
+            var mockLayerStateManager = new Mock<ILayerStateManager>();
+            var mockMessageBus = new Mock<IMessageBus>();
 
-      var selectionManager = new SelectionManager();
-      var navigationModel = new NavigationModel();
-      var messageBus = new StubMessageBus();
+            // Setup minimal behavior
+            mockToolStateManager.Setup(m => m.ActiveTool).Returns(new Mock<IDrawingTool>().Object);
+            
+            // Setup CurrentLayer to return a layer so we don't crash on null access if handler checks it
+            mockLayerStateManager.Setup(m => m.CurrentLayer).Returns(new Layer());
+            mockLayerStateManager.Setup(m => m.Layers).Returns(new ObservableCollection<Layer>());
 
-      var handler = new CanvasInputHandler(
-          toolStateManager,
-          layerStateManager,
-          selectionManager,
-          navigationModel,
-          messageBus
-      );
+            var selectionManager = new SelectionManager();
+            var navigationModel = new NavigationModel();
 
-      // Simulate two touches being pressed (ID 1 and 2)
-      var touch1 = new SKTouchEventArgs(1, SKTouchAction.Pressed, new SKPoint(10, 10), true);
-      handler.ProcessTouch(touch1, SKRect.Empty, null);
+            var handler = new CanvasInputHandler(
+                mockToolStateManager.Object,
+                mockLayerStateManager.Object,
+                selectionManager,
+                navigationModel,
+                mockMessageBus.Object
+            );
 
-      var touch2 = new SKTouchEventArgs(2, SKTouchAction.Pressed, new SKPoint(20, 20), true);
-      handler.ProcessTouch(touch2, SKRect.Empty, null);
+            // Simulate two touches being pressed (ID 1 and 2)
+            var touch1 = new SKTouchEventArgs(1, SKTouchAction.Pressed, new SKPoint(10, 10), true);
+            handler.ProcessTouch(touch1, SKRect.Empty, null);
 
-      // Simulate a moved event for a third touch (ID 3) that was never pressed
-      // This causes _activeTouches.Count (2) >= 2 to be true, triggering HandleMultiTouch(touch3)
-      var touch3 = new SKTouchEventArgs(3, SKTouchAction.Moved, new SKPoint(30, 30), true);
+            var touch2 = new SKTouchEventArgs(2, SKTouchAction.Pressed, new SKPoint(20, 20), true);
+            handler.ProcessTouch(touch2, SKRect.Empty, null);
 
-      // Act & Assert
-      Assert.Throws<KeyNotFoundException>(() => handler.ProcessTouch(touch3, SKRect.Empty, null));
+            // Simulate a moved event for a third touch (ID 3) that was never pressed
+            var touch3 = new SKTouchEventArgs(3, SKTouchAction.Moved, new SKPoint(30, 30), true);
+
+            // Act & Assert
+            var exception = Record.Exception(() => handler.ProcessTouch(touch3, SKRect.Empty, null));
+            Assert.Null(exception);
+        }
     }
-
-    // Stubs
-    private class StubToolStateManager : IToolStateManager
-    {
-      public IDrawingTool ActiveTool { get; set; } = new StubDrawingTool();
-      public SKColor StrokeColor { get; set; }
-      public SKColor? FillColor { get; set; }
-      public float StrokeWidth { get; set; }
-      public byte Opacity { get; set; }
-      public byte Flow { get; set; }
-      public float Spacing { get; set; }
-      public BrushShape CurrentBrushShape { get; set; } = default!;
-      public List<IDrawingTool> AvailableTools { get; } = new List<IDrawingTool>();
-      public List<BrushShape> AvailableBrushShapes { get; } = new List<BrushShape>();
-    }
-
-    private class StubLayerStateManager : ILayerStateManager
-    {
-      public ObservableCollection<Layer> Layers { get; } = new ObservableCollection<Layer>();
-      public Layer? CurrentLayer { get; set; }
-      public HistoryManager HistoryManager { get; } = default!;
-      public void AddLayer() { }
-      public void RemoveLayer(Layer layer) { }
-      public void SaveState() { }
-    }
-
-    private class StubMessageBus : IMessageBus
-    {
-      public IObservable<T> Listen<T>(string? contract = null) => System.Reactive.Linq.Observable.Empty<T>();
-      public bool IsRegistered(Type type, string? contract = null) => false;
-      public IDisposable RegisterMessageSource<T>(IObservable<T> source, string? contract = null) => System.Reactive.Disposables.Disposable.Empty;
-      public void SendMessage<T>(T message, string? contract = null) { }
-      public void RegisterScheduler<T>(System.Reactive.Concurrency.IScheduler scheduler, string? contract = null) { }
-      public IObservable<T> ListenIncludeLatest<T>(string? contract = null) => System.Reactive.Linq.Observable.Empty<T>();
-    }
-
-    private class StubDrawingTool : IDrawingTool
-    {
-      public string Name => "Stub";
-      public string Icon => "";
-      public ToolType Type => ToolType.Freehand;
-      public void OnTouchPressed(SKPoint point, ToolContext context) { }
-      public void OnTouchMoved(SKPoint point, ToolContext context) { }
-      public void OnTouchReleased(SKPoint point, ToolContext context) { }
-      public void OnTouchCancelled(ToolContext context) { }
-      public void DrawPreview(SKCanvas canvas, LunaDraw.Logic.ViewModels.MainViewModel viewModel) { }
-    }
-  }
 }

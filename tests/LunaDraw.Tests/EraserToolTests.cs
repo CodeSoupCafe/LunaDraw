@@ -107,7 +107,7 @@ namespace LunaDraw.Tests
         public void OnTouchReleased_StopsErasing()
         {
              // Arrange
-            var element = new TestDrawableElement { IsVisible = true, ZIndex = 1, HitTestResult = true };
+            var element = new TestDrawableElement { IsVisible = true, ZIndex = 1, HitTestResult = false }; // Start with False so initial press doesn't erase
             var layer = new Layer();
             layer.Elements.Add(element);
             
@@ -122,8 +122,11 @@ namespace LunaDraw.Tests
             var tool = new EraserTool();
             
             // Act
-            tool.OnTouchPressed(new SKPoint(0,0), context); // Start erasing
+            tool.OnTouchPressed(new SKPoint(0,0), context); // Start erasing (misses element)
+            
             tool.OnTouchReleased(new SKPoint(0,0), context); // Stop erasing
+            
+            element.HitTestResult = true; // Now it would hit if we were erasing
             tool.OnTouchMoved(new SKPoint(10,10), context); // Move over element
 
             // Assert
