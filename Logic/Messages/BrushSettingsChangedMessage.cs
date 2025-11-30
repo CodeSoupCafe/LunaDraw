@@ -21,6 +21,7 @@ namespace LunaDraw.Logic.Messages
         public float? SizeJitter { get; }
         public float? AngleJitter { get; }
         public float? HueJitter { get; }
+        public bool ShouldClearFillColor { get; }
 
         public BrushSettingsChangedMessage(
             SKColor? strokeColor = null, 
@@ -36,7 +37,8 @@ namespace LunaDraw.Logic.Messages
             float? scatterRadius = null,
             float? sizeJitter = null,
             float? angleJitter = null,
-            float? hueJitter = null)
+            float? hueJitter = null,
+            bool shouldClearFillColor = false)
         {
             StrokeColor = strokeColor;
             FillColor = fillColor;
@@ -52,6 +54,7 @@ namespace LunaDraw.Logic.Messages
             SizeJitter = sizeJitter;
             AngleJitter = angleJitter;
             HueJitter = hueJitter;
+            ShouldClearFillColor = shouldClearFillColor;
         }
     }
 }

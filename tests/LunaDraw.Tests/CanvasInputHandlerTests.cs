@@ -43,16 +43,16 @@ namespace LunaDraw.Tests
 
             // Simulate two touches being pressed (ID 1 and 2)
             var touch1 = new SKTouchEventArgs(1, SKTouchAction.Pressed, new SKPoint(10, 10), true);
-            handler.ProcessTouch(touch1, SKRect.Empty, null);
+            handler.ProcessTouch(touch1, SKRect.Empty);
 
             var touch2 = new SKTouchEventArgs(2, SKTouchAction.Pressed, new SKPoint(20, 20), true);
-            handler.ProcessTouch(touch2, SKRect.Empty, null);
+            handler.ProcessTouch(touch2, SKRect.Empty);
 
             // Simulate a moved event for a third touch (ID 3) that was never pressed
             var touch3 = new SKTouchEventArgs(3, SKTouchAction.Moved, new SKPoint(30, 30), true);
 
             // Act & Assert
-            var exception = Record.Exception(() => handler.ProcessTouch(touch3, SKRect.Empty, null));
+            var exception = Record.Exception(() => handler.ProcessTouch(touch3, SKRect.Empty));
             Assert.Null(exception);
         }
     }

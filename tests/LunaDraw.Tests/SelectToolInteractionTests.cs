@@ -18,13 +18,14 @@ namespace LunaDraw.Tests
       public int ZIndex { get; set; }
       public byte Opacity { get; set; } = 255;
       public SKColor? FillColor { get; set; } = SKColors.Blue;
-      public SKColor StrokeColor { get; set; } = SKColors.Black;
-      public float StrokeWidth { get; set; } = 1f;
+        public SKColor StrokeColor { get; set; }
+        public float StrokeWidth { get; set; }
+        public bool IsGlowEnabled { get; set; }
+        public SKColor GlowColor { get; set; }
+        public float GlowRadius { get; set; }
 
-      public bool HitTestResult { get; set; } = true;
-      public bool HitTest(SKPoint point) => HitTestResult;
-
-      public void Draw(SKCanvas canvas) { }
+        public void Draw(SKCanvas canvas) { }
+        public bool HitTest(SKPoint point) => Bounds.Contains(point);
 
       public IDrawableElement Clone() => this; // Simple clone for testing
 

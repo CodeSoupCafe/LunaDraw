@@ -165,7 +165,8 @@ namespace LunaDraw.Logic.Services
       _messageBus.Listen<BrushSettingsChangedMessage>().Subscribe(msg =>
       {
         if (msg.StrokeColor.HasValue) StrokeColor = msg.StrokeColor.Value;
-        if (msg.FillColor.HasValue) FillColor = msg.FillColor.Value;
+        if (msg.ShouldClearFillColor) FillColor = null;
+        else if (msg.FillColor.HasValue) FillColor = msg.FillColor.Value;
         if (msg.Transparency.HasValue) Opacity = msg.Transparency.Value;
         if (msg.Flow.HasValue) Flow = msg.Flow.Value;
         if (msg.Spacing.HasValue) Spacing = msg.Spacing.Value;

@@ -57,6 +57,8 @@ namespace LunaDraw.Components
             0.25f,
             propertyChanged: OnSpacingPropertyChanged);
 
+    private bool _suppressEvents;
+
     public SettingsFlyoutPanel()
     {
       InitializeComponent();
@@ -232,6 +234,8 @@ namespace LunaDraw.Components
 
     private void OnFillColorChanged(object sender, EventArgs e)
     {
+      if (_suppressEvents) return;
+
       if (sender is Maui.ColorPicker.ColorPicker colorPicker)
       {
         var fillColor = MauiColorToSKColor(colorPicker.PickedColor);
@@ -265,8 +269,16 @@ namespace LunaDraw.Components
 
     private void OnNoFillClicked(object sender, EventArgs e)
     {
-      MessageBus.Current.SendMessage(new BrushSettingsChangedMessage(fillColor: null));
-      FillColorPicker.PickedColor = Colors.Transparent; // Clear the color picker visually
+      _suppressEvents = true;
+      try
+      {
+        FillColorPicker.PickedColor = Colors.Transparent; // Clear the color picker visually
+      }
+      finally
+      {
+        _suppressEvents = false;
+      }
+      MessageBus.Current.SendMessage(new BrushSettingsChangedMessage(shouldClearFillColor: true));
     }
 
     private static Color SKColorToMauiColor(SKColor skColor)

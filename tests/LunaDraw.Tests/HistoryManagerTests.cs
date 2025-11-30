@@ -118,10 +118,14 @@ namespace LunaDraw.Tests
             public int ZIndex { get; set; }
             public byte Opacity { get; set; }
             public SKColor? FillColor { get; set; }
-            public SKColor StrokeColor { get; set; }
-            public float StrokeWidth { get; set; }
-            public bool HitTest(SKPoint point) => false;
-            public void Draw(SKCanvas canvas) { }
+        public SKColor StrokeColor { get; set; }
+        public float StrokeWidth { get; set; }
+        public bool IsGlowEnabled { get; set; }
+        public SKColor GlowColor { get; set; }
+        public float GlowRadius { get; set; }
+
+        public void Draw(SKCanvas canvas) { }
+        public bool HitTest(SKPoint point) => false;
             public IDrawableElement Clone() => new TestDrawableElement { IsSelected = this.IsSelected };
             public void Translate(SKPoint offset) { }
             public void Transform(SKMatrix matrix) { }
