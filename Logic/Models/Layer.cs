@@ -141,7 +141,13 @@ namespace LunaDraw.Logic.Models
         var maxX = (int)Math.Ceiling(visibleRect.Right / TileSize);
         var maxY = (int)Math.Ceiling(visibleRect.Bottom / TileSize);
 
-        using var paint = new SKPaint(); 
+        using var paint = new SKPaint
+        {
+            FilterQuality = SKFilterQuality.Low,
+            IsAntialias = true
+        };
+
+
         
         // 1. Draw Cached Tiles
         for (int x = minX; x < maxX; x++)

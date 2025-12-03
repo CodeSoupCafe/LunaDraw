@@ -53,12 +53,15 @@ public partial class MainPage : ContentPage
 
     canvas.Save();
 
-    // Apply Navigation Transformation (User Transforms)
-    canvas.Concat(_viewModel.NavigationModel.UserMatrix);
+    lock (_viewModel.NavigationModel.MatrixLock)
+    {
+        // Apply Navigation Transformation (User Transforms)
+        canvas.Concat(_viewModel.NavigationModel.UserMatrix);
 
-    // Apply Fit-To-Screen logic and capture Total Matrix (Legacy Pipeline)
-    var bounds = new SKRect(0, 0, width, height);
-    _viewModel.NavigationModel.TotalMatrix = canvas.MaxScaleCentered(width, height, bounds);
+        // Apply Fit-To-Screen logic and capture Total Matrix (Legacy Pipeline)
+        var bounds = new SKRect(0, 0, width, height);
+        _viewModel.NavigationModel.TotalMatrix = canvas.MaxScaleCentered(width, height, bounds);
+    }
 
     foreach (var layer in _viewModel.Layers)
     {

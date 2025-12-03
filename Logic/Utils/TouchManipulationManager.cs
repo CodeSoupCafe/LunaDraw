@@ -25,23 +25,29 @@ namespace LunaDraw.Logic.Utils
         {
             SKMatrix touchMatrix = SKMatrix.CreateIdentity();
 
+            // Calculate Centroids
+            SKPoint oldCentroid = new SKPoint((prevPoint.X + pivotPoint.X) / 2, (prevPoint.Y + pivotPoint.Y) / 2);
+            SKPoint newCentroid = new SKPoint((newPoint.X + pivotPoint.X) / 2, (newPoint.Y + pivotPoint.Y) / 2);
+
+            // 1. Translation (Move from Old Centroid to New Centroid)
+            SKPoint translation = newCentroid - oldCentroid;
+            touchMatrix = touchMatrix.PostConcat(SKMatrix.CreateTranslation(translation.X, translation.Y));
+
+            // Calculate Vectors for Rotation/Scale
             SKPoint oldVector = prevPoint - pivotPoint;
             SKPoint newVector = newPoint - pivotPoint;
 
-            // Calculate rotation
+            // 2. Rotation
             float oldAngle = (float)Math.Atan2(oldVector.Y, oldVector.X);
             float newAngle = (float)Math.Atan2(newVector.Y, newVector.X);
             float angleDiff = newAngle - oldAngle;
-
-            // Convert to degrees
             float degrees = angleDiff * 180f / (float)Math.PI;
             returnAngle = degrees;
 
-            // Create Rotation Matrix centered at pivotPoint
-            touchMatrix = touchMatrix.PostConcat(SKMatrix.CreateRotationDegrees(degrees, pivotPoint.X, pivotPoint.Y));
+            // Rotate around the NEW Centroid
+            touchMatrix = touchMatrix.PostConcat(SKMatrix.CreateRotationDegrees(degrees, newCentroid.X, newCentroid.Y));
 
-            // Calculate scale
-            // Avoid division by zero
+            // 3. Scale
             float oldDist = Magnitude(oldVector);
             float newDist = Magnitude(newVector);
             
@@ -51,11 +57,8 @@ namespace LunaDraw.Logic.Utils
                 scaleX = newDist / oldDist;
             }
             
-            float scaleY = scaleX; // Isotropic scale
-
-            // Create Scale Matrix centered at pivotPoint
-            // SKMatrix.CreateScale(sx, sy, pivotX, pivotY)
-            touchMatrix = touchMatrix.PostConcat(SKMatrix.CreateScale(scaleX, scaleY, pivotPoint.X, pivotPoint.Y));
+            // Scale around the NEW Centroid
+            touchMatrix = touchMatrix.PostConcat(SKMatrix.CreateScale(scaleX, scaleX, newCentroid.X, newCentroid.Y));
 
             return touchMatrix;
         }

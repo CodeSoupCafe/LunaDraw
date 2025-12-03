@@ -115,7 +115,14 @@ namespace LunaDraw.Logic.Services
 
       if (_layerStateManager.CurrentLayer?.IsLocked == false && selectedElements.Any())
       {
-        if (_navigationModel.TotalMatrix.TryInvert(out var inverseView))
+        SKMatrix inverseView;
+        bool canInvert;
+        lock (_navigationModel.MatrixLock)
+        {
+             canInvert = _navigationModel.TotalMatrix.TryInvert(out inverseView);
+        }
+
+        if (canInvert)
         {
           // Check if ANY active touch is on a selected element
           foreach (var touchPoint in _activeTouches.Values)
@@ -162,11 +169,21 @@ namespace LunaDraw.Logic.Services
           var selectedElements = _selectionManager.Selected;
           if (_layerStateManager.CurrentLayer?.IsLocked == false && selectedElements.Any())
           {
-            if (_navigationModel.TotalMatrix.TryInvert(out var inverseView))
+            SKMatrix inverseView;
+            bool canInvert;
+            SKMatrix currentTotal;
+            
+            lock(_navigationModel.MatrixLock)
+            {
+                currentTotal = _navigationModel.TotalMatrix;
+                canInvert = currentTotal.TryInvert(out inverseView);
+            }
+
+            if (canInvert)
             {
               // Convert screen-space touch matrix to world-space delta
               // delta = View^-1 * Touch * View
-              var delta = SKMatrix.Concat(inverseView, SKMatrix.Concat(touchMatrix, _navigationModel.TotalMatrix));
+              var delta = SKMatrix.Concat(inverseView, SKMatrix.Concat(touchMatrix, currentTotal));
 
               foreach (var element in selectedElements)
               {
@@ -177,9 +194,12 @@ namespace LunaDraw.Logic.Services
         }
         else
         {
-          // Apply transform to UserMatrix using PostConcat to accumulate transformations
-          // This matches the legacy behavior where TranslateMatrix = TranslateMatrix.PostConcat(touchMatrix)
-          _navigationModel.UserMatrix = _navigationModel.UserMatrix.PostConcat(touchMatrix);
+          lock (_navigationModel.MatrixLock)
+          {
+             // Apply transform to UserMatrix using PreConcat (Touch * User) to apply in Screen Space
+             // This ensures that screen-space gestures (like dragging right) always move the image right, regardless of current rotation/scale.
+             _navigationModel.UserMatrix = SKMatrix.Concat(touchMatrix, _navigationModel.UserMatrix);
+          }
         }
 
         // Update stored location
@@ -193,8 +213,14 @@ namespace LunaDraw.Logic.Services
     {
       // Transform point to World Coordinates using the TotalMatrix (which includes FitToScreen + User transforms)
       SKMatrix inverse = SKMatrix.CreateIdentity();
+      bool canInvert = false;
+      
+      lock(_navigationModel.MatrixLock)
+      {
+         canInvert = _navigationModel.TotalMatrix.TryInvert(out inverse);
+      }
 
-      if (_navigationModel.TotalMatrix.TryInvert(out inverse))
+      if (canInvert)
       {
         var worldPoint = inverse.MapPoint(location);
 
