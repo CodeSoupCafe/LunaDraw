@@ -34,13 +34,35 @@ namespace LunaDraw.Logic.Tools
     {
       if (context.CurrentLayer?.IsLocked == true || _currentEllipse == null) return;
 
-      var left = Math.Min(_startPoint.X, point.X);
-      var top = Math.Min(_startPoint.Y, point.Y);
-      var right = Math.Max(_startPoint.X, point.X);
-      var bottom = Math.Max(_startPoint.Y, point.Y);
+      // Calculate rotation from CanvasMatrix
+      float rotationRadians = (float)Math.Atan2(context.CanvasMatrix.SkewY, context.CanvasMatrix.ScaleX);
+      float rotationDegrees = rotationRadians * 180f / (float)Math.PI;
 
-      _currentEllipse.TransformMatrix = SKMatrix.CreateTranslation(left, top);
-      _currentEllipse.Oval = new SKRect(0, 0, right - left, bottom - top);
+      // Create alignment matrices
+      var toAligned = SKMatrix.CreateRotationDegrees(rotationDegrees);
+      var toWorld = SKMatrix.CreateRotationDegrees(-rotationDegrees);
+
+      var p1 = toAligned.MapPoint(_startPoint);
+      var p2 = toAligned.MapPoint(point);
+
+      var left = Math.Min(p1.X, p2.X);
+      var top = Math.Min(p1.Y, p2.Y);
+      var right = Math.Max(p1.X, p2.X);
+      var bottom = Math.Max(p1.Y, p2.Y);
+
+      var width = right - left;
+      var height = bottom - top;
+
+      // The Top-Left corner in aligned space
+      var alignedTL = new SKPoint(left, top);
+
+      // Transform aligned Top-Left back to World space
+      var worldTL = toWorld.MapPoint(alignedTL);
+
+      var translation = SKMatrix.CreateTranslation(worldTL.X, worldTL.Y);
+
+      _currentEllipse.TransformMatrix = SKMatrix.Concat(translation, toWorld);
+      _currentEllipse.Oval = new SKRect(0, 0, width, height);
 
       MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
     }

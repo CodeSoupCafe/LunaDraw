@@ -258,7 +258,8 @@ namespace LunaDraw.Logic.Services
         ScatterRadius = _toolStateManager.ScatterRadius,
         SizeJitter = _toolStateManager.SizeJitter,
         AngleJitter = _toolStateManager.AngleJitter,
-        HueJitter = _toolStateManager.HueJitter
+        HueJitter = _toolStateManager.HueJitter,
+        CanvasMatrix = _navigationModel.UserMatrix
       };
     }
   }

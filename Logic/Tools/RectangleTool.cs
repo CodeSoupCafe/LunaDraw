@@ -34,13 +34,41 @@ namespace LunaDraw.Logic.Tools
     {
       if (context.CurrentLayer?.IsLocked == true || _currentRectangle == null) return;
 
-      var left = Math.Min(_startPoint.X, point.X);
-      var top = Math.Min(_startPoint.Y, point.Y);
-      var right = Math.Max(_startPoint.X, point.X);
-      var bottom = Math.Max(_startPoint.Y, point.Y);
+      // Calculate rotation from CanvasMatrix
+      // SkewY is sin(angle) * scale, ScaleX is cos(angle) * scale
+      float rotationRadians = (float)Math.Atan2(context.CanvasMatrix.SkewY, context.CanvasMatrix.ScaleX);
+      float rotationDegrees = rotationRadians * 180f / (float)Math.PI;
 
-      _currentRectangle.TransformMatrix = SKMatrix.CreateTranslation(left, top);
-      _currentRectangle.Rectangle = new SKRect(0, 0, right - left, bottom - top);
+      // Create alignment matrices
+      // We rotate points by the canvas rotation to align them with the screen axes
+      // Note: Rotation is around (0,0)
+      var toAligned = SKMatrix.CreateRotationDegrees(rotationDegrees);
+      var toWorld = SKMatrix.CreateRotationDegrees(-rotationDegrees);
+
+      var p1 = toAligned.MapPoint(_startPoint);
+      var p2 = toAligned.MapPoint(point);
+
+      var left = Math.Min(p1.X, p2.X);
+      var top = Math.Min(p1.Y, p2.Y);
+      var right = Math.Max(p1.X, p2.X);
+      var bottom = Math.Max(p1.Y, p2.Y);
+
+      var width = right - left;
+      var height = bottom - top;
+
+      // The Top-Left corner in aligned space
+      var alignedTL = new SKPoint(left, top);
+
+      // Transform aligned Top-Left back to World space
+      var worldTL = toWorld.MapPoint(alignedTL);
+
+      // Assemble transform: Translate to World TL, then Rotate by -Degrees (which matches toWorld)
+      // We want Final = Translate(WorldTL) * Rotate(-Degrees)
+      // So that Local(0,0) -> Rot(0) -> Translate -> WorldTL
+      var translation = SKMatrix.CreateTranslation(worldTL.X, worldTL.Y);
+
+      _currentRectangle.TransformMatrix = SKMatrix.Concat(translation, toWorld);
+      _currentRectangle.Rectangle = new SKRect(0, 0, width, height);
 
       MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
     }

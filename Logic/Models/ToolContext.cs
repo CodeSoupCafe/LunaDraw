@@ -28,5 +28,6 @@ namespace LunaDraw.Logic.Models
         public float SizeJitter { get; init; }
         public float AngleJitter { get; init; }
         public float HueJitter { get; init; }
+        public SKMatrix CanvasMatrix { get; set; } = SKMatrix.CreateIdentity();
     }
 }
