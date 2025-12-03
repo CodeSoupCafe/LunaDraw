@@ -1,4 +1,4 @@
-﻿using SkiaSharp;
+using SkiaSharp;
 
 namespace LunaDraw.Logic.Extensions
 {
@@ -112,81 +112,67 @@ namespace LunaDraw.Logic.Extensions
       return reversedFramePixels;
     }
 
-    /// <summary>
-    ///  Draws text with a glowing effect using SkiaSharp's modern DrawText method.
-    /// THIS METHOD IS UNTESTED AND MAY REQUIRE ADJUSTMENTS BASED ON YOUR SPECIFIC NEEDS.
-    /// </summary>
-    /// <param name="canvas"></param>
-    /// <param name="text"></param>
-    /// <param name="x"></param>
-    /// <param name="y"></param>
-    /// <param name="glowColor"></param>
-    /// <param name="textColor"></param>
-    /// <param name="glowRadius"></param>
-    /// <param name="textSize"></param>
-    public static void DrawGlowingTextModern(
-      SKCanvas canvas,
-      string text,
-      float x,
-      float y,
-      SKColor glowColor,
-      SKColor textColor,
-      float glowRadius,
-      float textSize)
+    public static (SKMatrix Transform, SKRect Bounds) CalculateRotatedBounds(
+        this SKMatrix canvasMatrix,
+        SKPoint startPoint,
+        SKPoint currentPoint)
     {
-      // Define a common SKFont object for both drawing operations
-      using var font = new SKFont();
-      font.Size = textSize; // Use the SKFont.Size property
+      // Calculate rotation from CanvasMatrix
+      // SkewY is sin(angle) * scale, ScaleX is cos(angle) * scale
+      float rotationRadians = (float)Math.Atan2(canvasMatrix.SkewY, canvasMatrix.ScaleX);
+      float rotationDegrees = rotationRadians * 180f / (float)Math.PI;
 
-      // 1. Define the glow paint (blurred background)
-      using (var glowPaint = new SKPaint())
-      {
-        glowPaint.IsAntialias = true;
-        glowPaint.Style = SKPaintStyle.Fill;
-        glowPaint.Color = glowColor;
-        // Apply a blur mask filter to create the glow effect
-        glowPaint.MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, glowRadius);
+      // Create alignment matrices
+      var toAligned = SKMatrix.CreateRotationDegrees(rotationDegrees);
+      var toWorld = SKMatrix.CreateRotationDegrees(-rotationDegrees);
 
-        // Draw the blurred text using the new DrawText signature
-        // Note: In this specific use case (MaskFilter applied), we still rely on the paint's color.
-        canvas.DrawText(text, x, y, font, glowPaint);
-      }
+      var p1 = toAligned.MapPoint(startPoint);
+      var p2 = toAligned.MapPoint(currentPoint);
 
-      // 2. Define the main text paint (foreground)
-      using var textPaint = new SKPaint();
-      textPaint.IsAntialias = true;
-      textPaint.Style = SKPaintStyle.Fill;
-      textPaint.Color = textColor;
+      var left = Math.Min(p1.X, p2.X);
+      var top = Math.Min(p1.Y, p2.Y);
+      var right = Math.Max(p1.X, p2.X);
+      var bottom = Math.Max(p1.Y, p2.Y);
 
-      // Draw the sharp text on top using the new DrawText signature
-      canvas.DrawText(text, x, y, font, textPaint);
+      var width = right - left;
+      var height = bottom - top;
+
+      // The Top-Left corner in aligned space
+      var alignedTL = new SKPoint(left, top);
+
+      // Transform aligned Top-Left back to World space
+      var worldTL = toWorld.MapPoint(alignedTL);
+
+      // Assemble transform: Translate to World TL, then Rotate by -Degrees (which matches toWorld)
+      var translation = SKMatrix.CreateTranslation(worldTL.X, worldTL.Y);
+
+      var transformMatrix = SKMatrix.Concat(translation, toWorld);
+      var bounds = new SKRect(0, 0, width, height);
+
+      return (transformMatrix, bounds);
     }
 
-    public static void DrawGlowingTextLegacy(
-      SKCanvas canvas,
-      string textToDraw,
-      float x,
-      float y,
-      float textSize)
+    public static SKMatrix MaxScaleCentered(this SKCanvas canvas,
+      int width,
+      int height,
+      SKRect bounds,
+      float imageX = 0,
+      float imageY = 0,
+      float imageScale = 1)
     {
-      using var font = new SKFont();
-      font.Size = textSize;
+      canvas.Translate(width / 2f, height / 2f);
 
-      using SKPaint paint = new SKPaint();
-      paint.IsAntialias = true;
-      paint.Color = SKColors.Blue; // Color of the sharp text foreground
+      var ratio = bounds.Width < bounds.Height
+        ? height / bounds.Height
+        : width / bounds.Width;
 
-      // Use the modern CreateDropShadow method without the 'shadowMode' enum
-      paint.ImageFilter = SKImageFilter.CreateDropShadow(
-          dx: 0,
-          dy: 0,
-          sigmaX: 10, // Adjust sigmaX and sigmaY for the glow size
-          sigmaY: 10,
-          color: SKColors.Cyan // The glow color
-          /* shadowMode parameter is removed */);
+      canvas.Scale(ratio);
+      canvas.Translate(-bounds.MidX + imageX, -bounds.MidY + imageY);
 
-      // The resulting image filter automatically draws both the shadow and the foreground
-      canvas.DrawText(textToDraw, x, y, font, paint);
+      if (imageScale != 1)
+        canvas.Scale(imageScale);
+
+      return canvas.TotalMatrix;
     }
   }
 }
