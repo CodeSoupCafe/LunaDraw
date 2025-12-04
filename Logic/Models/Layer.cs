@@ -13,11 +13,11 @@ namespace LunaDraw.Logic.Models
   /// </summary>
   public class Layer : ReactiveObject
   {
-    private string _name = "Layer";
-    private bool _isVisible = true;
-    private bool _isLocked = false;
+    private string name = "Layer";
+    private bool isVisible = true;
+    private bool isLocked = false;
     
-    private QuadTree<IDrawableElement> _quadTree;
+    private QuadTree<IDrawableElement> quadTree;
 
     public Guid Id { get; } = Guid.NewGuid();
 
@@ -25,29 +25,29 @@ namespace LunaDraw.Logic.Models
     {
         // Initialize QuadTree with large bounds (arbitrary large world)
         var worldBounds = new SKRect(-500000, -500000, 500000, 500000);
-        _quadTree = new QuadTree<IDrawableElement>(0, worldBounds, e => e.Bounds);
+        quadTree = new QuadTree<IDrawableElement>(0, worldBounds, e => e.Bounds);
 
         Elements.CollectionChanged += OnElementsCollectionChanged;
     }
 
     public string Name
     {
-      get => _name;
-      set => this.RaiseAndSetIfChanged(ref _name, value);
+      get => name;
+      set => this.RaiseAndSetIfChanged(ref name, value);
     }
 
     public ObservableCollection<IDrawableElement> Elements { get; } = [];
 
     public bool IsVisible
     {
-      get => _isVisible;
-      set => this.RaiseAndSetIfChanged(ref _isVisible, value);
+      get => isVisible;
+      set => this.RaiseAndSetIfChanged(ref isVisible, value);
     }
 
     public bool IsLocked
     {
-      get => _isLocked;
-      set => this.RaiseAndSetIfChanged(ref _isLocked, value);
+      get => isLocked;
+      set => this.RaiseAndSetIfChanged(ref isLocked, value);
     }
     
     private void OnElementsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -67,10 +67,10 @@ namespace LunaDraw.Logic.Models
     
     private void RebuildQuadTree()
     {
-        _quadTree.Clear();
+        quadTree.Clear();
         foreach (var element in Elements)
         {
-            _quadTree.Insert(element);
+            quadTree.Insert(element);
         }
     }
     
@@ -86,7 +86,7 @@ namespace LunaDraw.Logic.Models
 
         // Use QuadTree to find elements that are potentially visible
         var visibleElements = new List<IDrawableElement>();
-        _quadTree.Retrieve(visibleElements, visibleRect);
+        quadTree.Retrieve(visibleElements, visibleRect);
         
         // Sort by ZIndex to ensure correct draw order
         visibleElements.Sort((a, b) => a.ZIndex.CompareTo(b.ZIndex));

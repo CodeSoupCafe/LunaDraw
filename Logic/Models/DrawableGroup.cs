@@ -14,14 +14,14 @@ namespace LunaDraw.Logic.Models
     public SKMatrix TransformMatrix { get; set; } = SKMatrix.CreateIdentity();
 
     public bool IsVisible { get; set; } = true;
-    private bool _isSelected;
+    private bool isSelected;
     public bool IsSelected
     {
-      get => _isSelected;
+      get => isSelected;
       set
       {
-        if (_isSelected == value) return;
-        _isSelected = value;
+        if (isSelected == value) return;
+        isSelected = value;
         foreach (var child in Children)
         {
           child.IsSelected = value;

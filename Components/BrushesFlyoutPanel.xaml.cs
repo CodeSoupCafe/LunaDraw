@@ -12,10 +12,10 @@ namespace LunaDraw.Components
     public BrushesFlyoutPanel()
     {
       InitializeComponent();
-      this.Loaded += BrushesFlyoutPanel_Loaded;
+      this.Loaded += OnBrushesFlyoutPanelLoaded;
     }
 
-    private void BrushesFlyoutPanel_Loaded(object? sender, EventArgs e)
+    private void OnBrushesFlyoutPanelLoaded(object? sender, EventArgs e)
     {
       if (BindingContext is ToolbarViewModel toolbarViewModel)
       {

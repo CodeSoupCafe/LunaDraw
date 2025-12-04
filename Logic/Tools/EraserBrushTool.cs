@@ -13,19 +13,19 @@ namespace LunaDraw.Logic.Tools
     public string Name => "Eraser";
     public ToolType Type => ToolType.Eraser;
 
-    private SKPath? _currentPath;
-    private DrawablePath? _currentDrawablePath;
+    private SKPath? currentPath;
+    private DrawablePath? currentDrawablePath;
 
     public void OnTouchPressed(SKPoint point, ToolContext context)
     {
       if (context.CurrentLayer?.IsLocked == true) return;
 
-      _currentPath = new SKPath();
-      _currentPath.MoveTo(point);
+      currentPath = new SKPath();
+      currentPath.MoveTo(point);
 
-      _currentDrawablePath = new DrawablePath
+      currentDrawablePath = new DrawablePath
       {
-        Path = _currentPath,
+        Path = currentPath,
         StrokeColor = SKColors.White, // Visual preview color
         StrokeWidth = context.StrokeWidth * 2, // Eraser usually wider
         Opacity = 255,
@@ -33,28 +33,28 @@ namespace LunaDraw.Logic.Tools
         ZIndex = context.CurrentLayer?.Elements.Count > 0 ? context.CurrentLayer.Elements.Max(e => e.ZIndex) + 1 : 0
       };
 
-      context.CurrentLayer?.Elements.Add(_currentDrawablePath);
+      context.CurrentLayer?.Elements.Add(currentDrawablePath);
       MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
     }
 
     public void OnTouchMoved(SKPoint point, ToolContext context)
     {
-      if (_currentPath == null || context.CurrentLayer?.IsLocked == true) return;
+      if (currentPath == null || context.CurrentLayer?.IsLocked == true) return;
 
-      _currentPath.LineTo(point);
+      currentPath.LineTo(point);
       MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
     }
 
     public void OnTouchReleased(SKPoint point, ToolContext context)
     {
-      if (_currentPath == null || context.CurrentLayer == null) return;
+      if (currentPath == null || context.CurrentLayer == null) return;
 
-      _currentPath.LineTo(point);
+      currentPath.LineTo(point);
 
       // Remove the temporary "global" eraser path
-      if (_currentDrawablePath != null)
+      if (currentDrawablePath != null)
       {
-        context.CurrentLayer.Elements.Remove(_currentDrawablePath);
+        context.CurrentLayer.Elements.Remove(currentDrawablePath);
       }
 
       // Convert stroke to fill path (outline) for operations
@@ -66,7 +66,7 @@ namespace LunaDraw.Logic.Tools
         StrokeJoin = SKStrokeJoin.Round
       };
       using var eraserOutline = new SKPath();
-      strokePaint.GetFillPath(_currentPath, eraserOutline);
+      strokePaint.GetFillPath(currentPath, eraserOutline);
 
       var elements = context.CurrentLayer.Elements.ToList();
       var modified = false;
@@ -75,7 +75,7 @@ namespace LunaDraw.Logic.Tools
 
       foreach (var element in elements)
       {
-        if (element == _currentDrawablePath) continue;
+        if (element == currentDrawablePath) continue;
         if (!element.IsVisible) continue;
 
         // Get element geometry
@@ -152,19 +152,19 @@ namespace LunaDraw.Logic.Tools
       }
       MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
 
-      _currentPath = null;
-      _currentDrawablePath = null;
+      currentPath = null;
+      currentDrawablePath = null;
     }
 
     public void OnTouchCancelled(ToolContext context)
     {
-      if (_currentDrawablePath != null && context.CurrentLayer != null)
+      if (currentDrawablePath != null && context.CurrentLayer != null)
       {
-        context.CurrentLayer.Elements.Remove(_currentDrawablePath);
+        context.CurrentLayer.Elements.Remove(currentDrawablePath);
       }
 
-      _currentPath = null;
-      _currentDrawablePath = null;
+      currentPath = null;
+      currentDrawablePath = null;
       MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
     }
 

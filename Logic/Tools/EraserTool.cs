@@ -13,17 +13,17 @@ namespace LunaDraw.Logic.Tools
     public string Name => "Eraser";
     public ToolType Type => ToolType.Eraser;
 
-    private bool _isErasing;
+    private bool isErasing;
 
     public void OnTouchPressed(SKPoint point, ToolContext context)
     {
-      _isErasing = true;
+      isErasing = true;
       Erase(point, context);
     }
 
     public void OnTouchMoved(SKPoint point, ToolContext context)
     {
-      if (_isErasing)
+      if (isErasing)
       {
         Erase(point, context);
       }
@@ -31,12 +31,12 @@ namespace LunaDraw.Logic.Tools
 
     public void OnTouchReleased(SKPoint point, ToolContext context)
     {
-      _isErasing = false;
+      isErasing = false;
     }
 
     public void OnTouchCancelled(ToolContext context)
     {
-      _isErasing = false;
+      isErasing = false;
     }
 
     private void Erase(SKPoint point, ToolContext context)

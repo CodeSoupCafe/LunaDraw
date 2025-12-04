@@ -57,15 +57,15 @@ namespace LunaDraw.Components
             0.25f,
             propertyChanged: OnSpacingPropertyChanged);
 
-    private bool _suppressEvents;
+    private bool suppressEvents;
 
     public SettingsFlyoutPanel()
     {
       InitializeComponent();
-      this.Loaded += SettingsFlyoutPanel_Loaded;
+      this.Loaded += OnSettingsFlyoutPanelLoaded;
     }
 
-    private void SettingsFlyoutPanel_Loaded(object? sender, EventArgs e)
+    private void OnSettingsFlyoutPanelLoaded(object? sender, EventArgs e)
     {
       if (BindingContext is ToolbarViewModel toolbarViewModel)
       {
@@ -234,7 +234,7 @@ namespace LunaDraw.Components
 
     private void OnFillColorChanged(object sender, EventArgs e)
     {
-      if (_suppressEvents) return;
+      if (suppressEvents) return;
 
       if (sender is Maui.ColorPicker.ColorPicker colorPicker)
       {
@@ -269,14 +269,14 @@ namespace LunaDraw.Components
 
     private void OnNoFillClicked(object sender, EventArgs e)
     {
-      _suppressEvents = true;
+      suppressEvents = true;
       try
       {
         FillColorPicker.PickedColor = Colors.Transparent; // Clear the color picker visually
       }
       finally
       {
-        _suppressEvents = false;
+        suppressEvents = false;
       }
       MessageBus.Current.SendMessage(new BrushSettingsChangedMessage(shouldClearFillColor: true));
     }

@@ -19,29 +19,29 @@ namespace LunaDraw.Logic.Services
 {
   public class CanvasInputHandler : ICanvasInputHandler
   {
-    private readonly IToolStateManager _toolStateManager;
-    private readonly ILayerStateManager _layerStateManager;
-    private readonly SelectionManager _selectionManager;
-    private readonly NavigationModel _navigationModel;
-    private readonly IMessageBus _messageBus;
+    private readonly IToolStateManager toolStateManager;
+    private readonly ILayerStateManager layerStateManager;
+    private readonly SelectionManager selectionManager;
+    private readonly NavigationModel navigationModel;
+    private readonly IMessageBus messageBus;
 
-    private readonly TouchManipulationManager _touchManipulationManager;
-    private readonly Dictionary<long, SKPoint> _activeTouches = [];
-    private bool _isMultiTouching = false;
-    private bool _isManipulatingSelection = false;
+    private readonly TouchManipulationManager touchManipulationManager;
+    private readonly Dictionary<long, SKPoint> activeTouches = [];
+    private bool isMultiTouching = false;
+    private bool isManipulatingSelection = false;
 
     // Multi-touch gesture state (snapshot at gesture start)
-    private SKPoint _gestureStartCentroid;
-    private float _gestureStartDistance;
-    private float _gestureStartAngle;
-    private SKPoint _previousCentroid;
-    private float _previousDistance;
-    private float _previousAngle;
+    private SKPoint gestureStartCentroid;
+    private float gestureStartDistance;
+    private float gestureStartAngle;
+    private SKPoint previousCentroid;
+    private float previousDistance;
+    private float previousAngle;
 
     // Movement deadzone threshold to reduce jitter on tiny movements
-    private const float MOVEMENT_THRESHOLD = 2.0f;
-    private const float SCALE_THRESHOLD = 0.001f;
-    private const float ROTATION_THRESHOLD = 0.01f; // radians
+    private const float MovementThreshold = 2.0f;
+    private const float ScaleThreshold = 0.001f;
+    private const float RotationThreshold = 0.01f; // radians
 
     public CanvasInputHandler(
         IToolStateManager toolStateManager,
@@ -50,18 +50,18 @@ namespace LunaDraw.Logic.Services
         NavigationModel navigationModel,
         IMessageBus messageBus)
     {
-      _toolStateManager = toolStateManager;
-      _layerStateManager = layerStateManager;
-      _selectionManager = selectionManager;
-      _navigationModel = navigationModel;
-      _messageBus = messageBus;
+      this.toolStateManager = toolStateManager;
+      this.layerStateManager = layerStateManager;
+      this.selectionManager = selectionManager;
+      this.navigationModel = navigationModel;
+      this.messageBus = messageBus;
 
-      _touchManipulationManager = new TouchManipulationManager();
+      touchManipulationManager = new TouchManipulationManager();
     }
 
     public void ProcessTouch(SKTouchEventArgs e, SKRect canvasViewPort)
     {
-      if (_layerStateManager.CurrentLayer == null) return;
+      if (layerStateManager.CurrentLayer == null) return;
 
       // e.Location is already relative to the SKCanvasView (pixel coordinates)
       var adjustedLocation = e.Location;
@@ -69,23 +69,23 @@ namespace LunaDraw.Logic.Services
       switch (e.ActionType)
       {
         case SKTouchAction.Pressed:
-          _activeTouches[e.Id] = adjustedLocation;
+          activeTouches[e.Id] = adjustedLocation;
           break;
         case SKTouchAction.Released:
         case SKTouchAction.Cancelled:
-          _activeTouches.Remove(e.Id);
+          activeTouches.Remove(e.Id);
           break;
       }
 
       // Handle Multi-Touch State Transition
-      if (_activeTouches.Count >= 2)
+      if (activeTouches.Count >= 2)
       {
-        if (!_isMultiTouching)
+        if (!isMultiTouching)
         {
-          _isMultiTouching = true;
+          isMultiTouching = true;
 
           // Cancel any active drawing tool
-          if (_toolStateManager.ActiveTool is IDrawingTool tool)
+          if (toolStateManager.ActiveTool is IDrawingTool tool)
           {
             var context = CreateToolContext();
             tool.OnTouchCancelled(context);
@@ -100,72 +100,72 @@ namespace LunaDraw.Logic.Services
       }
       else
       {
-        _isMultiTouching = false;
-        _isManipulatingSelection = false;
+        isMultiTouching = false;
+        isManipulatingSelection = false;
       }
 
       // Handle Navigation (Multi-touch)
-      if (_activeTouches.Count >= 2 && e.ActionType == SKTouchAction.Moved && _activeTouches.ContainsKey(e.Id))
+      if (activeTouches.Count >= 2 && e.ActionType == SKTouchAction.Moved && activeTouches.ContainsKey(e.Id))
       {
         HandleMultiTouch(adjustedLocation, e.Id);
         return;
       }
 
       // Handle Drawing/Tools (Single touch)
-      if (_activeTouches.Count <= 1)
+      if (activeTouches.Count <= 1)
       {
         HandleSingleTouch(adjustedLocation, e.ActionType);
       }
 
       // Update stored location for Moved events if not handled by navigation
-      if (e.ActionType == SKTouchAction.Moved && _activeTouches.ContainsKey(e.Id))
+      if (e.ActionType == SKTouchAction.Moved && activeTouches.ContainsKey(e.Id))
       {
-        _activeTouches[e.Id] = adjustedLocation;
+        activeTouches[e.Id] = adjustedLocation;
       }
     }
 
     private void InitializeGestureSnapshot()
     {
       // Get the two primary fingers
-      var sortedKeys = _activeTouches.Keys.OrderBy(k => k).ToList();
+      var sortedKeys = activeTouches.Keys.OrderBy(k => k).ToList();
       if (sortedKeys.Count < 2) return;
 
       long id1 = sortedKeys[0];
       long id2 = sortedKeys[1];
 
-      SKPoint p1 = _activeTouches[id1];
-      SKPoint p2 = _activeTouches[id2];
+      SKPoint p1 = activeTouches[id1];
+      SKPoint p2 = activeTouches[id2];
 
       // Store initial gesture state
-      _gestureStartCentroid = CalculateCentroid(p1, p2);
-      _gestureStartDistance = Distance(p1, p2);
-      _gestureStartAngle = CalculateAngle(p1, p2);
+      gestureStartCentroid = CalculateCentroid(p1, p2);
+      gestureStartDistance = Distance(p1, p2);
+      gestureStartAngle = CalculateAngle(p1, p2);
 
       // Initialize "previous" values to current state
-      _previousCentroid = _gestureStartCentroid;
-      _previousDistance = _gestureStartDistance;
-      _previousAngle = _gestureStartAngle;
+      previousCentroid = gestureStartCentroid;
+      previousDistance = gestureStartDistance;
+      previousAngle = gestureStartAngle;
     }
 
     private void DetermineMultiTouchTarget()
     {
-      _isManipulatingSelection = false;
-      var selectedElements = _selectionManager.Selected;
+      isManipulatingSelection = false;
+      var selectedElements = selectionManager.Selected;
 
-      if (_layerStateManager.CurrentLayer?.IsLocked == false && selectedElements.Any())
+      if (layerStateManager.CurrentLayer?.IsLocked == false && selectedElements.Any())
       {
         SKMatrix inverseView;
-        bool canInvert = _navigationModel.TotalMatrix.TryInvert(out inverseView);
+        bool canInvert = navigationModel.TotalMatrix.TryInvert(out inverseView);
 
         if (canInvert)
         {
           // Check if ANY active touch is on a selected element
-          foreach (var touchPoint in _activeTouches.Values)
+          foreach (var touchPoint in activeTouches.Values)
           {
             var worldPoint = inverseView.MapPoint(touchPoint);
             if (selectedElements.Any(el => el.HitTest(worldPoint)))
             {
-              _isManipulatingSelection = true;
+              isManipulatingSelection = true;
               return;
             }
           }
@@ -176,7 +176,7 @@ namespace LunaDraw.Logic.Services
     private void HandleMultiTouch(SKPoint newLocation, long id)
     {
       // 1. Identify the two primary fingers
-      var sortedKeys = _activeTouches.Keys.OrderBy(k => k).ToList();
+      var sortedKeys = activeTouches.Keys.OrderBy(k => k).ToList();
       if (sortedKeys.Count < 2) return;
 
       long id1 = sortedKeys[0];
@@ -184,8 +184,8 @@ namespace LunaDraw.Logic.Services
 
       // 2. Get CURRENT positions BEFORE updating dictionary
       // One finger is at its old position (in dictionary), the other just moved
-      SKPoint currentP1 = (id == id1) ? newLocation : _activeTouches[id1];
-      SKPoint currentP2 = (id == id2) ? newLocation : _activeTouches[id2];
+      SKPoint currentP1 = (id == id1) ? newLocation : activeTouches[id1];
+      SKPoint currentP2 = (id == id2) ? newLocation : activeTouches[id2];
 
       // 3. Calculate current gesture state
       SKPoint currentCentroid = CalculateCentroid(currentP1, currentP2);
@@ -193,24 +193,24 @@ namespace LunaDraw.Logic.Services
       float currentAngle = CalculateAngle(currentP1, currentP2);
 
       // 4. Calculate deltas from PREVIOUS frame (not from gesture start)
-      SKPoint centroidDelta = currentCentroid - _previousCentroid;
-      float scaleDelta = (_previousDistance > 0.001f) ? currentDistance / _previousDistance : 1.0f;
-      float rotationDelta = currentAngle - _previousAngle;
+      SKPoint centroidDelta = currentCentroid - previousCentroid;
+      float scaleDelta = (previousDistance > 0.001f) ? currentDistance / previousDistance : 1.0f;
+      float rotationDelta = currentAngle - previousAngle;
 
       // 5. Apply thresholds to reduce jitter on tiny movements
       bool shouldTransform = false;
 
-      if (Math.Abs(centroidDelta.X) > MOVEMENT_THRESHOLD || Math.Abs(centroidDelta.Y) > MOVEMENT_THRESHOLD)
+      if (Math.Abs(centroidDelta.X) > MovementThreshold || Math.Abs(centroidDelta.Y) > MovementThreshold)
       {
         shouldTransform = true;
       }
 
-      if (Math.Abs(scaleDelta - 1.0f) > SCALE_THRESHOLD)
+      if (Math.Abs(scaleDelta - 1.0f) > ScaleThreshold)
       {
         shouldTransform = true;
       }
 
-      if (Math.Abs(rotationDelta) > ROTATION_THRESHOLD)
+      if (Math.Abs(rotationDelta) > RotationThreshold)
       {
         shouldTransform = true;
       }
@@ -220,7 +220,7 @@ namespace LunaDraw.Logic.Services
       {
         // Use PREVIOUS centroid as the pivot point for transformation
         SKMatrix matrix = BuildTransformationMatrix(
-          _previousCentroid,
+          previousCentroid,
           scaleDelta,
           rotationDelta,
           centroidDelta
@@ -230,27 +230,27 @@ namespace LunaDraw.Logic.Services
         if (!float.IsNaN(matrix.ScaleX) && !float.IsInfinity(matrix.ScaleX))
         {
           // 7. Apply to Model
-          if (_isManipulatingSelection)
+          if (isManipulatingSelection)
           {
             ApplySelectionTransform(matrix);
           }
           else
           {
             // Apply to UserMatrix (View transformation)
-            _navigationModel.UserMatrix = SKMatrix.Concat(matrix, _navigationModel.UserMatrix);
+            navigationModel.UserMatrix = SKMatrix.Concat(matrix, navigationModel.UserMatrix);
           }
 
-          MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+          messageBus.SendMessage(new CanvasInvalidateMessage());
         }
 
         // 8. Update previous state for next frame
-        _previousCentroid = currentCentroid;
-        _previousDistance = currentDistance;
-        _previousAngle = currentAngle;
+        previousCentroid = currentCentroid;
+        previousDistance = currentDistance;
+        previousAngle = currentAngle;
       }
 
       // 9. Update the touch dictionary for the finger that moved
-      _activeTouches[id] = newLocation;
+      activeTouches[id] = newLocation;
     }
 
     private SKMatrix BuildTransformationMatrix(
@@ -291,11 +291,11 @@ namespace LunaDraw.Logic.Services
 
     private void ApplySelectionTransform(SKMatrix touchDelta)
     {
-      var selectedElements = _selectionManager.Selected;
-      if (_layerStateManager.CurrentLayer?.IsLocked == false && selectedElements.Any())
+      var selectedElements = selectionManager.Selected;
+      if (layerStateManager.CurrentLayer?.IsLocked == false && selectedElements.Any())
       {
         SKMatrix inverseView;
-        SKMatrix currentTotal = _navigationModel.TotalMatrix;
+        SKMatrix currentTotal = navigationModel.TotalMatrix;
         if (currentTotal.TryInvert(out inverseView))
         {
           // Convert screen-space delta to world-space delta
@@ -316,7 +316,7 @@ namespace LunaDraw.Logic.Services
     {
       // Transform point to World Coordinates using the TotalMatrix (which includes FitToScreen + User transforms)
       SKMatrix inverse = SKMatrix.CreateIdentity();
-      bool canInvert = _navigationModel.TotalMatrix.TryInvert(out inverse);
+      bool canInvert = navigationModel.TotalMatrix.TryInvert(out inverse);
 
       if (canInvert)
       {
@@ -330,11 +330,11 @@ namespace LunaDraw.Logic.Services
             HandleTouchPressed(worldPoint, context);
             break;
           case SKTouchAction.Moved:
-            _toolStateManager.ActiveTool.OnTouchMoved(worldPoint, context);
+            toolStateManager.ActiveTool.OnTouchMoved(worldPoint, context);
             // No need to update _activeTouches here as it's done in ProcessTouch
             break;
           case SKTouchAction.Released:
-            _toolStateManager.ActiveTool.OnTouchReleased(worldPoint, context);
+            toolStateManager.ActiveTool.OnTouchReleased(worldPoint, context);
             break;
         }
       }
@@ -343,47 +343,47 @@ namespace LunaDraw.Logic.Services
     private void HandleTouchPressed(SKPoint point, ToolContext context)
     {
       // If we're using the select tool, let it handle all selection logic
-      if (_toolStateManager.ActiveTool.Type == ToolType.Select)
+      if (toolStateManager.ActiveTool.Type == ToolType.Select)
       {
-        _toolStateManager.ActiveTool.OnTouchPressed(point, context);
+        toolStateManager.ActiveTool.OnTouchPressed(point, context);
         return;
       }
 
       // For other tools, clear selection and proceed with drawing
-      if (_selectionManager.Selected.Any())
+      if (selectionManager.Selected.Any())
       {
-        _selectionManager.Clear();
-        MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+        selectionManager.Clear();
+        messageBus.SendMessage(new CanvasInvalidateMessage());
       }
 
       // Pass to the active tool for drawing operations
-      _toolStateManager.ActiveTool.OnTouchPressed(point, context);
+      toolStateManager.ActiveTool.OnTouchPressed(point, context);
     }
 
     private ToolContext CreateToolContext()
     {
       return new ToolContext
       {
-        CurrentLayer = _layerStateManager.CurrentLayer!,
-        StrokeColor = _toolStateManager.StrokeColor,
-        FillColor = _toolStateManager.FillColor,
-        StrokeWidth = _toolStateManager.StrokeWidth,
-        Opacity = _toolStateManager.Opacity,
-        Flow = _toolStateManager.Flow,
-        Spacing = _toolStateManager.Spacing,
-        BrushShape = _toolStateManager.CurrentBrushShape,
-        AllElements = _layerStateManager.Layers.SelectMany(l => l.Elements),
-        SelectionManager = _selectionManager,
-        Scale = _navigationModel.TotalMatrix.ScaleX,
-        IsGlowEnabled = _toolStateManager.IsGlowEnabled,
-        GlowColor = _toolStateManager.GlowColor,
-        GlowRadius = _toolStateManager.GlowRadius,
-        IsRainbowEnabled = _toolStateManager.IsRainbowEnabled,
-        ScatterRadius = _toolStateManager.ScatterRadius,
-        SizeJitter = _toolStateManager.SizeJitter,
-        AngleJitter = _toolStateManager.AngleJitter,
-        HueJitter = _toolStateManager.HueJitter,
-        CanvasMatrix = _navigationModel.UserMatrix
+        CurrentLayer = layerStateManager.CurrentLayer!,
+        StrokeColor = toolStateManager.StrokeColor,
+        FillColor = toolStateManager.FillColor,
+        StrokeWidth = toolStateManager.StrokeWidth,
+        Opacity = toolStateManager.Opacity,
+        Flow = toolStateManager.Flow,
+        Spacing = toolStateManager.Spacing,
+        BrushShape = toolStateManager.CurrentBrushShape,
+        AllElements = layerStateManager.Layers.SelectMany(l => l.Elements),
+        SelectionManager = selectionManager,
+        Scale = navigationModel.TotalMatrix.ScaleX,
+        IsGlowEnabled = toolStateManager.IsGlowEnabled,
+        GlowColor = toolStateManager.GlowColor,
+        GlowRadius = toolStateManager.GlowRadius,
+        IsRainbowEnabled = toolStateManager.IsRainbowEnabled,
+        ScatterRadius = toolStateManager.ScatterRadius,
+        SizeJitter = toolStateManager.SizeJitter,
+        AngleJitter = toolStateManager.AngleJitter,
+        HueJitter = toolStateManager.HueJitter,
+        CanvasMatrix = navigationModel.UserMatrix
       };
     }
   }

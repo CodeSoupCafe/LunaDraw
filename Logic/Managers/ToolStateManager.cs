@@ -8,130 +8,130 @@ namespace LunaDraw.Logic.Services
 {
   public class ToolStateManager : ReactiveObject, IToolStateManager
   {
-    private IDrawingTool _activeTool;
+    private IDrawingTool activeTool;
     public IDrawingTool ActiveTool
     {
-      get => _activeTool;
+      get => activeTool;
       set
       {
-        this.RaiseAndSetIfChanged(ref _activeTool, value);
-        _messageBus.SendMessage(new ToolChangedMessage(value));
+        this.RaiseAndSetIfChanged(ref activeTool, value);
+        messageBus.SendMessage(new ToolChangedMessage(value));
       }
     }
 
-    private SKColor _strokeColor = SKColors.Black;
+    private SKColor strokeColor = SKColors.Black;
     public SKColor StrokeColor
     {
-      get => _strokeColor;
-      set => this.RaiseAndSetIfChanged(ref _strokeColor, value);
+      get => strokeColor;
+      set => this.RaiseAndSetIfChanged(ref strokeColor, value);
     }
 
-    private SKColor? _fillColor;
+    private SKColor? fillColor;
     public SKColor? FillColor
     {
-      get => _fillColor;
-      set => this.RaiseAndSetIfChanged(ref _fillColor, value);
+      get => fillColor;
+      set => this.RaiseAndSetIfChanged(ref fillColor, value);
     }
 
-    private float _strokeWidth = 5;
+    private float strokeWidth = 5;
     public float StrokeWidth
     {
-      get => _strokeWidth;
-      set => this.RaiseAndSetIfChanged(ref _strokeWidth, value);
+      get => strokeWidth;
+      set => this.RaiseAndSetIfChanged(ref strokeWidth, value);
     }
 
-    private byte _opacity = 255;
+    private byte opacity = 255;
     public byte Opacity
     {
-      get => _opacity;
-      set => this.RaiseAndSetIfChanged(ref _opacity, value);
+      get => opacity;
+      set => this.RaiseAndSetIfChanged(ref opacity, value);
     }
 
-    private byte _flow = 255;
+    private byte flow = 255;
     public byte Flow
     {
-      get => _flow;
-      set => this.RaiseAndSetIfChanged(ref _flow, value);
+      get => flow;
+      set => this.RaiseAndSetIfChanged(ref flow, value);
     }
 
-    private float _spacing = 0.25f;
+    private float spacing = 0.25f;
     public float Spacing
     {
-      get => _spacing;
-      set => this.RaiseAndSetIfChanged(ref _spacing, value);
+      get => spacing;
+      set => this.RaiseAndSetIfChanged(ref spacing, value);
     }
 
-    private BrushShape _currentBrushShape;
+    private BrushShape currentBrushShape;
     public BrushShape CurrentBrushShape
     {
-      get => _currentBrushShape;
-      set => this.RaiseAndSetIfChanged(ref _currentBrushShape, value);
+      get => currentBrushShape;
+      set => this.RaiseAndSetIfChanged(ref currentBrushShape, value);
     }
 
-    private bool _isGlowEnabled = false;
+    private bool isGlowEnabled = false;
     public bool IsGlowEnabled
     {
-      get => _isGlowEnabled;
-      set => this.RaiseAndSetIfChanged(ref _isGlowEnabled, value);
+      get => isGlowEnabled;
+      set => this.RaiseAndSetIfChanged(ref isGlowEnabled, value);
     }
 
-    private SKColor _glowColor = SKColors.Yellow; // Default glow color
+    private SKColor glowColor = SKColors.Yellow; // Default glow color
     public SKColor GlowColor
     {
-      get => _glowColor;
-      set => this.RaiseAndSetIfChanged(ref _glowColor, value);
+      get => glowColor;
+      set => this.RaiseAndSetIfChanged(ref glowColor, value);
     }
 
-    private float _glowRadius = 10f; // Default glow radius
+    private float glowRadius = 10f; // Default glow radius
     public float GlowRadius
     {
-      get => _glowRadius;
-      set => this.RaiseAndSetIfChanged(ref _glowRadius, value);
+      get => glowRadius;
+      set => this.RaiseAndSetIfChanged(ref glowRadius, value);
     }
 
-    private bool _isRainbowEnabled;
+    private bool isRainbowEnabled;
     public bool IsRainbowEnabled
     {
-        get => _isRainbowEnabled;
-        set => this.RaiseAndSetIfChanged(ref _isRainbowEnabled, value);
+        get => isRainbowEnabled;
+        set => this.RaiseAndSetIfChanged(ref isRainbowEnabled, value);
     }
 
-    private float _scatterRadius;
+    private float scatterRadius;
     public float ScatterRadius
     {
-        get => _scatterRadius;
-        set => this.RaiseAndSetIfChanged(ref _scatterRadius, value);
+        get => scatterRadius;
+        set => this.RaiseAndSetIfChanged(ref scatterRadius, value);
     }
 
-    private float _sizeJitter;
+    private float sizeJitter;
     public float SizeJitter
     {
-        get => _sizeJitter;
-        set => this.RaiseAndSetIfChanged(ref _sizeJitter, value);
+        get => sizeJitter;
+        set => this.RaiseAndSetIfChanged(ref sizeJitter, value);
     }
 
-    private float _angleJitter;
+    private float angleJitter;
     public float AngleJitter
     {
-        get => _angleJitter;
-        set => this.RaiseAndSetIfChanged(ref _angleJitter, value);
+        get => angleJitter;
+        set => this.RaiseAndSetIfChanged(ref angleJitter, value);
     }
 
-    private float _hueJitter;
+    private float hueJitter;
     public float HueJitter
     {
-        get => _hueJitter;
-        set => this.RaiseAndSetIfChanged(ref _hueJitter, value);
+        get => hueJitter;
+        set => this.RaiseAndSetIfChanged(ref hueJitter, value);
     }
 
     public List<IDrawingTool> AvailableTools { get; }
     public List<BrushShape> AvailableBrushShapes { get; }
 
-    private readonly IMessageBus _messageBus;
+    private readonly IMessageBus messageBus;
 
     public ToolStateManager(IMessageBus messageBus)
     {
-      _messageBus = messageBus;
+      this.messageBus = messageBus;
       AvailableTools =
       [
           new SelectTool(),
@@ -158,11 +158,11 @@ namespace LunaDraw.Logic.Services
           BrushShape.Hexagon()
       ];
 
-      _activeTool = new FreehandTool();
-      _currentBrushShape = AvailableBrushShapes.First();
+      activeTool = new FreehandTool();
+      currentBrushShape = AvailableBrushShapes.First();
 
       // Listen for messages that update tool state
-      _messageBus.Listen<BrushSettingsChangedMessage>().Subscribe(msg =>
+      this.messageBus.Listen<BrushSettingsChangedMessage>().Subscribe(msg =>
       {
         if (msg.StrokeColor.HasValue) StrokeColor = msg.StrokeColor.Value;
         if (msg.ShouldClearFillColor) FillColor = null;
@@ -181,7 +181,7 @@ namespace LunaDraw.Logic.Services
         if (msg.HueJitter.HasValue) HueJitter = msg.HueJitter.Value;
       });
 
-      _messageBus.Listen<BrushShapeChangedMessage>().Subscribe(msg =>
+      this.messageBus.Listen<BrushShapeChangedMessage>().Subscribe(msg =>
       {
         CurrentBrushShape = msg.Shape;
       });

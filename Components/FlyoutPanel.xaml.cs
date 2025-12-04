@@ -4,8 +4,8 @@ namespace LunaDraw.Components
 {
   public partial class FlyoutPanel : ContentView
   {
-    private bool _isOpen;
-    private View? _targetElement;
+    private bool isOpen;
+    private View? targetElement;
 
     public static readonly BindableProperty FlyoutContentProperty =
         BindableProperty.Create(
@@ -85,19 +85,19 @@ namespace LunaDraw.Components
     private static void OnIsOpenChanged(BindableObject bindable, object oldValue, object newValue)
     {
       var panel = (FlyoutPanel)bindable;
-      panel._isOpen = (bool)newValue;
+      panel.isOpen = (bool)newValue;
       panel.UpdateVisibility();
     }
 
     private static void OnTargetElementChanged(BindableObject bindable, object oldValue, object newValue)
     {
       var panel = (FlyoutPanel)bindable;
-      panel._targetElement = (View)newValue;
+      panel.targetElement = (View)newValue;
     }
 
     private async void UpdateVisibility()
     {
-      if (_isOpen)
+      if (isOpen)
       {
         await ShowFlyout();
       }
@@ -109,7 +109,7 @@ namespace LunaDraw.Components
 
     private async Task ShowFlyout()
     {
-      if (_targetElement != null)
+      if (targetElement != null)
       {
         await PositionFlyout();
       }
@@ -172,13 +172,13 @@ namespace LunaDraw.Components
 
     private async Task PositionFlyout()
     {
-      if (_targetElement == null) return;
+      if (targetElement == null) return;
 
       // Find the actual element to anchor to, if an AnchorName is provided
-      View anchorElement = _targetElement;
+      View anchorElement = targetElement;
       if (!string.IsNullOrEmpty(AnchorName))
       {
-        anchorElement = anchorElement.FindByName(AnchorName) as View ?? _targetElement;
+        anchorElement = anchorElement.FindByName(AnchorName) as View ?? targetElement;
       }
 
       // Compute target bounds relative to the page

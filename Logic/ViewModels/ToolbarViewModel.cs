@@ -13,22 +13,22 @@ namespace LunaDraw.Logic.ViewModels
 {
     public class ToolbarViewModel : ReactiveObject
     {
-        private readonly MainViewModel _mainViewModel;
-        private readonly IToolStateManager _toolStateManager;
+        private readonly MainViewModel mainViewModel;
+        private readonly IToolStateManager toolStateManager;
 
         // Forward properties from MainViewModel or ToolState
-        public List<IDrawingTool> AvailableTools => _toolStateManager.AvailableTools;
-        public List<BrushShape> AvailableBrushShapes => _toolStateManager.AvailableBrushShapes;
+        public List<IDrawingTool> AvailableTools => toolStateManager.AvailableTools;
+        public List<BrushShape> AvailableBrushShapes => toolStateManager.AvailableBrushShapes;
 
         // Commands delegate to MainViewModel (for now, until commands are moved to services/viewmodels)
-        public ReactiveCommand<IDrawingTool, Unit> SelectToolCommand => _mainViewModel.SelectToolCommand;
-        public ReactiveCommand<Unit, Unit> UndoCommand => _mainViewModel.UndoCommand;
-        public ReactiveCommand<Unit, Unit> RedoCommand => _mainViewModel.RedoCommand;
-        public ReactiveCommand<Unit, Unit> CopyCommand => _mainViewModel.CopyCommand;
-        public ReactiveCommand<Unit, Unit> PasteCommand => _mainViewModel.PasteCommand;
-        public ReactiveCommand<Unit, Unit> DeleteSelectedCommand => _mainViewModel.DeleteSelectedCommand;
-        public ReactiveCommand<Unit, Unit> GroupSelectedCommand => _mainViewModel.GroupSelectedCommand;
-        public ReactiveCommand<Unit, Unit> UngroupSelectedCommand => _mainViewModel.UngroupSelectedCommand;
+        public ReactiveCommand<IDrawingTool, Unit> SelectToolCommand => mainViewModel.SelectToolCommand;
+        public ReactiveCommand<Unit, Unit> UndoCommand => mainViewModel.UndoCommand;
+        public ReactiveCommand<Unit, Unit> RedoCommand => mainViewModel.RedoCommand;
+        public ReactiveCommand<Unit, Unit> CopyCommand => mainViewModel.CopyCommand;
+        public ReactiveCommand<Unit, Unit> PasteCommand => mainViewModel.PasteCommand;
+        public ReactiveCommand<Unit, Unit> DeleteSelectedCommand => mainViewModel.DeleteSelectedCommand;
+        public ReactiveCommand<Unit, Unit> GroupSelectedCommand => mainViewModel.GroupSelectedCommand;
+        public ReactiveCommand<Unit, Unit> UngroupSelectedCommand => mainViewModel.UngroupSelectedCommand;
 
         // Local Commands
         public ReactiveCommand<Unit, Unit> ShowSettingsCommand { get; }
@@ -40,94 +40,94 @@ namespace LunaDraw.Logic.ViewModels
         public ReactiveCommand<BrushShape, Unit> SelectBrushShapeCommand { get; }
 
         // OAPH properties for reactive binding
-        private IDrawingTool _activeTool;
+        private IDrawingTool activeTool;
         public IDrawingTool ActiveTool
         {
-            get => _activeTool;
-            set => this.RaiseAndSetIfChanged(ref _activeTool, value);
+            get => activeTool;
+            set => this.RaiseAndSetIfChanged(ref activeTool, value);
         }
 
-        private readonly ObservableAsPropertyHelper<SKColor> _strokeColor;
-        public SKColor StrokeColor => _strokeColor.Value;
+        private readonly ObservableAsPropertyHelper<SKColor> strokeColor;
+        public SKColor StrokeColor => strokeColor.Value;
 
-        private readonly ObservableAsPropertyHelper<SKColor?> _fillColor;
-        public SKColor? FillColor => _fillColor.Value;
+        private readonly ObservableAsPropertyHelper<SKColor?> fillColor;
+        public SKColor? FillColor => fillColor.Value;
 
-        private readonly ObservableAsPropertyHelper<float> _strokeWidth;
-        public float StrokeWidth => _strokeWidth.Value;
+        private readonly ObservableAsPropertyHelper<float> strokeWidth;
+        public float StrokeWidth => strokeWidth.Value;
 
-        private readonly ObservableAsPropertyHelper<byte> _opacity;
-        public byte Opacity => _opacity.Value;
+        private readonly ObservableAsPropertyHelper<byte> opacity;
+        public byte Opacity => opacity.Value;
 
-        private readonly ObservableAsPropertyHelper<byte> _flow;
-        public byte Flow => _flow.Value;
+        private readonly ObservableAsPropertyHelper<byte> flow;
+        public byte Flow => flow.Value;
 
-        private readonly ObservableAsPropertyHelper<float> _spacing;
-        public float Spacing => _spacing.Value;
+        private readonly ObservableAsPropertyHelper<float> spacing;
+        public float Spacing => spacing.Value;
 
-        private readonly ObservableAsPropertyHelper<BrushShape> _currentBrushShape;
-        public BrushShape CurrentBrushShape => _currentBrushShape.Value;
+        private readonly ObservableAsPropertyHelper<BrushShape> currentBrushShape;
+        public BrushShape CurrentBrushShape => currentBrushShape.Value;
 
-        private readonly ObservableAsPropertyHelper<bool> _isGlowEnabled;
-        public bool IsGlowEnabled => _isGlowEnabled.Value;
+        private readonly ObservableAsPropertyHelper<bool> isGlowEnabled;
+        public bool IsGlowEnabled => isGlowEnabled.Value;
 
-        private readonly ObservableAsPropertyHelper<SKColor> _glowColor;
-        public SKColor GlowColor => _glowColor.Value;
+        private readonly ObservableAsPropertyHelper<SKColor> glowColor;
+        public SKColor GlowColor => glowColor.Value;
 
-        private readonly ObservableAsPropertyHelper<float> _glowRadius;
-        public float GlowRadius => _glowRadius.Value;
+        private readonly ObservableAsPropertyHelper<float> glowRadius;
+        public float GlowRadius => glowRadius.Value;
 
-        private readonly ObservableAsPropertyHelper<bool> _isRainbowEnabled;
-        public bool IsRainbowEnabled => _isRainbowEnabled.Value;
+        private readonly ObservableAsPropertyHelper<bool> isRainbowEnabled;
+        public bool IsRainbowEnabled => isRainbowEnabled.Value;
 
-        private readonly ObservableAsPropertyHelper<float> _scatterRadius;
-        public float ScatterRadius => _scatterRadius.Value;
+        private readonly ObservableAsPropertyHelper<float> scatterRadius;
+        public float ScatterRadius => scatterRadius.Value;
 
-        private readonly ObservableAsPropertyHelper<float> _sizeJitter;
-        public float SizeJitter => _sizeJitter.Value;
+        private readonly ObservableAsPropertyHelper<float> sizeJitter;
+        public float SizeJitter => sizeJitter.Value;
 
-        private readonly ObservableAsPropertyHelper<float> _angleJitter;
-        public float AngleJitter => _angleJitter.Value;
+        private readonly ObservableAsPropertyHelper<float> angleJitter;
+        public float AngleJitter => angleJitter.Value;
 
-        private readonly ObservableAsPropertyHelper<float> _hueJitter;
-        public float HueJitter => _hueJitter.Value;
+        private readonly ObservableAsPropertyHelper<float> hueJitter;
+        public float HueJitter => hueJitter.Value;
 
         // UI state properties
-        private bool _isSettingsOpen = false;
+        private bool isSettingsOpen = false;
         public bool IsSettingsOpen
         {
-            get => _isSettingsOpen;
-            set => this.RaiseAndSetIfChanged(ref _isSettingsOpen, value);
+            get => isSettingsOpen;
+            set => this.RaiseAndSetIfChanged(ref isSettingsOpen, value);
         }
 
-        private bool _isShapesFlyoutOpen = false;
+        private bool isShapesFlyoutOpen = false;
         public bool IsShapesFlyoutOpen
         {
-            get => _isShapesFlyoutOpen;
-            set => this.RaiseAndSetIfChanged(ref _isShapesFlyoutOpen, value);
+            get => isShapesFlyoutOpen;
+            set => this.RaiseAndSetIfChanged(ref isShapesFlyoutOpen, value);
         }
 
-        private bool _isBrushesFlyoutOpen = false;
+        private bool isBrushesFlyoutOpen = false;
         public bool IsBrushesFlyoutOpen
         {
-            get => _isBrushesFlyoutOpen;
-            set => this.RaiseAndSetIfChanged(ref _isBrushesFlyoutOpen, value);
+            get => isBrushesFlyoutOpen;
+            set => this.RaiseAndSetIfChanged(ref isBrushesFlyoutOpen, value);
         }
 
-        private readonly ObservableAsPropertyHelper<bool> _isAnyFlyoutOpen;
-        public bool IsAnyFlyoutOpen => _isAnyFlyoutOpen.Value;
+        private readonly ObservableAsPropertyHelper<bool> isAnyFlyoutOpen;
+        public bool IsAnyFlyoutOpen => isAnyFlyoutOpen.Value;
 
-        private IDrawingTool _lastActiveShapeTool;
+        private IDrawingTool lastActiveShapeTool;
         public IDrawingTool LastActiveShapeTool
         {
-            get => _lastActiveShapeTool;
-            set => this.RaiseAndSetIfChanged(ref _lastActiveShapeTool, value);
+            get => lastActiveShapeTool;
+            set => this.RaiseAndSetIfChanged(ref lastActiveShapeTool, value);
         }
 
         public ToolbarViewModel(MainViewModel mainViewModel, IToolStateManager toolStateManager)
         {
-            _mainViewModel = mainViewModel;
-            _toolStateManager = toolStateManager;
+            this.mainViewModel = mainViewModel;
+            this.toolStateManager = toolStateManager;
 
             // Subscribe to ToolState changes via MainViewModel or directly?
             // Using MainViewModel properties to maintain consistency if they are wrapped there,
@@ -135,64 +135,64 @@ namespace LunaDraw.Logic.ViewModels
             // However, since MainViewModel exposes the same instances, it should be fine.
             
             // Initialize ActiveTool and subscribe
-            _activeTool = _toolStateManager.ActiveTool;
+            activeTool = this.toolStateManager.ActiveTool;
             
             // We subscribe to the ViewModel's property which is already synced with the Service
             // This ensures we are downstream of the MainViewModel's glue code if any exists.
-            _mainViewModel.WhenAnyValue(x => x.ActiveTool)
+            this.mainViewModel.WhenAnyValue(x => x.ActiveTool)
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(tool => ActiveTool = tool);
 
-            _strokeColor = _mainViewModel.WhenAnyValue(x => x.StrokeColor)
-              .ToProperty(this, x => x.StrokeColor, _mainViewModel.StrokeColor);
+            strokeColor = this.mainViewModel.WhenAnyValue(x => x.StrokeColor)
+              .ToProperty(this, x => x.StrokeColor, this.mainViewModel.StrokeColor);
 
-            _fillColor = _mainViewModel.WhenAnyValue(x => x.FillColor)
-              .ToProperty(this, x => x.FillColor, _mainViewModel.FillColor);
+            fillColor = this.mainViewModel.WhenAnyValue(x => x.FillColor)
+              .ToProperty(this, x => x.FillColor, this.mainViewModel.FillColor);
 
-            _strokeWidth = _mainViewModel.WhenAnyValue(x => x.StrokeWidth)
-              .ToProperty(this, x => x.StrokeWidth, _mainViewModel.StrokeWidth);
+            strokeWidth = this.mainViewModel.WhenAnyValue(x => x.StrokeWidth)
+              .ToProperty(this, x => x.StrokeWidth, this.mainViewModel.StrokeWidth);
 
-            _opacity = _mainViewModel.WhenAnyValue(x => x.Opacity)
-              .ToProperty(this, x => x.Opacity, _mainViewModel.Opacity);
+            opacity = this.mainViewModel.WhenAnyValue(x => x.Opacity)
+              .ToProperty(this, x => x.Opacity, this.mainViewModel.Opacity);
 
-            _flow = _mainViewModel.WhenAnyValue(x => x.Flow)
-              .ToProperty(this, x => x.Flow, _mainViewModel.Flow);
+            flow = this.mainViewModel.WhenAnyValue(x => x.Flow)
+              .ToProperty(this, x => x.Flow, this.mainViewModel.Flow);
 
-            _spacing = _mainViewModel.WhenAnyValue(x => x.Spacing)
-              .ToProperty(this, x => x.Spacing, _mainViewModel.Spacing);
+            spacing = this.mainViewModel.WhenAnyValue(x => x.Spacing)
+              .ToProperty(this, x => x.Spacing, this.mainViewModel.Spacing);
 
-            _currentBrushShape = _mainViewModel.WhenAnyValue(x => x.CurrentBrushShape)
-              .ToProperty(this, x => x.CurrentBrushShape, _mainViewModel.CurrentBrushShape);
+            currentBrushShape = this.mainViewModel.WhenAnyValue(x => x.CurrentBrushShape)
+              .ToProperty(this, x => x.CurrentBrushShape, this.mainViewModel.CurrentBrushShape);
 
-            _isGlowEnabled = _mainViewModel.WhenAnyValue(x => x.IsGlowEnabled)
-              .ToProperty(this, x => x.IsGlowEnabled, initialValue: _mainViewModel.IsGlowEnabled);
+            isGlowEnabled = this.mainViewModel.WhenAnyValue(x => x.IsGlowEnabled)
+              .ToProperty(this, x => x.IsGlowEnabled, initialValue: this.mainViewModel.IsGlowEnabled);
 
-            _glowColor = _mainViewModel.WhenAnyValue(x => x.GlowColor)
-              .ToProperty(this, x => x.GlowColor, initialValue: _mainViewModel.GlowColor);
+            glowColor = this.mainViewModel.WhenAnyValue(x => x.GlowColor)
+              .ToProperty(this, x => x.GlowColor, initialValue: this.mainViewModel.GlowColor);
 
-            _glowRadius = _mainViewModel.WhenAnyValue(x => x.GlowRadius)
-              .ToProperty(this, x => x.GlowRadius, initialValue: _mainViewModel.GlowRadius);
+            glowRadius = this.mainViewModel.WhenAnyValue(x => x.GlowRadius)
+              .ToProperty(this, x => x.GlowRadius, initialValue: this.mainViewModel.GlowRadius);
 
-            _isRainbowEnabled = _mainViewModel.WhenAnyValue(x => x.IsRainbowEnabled)
-              .ToProperty(this, x => x.IsRainbowEnabled, initialValue: _mainViewModel.IsRainbowEnabled);
+            isRainbowEnabled = this.mainViewModel.WhenAnyValue(x => x.IsRainbowEnabled)
+              .ToProperty(this, x => x.IsRainbowEnabled, initialValue: this.mainViewModel.IsRainbowEnabled);
 
-            _scatterRadius = _mainViewModel.WhenAnyValue(x => x.ScatterRadius)
-              .ToProperty(this, x => x.ScatterRadius, initialValue: _mainViewModel.ScatterRadius);
+            scatterRadius = this.mainViewModel.WhenAnyValue(x => x.ScatterRadius)
+              .ToProperty(this, x => x.ScatterRadius, initialValue: this.mainViewModel.ScatterRadius);
 
-            _sizeJitter = _mainViewModel.WhenAnyValue(x => x.SizeJitter)
-              .ToProperty(this, x => x.SizeJitter, initialValue: _mainViewModel.SizeJitter);
+            sizeJitter = this.mainViewModel.WhenAnyValue(x => x.SizeJitter)
+              .ToProperty(this, x => x.SizeJitter, initialValue: this.mainViewModel.SizeJitter);
 
-            _angleJitter = _mainViewModel.WhenAnyValue(x => x.AngleJitter)
-              .ToProperty(this, x => x.AngleJitter, initialValue: _mainViewModel.AngleJitter);
+            angleJitter = this.mainViewModel.WhenAnyValue(x => x.AngleJitter)
+              .ToProperty(this, x => x.AngleJitter, initialValue: this.mainViewModel.AngleJitter);
 
-            _hueJitter = _mainViewModel.WhenAnyValue(x => x.HueJitter)
-              .ToProperty(this, x => x.HueJitter, initialValue: _mainViewModel.HueJitter);
+            hueJitter = this.mainViewModel.WhenAnyValue(x => x.HueJitter)
+              .ToProperty(this, x => x.HueJitter, initialValue: this.mainViewModel.HueJitter);
 
-            _isAnyFlyoutOpen = this.WhenAnyValue(x => x.IsSettingsOpen, x => x.IsShapesFlyoutOpen, x => x.IsBrushesFlyoutOpen)
+            isAnyFlyoutOpen = this.WhenAnyValue(x => x.IsSettingsOpen, x => x.IsShapesFlyoutOpen, x => x.IsBrushesFlyoutOpen)
               .Select(values => values.Item1 || values.Item2 || values.Item3)
               .ToProperty(this, x => x.IsAnyFlyoutOpen);
 
-            _lastActiveShapeTool = AvailableTools.FirstOrDefault(t => t is RectangleTool)
+            lastActiveShapeTool = AvailableTools.FirstOrDefault(t => t is RectangleTool)
                                    ?? AvailableTools.FirstOrDefault(t => t is EllipseTool)
                                    ?? AvailableTools.FirstOrDefault(t => t is LineTool)
                                    ?? new RectangleTool();

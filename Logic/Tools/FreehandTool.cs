@@ -13,34 +13,34 @@ namespace LunaDraw.Logic.Tools
     public string Name => "Freehand";
     public ToolType Type => ToolType.Freehand;
 
-    private List<SKPoint>? _currentPoints;
-    private SKPoint _lastStampPoint;
-    private bool _isDrawing;
-    private readonly Random _random = new Random();
+    private List<SKPoint>? currentPoints;
+    private SKPoint lastStampPoint;
+    private bool isDrawing;
+    private readonly Random random = new Random();
 
     public void OnTouchPressed(SKPoint point, ToolContext context)
     {
       if (context.CurrentLayer?.IsLocked == true) return;
 
-      _currentPoints =
+      currentPoints =
       [
         // Add initial point
         point,
       ];
-      _lastStampPoint = point;
-      _isDrawing = true;
+      lastStampPoint = point;
+      isDrawing = true;
 
       MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
     }
 
     public void OnTouchMoved(SKPoint point, ToolContext context)
     {
-      if (!_isDrawing || context.CurrentLayer?.IsLocked == true || _currentPoints == null) return;
+      if (!isDrawing || context.CurrentLayer?.IsLocked == true || currentPoints == null) return;
 
       float spacingPixels = context.Spacing * context.StrokeWidth;
       if (spacingPixels < 1) spacingPixels = 1;
 
-      var vector = point - _lastStampPoint;
+      var vector = point - lastStampPoint;
       float distance = vector.Length;
 
       if (distance >= spacingPixels)
@@ -56,19 +56,19 @@ namespace LunaDraw.Logic.Tools
         int steps = (int)(distance / spacingPixels);
         for (int i = 0; i < steps; i++)
         {
-          var idealPoint = _lastStampPoint + new SKPoint(direction.X * spacingPixels, direction.Y * spacingPixels);
+          var idealPoint = lastStampPoint + new SKPoint(direction.X * spacingPixels, direction.Y * spacingPixels);
           
           var finalPoint = idealPoint;
           if (context.ScatterRadius > 0)
           {
               // Random scatter in a circle
-              double angle = _random.NextDouble() * Math.PI * 2;
-              double r = Math.Sqrt(_random.NextDouble()) * context.ScatterRadius; // Sqrt for uniform distribution
+              double angle = random.NextDouble() * Math.PI * 2;
+              double r = Math.Sqrt(random.NextDouble()) * context.ScatterRadius; // Sqrt for uniform distribution
               finalPoint += new SKPoint((float)(r * Math.Cos(angle)), (float)(r * Math.Sin(angle)));
           }
 
-          _currentPoints.Add(finalPoint);
-          _lastStampPoint = idealPoint;
+          currentPoints.Add(finalPoint);
+          lastStampPoint = idealPoint;
         }
 
         MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
@@ -78,13 +78,13 @@ namespace LunaDraw.Logic.Tools
 
     public void OnTouchReleased(SKPoint point, ToolContext context)
     {
-      if (!_isDrawing || context.CurrentLayer == null || context.CurrentLayer.IsLocked || _currentPoints == null) return;
+      if (!isDrawing || context.CurrentLayer == null || context.CurrentLayer.IsLocked || currentPoints == null) return;
 
-      if (_currentPoints.Count > 0)
+      if (currentPoints.Count > 0)
       {
         var element = new DrawableStamps
         {
-          Points = new List<SKPoint>(_currentPoints),
+          Points = new List<SKPoint>(currentPoints),
           Shape = context.BrushShape,
           Size = context.StrokeWidth,
           Flow = context.Flow,
@@ -103,21 +103,21 @@ namespace LunaDraw.Logic.Tools
         MessageBus.Current.SendMessage(new DrawingStateChangedMessage());
       }
 
-      _currentPoints = null;
-      _isDrawing = false;
+      currentPoints = null;
+      isDrawing = false;
       MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
     }
 
     public void OnTouchCancelled(ToolContext context)
     {
-      _currentPoints = null;
-      _isDrawing = false;
+      currentPoints = null;
+      isDrawing = false;
       MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
     }
 
     public void DrawPreview(SKCanvas canvas, MainViewModel viewModel)
     {
-      if (_currentPoints == null || _currentPoints.Count == 0) return;
+      if (currentPoints == null || currentPoints.Count == 0) return;
 
       // Get current shape from viewModel
       var shape = viewModel.CurrentBrushShape;
@@ -139,7 +139,7 @@ namespace LunaDraw.Logic.Tools
       };
 
       int index = 0;
-      foreach (var point in _currentPoints)
+      foreach (var point in currentPoints)
       {
         // Local random for preview jitter
         var random = new Random(index * 1337); 

@@ -10,20 +10,20 @@ namespace LunaDraw.Logic.Managers
 {
   public class SelectionManager : ReactiveObject
   {
-    private readonly ObservableCollection<IDrawableElement> _selected = [];
+    private readonly ObservableCollection<IDrawableElement> selected = [];
     public ReadOnlyObservableCollection<IDrawableElement> Selected { get; }
 
     public SelectionManager()
     {
-      Selected = new ReadOnlyObservableCollection<IDrawableElement>(_selected);
+      Selected = new ReadOnlyObservableCollection<IDrawableElement>(selected);
     }
 
     public void Clear()
     {
-      if (_selected.Count == 0) return;
+      if (selected.Count == 0) return;
 
-      var elementsToClear = _selected.ToList();
-      _selected.Clear();
+      var elementsToClear = selected.ToList();
+      selected.Clear();
 
       foreach (var el in elementsToClear)
       {
@@ -35,9 +35,9 @@ namespace LunaDraw.Logic.Managers
 
     public void Add(IDrawableElement element)
     {
-      if (element == null || _selected.Contains(element)) return;
+      if (element == null || selected.Contains(element)) return;
       element.IsSelected = true;
-      _selected.Add(element);
+      selected.Add(element);
       OnSelectionChanged();
     }
 
@@ -46,10 +46,10 @@ namespace LunaDraw.Logic.Managers
       var changed = false;
       foreach (var element in elements)
       {
-        if (element != null && !_selected.Contains(element))
+        if (element != null && !selected.Contains(element))
         {
           element.IsSelected = true;
-          _selected.Add(element);
+          selected.Add(element);
           changed = true;
         }
       }
@@ -60,9 +60,9 @@ namespace LunaDraw.Logic.Managers
 
     public void Remove(IDrawableElement element)
     {
-      if (element == null || !_selected.Contains(element)) return;
+      if (element == null || !selected.Contains(element)) return;
       element.IsSelected = false;
-      _selected.Remove(element);
+      selected.Remove(element);
       OnSelectionChanged();
     }
 
@@ -70,7 +70,7 @@ namespace LunaDraw.Logic.Managers
     {
       if (element == null) return;
 
-      if (_selected.Contains(element))
+      if (selected.Contains(element))
       {
         Remove(element);
       }
@@ -82,25 +82,25 @@ namespace LunaDraw.Logic.Managers
 
     public bool Contains(IDrawableElement element)
     {
-      return element != null && _selected.Contains(element);
+      return element != null && selected.Contains(element);
     }
 
     public IReadOnlyList<IDrawableElement> GetAll()
     {
-      return _selected.ToList().AsReadOnly();
+      return selected.ToList().AsReadOnly();
     }
 
     public SKRect GetBounds()
     {
-      if (_selected.Count == 0)
+      if (selected.Count == 0)
       {
         return SKRect.Empty;
       }
 
-      var bounds = _selected[0].Bounds;
-      for (var i = 1; i < _selected.Count; i++)
+      var bounds = selected[0].Bounds;
+      for (var i = 1; i < selected.Count; i++)
       {
-        bounds.Union(_selected[i].Bounds);
+        bounds.Union(selected[i].Bounds);
       }
 
       return bounds;
@@ -116,6 +116,6 @@ namespace LunaDraw.Logic.Managers
     public event EventHandler? SelectionChanged;
 
     public SKRect Bounds => GetBounds();
-    public bool HasSelection => _selected.Count > 0;
+    public bool HasSelection => selected.Count > 0;
   }
 }

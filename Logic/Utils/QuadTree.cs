@@ -4,49 +4,49 @@ namespace LunaDraw.Logic.Utils
 {
     public class QuadTree<T> where T : class
     {
-        private readonly int _maxObjects = 10;
-        private readonly int _maxLevels = 5;
+        private readonly int maxObjects = 10;
+        private readonly int maxLevels = 5;
 
-        private readonly int _level;
-        private readonly List<T> _objects;
-        private readonly SKRect _bounds;
-        private readonly Func<T, SKRect> _getBounds;
-        private QuadTree<T>[]? _nodes;
+        private readonly int level;
+        private readonly List<T> objects;
+        private readonly SKRect bounds;
+        private readonly Func<T, SKRect> getBounds;
+        private QuadTree<T>[]? nodes;
 
         public QuadTree(int level, SKRect bounds, Func<T, SKRect> getBounds)
         {
-            _level = level;
-            _bounds = bounds;
-            _getBounds = getBounds;
-            _objects = new List<T>();
+            this.level = level;
+            this.bounds = bounds;
+            this.getBounds = getBounds;
+            objects = new List<T>();
         }
 
         public void Clear()
         {
-            _objects.Clear();
+            objects.Clear();
 
-            if (_nodes != null)
+            if (nodes != null)
             {
-                foreach (var node in _nodes)
+                foreach (var node in nodes)
                 {
                     node.Clear();
                 }
-                _nodes = null;
+                nodes = null;
             }
         }
 
         private void Split()
         {
-            float subWidth = _bounds.Width / 2f;
-            float subHeight = _bounds.Height / 2f;
-            float x = _bounds.Left;
-            float y = _bounds.Top;
+            float subWidth = bounds.Width / 2f;
+            float subHeight = bounds.Height / 2f;
+            float x = bounds.Left;
+            float y = bounds.Top;
 
-            _nodes = new QuadTree<T>[4];
-            _nodes[0] = new QuadTree<T>(_level + 1, new SKRect(x + subWidth, y, x + subWidth + subWidth, y + subHeight), _getBounds);
-            _nodes[1] = new QuadTree<T>(_level + 1, new SKRect(x, y, x + subWidth, y + subHeight), _getBounds);
-            _nodes[2] = new QuadTree<T>(_level + 1, new SKRect(x, y + subHeight, x + subWidth, y + subHeight + subHeight), _getBounds);
-            _nodes[3] = new QuadTree<T>(_level + 1, new SKRect(x + subWidth, y + subHeight, x + subWidth + subWidth, y + subHeight + subHeight), _getBounds);
+            nodes = new QuadTree<T>[4];
+            nodes[0] = new QuadTree<T>(level + 1, new SKRect(x + subWidth, y, x + subWidth + subWidth, y + subHeight), getBounds);
+            nodes[1] = new QuadTree<T>(level + 1, new SKRect(x, y, x + subWidth, y + subHeight), getBounds);
+            nodes[2] = new QuadTree<T>(level + 1, new SKRect(x, y + subHeight, x + subWidth, y + subHeight + subHeight), getBounds);
+            nodes[3] = new QuadTree<T>(level + 1, new SKRect(x + subWidth, y + subHeight, x + subWidth + subWidth, y + subHeight + subHeight), getBounds);
         }
 
         /*
@@ -55,8 +55,8 @@ namespace LunaDraw.Logic.Utils
         private int GetIndex(SKRect pRect)
         {
             int index = -1;
-            double verticalMidpoint = _bounds.Left + (_bounds.Width / 2f);
-            double horizontalMidpoint = _bounds.Top + (_bounds.Height / 2f);
+            double verticalMidpoint = bounds.Left + (bounds.Width / 2f);
+            double horizontalMidpoint = bounds.Top + (bounds.Height / 2f);
 
             bool topQuadrant = (pRect.Top < horizontalMidpoint && pRect.Bottom < horizontalMidpoint);
             bool bottomQuadrant = (pRect.Top > horizontalMidpoint);
@@ -89,34 +89,34 @@ namespace LunaDraw.Logic.Utils
 
         public void Insert(T pObject)
         {
-            if (_nodes != null)
+            if (nodes != null)
             {
-                int index = GetIndex(_getBounds(pObject));
+                int index = GetIndex(getBounds(pObject));
 
                 if (index != -1)
                 {
-                    _nodes[index].Insert(pObject);
+                    nodes[index].Insert(pObject);
                     return;
                 }
             }
 
-            _objects.Add(pObject);
+            objects.Add(pObject);
 
-            if (_objects.Count > _maxObjects && _level < _maxLevels)
+            if (objects.Count > maxObjects && level < maxLevels)
             {
-                if (_nodes == null)
+                if (nodes == null)
                 {
                     Split();
                 }
 
                 int i = 0;
-                while (i < _objects.Count)
+                while (i < objects.Count)
                 {
-                    int index = GetIndex(_getBounds(_objects[i]));
+                    int index = GetIndex(getBounds(objects[i]));
                     if (index != -1)
                     {
-                        _nodes[index].Insert(_objects[i]);
-                        _objects.RemoveAt(i);
+                        nodes![index].Insert(objects[i]);
+                        objects.RemoveAt(i);
                     }
                     else
                     {
@@ -129,28 +129,28 @@ namespace LunaDraw.Logic.Utils
         public List<T> Retrieve(List<T> returnObjects, SKRect pRect)
         {
             int index = GetIndex(pRect);
-            if (index != -1 && _nodes != null)
+            if (index != -1 && nodes != null)
             {
-                _nodes[index].Retrieve(returnObjects, pRect);
+                nodes[index].Retrieve(returnObjects, pRect);
             }
-            else if (_nodes != null)
+            else if (nodes != null)
             {
                 // If the rect doesn't fit into a specific quadrant (overlaps multiple),
                 // we must query all quadrants that it touches.
                 // Simplified: query all subnodes if we can't determine a single one.
                 // Or strictly check intersection.
                 // For now, naive approach: if it doesn't fit one, retrieve from all.
-                foreach (var node in _nodes)
+                foreach (var node in nodes)
                 {
                     // Optimization: check intersection with node bounds
-                    if (node._bounds.IntersectsWith(pRect))
+                    if (node.bounds.IntersectsWith(pRect))
                     {
                         node.Retrieve(returnObjects, pRect);
                     }
                 }
             }
 
-            returnObjects.AddRange(_objects);
+            returnObjects.AddRange(objects);
 
             return returnObjects;
         }

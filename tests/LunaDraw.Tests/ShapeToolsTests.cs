@@ -57,7 +57,7 @@ namespace LunaDraw.Tests
             if (tool is LineTool)
             {
                 // LineTool sets Start/End relative to 0,0 and uses TransformMatrix to position
-                var line = element as DrawableLine;
+                var line = (DrawableLine)element;
                 Assert.Equal(SKPoint.Empty, line.StartPoint);
                 Assert.Equal(new SKPoint(40, 40), line.EndPoint); // 50-10 = 40
                 

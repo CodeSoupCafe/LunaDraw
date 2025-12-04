@@ -13,15 +13,15 @@ namespace LunaDraw.Logic.Tools
     public string Name => "Line";
     public ToolType Type => ToolType.Line;
 
-    private SKPoint _startPoint;
-    private DrawableLine? _currentLine;
+    private SKPoint startPoint;
+    private DrawableLine? currentLine;
 
     public void OnTouchPressed(SKPoint point, ToolContext context)
     {
       if (context.CurrentLayer?.IsLocked == true) return;
 
-      _startPoint = point;
-      _currentLine = new DrawableLine
+      startPoint = point;
+      currentLine = new DrawableLine
       {
         StartPoint = SKPoint.Empty,
         EndPoint = SKPoint.Empty,
@@ -34,37 +34,37 @@ namespace LunaDraw.Logic.Tools
 
     public void OnTouchMoved(SKPoint point, ToolContext context)
     {
-      if (context.CurrentLayer?.IsLocked == true || _currentLine == null) return;
+      if (context.CurrentLayer?.IsLocked == true || currentLine == null) return;
 
-      _currentLine.EndPoint = point - _startPoint;
+      currentLine.EndPoint = point - startPoint;
       MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
     }
 
     public void OnTouchReleased(SKPoint point, ToolContext context)
     {
-      if (context.CurrentLayer == null || context.CurrentLayer.IsLocked || _currentLine == null) return;
+      if (context.CurrentLayer == null || context.CurrentLayer.IsLocked || currentLine == null) return;
 
-      if (!_currentLine.EndPoint.Equals(SKPoint.Empty))
+      if (!currentLine.EndPoint.Equals(SKPoint.Empty))
       {
-        context.CurrentLayer.Elements.Add(_currentLine);
+        context.CurrentLayer.Elements.Add(currentLine);
         MessageBus.Current.SendMessage(new DrawingStateChangedMessage());
       }
 
-      _currentLine = null;
+      currentLine = null;
       MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
     }
 
     public void OnTouchCancelled(ToolContext context)
     {
-      _currentLine = null;
+      currentLine = null;
       MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
     }
 
     public void DrawPreview(SKCanvas canvas, MainViewModel viewModel)
     {
-      if (_currentLine != null)
+      if (currentLine != null)
       {
-        _currentLine.Draw(canvas);
+        currentLine.Draw(canvas);
       }
     }
   }

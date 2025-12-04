@@ -7,57 +7,57 @@ namespace LunaDraw.Logic.Models
   /// </summary>
   public class DrawableStamps : IDrawableElement
   {
-    private SKBitmap? _cachedBitmap;
-    private SKPoint _cacheOffset;
-    private bool _isCacheDirty = true;
+    private SKBitmap? cachedBitmap;
+    private SKPoint cacheOffset;
+    private bool isCacheDirty = true;
 
     public Guid Id { get; } = Guid.NewGuid();
 
-    private List<SKPoint> _points = [];
+    private List<SKPoint> points = [];
     public List<SKPoint> Points
     {
-        get => _points;
+        get => points;
         set
         {
-            _points = value;
+            points = value;
             InvalidateCache();
         }
     }
 
-    private BrushShape _shape = BrushShape.Circle();
+    private BrushShape shape = BrushShape.Circle();
     public BrushShape Shape
     {
-        get => _shape;
+        get => shape;
         set
         {
-            _shape = value;
+            shape = value;
             InvalidateCache();
         }
     }
 
-    private float _size = 10f;
+    private float size = 10f;
     public float Size
     {
-        get => _size;
+        get => size;
         set
         {
-            if (Math.Abs(_size - value) > 0.001f)
+            if (Math.Abs(size - value) > 0.001f)
             {
-                _size = value;
+                size = value;
                 InvalidateCache();
             }
         }
     }
 
-    private byte _flow = 255;
+    private byte flow = 255;
     public byte Flow
     {
-        get => _flow;
+        get => flow;
         set
         {
-            if (_flow != value)
+            if (flow != value)
             {
-                _flow = value;
+                flow = value;
                 InvalidateCache();
             }
         }
@@ -65,25 +65,25 @@ namespace LunaDraw.Logic.Models
 
     public SKMatrix TransformMatrix { get; set; } = SKMatrix.CreateIdentity();
 
-    private bool _isVisible = true;
+    private bool isVisible = true;
     public bool IsVisible
     {
-        get => _isVisible;
-        set => _isVisible = value;
+        get => isVisible;
+        set => isVisible = value;
     }
 
     public bool IsSelected { get; set; }
     public int ZIndex { get; set; }
 
-    private byte _opacity = 255;
+    private byte opacity = 255;
     public byte Opacity
     {
-        get => _opacity;
+        get => opacity;
         set
         {
-            if (_opacity != value)
+            if (opacity != value)
             {
-                _opacity = value;
+                opacity = value;
                 InvalidateCache();
             }
         }
@@ -91,15 +91,15 @@ namespace LunaDraw.Logic.Models
 
     public SKColor? FillColor { get; set; }
 
-    private SKColor _strokeColor = SKColors.Black;
+    private SKColor strokeColor = SKColors.Black;
     public SKColor StrokeColor
     {
-        get => _strokeColor;
+        get => strokeColor;
         set
         {
-            if (_strokeColor != value)
+            if (strokeColor != value)
             {
-                _strokeColor = value;
+                strokeColor = value;
                 InvalidateCache();
             }
         }
@@ -107,15 +107,15 @@ namespace LunaDraw.Logic.Models
 
     public float StrokeWidth { get; set; } // Not used directly, using Size instead
 
-    private SKBlendMode _blendMode = SKBlendMode.SrcOver;
+    private SKBlendMode blendMode = SKBlendMode.SrcOver;
     public SKBlendMode BlendMode
     {
-        get => _blendMode;
+        get => blendMode;
         set
         {
-            if (_blendMode != value)
+            if (blendMode != value)
             {
-                _blendMode = value;
+                blendMode = value;
                 InvalidateCache();
             }
         }
@@ -123,99 +123,99 @@ namespace LunaDraw.Logic.Models
 
     public bool IsFilled { get; set; } = true;
 
-    private bool _isGlowEnabled = false;
+    private bool isGlowEnabled = false;
     public bool IsGlowEnabled
     {
-        get => _isGlowEnabled;
+        get => isGlowEnabled;
         set
         {
-            if (_isGlowEnabled != value)
+            if (isGlowEnabled != value)
             {
-                _isGlowEnabled = value;
+                isGlowEnabled = value;
                 InvalidateCache();
             }
         }
     }
 
-    private SKColor _glowColor = SKColors.Transparent;
+    private SKColor glowColor = SKColors.Transparent;
     public SKColor GlowColor
     {
-        get => _glowColor;
+        get => glowColor;
         set
         {
-            if (_glowColor != value)
+            if (glowColor != value)
             {
-                _glowColor = value;
+                glowColor = value;
                 InvalidateCache();
             }
         }
     }
 
-    private float _glowRadius = 0f;
+    private float glowRadius = 0f;
     public float GlowRadius
     {
-        get => _glowRadius;
+        get => glowRadius;
         set
         {
-            if (Math.Abs(_glowRadius - value) > 0.001f)
+            if (Math.Abs(glowRadius - value) > 0.001f)
             {
-                _glowRadius = value;
+                glowRadius = value;
                 InvalidateCache();
             }
         }
     }
 
-    private bool _isRainbowEnabled;
+    private bool isRainbowEnabled;
     public bool IsRainbowEnabled
     {
-        get => _isRainbowEnabled;
+        get => isRainbowEnabled;
         set
         {
-            if (_isRainbowEnabled != value)
+            if (isRainbowEnabled != value)
             {
-                _isRainbowEnabled = value;
+                isRainbowEnabled = value;
                 InvalidateCache();
             }
         }
     }
 
-    private float _sizeJitter;
+    private float sizeJitter;
     public float SizeJitter
     {
-        get => _sizeJitter;
+        get => sizeJitter;
         set
         {
-            if (Math.Abs(_sizeJitter - value) > 0.001f)
+            if (Math.Abs(sizeJitter - value) > 0.001f)
             {
-                _sizeJitter = value;
+                sizeJitter = value;
                 InvalidateCache();
             }
         }
     }
 
-    private float _angleJitter;
+    private float angleJitter;
     public float AngleJitter
     {
-        get => _angleJitter;
+        get => angleJitter;
         set
         {
-            if (Math.Abs(_angleJitter - value) > 0.001f)
+            if (Math.Abs(angleJitter - value) > 0.001f)
             {
-                _angleJitter = value;
+                angleJitter = value;
                 InvalidateCache();
             }
         }
     }
 
-    private float _hueJitter;
+    private float hueJitter;
     public float HueJitter
     {
-        get => _hueJitter;
+        get => hueJitter;
         set
         {
-            if (Math.Abs(_hueJitter - value) > 0.001f)
+            if (Math.Abs(hueJitter - value) > 0.001f)
             {
-                _hueJitter = value;
+                hueJitter = value;
                 InvalidateCache();
             }
         }
@@ -223,9 +223,9 @@ namespace LunaDraw.Logic.Models
 
     private void InvalidateCache()
     {
-        _isCacheDirty = true;
-        _cachedBitmap?.Dispose();
-        _cachedBitmap = null;
+        isCacheDirty = true;
+        cachedBitmap?.Dispose();
+        cachedBitmap = null;
     }
 
     private SKRect GetLocalBounds()
@@ -255,11 +255,11 @@ namespace LunaDraw.Logic.Models
 
     private void UpdateCache()
     {
-        if (!_isCacheDirty && _cachedBitmap != null) return;
+        if (!isCacheDirty && cachedBitmap != null) return;
         if (Points == null || !Points.Any() || Shape?.Path == null) return;
 
-        _cachedBitmap?.Dispose();
-        _cachedBitmap = null;
+        cachedBitmap?.Dispose();
+        cachedBitmap = null;
 
         var bounds = GetLocalBounds();
         var width = (int)Math.Ceiling(bounds.Width);
@@ -267,15 +267,15 @@ namespace LunaDraw.Logic.Models
 
         if (width <= 0 || height <= 0) return;
 
-        _cachedBitmap = new SKBitmap(width, height);
-        using var canvas = new SKCanvas(_cachedBitmap);
+        cachedBitmap = new SKBitmap(width, height);
+        using var canvas = new SKCanvas(cachedBitmap);
         canvas.Clear(SKColors.Transparent);
         canvas.Translate(-bounds.Left, -bounds.Top);
 
         DrawContent(canvas);
 
-        _cacheOffset = new SKPoint(bounds.Left, bounds.Top);
-        _isCacheDirty = false;
+        cacheOffset = new SKPoint(bounds.Left, bounds.Top);
+        isCacheDirty = false;
     }
 
     private void DrawContent(SKCanvas canvas)
@@ -418,9 +418,9 @@ namespace LunaDraw.Logic.Models
 
         // Always try to use cache for content
         UpdateCache();
-        if (_cachedBitmap != null)
+        if (cachedBitmap != null)
         {
-            canvas.DrawBitmap(_cachedBitmap, _cacheOffset);
+            canvas.DrawBitmap(cachedBitmap, cacheOffset);
         }
         else
         {

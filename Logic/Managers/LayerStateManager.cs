@@ -11,24 +11,24 @@ namespace LunaDraw.Logic.Services
     public ObservableCollection<Layer> Layers { get; } = [];
     public HistoryManager HistoryManager { get; } = new HistoryManager();
 
-    private Layer? _currentLayer;
+    private Layer? currentLayer;
     public Layer? CurrentLayer
     {
-      get => _currentLayer;
-      set => this.RaiseAndSetIfChanged(ref _currentLayer, value);
+      get => currentLayer;
+      set => this.RaiseAndSetIfChanged(ref currentLayer, value);
     }
 
-    private readonly IMessageBus _messageBus;
+    private readonly IMessageBus messageBus;
 
     public LayerStateManager(IMessageBus messageBus)
     {
-      _messageBus = messageBus;
+      this.messageBus = messageBus;
       // Initialize with a default layer
       var initialLayer = new Layer { Name = "Layer 1" };
       Layers.Add(initialLayer);
       CurrentLayer = initialLayer;
 
-      _messageBus.Listen<DrawingStateChangedMessage>().Subscribe(_ => SaveState());
+      this.messageBus.Listen<DrawingStateChangedMessage>().Subscribe(_ => SaveState());
 
       SaveState();
     }

@@ -11,22 +11,22 @@ namespace LunaDraw.Pages;
 
 public partial class MainPage : ContentPage
 {
-  private readonly MainViewModel _viewModel;
-  private readonly ToolbarViewModel _toolbarViewModel;
+  private readonly MainViewModel viewModel;
+  private readonly ToolbarViewModel toolbarViewModel;
 
   public MainPage(MainViewModel viewModel, ToolbarViewModel toolbarViewModel)
   {
     InitializeComponent();
-    _viewModel = viewModel;
-    _toolbarViewModel = toolbarViewModel;
+    this.viewModel = viewModel;
+    this.toolbarViewModel = toolbarViewModel;
 
-    BindingContext = _viewModel;
-    toolbarView.BindingContext = _toolbarViewModel;
+    BindingContext = this.viewModel;
+    toolbarView.BindingContext = this.toolbarViewModel;
 
     // Set up flyout content binding contexts
-    SettingsFlyoutContent.BindingContext = _toolbarViewModel;
-    ShapesFlyoutContent.BindingContext = _toolbarViewModel;
-    BrushesFlyoutContent.BindingContext = _toolbarViewModel;
+    SettingsFlyoutContent.BindingContext = this.toolbarViewModel;
+    ShapesFlyoutContent.BindingContext = this.toolbarViewModel;
+    BrushesFlyoutContent.BindingContext = this.toolbarViewModel;
 
     canvasView.PaintSurface += OnCanvasViewPaintSurface;
     canvasView.Touch += OnTouch;
@@ -45,24 +45,24 @@ public partial class MainPage : ContentPage
     // Ensure ViewModel knows the current canvas size (logical pixels)
     int width = e.BackendRenderTarget.Width;
     int height = e.BackendRenderTarget.Height;
-    _viewModel.CanvasSize = new SKRect(0, 0, width, height);
+    viewModel.CanvasSize = new SKRect(0, 0, width, height);
 
     canvas.Clear(SKColors.White);
 
-    if (_viewModel == null) return;
+    if (viewModel == null) return;
 
     canvas.Save();
 
     // DIRECT FIX: Use SetMatrix directly with UserMatrix.
     // The UserMatrix is now the single source of truth for View Transformation (Pan/Zoom/Rotate).
     // We do not mix it with MaxScaleCentered or other legacy logic.
-    canvas.SetMatrix(_viewModel.NavigationModel.UserMatrix);
+    canvas.SetMatrix(viewModel.NavigationModel.UserMatrix);
     
     // Sync TotalMatrix for Input Handler (reverse mapping)
     // Since we just SetMatrix, TotalMatrix IS UserMatrix.
-    _viewModel.NavigationModel.TotalMatrix = canvas.TotalMatrix;
+    viewModel.NavigationModel.TotalMatrix = canvas.TotalMatrix;
 
-    foreach (var layer in _viewModel.Layers)
+    foreach (var layer in viewModel.Layers)
     {
       if (layer.IsVisible)
       {
@@ -70,7 +70,7 @@ public partial class MainPage : ContentPage
       }
     }
 
-    _viewModel.ActiveTool.DrawPreview(canvas, _viewModel);
+    viewModel.ActiveTool.DrawPreview(canvas, viewModel);
     
     canvas.Restore();
   }
@@ -81,7 +81,7 @@ public partial class MainPage : ContentPage
     {
          CheckHideFlyouts();
     }
-    _viewModel?.ProcessTouch(e);
+    viewModel?.ProcessTouch(e);
     e.Handled = true;
   }
 
@@ -92,11 +92,11 @@ public partial class MainPage : ContentPage
 
   private void CheckHideFlyouts()
   {
-    if (_toolbarViewModel.IsAnyFlyoutOpen)
+    if (toolbarViewModel.IsAnyFlyoutOpen)
     {
-      _toolbarViewModel.IsSettingsOpen = false;
-      _toolbarViewModel.IsShapesFlyoutOpen = false;
-      _toolbarViewModel.IsBrushesFlyoutOpen = false;
+      toolbarViewModel.IsSettingsOpen = false;
+      toolbarViewModel.IsShapesFlyoutOpen = false;
+      toolbarViewModel.IsBrushesFlyoutOpen = false;
     }
   }
 }

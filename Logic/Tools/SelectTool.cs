@@ -16,18 +16,18 @@ namespace LunaDraw.Logic.Tools
     public string Name => "Select";
     public ToolType Type => ToolType.Select;
 
-    private SKPoint _lastPoint;
-    private SelectionState _currentState = SelectionState.None;
-    private ResizeHandle _activeHandle = ResizeHandle.None;
-    private SKRect _originalBounds;
-    private Dictionary<IDrawableElement, SKMatrix> _originalTransforms = [];
-    private SKPoint _resizeStartPoint;
+    private SKPoint lastPoint;
+    private SelectionState currentState = SelectionState.None;
+    private ResizeHandle activeHandle = ResizeHandle.None;
+    private SKRect originalBounds;
+    private Dictionary<IDrawableElement, SKMatrix> originalTransforms = [];
+    private SKPoint resizeStartPoint;
 
     public void OnTouchPressed(SKPoint point, ToolContext context)
     {
       if (context.CurrentLayer?.IsLocked == true) return;
 
-      _lastPoint = point;
+      lastPoint = point;
 
       // Check for resize handles if we have a selection
       if (context.SelectionManager.Selected.Any())
@@ -37,11 +37,11 @@ namespace LunaDraw.Logic.Tools
 
         if (handle != ResizeHandle.None)
         {
-          _currentState = SelectionState.Resizing;
-          _activeHandle = handle;
-          _resizeStartPoint = point;
-          _originalBounds = bounds;
-          _originalTransforms = context.SelectionManager.GetAll()
+          currentState = SelectionState.Resizing;
+          activeHandle = handle;
+          resizeStartPoint = point;
+          originalBounds = bounds;
+          originalTransforms = context.SelectionManager.GetAll()
             .ToDictionary(e => e, e => e.TransformMatrix);
 
           MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
@@ -61,12 +61,12 @@ namespace LunaDraw.Logic.Tools
           context.SelectionManager.Clear();
           context.SelectionManager.Add(hitElement);
         }
-        _currentState = SelectionState.Dragging;
+        currentState = SelectionState.Dragging;
       }
       else
       {
         context.SelectionManager.Clear();
-        _currentState = SelectionState.None;
+        currentState = SelectionState.None;
       }
 
       MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
@@ -76,15 +76,15 @@ namespace LunaDraw.Logic.Tools
     {
       if (context.CurrentLayer?.IsLocked == true) return;
 
-      switch (_currentState)
+      switch (currentState)
       {
         case SelectionState.Dragging:
-          var delta = point - _lastPoint;
+          var delta = point - lastPoint;
           foreach (var element in context.SelectionManager.GetAll())
           {
             element.Translate(delta);
           }
-          _lastPoint = point;
+          lastPoint = point;
           MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
           break;
 
@@ -97,22 +97,22 @@ namespace LunaDraw.Logic.Tools
 
     public void OnTouchReleased(SKPoint point, ToolContext context)
     {
-      if (_currentState == SelectionState.Dragging || _currentState == SelectionState.Resizing)
+      if (currentState == SelectionState.Dragging || currentState == SelectionState.Resizing)
       {
         MessageBus.Current.SendMessage(new DrawingStateChangedMessage());
       }
 
-      _currentState = SelectionState.None;
-      _activeHandle = ResizeHandle.None;
-      _originalTransforms?.Clear();
+      currentState = SelectionState.None;
+      activeHandle = ResizeHandle.None;
+      originalTransforms?.Clear();
       MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
     }
 
     public void OnTouchCancelled(ToolContext context)
     {
-      _currentState = SelectionState.None;
-      _activeHandle = ResizeHandle.None;
-      _originalTransforms?.Clear();
+      currentState = SelectionState.None;
+      activeHandle = ResizeHandle.None;
+      originalTransforms?.Clear();
       MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
     }
 
@@ -134,7 +134,7 @@ namespace LunaDraw.Logic.Tools
         canvas.DrawRect(bounds, paint);
 
         // Draw resize handles
-        if (_currentState != SelectionState.Resizing)
+        if (currentState != SelectionState.Resizing)
         {
           float handleDrawScale = 1.0f / viewModel.NavigationModel.TotalMatrix.ScaleX; // Inverse of canvas scale
           DrawResizeHandle(canvas, new SKPoint(bounds.Left, bounds.Top), handleDrawScale);
@@ -171,23 +171,23 @@ namespace LunaDraw.Logic.Tools
 
     private void PerformResize(SKPoint currentPoint, ToolContext context)
     {
-      if (_originalTransforms == null) return;
+      if (originalTransforms == null) return;
 
-      var dragDelta = currentPoint - _resizeStartPoint;
-      var newBounds = CalculateNewBounds(_originalBounds, _activeHandle, dragDelta);
+      var dragDelta = currentPoint - resizeStartPoint;
+      var newBounds = CalculateNewBounds(originalBounds, activeHandle, dragDelta);
 
       if (newBounds.Width < 5 || newBounds.Height < 5) return;
 
-      var sx = _originalBounds.Width == 0 ? 1 : newBounds.Width / _originalBounds.Width;
-      var sy = _originalBounds.Height == 0 ? 1 : newBounds.Height / _originalBounds.Height;
-      var tx = newBounds.Left - (_originalBounds.Left * sx);
-      var ty = newBounds.Top - (_originalBounds.Top * sy);
+      var sx = originalBounds.Width == 0 ? 1 : newBounds.Width / originalBounds.Width;
+      var sy = originalBounds.Height == 0 ? 1 : newBounds.Height / originalBounds.Height;
+      var tx = newBounds.Left - (originalBounds.Left * sx);
+      var ty = newBounds.Top - (originalBounds.Top * sy);
 
       var transformFromOriginal = new SKMatrix(sx, 0, tx, 0, sy, ty, 0, 0, 1);
 
       foreach (var element in context.SelectionManager.GetAll())
       {
-        if (_originalTransforms.TryGetValue(element, out var originalMatrix))
+        if (originalTransforms.TryGetValue(element, out var originalMatrix))
         {
           // Apply the resize transformation (calculated in world space) AFTER the original matrix
           // New = Resize * Original
