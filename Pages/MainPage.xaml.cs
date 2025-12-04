@@ -13,12 +13,14 @@ public partial class MainPage : ContentPage
 {
   private readonly MainViewModel viewModel;
   private readonly ToolbarViewModel toolbarViewModel;
+  private readonly IMessageBus messageBus;
 
-  public MainPage(MainViewModel viewModel, ToolbarViewModel toolbarViewModel)
+  public MainPage(MainViewModel viewModel, ToolbarViewModel toolbarViewModel, IMessageBus messageBus)
   {
     InitializeComponent();
     this.viewModel = viewModel;
     this.toolbarViewModel = toolbarViewModel;
+    this.messageBus = messageBus;
 
     BindingContext = this.viewModel;
     toolbarView.BindingContext = this.toolbarViewModel;
@@ -31,7 +33,7 @@ public partial class MainPage : ContentPage
     canvasView.PaintSurface += OnCanvasViewPaintSurface;
     canvasView.Touch += OnTouch;
 
-    MessageBus.Current.Listen<CanvasInvalidateMessage>().Subscribe(_ =>
+    this.messageBus.Listen<CanvasInvalidateMessage>().Subscribe(_ =>
     {
       canvasView?.InvalidateSurface();
     });

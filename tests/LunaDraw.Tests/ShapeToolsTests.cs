@@ -4,19 +4,23 @@ using System.Linq;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Tools;
 using LunaDraw.Logic.Managers;
+using ReactiveUI;
 using Xunit;
 using SkiaSharp;
+using Moq;
 
 namespace LunaDraw.Tests
 {
     public class ShapeToolsTests
     {
+        private static readonly Mock<IMessageBus> mockBus = new Mock<IMessageBus>();
+
         public static TheoryData<IDrawingTool, Type> ToolTypesData =>
             new TheoryData<IDrawingTool, Type>
             {
-                { new RectangleTool(), typeof(DrawableRectangle) },
-                { new EllipseTool(), typeof(DrawableEllipse) },
-                { new LineTool(), typeof(DrawableLine) }
+                { new RectangleTool(mockBus.Object), typeof(DrawableRectangle) },
+                { new EllipseTool(mockBus.Object), typeof(DrawableEllipse) },
+                { new LineTool(mockBus.Object), typeof(DrawableLine) }
             };
 
         [Theory]

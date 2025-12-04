@@ -33,7 +33,7 @@ public static class MauiProgram
 			});
 
         // Register Core State Managers
-        builder.Services.AddSingleton<IMessageBus>(MessageBus.Current);
+        builder.Services.AddSingleton<IMessageBus>(new ReactiveUI.MessageBus());
         builder.Services.AddSingleton<NavigationModel>();
         builder.Services.AddSingleton<SelectionManager>();
         builder.Services.AddSingleton<IToolStateManager, ToolStateManager>();

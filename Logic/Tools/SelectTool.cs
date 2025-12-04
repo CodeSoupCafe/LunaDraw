@@ -22,6 +22,12 @@ namespace LunaDraw.Logic.Tools
     private SKRect originalBounds;
     private Dictionary<IDrawableElement, SKMatrix> originalTransforms = [];
     private SKPoint resizeStartPoint;
+    private readonly IMessageBus messageBus;
+
+    public SelectTool(IMessageBus messageBus)
+    {
+        this.messageBus = messageBus;
+    }
 
     public void OnTouchPressed(SKPoint point, ToolContext context)
     {
@@ -44,7 +50,7 @@ namespace LunaDraw.Logic.Tools
           originalTransforms = context.SelectionManager.GetAll()
             .ToDictionary(e => e, e => e.TransformMatrix);
 
-          MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+          messageBus.SendMessage(new CanvasInvalidateMessage());
           return;
         }
       }
@@ -69,7 +75,7 @@ namespace LunaDraw.Logic.Tools
         currentState = SelectionState.None;
       }
 
-      MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+      messageBus.SendMessage(new CanvasInvalidateMessage());
     }
 
     public void OnTouchMoved(SKPoint point, ToolContext context)
@@ -85,12 +91,12 @@ namespace LunaDraw.Logic.Tools
             element.Translate(delta);
           }
           lastPoint = point;
-          MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+          messageBus.SendMessage(new CanvasInvalidateMessage());
           break;
 
         case SelectionState.Resizing:
           PerformResize(point, context);
-          MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+          messageBus.SendMessage(new CanvasInvalidateMessage());
           break;
       }
     }
@@ -99,13 +105,13 @@ namespace LunaDraw.Logic.Tools
     {
       if (currentState == SelectionState.Dragging || currentState == SelectionState.Resizing)
       {
-        MessageBus.Current.SendMessage(new DrawingStateChangedMessage());
+        messageBus.SendMessage(new DrawingStateChangedMessage());
       }
 
       currentState = SelectionState.None;
       activeHandle = ResizeHandle.None;
       originalTransforms?.Clear();
-      MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+      messageBus.SendMessage(new CanvasInvalidateMessage());
     }
 
     public void OnTouchCancelled(ToolContext context)
@@ -113,7 +119,7 @@ namespace LunaDraw.Logic.Tools
       currentState = SelectionState.None;
       activeHandle = ResizeHandle.None;
       originalTransforms?.Clear();
-      MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+      messageBus.SendMessage(new CanvasInvalidateMessage());
     }
 
     public void DrawPreview(SKCanvas canvas, MainViewModel viewModel)

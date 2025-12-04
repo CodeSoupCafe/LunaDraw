@@ -134,13 +134,13 @@ namespace LunaDraw.Logic.Services
       this.messageBus = messageBus;
       AvailableTools =
       [
-          new SelectTool(),
-                new FreehandTool(),
-                new RectangleTool(),
-                new EllipseTool(),
-                new LineTool(),
-                new FillTool(),
-                new EraserBrushTool()
+          new SelectTool(messageBus),
+                new FreehandTool(messageBus),
+                new RectangleTool(messageBus),
+                new EllipseTool(messageBus),
+                new LineTool(messageBus),
+                new FillTool(messageBus),
+                new EraserBrushTool(messageBus)
       ];
 
       AvailableBrushShapes =
@@ -158,7 +158,7 @@ namespace LunaDraw.Logic.Services
           BrushShape.Hexagon()
       ];
 
-      activeTool = new FreehandTool();
+      activeTool = new FreehandTool(messageBus);
       currentBrushShape = AvailableBrushShapes.First();
 
       // Listen for messages that update tool state

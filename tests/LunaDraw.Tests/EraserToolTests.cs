@@ -8,17 +8,17 @@ using LunaDraw.Logic.Messages;
 using ReactiveUI;
 using Xunit;
 using SkiaSharp;
+using Moq;
 
 namespace LunaDraw.Tests
 {
     public class EraserToolTests
     {
+        private readonly Mock<IMessageBus> mockBus;
+
         public EraserToolTests()
         {
-            // Ensure MessageBus is initialized if needed. 
-            // ReactiveUI's MessageBus is usually ready.
-            // If tests fail due to MessageBus, we might need to register a custom one, 
-            // but standard practice usually works out of the box for unit tests if dependencies aren't mocked strictly.
+            mockBus = new Mock<IMessageBus>();
         }
 
         [Fact]
@@ -37,7 +37,7 @@ namespace LunaDraw.Tests
                 BrushShape = BrushShape.Circle()
             };
             
-            var tool = new EraserTool();
+            var tool = new EraserTool(mockBus.Object);
             var point = new SKPoint(10, 10);
 
             // Act
@@ -63,7 +63,7 @@ namespace LunaDraw.Tests
                 BrushShape = BrushShape.Circle()
             };
             
-            var tool = new EraserTool();
+            var tool = new EraserTool(mockBus.Object);
             var point = new SKPoint(10, 10);
 
             // Act
@@ -92,7 +92,7 @@ namespace LunaDraw.Tests
                 BrushShape = BrushShape.Circle()
             };
             
-            var tool = new EraserTool();
+            var tool = new EraserTool(mockBus.Object);
             var point = new SKPoint(10, 10);
 
             // Act
@@ -119,7 +119,7 @@ namespace LunaDraw.Tests
                 BrushShape = BrushShape.Circle()
             };
             
-            var tool = new EraserTool();
+            var tool = new EraserTool(mockBus.Object);
             
             // Act
             tool.OnTouchPressed(new SKPoint(0,0), context); // Start erasing (misses element)

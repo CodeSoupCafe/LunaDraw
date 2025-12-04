@@ -3,13 +3,18 @@ using System.Collections.Generic;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Tools;
 using LunaDraw.Logic.Managers;
+using LunaDraw.Logic.Messages;
+using ReactiveUI;
 using Xunit;
 using SkiaSharp;
+using Moq;
 
 namespace LunaDraw.Tests
 {
     public class SelectToolTests
     {
+        private readonly Mock<IMessageBus> mockBus = new Mock<IMessageBus>();
+
         [Theory]
         [InlineData(false, true, true)]  // Initially not selected, Hit -> Selected
         [InlineData(true, false, false)] // Initially selected, No Hit -> Deselected
@@ -33,7 +38,7 @@ namespace LunaDraw.Tests
                 SelectionManager = selectionManager,
                 BrushShape = BrushShape.Circle()
             };
-            var tool = new SelectTool();
+            var tool = new SelectTool(mockBus.Object);
             var point = new SKPoint(100, 100);
 
             // Act

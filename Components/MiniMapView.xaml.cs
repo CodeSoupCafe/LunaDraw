@@ -17,14 +17,29 @@ namespace LunaDraw.Components
     private SKMatrix fitMatrix;
     private float density = 1.0f;
 
+    private IMessageBus? messageBus;
+    private IMessageBus? MessageBus
+    {
+        get
+        {
+            if (messageBus != null) return messageBus;
+            messageBus = Handler?.MauiContext?.Services.GetService<IMessageBus>()
+                         ?? IPlatformApplication.Current?.Services.GetService<IMessageBus>();
+            return messageBus;
+        }
+    }
+
     public MiniMapView()
     {
       InitializeComponent();
 
-      // Redraw when canvas is invalidated (drawing changes)
-      MessageBus.Current.Listen<CanvasInvalidateMessage>()
-          .Throttle(TimeSpan.FromMilliseconds(30), RxApp.MainThreadScheduler) // Throttle to avoid excessive redraws
-          .Subscribe(_ => miniMapCanvas?.InvalidateSurface());
+      this.Loaded += (s, e) =>
+      {
+          // Redraw when canvas is invalidated (drawing changes)
+          MessageBus?.Listen<CanvasInvalidateMessage>()
+              .Throttle(TimeSpan.FromMilliseconds(30), RxApp.MainThreadScheduler) // Throttle to avoid excessive redraws
+              .Subscribe(_ => miniMapCanvas?.InvalidateSurface());
+      };
     }
 
     protected override void OnBindingContextChanged()
@@ -214,7 +229,7 @@ namespace LunaDraw.Components
             // Update UserMatrix using PostConcat to accumulate transformations (Legacy style)
             viewModel.NavigationModel.UserMatrix = viewModel.NavigationModel.UserMatrix.PostConcat(translation);
 
-            MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+            MessageBus?.SendMessage(new CanvasInvalidateMessage());
           }
           e.Handled = true;
           break;

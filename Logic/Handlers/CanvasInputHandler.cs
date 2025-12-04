@@ -2,18 +2,11 @@ using LunaDraw.Logic.Managers;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Tools;
-using LunaDraw.Logic.Utils;
-
-// For SKCanvasView
-using Microsoft.Maui.Devices;
 
 using ReactiveUI;
 
 using SkiaSharp;
 using SkiaSharp.Views.Maui;
-using SkiaSharp.Views.Maui.Controls;
-
-// For DeviceInfo and DisplayInfo
 
 namespace LunaDraw.Logic.Services
 {
@@ -25,7 +18,6 @@ namespace LunaDraw.Logic.Services
     private readonly NavigationModel navigationModel;
     private readonly IMessageBus messageBus;
 
-    private readonly TouchManipulationManager touchManipulationManager;
     private readonly Dictionary<long, SKPoint> activeTouches = [];
     private bool isMultiTouching = false;
     private bool isManipulatingSelection = false;
@@ -55,8 +47,6 @@ namespace LunaDraw.Logic.Services
       this.selectionManager = selectionManager;
       this.navigationModel = navigationModel;
       this.messageBus = messageBus;
-
-      touchManipulationManager = new TouchManipulationManager();
     }
 
     public void ProcessTouch(SKTouchEventArgs e, SKRect canvasViewPort)

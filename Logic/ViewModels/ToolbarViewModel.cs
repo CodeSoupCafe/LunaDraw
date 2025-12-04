@@ -15,6 +15,7 @@ namespace LunaDraw.Logic.ViewModels
     {
         private readonly MainViewModel mainViewModel;
         private readonly IToolStateManager toolStateManager;
+        private readonly IMessageBus messageBus;
 
         // Forward properties from MainViewModel or ToolState
         public List<IDrawingTool> AvailableTools => toolStateManager.AvailableTools;
@@ -124,10 +125,11 @@ namespace LunaDraw.Logic.ViewModels
             set => this.RaiseAndSetIfChanged(ref lastActiveShapeTool, value);
         }
 
-        public ToolbarViewModel(MainViewModel mainViewModel, IToolStateManager toolStateManager)
+        public ToolbarViewModel(MainViewModel mainViewModel, IToolStateManager toolStateManager, IMessageBus messageBus)
         {
             this.mainViewModel = mainViewModel;
             this.toolStateManager = toolStateManager;
+            this.messageBus = messageBus;
 
             // Subscribe to ToolState changes via MainViewModel or directly?
             // Using MainViewModel properties to maintain consistency if they are wrapped there,
@@ -195,7 +197,7 @@ namespace LunaDraw.Logic.ViewModels
             lastActiveShapeTool = AvailableTools.FirstOrDefault(t => t is RectangleTool)
                                    ?? AvailableTools.FirstOrDefault(t => t is EllipseTool)
                                    ?? AvailableTools.FirstOrDefault(t => t is LineTool)
-                                   ?? new RectangleTool();
+                                   ?? new RectangleTool(messageBus);
 
             ShowShapesFlyoutCommand = ReactiveCommand.Create(() =>
             {
@@ -234,7 +236,7 @@ namespace LunaDraw.Logic.ViewModels
 
             SelectBrushShapeCommand = ReactiveCommand.Create<BrushShape>(shape =>
             {
-                ReactiveUI.MessageBus.Current.SendMessage(new LunaDraw.Logic.Messages.BrushShapeChangedMessage(shape));
+                this.messageBus.SendMessage(new LunaDraw.Logic.Messages.BrushShapeChangedMessage(shape));
                 IsBrushesFlyoutOpen = false;
 
                 var freehandTool = AvailableTools.FirstOrDefault(t => t.Type == ToolType.Freehand);
@@ -253,7 +255,7 @@ namespace LunaDraw.Logic.ViewModels
 
             SelectRectangleCommand = ReactiveCommand.Create(() =>
             {
-                var tool = AvailableTools.FirstOrDefault(t => t is RectangleTool) ?? new RectangleTool();
+                var tool = AvailableTools.FirstOrDefault(t => t is RectangleTool) ?? new RectangleTool(messageBus);
                 LastActiveShapeTool = tool;
                 SelectToolCommand.Execute(tool).Subscribe();
                 IsShapesFlyoutOpen = false;
@@ -261,7 +263,7 @@ namespace LunaDraw.Logic.ViewModels
 
             SelectCircleCommand = ReactiveCommand.Create(() =>
             {
-                var tool = AvailableTools.FirstOrDefault(t => t is EllipseTool) ?? new EllipseTool();
+                var tool = AvailableTools.FirstOrDefault(t => t is EllipseTool) ?? new EllipseTool(messageBus);
                 LastActiveShapeTool = tool;
                 SelectToolCommand.Execute(tool).Subscribe();
                 IsShapesFlyoutOpen = false;
@@ -269,7 +271,7 @@ namespace LunaDraw.Logic.ViewModels
 
             SelectLineCommand = ReactiveCommand.Create(() =>
             {
-                var tool = AvailableTools.FirstOrDefault(t => t is LineTool) ?? new LineTool();
+                var tool = AvailableTools.FirstOrDefault(t => t is LineTool) ?? new LineTool(messageBus);
                 LastActiveShapeTool = tool;
                 SelectToolCommand.Execute(tool).Subscribe();
                 IsShapesFlyoutOpen = false;

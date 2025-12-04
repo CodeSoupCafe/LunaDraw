@@ -12,6 +12,12 @@ namespace LunaDraw.Logic.Tools
   {
     public string Name => "Fill";
     public ToolType Type => ToolType.Fill;
+    private readonly IMessageBus messageBus;
+
+    public FillTool(IMessageBus messageBus)
+    {
+        this.messageBus = messageBus;
+    }
 
     public void OnTouchPressed(SKPoint point, ToolContext context)
     {
@@ -25,8 +31,8 @@ namespace LunaDraw.Logic.Tools
       if (hitElement != null)
       {
         hitElement.FillColor = context.FillColor;
-        MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
-        MessageBus.Current.SendMessage(new DrawingStateChangedMessage());
+        messageBus.SendMessage(new CanvasInvalidateMessage());
+        messageBus.SendMessage(new DrawingStateChangedMessage());
       }
     }
 

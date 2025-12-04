@@ -14,6 +14,12 @@ namespace LunaDraw.Logic.Tools
     public ToolType Type => ToolType.Eraser;
 
     private bool isErasing;
+    private readonly IMessageBus messageBus;
+
+    public EraserTool(IMessageBus messageBus)
+    {
+        this.messageBus = messageBus;
+    }
 
     public void OnTouchPressed(SKPoint point, ToolContext context)
     {
@@ -51,8 +57,8 @@ namespace LunaDraw.Logic.Tools
       if (hitElement != null && context.CurrentLayer != null)
       {
         context.CurrentLayer.Elements.Remove(hitElement);
-        MessageBus.Current.SendMessage(new DrawingStateChangedMessage());
-        MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+        messageBus.SendMessage(new DrawingStateChangedMessage());
+        messageBus.SendMessage(new CanvasInvalidateMessage());
       }
     }
 

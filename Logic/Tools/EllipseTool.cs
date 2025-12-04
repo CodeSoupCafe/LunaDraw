@@ -1,4 +1,5 @@
 using LunaDraw.Logic.Models;
+using ReactiveUI;
 using SkiaSharp;
 
 namespace LunaDraw.Logic.Tools
@@ -7,6 +8,10 @@ namespace LunaDraw.Logic.Tools
   {
     public override string Name => "Ellipse";
     public override ToolType Type => ToolType.Ellipse;
+
+    public EllipseTool(IMessageBus messageBus) : base(messageBus)
+    {
+    }
 
     protected override DrawableEllipse CreateShape(ToolContext context)
     {

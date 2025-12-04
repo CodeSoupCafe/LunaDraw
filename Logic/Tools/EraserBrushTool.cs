@@ -15,6 +15,12 @@ namespace LunaDraw.Logic.Tools
 
     private SKPath? currentPath;
     private DrawablePath? currentDrawablePath;
+    private readonly IMessageBus messageBus;
+
+    public EraserBrushTool(IMessageBus messageBus)
+    {
+        this.messageBus = messageBus;
+    }
 
     public void OnTouchPressed(SKPoint point, ToolContext context)
     {
@@ -34,7 +40,7 @@ namespace LunaDraw.Logic.Tools
       };
 
       context.CurrentLayer?.Elements.Add(currentDrawablePath);
-      MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+      messageBus.SendMessage(new CanvasInvalidateMessage());
     }
 
     public void OnTouchMoved(SKPoint point, ToolContext context)
@@ -42,7 +48,7 @@ namespace LunaDraw.Logic.Tools
       if (currentPath == null || context.CurrentLayer?.IsLocked == true) return;
 
       currentPath.LineTo(point);
-      MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+      messageBus.SendMessage(new CanvasInvalidateMessage());
     }
 
     public void OnTouchReleased(SKPoint point, ToolContext context)
@@ -148,9 +154,9 @@ namespace LunaDraw.Logic.Tools
           context.CurrentLayer.Elements.Add(item);
         }
 
-        MessageBus.Current.SendMessage(new DrawingStateChangedMessage());
+        messageBus.SendMessage(new DrawingStateChangedMessage());
       }
-      MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+      messageBus.SendMessage(new CanvasInvalidateMessage());
 
       currentPath = null;
       currentDrawablePath = null;
@@ -165,7 +171,7 @@ namespace LunaDraw.Logic.Tools
 
       currentPath = null;
       currentDrawablePath = null;
-      MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+      messageBus.SendMessage(new CanvasInvalidateMessage());
     }
 
     public void DrawPreview(SKCanvas canvas, MainViewModel viewModel)

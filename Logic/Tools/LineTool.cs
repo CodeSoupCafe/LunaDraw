@@ -15,6 +15,12 @@ namespace LunaDraw.Logic.Tools
 
     private SKPoint startPoint;
     private DrawableLine? currentLine;
+    private readonly IMessageBus messageBus;
+
+    public LineTool(IMessageBus messageBus)
+    {
+        this.messageBus = messageBus;
+    }
 
     public void OnTouchPressed(SKPoint point, ToolContext context)
     {
@@ -37,7 +43,7 @@ namespace LunaDraw.Logic.Tools
       if (context.CurrentLayer?.IsLocked == true || currentLine == null) return;
 
       currentLine.EndPoint = point - startPoint;
-      MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+      messageBus.SendMessage(new CanvasInvalidateMessage());
     }
 
     public void OnTouchReleased(SKPoint point, ToolContext context)
@@ -47,17 +53,17 @@ namespace LunaDraw.Logic.Tools
       if (!currentLine.EndPoint.Equals(SKPoint.Empty))
       {
         context.CurrentLayer.Elements.Add(currentLine);
-        MessageBus.Current.SendMessage(new DrawingStateChangedMessage());
+        messageBus.SendMessage(new DrawingStateChangedMessage());
       }
 
       currentLine = null;
-      MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+      messageBus.SendMessage(new CanvasInvalidateMessage());
     }
 
     public void OnTouchCancelled(ToolContext context)
     {
       currentLine = null;
-      MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+      messageBus.SendMessage(new CanvasInvalidateMessage());
     }
 
     public void DrawPreview(SKCanvas canvas, MainViewModel viewModel)

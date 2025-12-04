@@ -1,6 +1,9 @@
 using LunaDraw.Logic.Managers;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Tools;
+using LunaDraw.Logic.Messages;
+using ReactiveUI;
+using Moq;
 
 using SkiaSharp;
 
@@ -8,6 +11,8 @@ namespace LunaDraw.Tests
 {
   public class SelectToolInteractionTests
   {
+    private readonly Mock<IMessageBus> mockBus = new Mock<IMessageBus>();
+
     private class MockDrawableElement : IDrawableElement
     {
       public Guid Id { get; } = Guid.NewGuid();
@@ -59,7 +64,7 @@ namespace LunaDraw.Tests
         SelectionManager = selectionManager,
         BrushShape = BrushShape.Circle()
       };
-      var tool = new SelectTool();
+      var tool = new SelectTool(mockBus.Object);
 
       // Act
       // 1. Press on the element (10,10 is inside 0,0,100,100)
@@ -90,7 +95,7 @@ namespace LunaDraw.Tests
         SelectionManager = selectionManager,
         BrushShape = BrushShape.Circle()
       };
-      var tool = new SelectTool();
+      var tool = new SelectTool(mockBus.Object);
 
       // Initial bounds are 0,0 to 100,100. 
       // Bottom Right handle should be near 100,100.

@@ -1,4 +1,5 @@
 using LunaDraw.Logic.Models;
+using ReactiveUI;
 using SkiaSharp;
 
 namespace LunaDraw.Logic.Tools
@@ -7,6 +8,10 @@ namespace LunaDraw.Logic.Tools
   {
     public override string Name => "Rectangle";
     public override ToolType Type => ToolType.Rectangle;
+
+    public RectangleTool(IMessageBus messageBus) : base(messageBus)
+    {
+    }
 
     protected override DrawableRectangle CreateShape(ToolContext context)
     {

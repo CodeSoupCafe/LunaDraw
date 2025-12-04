@@ -59,6 +59,18 @@ namespace LunaDraw.Components
 
     private bool suppressEvents;
 
+    private IMessageBus? messageBus;
+    private IMessageBus? MessageBus
+    {
+        get
+        {
+            if (messageBus != null) return messageBus;
+            messageBus = Handler?.MauiContext?.Services.GetService<IMessageBus>()
+                         ?? IPlatformApplication.Current?.Services.GetService<IMessageBus>();
+            return messageBus;
+        }
+    }
+
     public SettingsFlyoutPanel()
     {
       InitializeComponent();
@@ -133,8 +145,8 @@ namespace LunaDraw.Components
             var panel = (SettingsFlyoutPanel)bindable;
             if (panel.BindingContext is ToolbarViewModel toolbarViewModel && newValue is SKColor color)
             {
-                if (MessageBus.Current != null)
-                    MessageBus.Current.SendMessage(new BrushSettingsChangedMessage(strokeColor: color));
+                if (panel.MessageBus != null)
+                    panel.MessageBus.SendMessage(new BrushSettingsChangedMessage(strokeColor: color));
                 if (panel.StrokeColorPicker != null)
                     panel.StrokeColorPicker.PickedColor = SKColorToMauiColor(color);
             }
@@ -150,8 +162,8 @@ namespace LunaDraw.Components
             if (panel.BindingContext is ToolbarViewModel toolbarViewModel)
             {
                 var fill = newValue as SKColor?;
-                if (MessageBus.Current != null)
-                    MessageBus.Current.SendMessage(new BrushSettingsChangedMessage(fillColor: fill));
+                if (panel.MessageBus != null)
+                    panel.MessageBus.SendMessage(new BrushSettingsChangedMessage(fillColor: fill));
                 if (newValue is SKColor fillColor && panel.FillColorPicker != null)
                     panel.FillColorPicker.PickedColor = SKColorToMauiColor(fillColor);
             }
@@ -166,8 +178,8 @@ namespace LunaDraw.Components
             var panel = (SettingsFlyoutPanel)bindable;
             if (panel.BindingContext is ToolbarViewModel toolbarViewModel && newValue is byte transparency)
             {
-                if (MessageBus.Current != null)
-                    MessageBus.Current.SendMessage(new BrushSettingsChangedMessage(transparency: transparency));
+                if (panel.MessageBus != null)
+                    panel.MessageBus.SendMessage(new BrushSettingsChangedMessage(transparency: transparency));
                 if (panel.TransparencySlider != null)
                     panel.TransparencySlider.Value = transparency;
             }
@@ -182,8 +194,8 @@ namespace LunaDraw.Components
             var panel = (SettingsFlyoutPanel)bindable;
             if (panel.BindingContext is ToolbarViewModel && newValue is float size)
             {
-                if (MessageBus.Current != null)
-                    MessageBus.Current.SendMessage(new BrushSettingsChangedMessage(strokeWidth: size));
+                if (panel.MessageBus != null)
+                    panel.MessageBus.SendMessage(new BrushSettingsChangedMessage(strokeWidth: size));
                 if (panel.SizeSlider != null)
                     panel.SizeSlider.Value = size;
             }
@@ -198,8 +210,8 @@ namespace LunaDraw.Components
             var panel = (SettingsFlyoutPanel)bindable;
             if (panel.BindingContext is ToolbarViewModel && newValue is byte flow)
             {
-                if (MessageBus.Current != null)
-                    MessageBus.Current.SendMessage(new BrushSettingsChangedMessage(flow: flow));
+                if (panel.MessageBus != null)
+                    panel.MessageBus.SendMessage(new BrushSettingsChangedMessage(flow: flow));
                 if (panel.FlowSlider != null)
                     panel.FlowSlider.Value = flow;
             }
@@ -214,8 +226,8 @@ namespace LunaDraw.Components
             var panel = (SettingsFlyoutPanel)bindable;
             if (panel.BindingContext is ToolbarViewModel && newValue is float spacing)
             {
-                if (MessageBus.Current != null)
-                    MessageBus.Current.SendMessage(new BrushSettingsChangedMessage(spacing: spacing));
+                if (panel.MessageBus != null)
+                    panel.MessageBus.SendMessage(new BrushSettingsChangedMessage(spacing: spacing));
                 if (panel.SpacingSlider != null)
                     panel.SpacingSlider.Value = spacing;
             }
@@ -228,7 +240,7 @@ namespace LunaDraw.Components
       if (sender is Maui.ColorPicker.ColorPicker colorPicker)
       {
         var strokeColor = MauiColorToSKColor(colorPicker.PickedColor);
-        MessageBus.Current.SendMessage(new BrushSettingsChangedMessage(strokeColor: strokeColor));
+        MessageBus?.SendMessage(new BrushSettingsChangedMessage(strokeColor: strokeColor));
       }
     }
 
@@ -239,32 +251,32 @@ namespace LunaDraw.Components
       if (sender is Maui.ColorPicker.ColorPicker colorPicker)
       {
         var fillColor = MauiColorToSKColor(colorPicker.PickedColor);
-        MessageBus.Current.SendMessage(new BrushSettingsChangedMessage(fillColor: fillColor));
+        MessageBus?.SendMessage(new BrushSettingsChangedMessage(fillColor: fillColor));
       }
     }
 
     private void OnTransparencyChanged(object sender, ValueChangedEventArgs e)
     {
       var transparency = (byte)e.NewValue;
-      MessageBus.Current.SendMessage(new BrushSettingsChangedMessage(transparency: transparency));
+      MessageBus?.SendMessage(new BrushSettingsChangedMessage(transparency: transparency));
     }
 
     private void OnSizeChanged(object sender, ValueChangedEventArgs e)
     {
       var size = (float)e.NewValue;
-      MessageBus.Current.SendMessage(new BrushSettingsChangedMessage(strokeWidth: size));
+      MessageBus?.SendMessage(new BrushSettingsChangedMessage(strokeWidth: size));
     }
 
     private void OnFlowChanged(object sender, ValueChangedEventArgs e)
     {
       var flow = (byte)e.NewValue;
-      MessageBus.Current.SendMessage(new BrushSettingsChangedMessage(flow: flow));
+      MessageBus?.SendMessage(new BrushSettingsChangedMessage(flow: flow));
     }
 
     private void OnSpacingChanged(object sender, ValueChangedEventArgs e)
     {
       var spacing = (float)e.NewValue;
-      MessageBus.Current.SendMessage(new BrushSettingsChangedMessage(spacing: spacing));
+      MessageBus?.SendMessage(new BrushSettingsChangedMessage(spacing: spacing));
     }
 
     private void OnNoFillClicked(object sender, EventArgs e)
@@ -278,7 +290,7 @@ namespace LunaDraw.Components
       {
         suppressEvents = false;
       }
-      MessageBus.Current.SendMessage(new BrushSettingsChangedMessage(shouldClearFillColor: true));
+      MessageBus?.SendMessage(new BrushSettingsChangedMessage(shouldClearFillColor: true));
     }
 
     private static Color SKColorToMauiColor(SKColor skColor)
@@ -297,12 +309,12 @@ namespace LunaDraw.Components
 
     private void OnGlowSwitchToggled(object sender, ToggledEventArgs e)
     {
-      MessageBus.Current.SendMessage(new BrushSettingsChangedMessage(isGlowEnabled: e.Value));
+      MessageBus?.SendMessage(new BrushSettingsChangedMessage(isGlowEnabled: e.Value));
     }
 
     private void OnGlowRadiusChanged(object sender, ValueChangedEventArgs e)
     {
-      MessageBus.Current.SendMessage(new BrushSettingsChangedMessage(glowRadius: (float)e.NewValue));
+      MessageBus?.SendMessage(new BrushSettingsChangedMessage(glowRadius: (float)e.NewValue));
     }
 
     private void OnGlowColorTapped(object sender, TappedEventArgs e)
@@ -311,34 +323,34 @@ namespace LunaDraw.Components
       {
         if (SKColor.TryParse(hexColor, out var color))
         {
-          MessageBus.Current.SendMessage(new BrushSettingsChangedMessage(glowColor: color));
+          MessageBus?.SendMessage(new BrushSettingsChangedMessage(glowColor: color));
         }
       }
     }
 
     private void OnRainbowSwitchToggled(object sender, ToggledEventArgs e)
     {
-        MessageBus.Current.SendMessage(new BrushSettingsChangedMessage(isRainbowEnabled: e.Value));
+        MessageBus?.SendMessage(new BrushSettingsChangedMessage(isRainbowEnabled: e.Value));
     }
 
     private void OnScatterChanged(object sender, ValueChangedEventArgs e)
     {
-        MessageBus.Current.SendMessage(new BrushSettingsChangedMessage(scatterRadius: (float)e.NewValue));
+        MessageBus?.SendMessage(new BrushSettingsChangedMessage(scatterRadius: (float)e.NewValue));
     }
 
     private void OnSizeJitterChanged(object sender, ValueChangedEventArgs e)
     {
-        MessageBus.Current.SendMessage(new BrushSettingsChangedMessage(sizeJitter: (float)e.NewValue));
+        MessageBus?.SendMessage(new BrushSettingsChangedMessage(sizeJitter: (float)e.NewValue));
     }
 
     private void OnAngleJitterChanged(object sender, ValueChangedEventArgs e)
     {
-        MessageBus.Current.SendMessage(new BrushSettingsChangedMessage(angleJitter: (float)e.NewValue));
+        MessageBus?.SendMessage(new BrushSettingsChangedMessage(angleJitter: (float)e.NewValue));
     }
 
     private void OnHueJitterChanged(object sender, ValueChangedEventArgs e)
     {
-        MessageBus.Current.SendMessage(new BrushSettingsChangedMessage(hueJitter: (float)e.NewValue));
+        MessageBus?.SendMessage(new BrushSettingsChangedMessage(hueJitter: (float)e.NewValue));
     }
   }
 }

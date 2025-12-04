@@ -22,6 +22,7 @@ namespace LunaDraw.Logic.ViewModels
     private readonly IToolStateManager toolStateManager;
     private readonly ILayerStateManager layerStateManager;
     private readonly ICanvasInputHandler canvasInputHandler;
+    private readonly IMessageBus messageBus;
     public NavigationModel NavigationModel { get; }
     public SelectionManager SelectionManager { get; }
 
@@ -179,13 +180,15 @@ namespace LunaDraw.Logic.ViewModels
         ILayerStateManager layerStateManager,
         ICanvasInputHandler canvasInputHandler,
         NavigationModel navigationModel,
-        SelectionManager selectionManager)
+        SelectionManager selectionManager,
+        IMessageBus messageBus)
     {
       this.toolStateManager = toolStateManager;
       this.layerStateManager = layerStateManager;
       this.canvasInputHandler = canvasInputHandler;
       NavigationModel = navigationModel;
       SelectionManager = selectionManager;
+      this.messageBus = messageBus;
 
       // Subscribe to service property changes to notify View
       this.toolStateManager.WhenAnyValue(x => x.ActiveTool).Subscribe(_ => this.RaisePropertyChanged(nameof(ActiveTool)));
@@ -256,7 +259,7 @@ namespace LunaDraw.Logic.ViewModels
           CurrentLayer.Elements.Remove(element);
         }
         SelectionManager.Clear();
-        MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+                messageBus.SendMessage(new CanvasInvalidateMessage());
         this.layerStateManager.SaveState();
       }, this.WhenAnyValue(x => x.CanDelete), RxApp.MainThreadScheduler);
 
@@ -275,7 +278,7 @@ namespace LunaDraw.Logic.ViewModels
         CurrentLayer.Elements.Add(group);
         SelectionManager.Clear();
         SelectionManager.Add(group);
-        MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+                messageBus.SendMessage(new CanvasInvalidateMessage());
         this.layerStateManager.SaveState();
       }, this.WhenAnyValue(x => x.CanGroup), RxApp.MainThreadScheduler);
 
@@ -291,7 +294,7 @@ namespace LunaDraw.Logic.ViewModels
             CurrentLayer.Elements.Add(child);
           }
           SelectionManager.Clear();
-          MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+                  messageBus.SendMessage(new CanvasInvalidateMessage());
           this.layerStateManager.SaveState();
         }
       }, this.WhenAnyValue(x => x.CanUngroup), RxApp.MainThreadScheduler);
@@ -311,7 +314,7 @@ namespace LunaDraw.Logic.ViewModels
           CurrentLayer.Elements.Remove(element);
         }
         SelectionManager.Clear();
-        MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+                messageBus.SendMessage(new CanvasInvalidateMessage());
         this.layerStateManager.SaveState();
       }, this.WhenAnyValue(x => x.CanDelete), RxApp.MainThreadScheduler);
 
@@ -324,7 +327,7 @@ namespace LunaDraw.Logic.ViewModels
           clone.Translate(new SKPoint(10, 10)); // Offset pasted element
           CurrentLayer.Elements.Add(clone);
         }
-        MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+                messageBus.SendMessage(new CanvasInvalidateMessage());
         this.layerStateManager.SaveState();
       }, this.WhenAnyValue(x => x.CanPaste), RxApp.MainThreadScheduler);
 
@@ -369,7 +372,7 @@ namespace LunaDraw.Logic.ViewModels
       var currentLayerId = CurrentLayer?.Id;
       CurrentLayer = Layers.FirstOrDefault(l => l.Id == currentLayerId) ?? Layers.FirstOrDefault();
 
-      MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+              messageBus.SendMessage(new CanvasInvalidateMessage());
     }
 
     public void ProcessTouch(SKTouchEventArgs e)

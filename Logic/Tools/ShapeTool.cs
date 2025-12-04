@@ -12,6 +12,13 @@ namespace LunaDraw.Logic.Tools
         public abstract string Name { get; }
         public abstract ToolType Type { get; }
 
+        protected readonly IMessageBus MessageBus;
+
+        protected ShapeTool(IMessageBus messageBus)
+        {
+            MessageBus = messageBus;
+        }
+
         protected SKPoint StartPoint;
         protected T? CurrentShape;
 
@@ -34,7 +41,7 @@ namespace LunaDraw.Logic.Tools
             var (transform, bounds) = context.CanvasMatrix.CalculateRotatedBounds(StartPoint, point);
             UpdateShape(CurrentShape, bounds, transform);
 
-            MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+            MessageBus.SendMessage(new CanvasInvalidateMessage());
         }
 
         public virtual void OnTouchReleased(SKPoint point, ToolContext context)
@@ -44,17 +51,17 @@ namespace LunaDraw.Logic.Tools
             if (IsShapeValid(CurrentShape))
             {
                 context.CurrentLayer.Elements.Add(CurrentShape);
-                MessageBus.Current.SendMessage(new DrawingStateChangedMessage());
+                MessageBus.SendMessage(new DrawingStateChangedMessage());
             }
 
             CurrentShape = null;
-            MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+            MessageBus.SendMessage(new CanvasInvalidateMessage());
         }
 
         public virtual void OnTouchCancelled(ToolContext context)
         {
             CurrentShape = null;
-            MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+            MessageBus.SendMessage(new CanvasInvalidateMessage());
         }
 
         public virtual void DrawPreview(SKCanvas canvas, MainViewModel viewModel)

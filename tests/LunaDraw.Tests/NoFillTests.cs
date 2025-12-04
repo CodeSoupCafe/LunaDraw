@@ -3,6 +3,9 @@ using System.Linq;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Tools;
 using LunaDraw.Logic.Managers;
+using LunaDraw.Logic.Messages;
+using ReactiveUI;
+using Moq;
 using Xunit;
 using SkiaSharp;
 
@@ -10,11 +13,13 @@ namespace LunaDraw.Tests
 {
     public class NoFillTests
     {
+        private readonly Mock<IMessageBus> mockBus = new Mock<IMessageBus>();
+
         [Fact]
         public void RectangleTool_Respects_NoFill()
         {
             // Arrange
-            var tool = new RectangleTool();
+            var tool = new RectangleTool(mockBus.Object);
             var layer = new Layer();
             var context = new ToolContext
             {
@@ -42,7 +47,7 @@ namespace LunaDraw.Tests
         public void EllipseTool_Respects_NoFill()
         {
             // Arrange
-            var tool = new EllipseTool();
+            var tool = new EllipseTool(mockBus.Object);
             var layer = new Layer();
             var context = new ToolContext
             {

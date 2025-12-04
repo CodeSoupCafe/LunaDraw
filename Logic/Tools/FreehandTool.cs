@@ -17,6 +17,12 @@ namespace LunaDraw.Logic.Tools
     private SKPoint lastStampPoint;
     private bool isDrawing;
     private readonly Random random = new Random();
+    private readonly IMessageBus messageBus;
+
+    public FreehandTool(IMessageBus messageBus)
+    {
+        this.messageBus = messageBus;
+    }
 
     public void OnTouchPressed(SKPoint point, ToolContext context)
     {
@@ -30,7 +36,7 @@ namespace LunaDraw.Logic.Tools
       lastStampPoint = point;
       isDrawing = true;
 
-      MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+      messageBus.SendMessage(new CanvasInvalidateMessage());
     }
 
     public void OnTouchMoved(SKPoint point, ToolContext context)
@@ -71,7 +77,7 @@ namespace LunaDraw.Logic.Tools
           lastStampPoint = idealPoint;
         }
 
-        MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+        messageBus.SendMessage(new CanvasInvalidateMessage());
 
       }
     }
@@ -100,19 +106,19 @@ namespace LunaDraw.Logic.Tools
         };
 
         context.CurrentLayer.Elements.Add(element);
-        MessageBus.Current.SendMessage(new DrawingStateChangedMessage());
+        messageBus.SendMessage(new DrawingStateChangedMessage());
       }
 
       currentPoints = null;
       isDrawing = false;
-      MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+      messageBus.SendMessage(new CanvasInvalidateMessage());
     }
 
     public void OnTouchCancelled(ToolContext context)
     {
       currentPoints = null;
       isDrawing = false;
-      MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+      messageBus.SendMessage(new CanvasInvalidateMessage());
     }
 
     public void DrawPreview(SKCanvas canvas, MainViewModel viewModel)
