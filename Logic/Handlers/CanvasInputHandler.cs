@@ -30,6 +30,19 @@ namespace LunaDraw.Logic.Services
     private bool _isMultiTouching = false;
     private bool _isManipulatingSelection = false;
 
+    // Multi-touch gesture state (snapshot at gesture start)
+    private SKPoint _gestureStartCentroid;
+    private float _gestureStartDistance;
+    private float _gestureStartAngle;
+    private SKPoint _previousCentroid;
+    private float _previousDistance;
+    private float _previousAngle;
+
+    // Movement deadzone threshold to reduce jitter on tiny movements
+    private const float MOVEMENT_THRESHOLD = 2.0f;
+    private const float SCALE_THRESHOLD = 0.001f;
+    private const float ROTATION_THRESHOLD = 0.01f; // radians
+
     public CanvasInputHandler(
         IToolStateManager toolStateManager,
         ILayerStateManager layerStateManager,
@@ -80,6 +93,9 @@ namespace LunaDraw.Logic.Services
 
           // Determine manipulation target (View vs Selection) ONCE at the start of multi-touch
           DetermineMultiTouchTarget();
+
+          // Initialize gesture snapshot
+          InitializeGestureSnapshot();
         }
       }
       else
@@ -106,6 +122,29 @@ namespace LunaDraw.Logic.Services
       {
         _activeTouches[e.Id] = adjustedLocation;
       }
+    }
+
+    private void InitializeGestureSnapshot()
+    {
+      // Get the two primary fingers
+      var sortedKeys = _activeTouches.Keys.OrderBy(k => k).ToList();
+      if (sortedKeys.Count < 2) return;
+
+      long id1 = sortedKeys[0];
+      long id2 = sortedKeys[1];
+
+      SKPoint p1 = _activeTouches[id1];
+      SKPoint p2 = _activeTouches[id2];
+
+      // Store initial gesture state
+      _gestureStartCentroid = CalculateCentroid(p1, p2);
+      _gestureStartDistance = Distance(p1, p2);
+      _gestureStartAngle = CalculateAngle(p1, p2);
+
+      // Initialize "previous" values to current state
+      _previousCentroid = _gestureStartCentroid;
+      _previousDistance = _gestureStartDistance;
+      _previousAngle = _gestureStartAngle;
     }
 
     private void DetermineMultiTouchTarget()
@@ -136,100 +175,141 @@ namespace LunaDraw.Logic.Services
 
     private void HandleMultiTouch(SKPoint newLocation, long id)
     {
-       // 1. Identify the two primary fingers
-       var sortedKeys = _activeTouches.Keys.OrderBy(k => k).ToList();
-       if (sortedKeys.Count < 2) return;
-       
-       long id1 = sortedKeys[0];
-       long id2 = sortedKeys[1];
-       
-       // 2. Get "Previous" points (Current state of _activeTouches)
-       SKPoint prevP1 = _activeTouches[id1];
-       SKPoint prevP2 = _activeTouches[id2];
-       
-       // 3. Determine "New" points
-       // One of these is the finger that moved ('id').
-       SKPoint newP1 = (id == id1) ? newLocation : prevP1;
-       SKPoint newP2 = (id == id2) ? newLocation : prevP2;
-       
-       // 4. Calculate Canonical Transformations
-       // Pivot is the midpoint of the PREVIOUS state
-       SKPoint prevCenter = new SKPoint((prevP1.X + prevP2.X) / 2.0f, (prevP1.Y + prevP2.Y) / 2.0f);
-       SKPoint newCenter = new SKPoint((newP1.X + newP2.X) / 2.0f, (newP1.Y + newP2.Y) / 2.0f);
-       
-       float prevDist = Distance(prevP1, prevP2);
-       float newDist = Distance(newP1, newP2);
-       float scale = (prevDist > 0.001f) ? newDist / prevDist : 1.0f;
-       
-       float prevAngle = (float)Math.Atan2(prevP2.Y - prevP1.Y, prevP2.X - prevP1.X);
-       float newAngle = (float)Math.Atan2(newP2.Y - newP1.Y, newP2.X - newP1.X);
-       float rotationDelta = newAngle - prevAngle; // Radians
-       
-       // 5. Construct Matrix: 
-       // Translate(-Pivot) -> Scale & Rotate -> Translate(Pivot) -> Translate(Pan)
-       
-       SKMatrix matrix = SKMatrix.CreateIdentity();
-       
-       // Move Pivot to Origin
-       matrix = matrix.PostConcat(SKMatrix.CreateTranslation(-prevCenter.X, -prevCenter.Y));
-       
-       // Scale (around origin)
-       matrix = matrix.PostConcat(SKMatrix.CreateScale(scale, scale));
-       
-       // Rotate (around origin)
-       matrix = matrix.PostConcat(SKMatrix.CreateRotation(rotationDelta));
-       
-       // Move Pivot back
-       matrix = matrix.PostConcat(SKMatrix.CreateTranslation(prevCenter.X, prevCenter.Y));
-       
-       // Apply Pan (NewCenter - PrevCenter)
-       SKPoint pan = newCenter - prevCenter;
-       matrix = matrix.PostConcat(SKMatrix.CreateTranslation(pan.X, pan.Y));
+      // 1. Identify the two primary fingers
+      var sortedKeys = _activeTouches.Keys.OrderBy(k => k).ToList();
+      if (sortedKeys.Count < 2) return;
 
-       // Safety check for invalid matrix values
-       if (float.IsNaN(matrix.ScaleX) || float.IsInfinity(matrix.ScaleX)) return;
+      long id1 = sortedKeys[0];
+      long id2 = sortedKeys[1];
 
-       // 6. Apply to Model
-       if (_isManipulatingSelection)
-       {
+      // 2. Get CURRENT positions BEFORE updating dictionary
+      // One finger is at its old position (in dictionary), the other just moved
+      SKPoint currentP1 = (id == id1) ? newLocation : _activeTouches[id1];
+      SKPoint currentP2 = (id == id2) ? newLocation : _activeTouches[id2];
+
+      // 3. Calculate current gesture state
+      SKPoint currentCentroid = CalculateCentroid(currentP1, currentP2);
+      float currentDistance = Distance(currentP1, currentP2);
+      float currentAngle = CalculateAngle(currentP1, currentP2);
+
+      // 4. Calculate deltas from PREVIOUS frame (not from gesture start)
+      SKPoint centroidDelta = currentCentroid - _previousCentroid;
+      float scaleDelta = (_previousDistance > 0.001f) ? currentDistance / _previousDistance : 1.0f;
+      float rotationDelta = currentAngle - _previousAngle;
+
+      // 5. Apply thresholds to reduce jitter on tiny movements
+      bool shouldTransform = false;
+
+      if (Math.Abs(centroidDelta.X) > MOVEMENT_THRESHOLD || Math.Abs(centroidDelta.Y) > MOVEMENT_THRESHOLD)
+      {
+        shouldTransform = true;
+      }
+
+      if (Math.Abs(scaleDelta - 1.0f) > SCALE_THRESHOLD)
+      {
+        shouldTransform = true;
+      }
+
+      if (Math.Abs(rotationDelta) > ROTATION_THRESHOLD)
+      {
+        shouldTransform = true;
+      }
+
+      // 6. Build transformation matrix if movement exceeds threshold
+      if (shouldTransform)
+      {
+        // Use PREVIOUS centroid as the pivot point for transformation
+        SKMatrix matrix = BuildTransformationMatrix(
+          _previousCentroid,
+          scaleDelta,
+          rotationDelta,
+          centroidDelta
+        );
+
+        // Safety check for invalid matrix values
+        if (!float.IsNaN(matrix.ScaleX) && !float.IsInfinity(matrix.ScaleX))
+        {
+          // 7. Apply to Model
+          if (_isManipulatingSelection)
+          {
             ApplySelectionTransform(matrix);
-       }
-       else
-       {
-           // Apply to UserMatrix
-           // Since UserMatrix is our View Matrix, and 'matrix' is a Screen-Space transformation (Delta),
-           // we Pre-Concat the Delta to the View Matrix.
-           // NewView = Delta * OldView
-           _navigationModel.UserMatrix = SKMatrix.Concat(matrix, _navigationModel.UserMatrix);
-       }
-       
-       // 7. Update the state for the next event
-       _activeTouches[id] = newLocation;
-       
-       MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+          }
+          else
+          {
+            // Apply to UserMatrix (View transformation)
+            _navigationModel.UserMatrix = SKMatrix.Concat(matrix, _navigationModel.UserMatrix);
+          }
+
+          MessageBus.Current.SendMessage(new CanvasInvalidateMessage());
+        }
+
+        // 8. Update previous state for next frame
+        _previousCentroid = currentCentroid;
+        _previousDistance = currentDistance;
+        _previousAngle = currentAngle;
+      }
+
+      // 9. Update the touch dictionary for the finger that moved
+      _activeTouches[id] = newLocation;
+    }
+
+    private SKMatrix BuildTransformationMatrix(
+      SKPoint pivot,
+      float scale,
+      float rotation,
+      SKPoint translation)
+    {
+      SKMatrix matrix = SKMatrix.CreateIdentity();
+
+      // Step 1: Translate pivot to origin
+      matrix = matrix.PostConcat(SKMatrix.CreateTranslation(-pivot.X, -pivot.Y));
+
+      // Step 2: Apply scale around origin
+      matrix = matrix.PostConcat(SKMatrix.CreateScale(scale, scale));
+
+      // Step 3: Apply rotation around origin
+      matrix = matrix.PostConcat(SKMatrix.CreateRotation(rotation));
+
+      // Step 4: Translate pivot back
+      matrix = matrix.PostConcat(SKMatrix.CreateTranslation(pivot.X, pivot.Y));
+
+      // Step 5: Apply pan/translation
+      matrix = matrix.PostConcat(SKMatrix.CreateTranslation(translation.X, translation.Y));
+
+      return matrix;
+    }
+
+    private SKPoint CalculateCentroid(SKPoint p1, SKPoint p2)
+    {
+      return new SKPoint((p1.X + p2.X) / 2.0f, (p1.Y + p2.Y) / 2.0f);
+    }
+
+    private float CalculateAngle(SKPoint p1, SKPoint p2)
+    {
+      return (float)Math.Atan2(p2.Y - p1.Y, p2.X - p1.X);
     }
 
     private void ApplySelectionTransform(SKMatrix touchDelta)
     {
-          var selectedElements = _selectionManager.Selected;
-          if (_layerStateManager.CurrentLayer?.IsLocked == false && selectedElements.Any())
-          {
-            SKMatrix inverseView;
-            SKMatrix currentTotal = _navigationModel.TotalMatrix;
-            if (currentTotal.TryInvert(out inverseView))
-            {
-               // Convert screen-space delta to world-space delta
-               // DeltaWorld = View^-1 * DeltaScreen * View
-               var worldDelta = SKMatrix.Concat(inverseView, SKMatrix.Concat(touchDelta, currentTotal));
+      var selectedElements = _selectionManager.Selected;
+      if (_layerStateManager.CurrentLayer?.IsLocked == false && selectedElements.Any())
+      {
+        SKMatrix inverseView;
+        SKMatrix currentTotal = _navigationModel.TotalMatrix;
+        if (currentTotal.TryInvert(out inverseView))
+        {
+          // Convert screen-space delta to world-space delta
+          // DeltaWorld = View^-1 * DeltaScreen * View
+          var worldDelta = SKMatrix.Concat(inverseView, SKMatrix.Concat(touchDelta, currentTotal));
 
-               foreach (var element in selectedElements)
-               {
-                 element.TransformMatrix = SKMatrix.Concat(worldDelta, element.TransformMatrix);
-               }
-            }
+          foreach (var element in selectedElements)
+          {
+            element.TransformMatrix = SKMatrix.Concat(worldDelta, element.TransformMatrix);
           }
+        }
+      }
     }
-    
+
     private float Distance(SKPoint p1, SKPoint p2) => (float)Math.Sqrt(Math.Pow(p2.X - p1.X, 2) + Math.Pow(p2.Y - p1.Y, 2));
 
     private void HandleSingleTouch(SKPoint location, SKTouchAction actionType)
