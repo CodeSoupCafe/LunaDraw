@@ -112,15 +112,20 @@ namespace LunaDraw.Logic.Extensions
       return reversedFramePixels;
     }
 
+    public static float GetRotationDegrees(this SKMatrix matrix)
+    {
+      // SkewY is sin(angle) * scale, ScaleX is cos(angle) * scale
+      float rotationRadians = (float)Math.Atan2(matrix.SkewY, matrix.ScaleX);
+      return rotationRadians * 180f / (float)Math.PI;
+    }
+
     public static (SKMatrix Transform, SKRect Bounds) CalculateRotatedBounds(
         this SKMatrix canvasMatrix,
         SKPoint startPoint,
         SKPoint currentPoint)
     {
       // Calculate rotation from CanvasMatrix
-      // SkewY is sin(angle) * scale, ScaleX is cos(angle) * scale
-      float rotationRadians = (float)Math.Atan2(canvasMatrix.SkewY, canvasMatrix.ScaleX);
-      float rotationDegrees = rotationRadians * 180f / (float)Math.PI;
+      float rotationDegrees = canvasMatrix.GetRotationDegrees();
 
       // Create alignment matrices
       var toAligned = SKMatrix.CreateRotationDegrees(rotationDegrees);

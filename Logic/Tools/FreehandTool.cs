@@ -1,7 +1,7 @@
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.ViewModels;
-
+using LunaDraw.Logic.Extensions;
 using ReactiveUI;
 
 using SkiaSharp;
@@ -13,7 +13,7 @@ namespace LunaDraw.Logic.Tools
     public string Name => "Freehand";
     public ToolType Type => ToolType.Freehand;
 
-    private List<SKPoint>? currentPoints;
+    private List<(SKPoint Point, float Rotation)>? currentPoints;
     private SKPoint lastStampPoint;
     private bool isDrawing;
     private readonly Random random = new Random();
@@ -30,8 +30,8 @@ namespace LunaDraw.Logic.Tools
 
       currentPoints =
       [
-        // Add initial point
-        point,
+        // Add initial point with default 0 rotation
+        (point, 0f),
       ];
       lastStampPoint = point;
       isDrawing = true;
@@ -59,6 +59,9 @@ namespace LunaDraw.Logic.Tools
           direction = new SKPoint(direction.X * invLength, direction.Y * invLength);
         }
 
+        // Calculate angle for this segment
+        float angle = (float)(Math.Atan2(vector.Y, vector.X) * 180.0 / Math.PI);
+
         int steps = (int)(distance / spacingPixels);
         for (int i = 0; i < steps; i++)
         {
@@ -68,12 +71,12 @@ namespace LunaDraw.Logic.Tools
           if (context.ScatterRadius > 0)
           {
               // Random scatter in a circle
-              double angle = random.NextDouble() * Math.PI * 2;
+              double rndAngle = random.NextDouble() * Math.PI * 2;
               double r = Math.Sqrt(random.NextDouble()) * context.ScatterRadius; // Sqrt for uniform distribution
-              finalPoint += new SKPoint((float)(r * Math.Cos(angle)), (float)(r * Math.Sin(angle)));
+              finalPoint += new SKPoint((float)(r * Math.Cos(rndAngle)), (float)(r * Math.Sin(rndAngle)));
           }
 
-          currentPoints.Add(finalPoint);
+          currentPoints.Add((finalPoint, angle));
           lastStampPoint = idealPoint;
         }
 
@@ -88,9 +91,13 @@ namespace LunaDraw.Logic.Tools
 
       if (currentPoints.Count > 0)
       {
+        var points = currentPoints.Select(p => p.Point).ToList();
+        var rotations = currentPoints.Select(p => p.Rotation).ToList();
+
         var element = new DrawableStamps
         {
-          Points = new List<SKPoint>(currentPoints),
+          Points = points,
+          Rotations = rotations,
           Shape = context.BrushShape,
           Size = context.StrokeWidth,
           Flow = context.Flow,
@@ -145,8 +152,12 @@ namespace LunaDraw.Logic.Tools
       };
 
       int index = 0;
-      foreach (var point in currentPoints)
+      
+      foreach (var item in currentPoints)
       {
+        var point = item.Point;
+        var baseRotation = item.Rotation;
+
         // Local random for preview jitter
         var random = new Random(index * 1337); 
 
@@ -170,6 +181,12 @@ namespace LunaDraw.Logic.Tools
 
         canvas.Save();
         canvas.Translate(point.X, point.Y);
+
+        // Apply Stroke Rotation
+        if (Math.Abs(baseRotation) > 0.001f)
+        {
+            canvas.RotateDegrees(baseRotation);
+        }
 
         // Rotation Jitter
         if (viewModel.AngleJitter > 0)

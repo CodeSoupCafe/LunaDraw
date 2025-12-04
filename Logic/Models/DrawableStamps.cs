@@ -179,6 +179,17 @@ namespace LunaDraw.Logic.Models
         }
     }
 
+    private List<float> rotations = [];
+    public List<float> Rotations
+    {
+        get => rotations;
+        set
+        {
+            rotations = value;
+            InvalidateCache();
+        }
+    }
+
     private float sizeJitter;
     public float SizeJitter
     {
@@ -343,10 +354,10 @@ namespace LunaDraw.Logic.Models
         }
 
         // Angle Jitter
-        float rotation = 0f;
+        float rotationDelta = 0f;
         if (AngleJitter > 0)
         {
-            rotation = ((float)random.NextDouble() - 0.5f) * 2.0f * AngleJitter; // +/- AngleJitter
+            rotationDelta = ((float)random.NextDouble() - 0.5f) * 2.0f * AngleJitter; // +/- AngleJitter
         }
 
         // Color Jitter / Rainbow
@@ -374,9 +385,13 @@ namespace LunaDraw.Logic.Models
         canvas.Save();
         canvas.Translate(point.X, point.Y);
         
-        if (rotation != 0)
+        // Apply Base Rotation (from path direction) + Jitter
+        float baseRotation = (Rotations != null && index < Rotations.Count) ? Rotations[index] : 0f;
+        float finalRotation = baseRotation + rotationDelta;
+
+        if (Math.Abs(finalRotation) > 0.001f)
         {
-            canvas.RotateDegrees(rotation);
+            canvas.RotateDegrees(finalRotation);
         }
         
         if (scaleFactor != 1.0f)
@@ -471,6 +486,7 @@ namespace LunaDraw.Logic.Models
         GlowColor = GlowColor,
         GlowRadius = GlowRadius,
         IsRainbowEnabled = IsRainbowEnabled,
+        Rotations = new List<float>(Rotations),
         SizeJitter = SizeJitter,
         AngleJitter = AngleJitter,
         HueJitter = HueJitter
