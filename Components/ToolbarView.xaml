@@ -73,6 +73,14 @@
                    HorizontalTextAlignment="Center"/>
           </StackLayout>
           <StackLayout HorizontalOptions="Center">
+            <Button x:Name="SettingsButton"
+                    Style="{StaticResource ToolbarButtonStyle}"
+                    Text="🌈"
+                    Command="{Binding ShowSettingsCommand}"/>
+            <Label Text="Colors"
+                   HorizontalTextAlignment="Center"/>
+          </StackLayout>
+           <StackLayout HorizontalOptions="Center">
             <Border WidthRequest="72"
                     HeightRequest="72"
                     Padding="8"
@@ -110,15 +118,7 @@
             <Label Text="Shapes"
                    HorizontalTextAlignment="Center"/>
           </StackLayout>
-          <StackLayout HorizontalOptions="Center">
-            <Button x:Name="SettingsButton"
-                    Style="{StaticResource ToolbarButtonStyle}"
-                    Text="🌈"
-                    Command="{Binding ShowSettingsCommand}"/>
-            <Label Text="Colors"
-                   HorizontalTextAlignment="Center"/>
-          </StackLayout>
-          <StackLayout HorizontalOptions="Center">
+         <StackLayout HorizontalOptions="Center">
             <Button x:Name="EraserButton"
                     Style="{StaticResource ToolbarButtonStyle}"
                     Text="🧽"

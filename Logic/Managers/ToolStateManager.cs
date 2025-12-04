@@ -19,21 +19,21 @@ namespace LunaDraw.Logic.Services
       }
     }
 
-    private SKColor strokeColor = SKColors.Black;
+    private SKColor strokeColor = SKColors.MediumPurple;
     public SKColor StrokeColor
     {
       get => strokeColor;
       set => this.RaiseAndSetIfChanged(ref strokeColor, value);
     }
 
-    private SKColor? fillColor;
+    private SKColor? fillColor = SKColors.SteelBlue;
     public SKColor? FillColor
     {
       get => fillColor;
       set => this.RaiseAndSetIfChanged(ref fillColor, value);
     }
 
-    private float strokeWidth = 5;
+    private float strokeWidth = 40;
     public float StrokeWidth
     {
       get => strokeWidth;
@@ -54,7 +54,7 @@ namespace LunaDraw.Logic.Services
       set => this.RaiseAndSetIfChanged(ref flow, value);
     }
 
-    private float spacing = 0.25f;
+    private float spacing = 1f;
     public float Spacing
     {
       get => spacing;

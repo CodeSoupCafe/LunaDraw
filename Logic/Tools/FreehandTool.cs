@@ -10,7 +10,7 @@ namespace LunaDraw.Logic.Tools
 {
   public class FreehandTool : IDrawingTool
   {
-    public string Name => "Freehand";
+    public string Name => "Stamps";
     public ToolType Type => ToolType.Freehand;
 
     private List<(SKPoint Point, float Rotation)>? currentPoints;
