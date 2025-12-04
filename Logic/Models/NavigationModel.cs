@@ -6,7 +6,6 @@ namespace LunaDraw.Logic.Models
 {
     public class NavigationModel : ReactiveObject
     {
-        public readonly object MatrixLock = new();
         private SKMatrix _userMatrix;
 
         private SKMatrix _totalMatrix;

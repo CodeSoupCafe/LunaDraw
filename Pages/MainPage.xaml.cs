@@ -53,15 +53,14 @@ public partial class MainPage : ContentPage
 
     canvas.Save();
 
-    lock (_viewModel.NavigationModel.MatrixLock)
-    {
-        // Apply Navigation Transformation (User Transforms)
-        canvas.Concat(_viewModel.NavigationModel.UserMatrix);
-
-        // Apply Fit-To-Screen logic and capture Total Matrix (Legacy Pipeline)
-        var bounds = new SKRect(0, 0, width, height);
-        _viewModel.NavigationModel.TotalMatrix = canvas.MaxScaleCentered(width, height, bounds);
-    }
+    // DIRECT FIX: Use SetMatrix directly with UserMatrix.
+    // The UserMatrix is now the single source of truth for View Transformation (Pan/Zoom/Rotate).
+    // We do not mix it with MaxScaleCentered or other legacy logic.
+    canvas.SetMatrix(_viewModel.NavigationModel.UserMatrix);
+    
+    // Sync TotalMatrix for Input Handler (reverse mapping)
+    // Since we just SetMatrix, TotalMatrix IS UserMatrix.
+    _viewModel.NavigationModel.TotalMatrix = canvas.TotalMatrix;
 
     foreach (var layer in _viewModel.Layers)
     {
