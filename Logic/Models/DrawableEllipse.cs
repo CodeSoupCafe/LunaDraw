@@ -134,7 +134,7 @@ namespace LunaDraw.Logic.Models
     public void Translate(SKPoint offset)
     {
       var translation = SKMatrix.CreateTranslation(offset.X, offset.Y);
-      TransformMatrix = SKMatrix.Concat(TransformMatrix, translation);
+      TransformMatrix = SKMatrix.Concat(translation, TransformMatrix);
     }
 
     public void Transform(SKMatrix matrix)
