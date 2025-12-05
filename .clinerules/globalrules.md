@@ -1,9 +1,3 @@
----
-description: 
-globs: 
-alwaysApply: true
----
-
 SPARC Agentic Development Rules
 
 Core Philosophy
