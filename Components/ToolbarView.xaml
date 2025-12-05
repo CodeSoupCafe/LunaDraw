@@ -77,7 +77,7 @@
                     Style="{StaticResource ToolbarButtonStyle}"
                     Text="🌈"
                     Command="{Binding ShowSettingsCommand}"/>
-            <Label Text="Colors"
+            <Label Text="Styles"
                    HorizontalTextAlignment="Center"/>
           </StackLayout>
            <StackLayout HorizontalOptions="Center">

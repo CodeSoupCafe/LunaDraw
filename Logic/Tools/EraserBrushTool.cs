@@ -87,7 +87,10 @@ namespace LunaDraw.Logic.Tools
         // Determine if this is a "pure stroke" (like a freehand line or line shape) vs a "filled shape"
         // A DrawablePath is a pure stroke if IsFilled is false.
         // A DrawableLine is always a stroke.
-        bool isPureStroke = (element is DrawablePath dp && !dp.IsFilled) || (element is DrawableLine);
+        // A shape (like Rect/Ellipse) with no FillColor is visually just a stroke.
+        bool isPureStroke = (element is DrawablePath dp && !dp.IsFilled) || 
+                            (element is DrawableLine) ||
+                            (element.FillColor == null);
 
         SKPath elementPath;
         if (isPureStroke)
