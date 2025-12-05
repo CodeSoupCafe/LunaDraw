@@ -2,6 +2,11 @@
 
 LunaDraw is a child-centric drawing application designed for children aged 3–8. It provides a safe, ad-free, and magical environment for creativity, featuring special effects brushes, easy-to-use tools, and a "Movie Mode" that replays the drawing process.
 
+> ### **<span style="color:maroon">NOTE - Expected Feature Set / Parity</span>**
+> This application is a work in-progress and has several missing features yet to be implemented. The running list can be found below:
+>
+> - [Missing Features](Documentation/MissingFeatures.md)
+
 ## Features
 
 ### 🎨 Core Drawing
