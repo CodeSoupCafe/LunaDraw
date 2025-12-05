@@ -2,10 +2,16 @@
 
 LunaDraw is a child-centric drawing application designed for children aged 3–8. It provides a safe, ad-free, and magical environment for creativity, featuring special effects brushes, easy-to-use tools, and a "Movie Mode" that replays the drawing process.
 
-> ### **<span style="color:maroon">NOTE - Expected Feature Set / Parity</span>**
-> This application is a work in-progress and has several missing features yet to be implemented. The running list can be found below:
+> ### **<span style="color:maroon">Missing Features / Parity / Testing / Deployment</span>**
+> This application is a work in-progress and has several missing features yet to be implemented. Only Windows has been tested on one device. No mobile testing has been done. As the application is new and the holidays draw closer, it may be another month or two before app store submission.
+> 
+> The running list can be found below:
 >
 > - [Missing Features](Documentation/MissingFeatures.md)
+
+
+> ### **Vibe-Coded**
+> The application is heavily vibe-coded and guided by best practices in the [Cline Rules](.clinerules/.clinerules.md) using [SPARC Agentic Development](https://gist.github.com/ruvnet/7d4e1d5c9233ab0a1d2a66bf5ec3e58f); mostly using [Gemini 3](https://gemini.google.com/). Hallucinations are always possible. It is recognized and should be by all that AI is still sometimes as helpful as a sack of hair.
 
 ## Features
 

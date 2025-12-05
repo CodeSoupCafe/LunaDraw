@@ -35,3 +35,9 @@ This document tracks features that are specified in the requirements or document
 **Current State:**
 - **Engine:** `FreehandTool` and `DrawableStamps` support the *capabilities* (Glow, Rainbow, Jitter, Scatter).
 - **Presets:** The specific list of 24+ configured presets is not visible in `ToolbarViewModel` or `ToolStateManager`. The UI allows manual configuration, but the child-friendly "pick and draw" presets need to be verified or implemented.
+
+## 6. Production Deployment
+**Status:** ❌ Missing
+**Requirement:** Build actions for QC, smoke tests for all platforms.
+**Current State:**
+- No build actions exist. No docker or other deployment strategies implemented.
