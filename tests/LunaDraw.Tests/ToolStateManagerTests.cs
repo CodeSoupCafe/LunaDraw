@@ -1,0 +1,169 @@
+using System;
+using System.Linq;
+using System.Reactive.Subjects;
+using FluentAssertions;
+using LunaDraw.Logic.Managers;
+using LunaDraw.Logic.Messages;
+using LunaDraw.Logic.Models;
+using LunaDraw.Logic.Services; // Keep this for ToolStateManager
+using LunaDraw.Logic.Tools;
+using Moq;
+using ReactiveUI; // ADDED: Required for IMessageBus
+using SkiaSharp;
+using Xunit;
+
+namespace LunaDraw.Tests
+{
+    public class ToolStateManagerTests
+    {
+        private readonly Mock<IMessageBus> mockBus;
+        private readonly Subject<BrushSettingsChangedMessage> brushSettingsSubject;
+        private readonly Subject<BrushShapeChangedMessage> brushShapeSubject;
+        private readonly ToolStateManager sut;
+
+        public ToolStateManagerTests()
+        {
+            mockBus = new Mock<IMessageBus>();
+            brushSettingsSubject = new Subject<BrushSettingsChangedMessage>();
+            brushShapeSubject = new Subject<BrushShapeChangedMessage>();
+
+            mockBus.Setup(x => x.Listen<BrushSettingsChangedMessage>())
+                .Returns(brushSettingsSubject);
+            mockBus.Setup(x => x.Listen<BrushShapeChangedMessage>())
+                .Returns(brushShapeSubject);
+
+            sut = new ToolStateManager(mockBus.Object);
+        }
+
+        [Fact]
+        public void Constructor_ShouldInitializeWithDefaultValues()
+        {
+            // Act
+            var strokeWidth = sut.StrokeWidth;
+
+            // Assert
+            strokeWidth.Should().Be(40);
+        }
+
+        [Fact]
+        public void Constructor_ShouldInitializeWithDefaultStrokeColor()
+        {
+            // Act
+            var strokeColor = sut.StrokeColor;
+
+            // Assert
+            strokeColor.Should().Be(SKColors.MediumPurple);
+        }
+
+        [Fact]
+        public void Constructor_ShouldInitializeWithDefaultFillColor()
+        {
+            // Act
+            var fillColor = sut.FillColor;
+
+            // Assert
+            fillColor.Should().Be(SKColors.SteelBlue);
+        }
+
+        [Fact]
+        public void Constructor_ShouldInitializeActiveToolToFreehand()
+        {
+            // Act
+            var activeTool = sut.ActiveTool;
+
+            // Assert
+            activeTool.Should().BeOfType<FreehandTool>();
+        }
+
+        [Fact]
+        public void ActiveTool_Set_ShouldRaisePropertyChanged()
+        {
+            // Arrange
+            var newTool = new RectangleTool(mockBus.Object);
+            using var monitoredSubject = sut.Monitor();
+            
+            // Act
+            sut.ActiveTool = newTool;
+            
+            // Assert
+            monitoredSubject.Should().RaisePropertyChangeFor(x => x.ActiveTool);
+        }
+
+        [Fact]
+        public void ActiveTool_Set_ShouldSendMessage()
+        {
+            // Arrange
+            var newTool = new RectangleTool(mockBus.Object);
+            
+            // Act
+            sut.ActiveTool = newTool;
+
+            // Assert
+            mockBus.Verify(x => x.SendMessage(It.Is<ToolChangedMessage>(msg => msg.NewTool == newTool)), Times.Once); 
+        }
+
+        [Fact]
+        public void Receive_BrushSettingsChangedMessage_ShouldUpdateStrokeColor()
+        {
+            // Arrange
+            var expectedColor = SKColors.Red;
+            
+            // Act
+            brushSettingsSubject.OnNext(new BrushSettingsChangedMessage(strokeColor: expectedColor)); // FIX HERE
+
+            // Assert
+            sut.StrokeColor.Should().Be(expectedColor);
+        }
+
+        [Fact]
+        public void Receive_BrushSettingsChangedMessage_ShouldUpdateStrokeWidth()
+        {
+            // Arrange
+            var expectedWidth = 15.5f;
+
+            // Act
+            brushSettingsSubject.OnNext(new BrushSettingsChangedMessage(strokeWidth: expectedWidth)); // FIX HERE
+
+            // Assert
+            sut.StrokeWidth.Should().Be(expectedWidth);
+        }
+
+        [Fact]
+        public void Receive_BrushSettingsChangedMessage_ShouldUpdateOpacity()
+        {
+            // Arrange
+            byte expectedOpacity = 128;
+
+            // Act
+            brushSettingsSubject.OnNext(new BrushSettingsChangedMessage(transparency: expectedOpacity)); // FIX HERE
+
+            // Assert
+            sut.Opacity.Should().Be(expectedOpacity);
+        }
+
+        [Fact]
+        public void Receive_BrushShapeChangedMessage_ShouldUpdateCurrentBrushShape()
+        {
+            // Arrange
+            var expectedShape = BrushShape.Star();
+
+            // Act
+            brushShapeSubject.OnNext(new BrushShapeChangedMessage(expectedShape));
+
+            // Assert
+            sut.CurrentBrushShape.Should().BeEquivalentTo(expectedShape);
+        }
+        
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void Receive_BrushSettingsChangedMessage_ShouldUpdateGlowEnabled(bool isEnabled)
+        {
+            // Act
+             brushSettingsSubject.OnNext(new BrushSettingsChangedMessage(isGlowEnabled: isEnabled)); // FIX HERE
+             
+            // Assert
+             sut.IsGlowEnabled.Should().Be(isEnabled);
+        }
+    }
+}
