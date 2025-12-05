@@ -12,11 +12,11 @@ namespace LunaDraw.Tests
 {
     public class SelectionManagerTests
     {
-        private readonly SelectionManager sut;
+        private readonly SelectionManager selectionManager;
 
         public SelectionManagerTests()
         {
-            sut = new SelectionManager();
+            selectionManager = new SelectionManager();
         }
 
         [Fact]
@@ -24,11 +24,11 @@ namespace LunaDraw.Tests
         {
             // Arrange
             // Act
-            // (SUT initialized in constructor)
+            // (SelectionManager initialized in constructor)
 
             // Assert
-            sut.Selected.Should().BeEmpty();
-            sut.HasSelection.Should().BeFalse();
+            selectionManager.Selected.Should().BeEmpty();
+            selectionManager.HasSelection.Should().BeFalse();
         }
 
         [Fact]
@@ -39,11 +39,11 @@ namespace LunaDraw.Tests
             mockElement.SetupAllProperties(); // Enable setting IsSelected property
 
             // Act
-            sut.Add(mockElement.Object);
+            selectionManager.Add(mockElement.Object);
 
             // Assert
-            sut.Selected.Should().ContainSingle(x => x == mockElement.Object); // Fixed
-            sut.HasSelection.Should().BeTrue();
+            selectionManager.Selected.Should().ContainSingle(x => x == mockElement.Object); // Fixed
+            selectionManager.HasSelection.Should().BeTrue();
             mockElement.Object.IsSelected.Should().BeTrue();
         }
 
@@ -54,10 +54,10 @@ namespace LunaDraw.Tests
             var mockElement = new Mock<IDrawableElement>();
             mockElement.SetupAllProperties();
             var eventRaised = false;
-            sut.SelectionChanged += (sender, args) => eventRaised = true;
+            selectionManager.SelectionChanged += (sender, args) => eventRaised = true;
 
             // Act
-            sut.Add(mockElement.Object);
+            selectionManager.Add(mockElement.Object);
 
             // Assert
             eventRaised.Should().BeTrue();
@@ -69,13 +69,13 @@ namespace LunaDraw.Tests
             // Arrange
             var mockElement = new Mock<IDrawableElement>();
             mockElement.SetupAllProperties();
-            sut.Add(mockElement.Object); // Add once
+            selectionManager.Add(mockElement.Object); // Add once
 
             // Act
-            sut.Add(mockElement.Object); // Add again
+            selectionManager.Add(mockElement.Object); // Add again
 
             // Assert
-            sut.Selected.Should().ContainSingle(x => x == mockElement.Object); // Fixed
+            selectionManager.Selected.Should().ContainSingle(x => x == mockElement.Object); // Fixed
         }
 
         [Fact]
@@ -85,11 +85,11 @@ namespace LunaDraw.Tests
             IDrawableElement nullElement = null;
 
             // Act
-            sut.Add(nullElement);
+            selectionManager.Add(nullElement);
 
             // Assert
-            sut.Selected.Should().BeEmpty();
-            sut.HasSelection.Should().BeFalse();
+            selectionManager.Selected.Should().BeEmpty();
+            selectionManager.HasSelection.Should().BeFalse();
         }
 
         [Fact]
@@ -98,14 +98,14 @@ namespace LunaDraw.Tests
             // Arrange
             var mockElement = new Mock<IDrawableElement>();
             mockElement.SetupAllProperties();
-            sut.Add(mockElement.Object); // Add element first
+            selectionManager.Add(mockElement.Object); // Add element first
 
             // Act
-            sut.Remove(mockElement.Object);
+            selectionManager.Remove(mockElement.Object);
 
             // Assert
-            sut.Selected.Should().BeEmpty();
-            sut.HasSelection.Should().BeFalse();
+            selectionManager.Selected.Should().BeEmpty();
+            selectionManager.HasSelection.Should().BeFalse();
             mockElement.Object.IsSelected.Should().BeFalse();
         }
 
@@ -115,12 +115,12 @@ namespace LunaDraw.Tests
             // Arrange
             var mockElement = new Mock<IDrawableElement>();
             mockElement.SetupAllProperties();
-            sut.Add(mockElement.Object); // Add element first
+            selectionManager.Add(mockElement.Object); // Add element first
             var eventRaised = false;
-            sut.SelectionChanged += (sender, args) => eventRaised = true; // Reset and listen again
+            selectionManager.SelectionChanged += (sender, args) => eventRaised = true; // Reset and listen again
 
             // Act
-            sut.Remove(mockElement.Object);
+            selectionManager.Remove(mockElement.Object);
 
             // Assert
             eventRaised.Should().BeTrue();
@@ -133,15 +133,15 @@ namespace LunaDraw.Tests
             var mockElement = new Mock<IDrawableElement>();
             mockElement.SetupAllProperties();
             IDrawableElement nonExistentElement = new Mock<IDrawableElement>().Object; // A different element
-            sut.Add(mockElement.Object); // Add one element
+            selectionManager.Add(mockElement.Object); // Add one element
 
             // Act
-            sut.Remove(null);
-            sut.Remove(nonExistentElement);
+            selectionManager.Remove(null);
+            selectionManager.Remove(nonExistentElement);
 
             // Assert
-            sut.Selected.Should().ContainSingle(x => x == mockElement.Object); // Fixed
-            sut.HasSelection.Should().BeTrue();
+            selectionManager.Selected.Should().ContainSingle(x => x == mockElement.Object); // Fixed
+            selectionManager.HasSelection.Should().BeTrue();
         }
 
         [Fact]
@@ -152,15 +152,15 @@ namespace LunaDraw.Tests
             var mockElement2 = new Mock<IDrawableElement>();
             mockElement1.SetupAllProperties();
             mockElement2.SetupAllProperties();
-            sut.Add(mockElement1.Object);
-            sut.Add(mockElement2.Object);
+            selectionManager.Add(mockElement1.Object);
+            selectionManager.Add(mockElement2.Object);
 
             // Act
-            sut.Clear();
+            selectionManager.Clear();
 
             // Assert
-            sut.Selected.Should().BeEmpty();
-            sut.HasSelection.Should().BeFalse();
+            selectionManager.Selected.Should().BeEmpty();
+            selectionManager.HasSelection.Should().BeFalse();
             mockElement1.Object.IsSelected.Should().BeFalse();
             mockElement2.Object.IsSelected.Should().BeFalse();
         }
@@ -171,12 +171,12 @@ namespace LunaDraw.Tests
             // Arrange
             var mockElement = new Mock<IDrawableElement>();
             mockElement.SetupAllProperties();
-            sut.Add(mockElement.Object);
+            selectionManager.Add(mockElement.Object);
             var eventRaised = false;
-            sut.SelectionChanged += (sender, args) => eventRaised = true; // Reset and listen
+            selectionManager.SelectionChanged += (sender, args) => eventRaised = true; // Reset and listen
 
             // Act
-            sut.Clear();
+            selectionManager.Clear();
 
             // Assert
             eventRaised.Should().BeTrue();
@@ -187,10 +187,10 @@ namespace LunaDraw.Tests
         {
             // Arrange
             var eventRaised = false;
-            sut.SelectionChanged += (sender, args) => eventRaised = true;
+            selectionManager.SelectionChanged += (sender, args) => eventRaised = true;
 
             // Act
-            sut.Clear();
+            selectionManager.Clear();
 
             // Assert
             eventRaised.Should().BeFalse();
@@ -204,10 +204,10 @@ namespace LunaDraw.Tests
             mockElement.SetupAllProperties();
 
             // Act
-            sut.Toggle(mockElement.Object);
+            selectionManager.Toggle(mockElement.Object);
 
             // Assert
-            sut.Selected.Should().ContainSingle(x => x == mockElement.Object); // Fixed
+            selectionManager.Selected.Should().ContainSingle(x => x == mockElement.Object); // Fixed
             mockElement.Object.IsSelected.Should().BeTrue();
         }
 
@@ -217,13 +217,13 @@ namespace LunaDraw.Tests
             // Arrange
             var mockElement = new Mock<IDrawableElement>();
             mockElement.SetupAllProperties();
-            sut.Add(mockElement.Object); // Add it first
+            selectionManager.Add(mockElement.Object); // Add it first
 
             // Act
-            sut.Toggle(mockElement.Object);
+            selectionManager.Toggle(mockElement.Object);
 
             // Assert
-            sut.Selected.Should().BeEmpty();
+            selectionManager.Selected.Should().BeEmpty();
             mockElement.Object.IsSelected.Should().BeFalse();
         }
 
@@ -232,13 +232,13 @@ namespace LunaDraw.Tests
         {
             // Arrange
             IDrawableElement nullElement = null;
-            var initialCount = sut.Selected.Count;
+            var initialCount = selectionManager.Selected.Count;
 
             // Act
-            sut.Toggle(nullElement);
+            selectionManager.Toggle(nullElement);
 
             // Assert
-            sut.Selected.Count.Should().Be(initialCount); // No change
+            selectionManager.Selected.Count.Should().Be(initialCount); // No change
         }
 
         [Fact]
@@ -246,10 +246,10 @@ namespace LunaDraw.Tests
         {
             // Arrange
             var mockElement = new Mock<IDrawableElement>();
-            sut.Add(mockElement.Object);
+            selectionManager.Add(mockElement.Object);
 
             // Act
-            var result = sut.Contains(mockElement.Object);
+            var result = selectionManager.Contains(mockElement.Object);
 
             // Assert
             result.Should().BeTrue();
@@ -263,7 +263,7 @@ namespace LunaDraw.Tests
             var nonSelectedElement = new Mock<IDrawableElement>().Object;
 
             // Act
-            var result = sut.Contains(nonSelectedElement);
+            var result = selectionManager.Contains(nonSelectedElement);
 
             // Assert
             result.Should().BeFalse();
@@ -276,7 +276,7 @@ namespace LunaDraw.Tests
             IDrawableElement nullElement = null;
 
             // Act
-            var result = sut.Contains(nullElement);
+            var result = selectionManager.Contains(nullElement);
 
             // Assert
             result.Should().BeFalse();
@@ -288,11 +288,11 @@ namespace LunaDraw.Tests
             // Arrange
             var mockElement1 = new Mock<IDrawableElement>().Object;
             var mockElement2 = new Mock<IDrawableElement>().Object;
-            sut.Add(mockElement1);
-            sut.Add(mockElement2);
+            selectionManager.Add(mockElement1);
+            selectionManager.Add(mockElement2);
 
             // Act
-            var allElements = sut.GetAll();
+            var allElements = selectionManager.GetAll();
 
             // Assert
             allElements.Should().HaveCount(2);
@@ -304,7 +304,7 @@ namespace LunaDraw.Tests
         public void GetBounds_ShouldReturnEmptyRectForEmptySelection()
         {
             // Act
-            var bounds = sut.GetBounds();
+            var bounds = selectionManager.GetBounds();
 
             // Assert
             bounds.Should().Be(SKRect.Empty);
@@ -317,10 +317,10 @@ namespace LunaDraw.Tests
             var expectedBounds = new SKRect(0, 0, 100, 100);
             var mockElement = new Mock<IDrawableElement>();
             mockElement.Setup(e => e.Bounds).Returns(expectedBounds);
-            sut.Add(mockElement.Object);
+            selectionManager.Add(mockElement.Object);
 
             // Act
-            var bounds = sut.GetBounds();
+            var bounds = selectionManager.GetBounds();
 
             // Assert
             bounds.Should().Be(expectedBounds);
@@ -334,11 +334,11 @@ namespace LunaDraw.Tests
             mockElement1.Setup(e => e.Bounds).Returns(new SKRect(0, 0, 50, 50));
             var mockElement2 = new Mock<IDrawableElement>();
             mockElement2.Setup(e => e.Bounds).Returns(new SKRect(25, 25, 75, 75));
-            sut.Add(mockElement1.Object);
-            sut.Add(mockElement2.Object);
+            selectionManager.Add(mockElement1.Object);
+            selectionManager.Add(mockElement2.Object);
 
             // Act
-            var bounds = sut.GetBounds();
+            var bounds = selectionManager.GetBounds();
 
             // Assert
             bounds.Should().Be(new SKRect(0, 0, 75, 75));

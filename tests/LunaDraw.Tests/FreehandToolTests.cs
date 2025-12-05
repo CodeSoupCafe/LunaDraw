@@ -19,7 +19,7 @@ namespace LunaDraw.Tests
     public class FreehandToolTests
     {
         private readonly Mock<IMessageBus> mockMessageBus;
-        private readonly FreehandTool sut;
+        private readonly FreehandTool freehandTool;
         private readonly Mock<ILayerStateManager> mockLayerStateManager;
         private readonly Mock<IToolStateManager> mockToolStateManager;
         private readonly SelectionManager selectionManager;
@@ -28,7 +28,7 @@ namespace LunaDraw.Tests
         public FreehandToolTests()
         {
             mockMessageBus = new Mock<IMessageBus>();
-            sut = new FreehandTool(mockMessageBus.Object);
+            freehandTool = new FreehandTool(mockMessageBus.Object);
 
             mockLayerStateManager = new Mock<ILayerStateManager>();
             mockToolStateManager = new Mock<IToolStateManager>();
@@ -63,7 +63,7 @@ namespace LunaDraw.Tests
         {
             // Arrange
             // Act
-            var name = sut.Name;
+            var name = freehandTool.Name;
 
             // Assert
             name.Should().Be("Stamps");
@@ -74,7 +74,7 @@ namespace LunaDraw.Tests
         {
             // Arrange
             // Act
-            var type = sut.Type;
+            var type = freehandTool.Type;
 
             // Assert
             type.Should().Be(ToolType.Freehand);
@@ -89,12 +89,12 @@ namespace LunaDraw.Tests
             var point = new SKPoint(10, 10);
 
             // Act
-            sut.OnTouchPressed(point, context);
+            freehandTool.OnTouchPressed(point, context);
 
             // Assert
             mockMessageBus.Verify(m => m.SendMessage(It.IsAny<CanvasInvalidateMessage>()), Times.Never);
             // Internal state is not directly accessible, but we can infer no drawing started
-            sut.Invoking(s => s.OnTouchMoved(new SKPoint(20,20), context)).Should().NotThrow(); // Should not crash
+            freehandTool.Invoking(s => s.OnTouchMoved(new SKPoint(20,20), context)).Should().NotThrow(); // Should not crash
         }
 
         [Fact]
@@ -106,7 +106,7 @@ namespace LunaDraw.Tests
             var point = new SKPoint(10, 10);
 
             // Act
-            sut.OnTouchPressed(point, context);
+            freehandTool.OnTouchPressed(point, context);
 
             // Assert
             // We can't directly assert currentPoints as it's private, but we can verify subsequent behavior
@@ -114,8 +114,8 @@ namespace LunaDraw.Tests
             
             // Further actions should indicate drawing has started
             var movedPoint = new SKPoint(20, 20);
-            sut.OnTouchMoved(movedPoint, context); // Move to trigger point addition
-            sut.OnTouchReleased(movedPoint, context); // Release to finalize
+            freehandTool.OnTouchMoved(movedPoint, context); // Move to trigger point addition
+            freehandTool.OnTouchReleased(movedPoint, context); // Release to finalize
             unlockedLayer.Elements.Should().ContainSingle(); // Should have added stamps
         }
 
@@ -128,7 +128,7 @@ namespace LunaDraw.Tests
             var point = new SKPoint(10, 10);
 
             // Act
-            sut.OnTouchMoved(point, context);
+            freehandTool.OnTouchMoved(point, context);
 
             // Assert
             mockMessageBus.Verify(m => m.SendMessage(It.IsAny<CanvasInvalidateMessage>()), Times.Never);
@@ -144,8 +144,8 @@ namespace LunaDraw.Tests
             var point = new SKPoint(10, 10);
 
             // Act
-            sut.OnTouchPressed(new SKPoint(5,5), context); // Try to start drawing
-            sut.OnTouchMoved(point, context);
+            freehandTool.OnTouchPressed(new SKPoint(5,5), context); // Try to start drawing
+            freehandTool.OnTouchMoved(point, context);
 
             // Assert
             mockMessageBus.Verify(m => m.SendMessage(It.IsAny<CanvasInvalidateMessage>()), Times.Never);
@@ -159,19 +159,19 @@ namespace LunaDraw.Tests
             var unlockedLayer = new Layer { IsLocked = false };
             var context = CreateToolContext(unlockedLayer);
             var startPoint = new SKPoint(10, 10);
-            sut.OnTouchPressed(startPoint, context);
+            freehandTool.OnTouchPressed(startPoint, context);
             mockMessageBus.Invocations.Clear(); // Clear initial message
 
             var movePoint = new SKPoint(100, 10); // Far enough to add multiple stamps
             
             // Act
-            sut.OnTouchMoved(movePoint, context);
+            freehandTool.OnTouchMoved(movePoint, context);
 
             // Assert
             // Cannot directly assert currentPoints.Count, but can infer from message bus.
             mockMessageBus.Verify(m => m.SendMessage(It.IsAny<CanvasInvalidateMessage>()), Times.Once); // At least one invalidate message for adding points
             
-            sut.OnTouchReleased(movePoint, context);
+            freehandTool.OnTouchReleased(movePoint, context);
             var drawableStamps = unlockedLayer.Elements.Should().ContainSingle().Subject.Should().BeOfType<DrawableStamps>().Subject;
             drawableStamps.Points.Count.Should().BeGreaterThan(1); // Check that multiple points were added
         }
@@ -183,18 +183,18 @@ namespace LunaDraw.Tests
             var unlockedLayer = new Layer { IsLocked = false };
             var context = CreateToolContext(unlockedLayer);
             var startPoint = new SKPoint(10, 10);
-            sut.OnTouchPressed(startPoint, context);
+            freehandTool.OnTouchPressed(startPoint, context);
             mockMessageBus.Invocations.Clear(); // Clear initial message
 
             var movePoint = new SKPoint(10.1f, 10.1f); // Very small move, less than spacing
             
             // Act
-            sut.OnTouchMoved(movePoint, context);
+            freehandTool.OnTouchMoved(movePoint, context);
 
             // Assert
             mockMessageBus.Verify(m => m.SendMessage(It.IsAny<CanvasInvalidateMessage>()), Times.Never); // No invalidate message for new points
             
-            sut.OnTouchReleased(movePoint, context);
+            freehandTool.OnTouchReleased(movePoint, context);
             var drawableStamps = unlockedLayer.Elements.Should().ContainSingle().Subject.Should().BeOfType<DrawableStamps>().Subject;
             drawableStamps.Points.Should().ContainSingle(); // Only the initial point
         }
@@ -208,7 +208,7 @@ namespace LunaDraw.Tests
             var point = new SKPoint(10, 10);
 
             // Act
-            sut.OnTouchReleased(point, context);
+            freehandTool.OnTouchReleased(point, context);
 
             // Assert
             unlockedLayer.Elements.Should().BeEmpty();
@@ -224,12 +224,12 @@ namespace LunaDraw.Tests
             var context = CreateToolContext(unlockedLayer);
             var startPoint = new SKPoint(10, 10);
             var endPoint = new SKPoint(50, 50);
-            sut.OnTouchPressed(startPoint, context);
-            sut.OnTouchMoved(endPoint, context); // Add some points
+            freehandTool.OnTouchPressed(startPoint, context);
+            freehandTool.OnTouchMoved(endPoint, context); // Add some points
             mockMessageBus.Invocations.Clear(); // Clear previous messages
 
             // Act
-            sut.OnTouchReleased(endPoint, context);
+            freehandTool.OnTouchReleased(endPoint, context);
 
             // Assert
             unlockedLayer.Elements.Should().ContainSingle();
@@ -244,12 +244,12 @@ namespace LunaDraw.Tests
             var context = CreateToolContext(unlockedLayer);
             var startPoint = new SKPoint(10, 10);
             var endPoint = new SKPoint(50, 50);
-            sut.OnTouchPressed(startPoint, context);
-            sut.OnTouchMoved(endPoint, context);
+            freehandTool.OnTouchPressed(startPoint, context);
+            freehandTool.OnTouchMoved(endPoint, context);
             mockMessageBus.Invocations.Clear();
 
             // Act
-            sut.OnTouchReleased(endPoint, context);
+            freehandTool.OnTouchReleased(endPoint, context);
 
             // Assert
             mockMessageBus.Verify(m => m.SendMessage(It.IsAny<DrawingStateChangedMessage>()), Times.Once);
@@ -263,12 +263,12 @@ namespace LunaDraw.Tests
             var context = CreateToolContext(unlockedLayer);
             var startPoint = new SKPoint(10, 10);
             var endPoint = new SKPoint(50, 50);
-            sut.OnTouchPressed(startPoint, context);
-            sut.OnTouchMoved(endPoint, context);
+            freehandTool.OnTouchPressed(startPoint, context);
+            freehandTool.OnTouchMoved(endPoint, context);
             mockMessageBus.Invocations.Clear();
 
             // Act
-            sut.OnTouchReleased(endPoint, context);
+            freehandTool.OnTouchReleased(endPoint, context);
 
             // Assert
             mockMessageBus.Verify(m => m.SendMessage(It.IsAny<CanvasInvalidateMessage>()), Times.Once);
@@ -282,14 +282,14 @@ namespace LunaDraw.Tests
             var context = CreateToolContext(unlockedLayer);
             var startPoint = new SKPoint(10, 10);
             var endPoint = new SKPoint(50, 50);
-            sut.OnTouchPressed(startPoint, context);
-            sut.OnTouchMoved(endPoint, context);
+            freehandTool.OnTouchPressed(startPoint, context);
+            freehandTool.OnTouchMoved(endPoint, context);
 
             // Act
-            sut.OnTouchReleased(endPoint, context);
+            freehandTool.OnTouchReleased(endPoint, context);
 
             // Assert
-            sut.Invoking(s => s.OnTouchMoved(new SKPoint(60,60), context)).Should().NotThrow(); // Should not crash
+            freehandTool.Invoking(s => s.OnTouchMoved(new SKPoint(60,60), context)).Should().NotThrow(); // Should not crash
             // The isDrawing flag is internal, but its effect is that OnTouchMoved will do nothing
             // mockMessageBus.Verify(m => m.SendMessage(It.IsAny<CanvasInvalidateMessage>()), Times.Exactly(2)); // REMOVED
         }
@@ -303,8 +303,8 @@ namespace LunaDraw.Tests
             var point = new SKPoint(10, 10);
 
             // Act - only press, no moves to add multiple points
-            sut.OnTouchPressed(point, context);
-            sut.OnTouchReleased(point, context);
+            freehandTool.OnTouchPressed(point, context);
+            freehandTool.OnTouchReleased(point, context);
 
             // Assert
             unlockedLayer.Elements.Should().ContainSingle(); // Still adds a single stamp even for just pressed/released
@@ -320,17 +320,17 @@ namespace LunaDraw.Tests
             var context = CreateToolContext(unlockedLayer);
             var startPoint = new SKPoint(10, 10);
             var movedPoint = new SKPoint(50, 50);
-            sut.OnTouchPressed(startPoint, context);
-            sut.OnTouchMoved(movedPoint, context);
+            freehandTool.OnTouchPressed(startPoint, context);
+            freehandTool.OnTouchMoved(movedPoint, context);
             mockMessageBus.Invocations.Clear(); // Clear previous messages
 
             // Act
-            sut.OnTouchCancelled(context);
+            freehandTool.OnTouchCancelled(context);
 
             // Assert
             unlockedLayer.Elements.Should().BeEmpty(); // No elements should be added
             mockMessageBus.Verify(m => m.SendMessage(It.IsAny<CanvasInvalidateMessage>()), Times.Once);
-            sut.Invoking(s => s.OnTouchMoved(new SKPoint(60,60), context)).Should().NotThrow(); // Should not crash, indicates drawing is false
+            freehandTool.Invoking(s => s.OnTouchMoved(new SKPoint(60,60), context)).Should().NotThrow(); // Should not crash, indicates drawing is false
         }
     }
 }

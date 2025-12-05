@@ -15,7 +15,7 @@ namespace LunaDraw.Tests
     {
         private readonly Mock<IMessageBus> mockBus;
         private readonly Subject<DrawingStateChangedMessage> drawingStateSubject;
-        private readonly LayerStateManager sut;
+        private readonly LayerStateManager layerStateManager;
 
         public LayerStateManagerTests()
         {
@@ -25,14 +25,14 @@ namespace LunaDraw.Tests
             mockBus.Setup(x => x.Listen<DrawingStateChangedMessage>())
                 .Returns(drawingStateSubject);
 
-            sut = new LayerStateManager(mockBus.Object);
+            layerStateManager = new LayerStateManager(mockBus.Object);
         }
 
         [Fact]
         public void Constructor_ShouldInitializeWithOneLayer()
         {
             // Act
-            var layers = sut.Layers;
+            var layers = layerStateManager.Layers;
 
             // Assert
             layers.Should().HaveCount(1);
@@ -42,7 +42,7 @@ namespace LunaDraw.Tests
         public void Constructor_ShouldSetCurrentLayer()
         {
             // Act
-            var currentLayer = sut.CurrentLayer;
+            var currentLayer = layerStateManager.CurrentLayer;
 
             // Assert
             currentLayer.Should().NotBeNull();
@@ -52,7 +52,7 @@ namespace LunaDraw.Tests
         public void Constructor_ShouldSetCurrentLayerName()
         {
             // Act
-            var layerName = sut.CurrentLayer?.Name;
+            var layerName = layerStateManager.CurrentLayer?.Name;
 
             // Assert
             layerName.Should().Be("Layer 1");
@@ -62,77 +62,77 @@ namespace LunaDraw.Tests
         public void AddLayer_ShouldIncreaseLayerCount()
         {
             // Arrange
-            // (SUT initialized in constructor)
+            // (LayerStateManager initialized in constructor)
 
             // Act
-            sut.AddLayer();
+            layerStateManager.AddLayer();
 
             // Assert
-            sut.Layers.Should().HaveCount(2);
+            layerStateManager.Layers.Should().HaveCount(2);
         }
 
         [Fact]
         public void AddLayer_ShouldChangeCurrentLayer()
         {
             // Arrange
-            var initialLayer = sut.CurrentLayer;
+            var initialLayer = layerStateManager.CurrentLayer;
 
             // Act
-            sut.AddLayer();
+            layerStateManager.AddLayer();
 
             // Assert
-            sut.CurrentLayer.Should().NotBe(initialLayer);
+            layerStateManager.CurrentLayer.Should().NotBe(initialLayer);
         }
 
         [Fact]
         public void AddLayer_ShouldSetNewLayerAsCurrent()
         {
             // Act
-            sut.AddLayer();
+            layerStateManager.AddLayer();
 
             // Assert
-            sut.CurrentLayer!.Name.Should().Be("Layer 2");
+            layerStateManager.CurrentLayer!.Name.Should().Be("Layer 2");
         }
 
         [Fact]
         public void RemoveLayer_ShouldDecreaseLayerCount()
         {
             // Arrange
-            sut.AddLayer();
-            var layerToRemove = sut.CurrentLayer!;
+            layerStateManager.AddLayer();
+            var layerToRemove = layerStateManager.CurrentLayer!;
 
             // Act
-            sut.RemoveLayer(layerToRemove);
+            layerStateManager.RemoveLayer(layerToRemove);
 
             // Assert
-            sut.Layers.Should().HaveCount(1);
+            layerStateManager.Layers.Should().HaveCount(1);
         }
 
         [Fact]
         public void RemoveLayer_ShouldSetFirstLayerAsCurrent()
         {
             // Arrange
-            sut.AddLayer(); // Layers: L1, L2(current)
-            var layerToRemove = sut.CurrentLayer!;
+            layerStateManager.AddLayer(); // Layers: L1, L2(current)
+            var layerToRemove = layerStateManager.CurrentLayer!;
 
             // Act
-            sut.RemoveLayer(layerToRemove);
+            layerStateManager.RemoveLayer(layerToRemove);
 
             // Assert
-            sut.CurrentLayer!.Name.Should().Be("Layer 1");
+            layerStateManager.CurrentLayer!.Name.Should().Be("Layer 1");
         }
 
         [Fact]
         public void RemoveLayer_WhenOnlyOneLayer_ShouldNotRemove()
         {
             // Arrange
-            var layer1 = sut.CurrentLayer!;
+            var layer1 = layerStateManager.CurrentLayer!;
 
             // Act
-            sut.RemoveLayer(layer1);
+            layerStateManager.RemoveLayer(layer1);
 
             // Assert
-            sut.Layers.Should().HaveCount(1);
+            layerStateManager.Layers.Should().HaveCount(1);
         }
 
         [Fact]
@@ -141,8 +141,8 @@ namespace LunaDraw.Tests
             // Arrange
             // HistoryManager saves state in constructor of LayerStateManager.
             // So, CanUndo should be false initially because historyIndex is 0.
-            sut.HistoryManager.CanUndo.Should().BeFalse(); // FIX HERE
-            sut.HistoryManager.CanRedo.Should().BeFalse(); // No redo possible yet
+            layerStateManager.HistoryManager.CanUndo.Should().BeFalse(); // FIX HERE
+            layerStateManager.HistoryManager.CanRedo.Should().BeFalse(); // No redo possible yet
 
             // Act
             drawingStateSubject.OnNext(new DrawingStateChangedMessage());
@@ -150,8 +150,8 @@ namespace LunaDraw.Tests
             // Assert
             // After another state save, CanUndo should now be true.
             // If there were any redo states, they should be cleared, so CanRedo should be false
-            sut.HistoryManager.CanUndo.Should().BeTrue(); // FIX HERE
-            sut.HistoryManager.CanRedo.Should().BeFalse();
+            layerStateManager.HistoryManager.CanUndo.Should().BeTrue(); // FIX HERE
+            layerStateManager.HistoryManager.CanRedo.Should().BeFalse();
         }
     }
 }

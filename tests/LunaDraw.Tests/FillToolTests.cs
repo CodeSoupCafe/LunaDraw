@@ -18,7 +18,7 @@ namespace LunaDraw.Tests
     public class FillToolTests
     {
         private readonly Mock<IMessageBus> mockMessageBus;
-        private readonly FillTool sut;
+        private readonly FillTool fillTool;
         private readonly SelectionManager selectionManager; // Added for ToolContext
         private readonly Layer defaultLayer; // Added for ToolContext
         private readonly BrushShape defaultBrushShape; // Added for ToolContext
@@ -26,7 +26,7 @@ namespace LunaDraw.Tests
         public FillToolTests()
         {
             mockMessageBus = new Mock<IMessageBus>();
-            sut = new FillTool(mockMessageBus.Object);
+            fillTool = new FillTool(mockMessageBus.Object);
             selectionManager = new SelectionManager(); // Initialize SelectionManager
             defaultLayer = new Layer(); // Initialize default layer
             defaultBrushShape = BrushShape.Circle(); // Initialize default brush shape
@@ -48,7 +48,7 @@ namespace LunaDraw.Tests
         {
             // Arrange
             // Act
-            var name = sut.Name;
+            var name = fillTool.Name;
 
             // Assert
             name.Should().Be("Fill");
@@ -59,7 +59,7 @@ namespace LunaDraw.Tests
         {
             // Arrange
             // Act
-            var type = sut.Type;
+            var type = fillTool.Type;
 
             // Assert
             type.Should().Be(ToolType.Fill);
@@ -75,7 +75,7 @@ namespace LunaDraw.Tests
             var point = new SKPoint(10, 10);
 
             // Act
-            sut.OnTouchPressed(point, context);
+            fillTool.OnTouchPressed(point, context);
 
             // Assert
             mockMessageBus.Verify(m => m.SendMessage(It.IsAny<CanvasInvalidateMessage>()), Times.Never);
@@ -96,7 +96,7 @@ namespace LunaDraw.Tests
             var point = new SKPoint(10, 10);
 
             // Act
-            sut.OnTouchPressed(point, context);
+            fillTool.OnTouchPressed(point, context);
 
             // Assert
             mockElement.VerifySet(e => e.FillColor = It.IsAny<SKColor?>(), Times.Never);
@@ -121,7 +121,7 @@ namespace LunaDraw.Tests
             var point = new SKPoint(10, 10);
 
             // Act
-            sut.OnTouchPressed(point, context);
+            fillTool.OnTouchPressed(point, context);
 
             // Assert
             mockElement.Object.FillColor.Should().Be(expectedFillColor);
@@ -142,7 +142,7 @@ namespace LunaDraw.Tests
             var point = new SKPoint(10, 10);
 
             // Act
-            sut.OnTouchPressed(point, context);
+            fillTool.OnTouchPressed(point, context);
 
             // Assert
             mockMessageBus.Verify(m => m.SendMessage(It.IsAny<CanvasInvalidateMessage>()), Times.Once);
@@ -163,7 +163,7 @@ namespace LunaDraw.Tests
             var point = new SKPoint(10, 10);
 
             // Act
-            sut.OnTouchPressed(point, context);
+            fillTool.OnTouchPressed(point, context);
 
             // Assert
             mockMessageBus.Verify(m => m.SendMessage(It.IsAny<DrawingStateChangedMessage>()), Times.Once);
@@ -204,7 +204,7 @@ namespace LunaDraw.Tests
             var point = new SKPoint(10, 10);
 
             // Act
-            sut.OnTouchPressed(point, context);
+            fillTool.OnTouchPressed(point, context);
 
             // Assert
             mockElementTop.Object.FillColor.Should().Be(expectedFillColor);
@@ -220,7 +220,7 @@ namespace LunaDraw.Tests
             var point = new SKPoint(10, 10);
 
             // Act
-            sut.OnTouchMoved(point, context);
+            fillTool.OnTouchMoved(point, context);
 
             // Assert (No exceptions, no messages sent, no state change)
             mockMessageBus.Verify(m => m.SendMessage(It.IsAny<object>()), Times.Never);
@@ -234,7 +234,7 @@ namespace LunaDraw.Tests
             var point = new SKPoint(10, 10);
 
             // Act
-            sut.OnTouchReleased(point, context);
+            fillTool.OnTouchReleased(point, context);
 
             // Assert (No exceptions, no messages sent, no state change)
             mockMessageBus.Verify(m => m.SendMessage(It.IsAny<object>()), Times.Never);
@@ -247,7 +247,7 @@ namespace LunaDraw.Tests
             var context = CreateDefaultToolContext();
 
             // Act
-            sut.OnTouchCancelled(context);
+            fillTool.OnTouchCancelled(context);
 
             // Assert (No exceptions, no messages sent, no state change)
             mockMessageBus.Verify(m => m.SendMessage(It.IsAny<object>()), Times.Never);

@@ -19,7 +19,7 @@ namespace LunaDraw.Tests
         private readonly Mock<IMessageBus> mockBus;
         private readonly Subject<BrushSettingsChangedMessage> brushSettingsSubject;
         private readonly Subject<BrushShapeChangedMessage> brushShapeSubject;
-        private readonly ToolStateManager sut;
+        private readonly ToolStateManager toolStateManager;
 
         public ToolStateManagerTests()
         {
@@ -32,14 +32,14 @@ namespace LunaDraw.Tests
             mockBus.Setup(x => x.Listen<BrushShapeChangedMessage>())
                 .Returns(brushShapeSubject);
 
-            sut = new ToolStateManager(mockBus.Object);
+            toolStateManager = new ToolStateManager(mockBus.Object);
         }
 
         [Fact]
         public void Constructor_ShouldInitializeWithDefaultValues()
         {
             // Act
-            var strokeWidth = sut.StrokeWidth;
+            var strokeWidth = toolStateManager.StrokeWidth;
 
             // Assert
             strokeWidth.Should().Be(40);
@@ -49,7 +49,7 @@ namespace LunaDraw.Tests
         public void Constructor_ShouldInitializeWithDefaultStrokeColor()
         {
             // Act
-            var strokeColor = sut.StrokeColor;
+            var strokeColor = toolStateManager.StrokeColor;
 
             // Assert
             strokeColor.Should().Be(SKColors.MediumPurple);
@@ -59,7 +59,7 @@ namespace LunaDraw.Tests
         public void Constructor_ShouldInitializeWithDefaultFillColor()
         {
             // Act
-            var fillColor = sut.FillColor;
+            var fillColor = toolStateManager.FillColor;
 
             // Assert
             fillColor.Should().Be(SKColors.SteelBlue);
@@ -69,7 +69,7 @@ namespace LunaDraw.Tests
         public void Constructor_ShouldInitializeActiveToolToFreehand()
         {
             // Act
-            var activeTool = sut.ActiveTool;
+            var activeTool = toolStateManager.ActiveTool;
 
             // Assert
             activeTool.Should().BeOfType<FreehandTool>();
@@ -80,10 +80,10 @@ namespace LunaDraw.Tests
         {
             // Arrange
             var newTool = new RectangleTool(mockBus.Object);
-            using var monitoredSubject = sut.Monitor();
+            using var monitoredSubject = toolStateManager.Monitor();
             
             // Act
-            sut.ActiveTool = newTool;
+            toolStateManager.ActiveTool = newTool;
             
             // Assert
             monitoredSubject.Should().RaisePropertyChangeFor(x => x.ActiveTool);
@@ -96,7 +96,7 @@ namespace LunaDraw.Tests
             var newTool = new RectangleTool(mockBus.Object);
             
             // Act
-            sut.ActiveTool = newTool;
+            toolStateManager.ActiveTool = newTool;
 
             // Assert
             mockBus.Verify(x => x.SendMessage(It.Is<ToolChangedMessage>(msg => msg.NewTool == newTool)), Times.Once); 
@@ -112,7 +112,7 @@ namespace LunaDraw.Tests
             brushSettingsSubject.OnNext(new BrushSettingsChangedMessage(strokeColor: expectedColor)); // FIX HERE
 
             // Assert
-            sut.StrokeColor.Should().Be(expectedColor);
+            toolStateManager.StrokeColor.Should().Be(expectedColor);
         }
 
         [Fact]
@@ -125,7 +125,7 @@ namespace LunaDraw.Tests
             brushSettingsSubject.OnNext(new BrushSettingsChangedMessage(strokeWidth: expectedWidth)); // FIX HERE
 
             // Assert
-            sut.StrokeWidth.Should().Be(expectedWidth);
+            toolStateManager.StrokeWidth.Should().Be(expectedWidth);
         }
 
         [Fact]
@@ -138,7 +138,7 @@ namespace LunaDraw.Tests
             brushSettingsSubject.OnNext(new BrushSettingsChangedMessage(transparency: expectedOpacity)); // FIX HERE
 
             // Assert
-            sut.Opacity.Should().Be(expectedOpacity);
+            toolStateManager.Opacity.Should().Be(expectedOpacity);
         }
 
         [Fact]
@@ -151,7 +151,7 @@ namespace LunaDraw.Tests
             brushShapeSubject.OnNext(new BrushShapeChangedMessage(expectedShape));
 
             // Assert
-            sut.CurrentBrushShape.Should().BeEquivalentTo(expectedShape);
+            toolStateManager.CurrentBrushShape.Should().BeEquivalentTo(expectedShape);
         }
         
         [Theory]
@@ -163,7 +163,7 @@ namespace LunaDraw.Tests
              brushSettingsSubject.OnNext(new BrushSettingsChangedMessage(isGlowEnabled: isEnabled)); // FIX HERE
              
             // Assert
-             sut.IsGlowEnabled.Should().Be(isEnabled);
+             toolStateManager.IsGlowEnabled.Should().Be(isEnabled);
         }
     }
 }

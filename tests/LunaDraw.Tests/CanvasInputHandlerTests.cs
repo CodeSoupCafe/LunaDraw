@@ -22,7 +22,7 @@ namespace LunaDraw.Tests
         private readonly Mock<IDrawingTool> mockDrawingTool;
         private readonly SelectionManager selectionManager;
         private readonly NavigationModel navigationModel;
-        private readonly CanvasInputHandler sut;
+        private readonly CanvasInputHandler canvasInputHandler;
 
         public CanvasInputHandlerTests()
         {
@@ -39,7 +39,7 @@ namespace LunaDraw.Tests
             selectionManager = new SelectionManager();
             navigationModel = new NavigationModel();
 
-            sut = new CanvasInputHandler(
+            canvasInputHandler = new CanvasInputHandler(
                 mockToolStateManager.Object,
                 mockLayerStateManager.Object,
                 selectionManager,
@@ -88,7 +88,7 @@ namespace LunaDraw.Tests
             var eventArgs = new SKTouchEventArgs(1, SKTouchAction.Pressed, touchLocation, true);
             
             // Act
-            sut.ProcessTouch(eventArgs, SKRect.Empty);
+            canvasInputHandler.ProcessTouch(eventArgs, SKRect.Empty);
 
             // Assert
             mockDrawingTool.Verify(x => x.OnTouchPressed(It.IsAny<SKPoint>(), It.IsAny<ToolContext>()), Times.Once);
@@ -100,13 +100,13 @@ namespace LunaDraw.Tests
             // Arrange
             var touchLocation = new SKPoint(100, 100);
             var eventArgsPressed = new SKTouchEventArgs(1, SKTouchAction.Pressed, touchLocation, true);
-            sut.ProcessTouch(eventArgsPressed, SKRect.Empty); // Simulate initial press
+            canvasInputHandler.ProcessTouch(eventArgsPressed, SKRect.Empty); // Simulate initial press
 
             var newTouchLocation = new SKPoint(110, 110);
             var eventArgsMoved = new SKTouchEventArgs(1, SKTouchAction.Moved, newTouchLocation, true);
             
             // Act
-            sut.ProcessTouch(eventArgsMoved, SKRect.Empty);
+            canvasInputHandler.ProcessTouch(eventArgsMoved, SKRect.Empty);
 
             // Assert
             mockDrawingTool.Verify(x => x.OnTouchMoved(It.IsAny<SKPoint>(), It.IsAny<ToolContext>()), Times.Once);
@@ -118,12 +118,12 @@ namespace LunaDraw.Tests
             // Arrange
             var touchLocation = new SKPoint(100, 100);
             var eventArgsPressed = new SKTouchEventArgs(1, SKTouchAction.Pressed, touchLocation, true);
-            sut.ProcessTouch(eventArgsPressed, SKRect.Empty); // Simulate initial press
+            canvasInputHandler.ProcessTouch(eventArgsPressed, SKRect.Empty); // Simulate initial press
 
             var eventArgsReleased = new SKTouchEventArgs(1, SKTouchAction.Released, touchLocation, true);
             
             // Act
-            sut.ProcessTouch(eventArgsReleased, SKRect.Empty);
+            canvasInputHandler.ProcessTouch(eventArgsReleased, SKRect.Empty);
 
             // Assert
             mockDrawingTool.Verify(x => x.OnTouchReleased(It.IsAny<SKPoint>(), It.IsAny<ToolContext>()), Times.Once);
@@ -138,7 +138,7 @@ namespace LunaDraw.Tests
             var eventArgs = new SKTouchEventArgs(1, SKTouchAction.Pressed, touchLocation, true);
             
             // Act
-            sut.ProcessTouch(eventArgs, SKRect.Empty);
+            canvasInputHandler.ProcessTouch(eventArgs, SKRect.Empty);
 
             // Assert
             mockDrawingTool.Verify(x => x.OnTouchPressed(It.IsAny<SKPoint>(), It.IsAny<ToolContext>()), Times.Never);
@@ -151,12 +151,12 @@ namespace LunaDraw.Tests
         {
             // Arrange
             var touch1 = new SKTouchEventArgs(1, SKTouchAction.Pressed, new SKPoint(10, 10), true);
-            sut.ProcessTouch(touch1, SKRect.Empty); // First touch starts single touch mode
+            canvasInputHandler.ProcessTouch(touch1, SKRect.Empty); // First touch starts single touch mode
 
             var touch2 = new SKTouchEventArgs(2, SKTouchAction.Pressed, new SKPoint(20, 20), true);
             
             // Act
-            sut.ProcessTouch(touch2, SKRect.Empty); // Second touch initiates multi-touch
+            canvasInputHandler.ProcessTouch(touch2, SKRect.Empty); // Second touch initiates multi-touch
 
             // Assert
             mockDrawingTool.Verify(x => x.OnTouchCancelled(It.IsAny<ToolContext>()), Times.Once);
@@ -171,16 +171,16 @@ namespace LunaDraw.Tests
             var touch2Start = new SKPoint(200, 100);
 
             // Simulate two fingers pressed
-            sut.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Pressed, touch1Start, true), SKRect.Empty);
-            sut.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Pressed, touch2Start, true), SKRect.Empty);
+            canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Pressed, touch1Start, true), SKRect.Empty);
+            canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Pressed, touch2Start, true), SKRect.Empty);
 
             // Move both fingers in parallel
             var touch1Move = new SKPoint(110, 110); // Move +10, +10
             var touch2Move = new SKPoint(210, 110); // Move +10, +10
 
             // Act
-            sut.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Moved, touch1Move, true), SKRect.Empty);
-            sut.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Moved, touch2Move, true), SKRect.Empty);
+            canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Moved, touch1Move, true), SKRect.Empty);
+            canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Moved, touch2Move, true), SKRect.Empty);
 
             // Assert
             var finalMatrix = navigationModel.UserMatrix;
@@ -197,8 +197,8 @@ namespace LunaDraw.Tests
             var touch2Start = new SKPoint(200, 100); // Distance = 100
             
             // Simulate two fingers pressed
-            sut.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Pressed, touch1Start, true), SKRect.Empty);
-            sut.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Pressed, touch2Start, true), SKRect.Empty);
+            canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Pressed, touch1Start, true), SKRect.Empty);
+            canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Pressed, touch2Start, true), SKRect.Empty);
 
             // Simulate pinch out (increase distance)
             // Centroid (150, 100) stays same
@@ -206,8 +206,8 @@ namespace LunaDraw.Tests
             var touch2Move = new SKPoint(225, 100); // Moved right by 25. Distance = 150 (1.5x original)
 
             // Act
-            sut.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Moved, touch1Move, true), SKRect.Empty);
-            sut.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Moved, touch2Move, true), SKRect.Empty);
+            canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Moved, touch1Move, true), SKRect.Empty);
+            canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Moved, touch2Move, true), SKRect.Empty);
 
             // Assert
             var finalMatrix = navigationModel.UserMatrix;
@@ -224,8 +224,8 @@ namespace LunaDraw.Tests
             var touch2Start = new SKPoint(200, 100); 
 
             // Simulate two fingers pressed
-            sut.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Pressed, touch1Start, true), SKRect.Empty);
-            sut.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Pressed, touch2Start, true), SKRect.Empty);
+            canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Pressed, touch1Start, true), SKRect.Empty);
+            canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Pressed, touch2Start, true), SKRect.Empty);
 
             // Simulate rotation: touch1 moves up, touch2 moves down, maintaining same horizontal distance from center.
             // Centroid (150, 100)
@@ -233,8 +233,8 @@ namespace LunaDraw.Tests
             var touch2Move = new SKPoint(200, 150); 
 
             // Act
-            sut.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Moved, touch1Move, true), SKRect.Empty);
-            sut.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Moved, touch2Move, true), SKRect.Empty);
+            canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Moved, touch1Move, true), SKRect.Empty);
+            canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Moved, touch2Move, true), SKRect.Empty);
 
             // Assert
             var finalMatrix = navigationModel.UserMatrix;
@@ -271,8 +271,8 @@ namespace LunaDraw.Tests
             var touch2Start = new SKPoint(200, 100);
 
             // Simulate two fingers pressed to start multi-touch on selected elements
-            sut.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Pressed, touch1Start, true), SKRect.Empty);
-            sut.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Pressed, touch2Start, true), SKRect.Empty);
+            canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Pressed, touch1Start, true), SKRect.Empty);
+            canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Pressed, touch2Start, true), SKRect.Empty);
             
             var initialElementMatrix = mockElement.Object.TransformMatrix;
 
@@ -281,8 +281,8 @@ namespace LunaDraw.Tests
             var touch2Move = new SKPoint(210, 110); // Move +10, +10
 
             // Act
-            sut.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Moved, touch1Move, true), SKRect.Empty);
-            sut.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Moved, touch2Move, true), SKRect.Empty);
+            canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Moved, touch1Move, true), SKRect.Empty);
+            canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Moved, touch2Move, true), SKRect.Empty);
 
             // Assert
             var finalElementMatrix = mockElement.Object.TransformMatrix;
@@ -309,8 +309,8 @@ namespace LunaDraw.Tests
             var touch1Start = new SKPoint(100, 100);
             var touch2Start = new SKPoint(200, 100); 
 
-            sut.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Pressed, touch1Start, true), SKRect.Empty);
-            sut.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Pressed, touch2Start, true), SKRect.Empty);
+            canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Pressed, touch1Start, true), SKRect.Empty);
+            canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Pressed, touch2Start, true), SKRect.Empty);
             
             var initialElementMatrix = mockElement.Object.TransformMatrix;
 
@@ -319,8 +319,8 @@ namespace LunaDraw.Tests
             var touch2Move = new SKPoint(225, 100); 
 
             // Act
-            sut.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Moved, touch1Move, true), SKRect.Empty);
-            sut.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Moved, touch2Move, true), SKRect.Empty);
+            canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Moved, touch1Move, true), SKRect.Empty);
+            canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Moved, touch2Move, true), SKRect.Empty);
 
             // Assert
             var finalElementMatrix = mockElement.Object.TransformMatrix;
@@ -347,8 +347,8 @@ namespace LunaDraw.Tests
             var touch1Start = new SKPoint(100, 100);
             var touch2Start = new SKPoint(200, 100); 
 
-            sut.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Pressed, touch1Start, true), SKRect.Empty);
-            sut.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Pressed, touch2Start, true), SKRect.Empty);
+            canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Pressed, touch1Start, true), SKRect.Empty);
+            canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Pressed, touch2Start, true), SKRect.Empty);
             
             var initialElementMatrix = mockElement.Object.TransformMatrix;
 
@@ -357,8 +357,8 @@ namespace LunaDraw.Tests
             var touch2Move = new SKPoint(200, 150); 
 
             // Act
-            sut.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Moved, touch1Move, true), SKRect.Empty);
-            sut.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Moved, touch2Move, true), SKRect.Empty);
+            canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Moved, touch1Move, true), SKRect.Empty);
+            canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Moved, touch2Move, true), SKRect.Empty);
 
             // Assert
             var finalElementMatrix = mockElement.Object.TransformMatrix;
