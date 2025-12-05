@@ -187,9 +187,9 @@ namespace LunaDraw.Components
         case SKTouchAction.Pressed:
         case SKTouchAction.Moved:
           // Convert DIPs (Touch Location) to Pixels (Canvas Coordinates)
-          // _fitMatrix is calculated based on Pixels (e.Info in OnPaintSurface)
-          var touchPointLogical = e.Location;
-          var touchPointPixels = new SKPoint(touchPointLogical.X * density, touchPointLogical.Y * density);
+          // SKTouchEventArgs.Location is ALREADY in pixels (canvas coordinates) for SKCanvasView.
+          // We do NOT need to multiply by density.
+          var touchPointPixels = e.Location;
 
           // Move main view to this location
           if (fitMatrix.TryInvert(out var inverseFit))
