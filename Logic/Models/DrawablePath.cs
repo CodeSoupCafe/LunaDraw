@@ -61,26 +61,51 @@ namespace LunaDraw.Logic.Models
         canvas.DrawPath(Path, highlightPaint);
       }
 
-      using var paint = new SKPaint
+      // Draw Fill
+      if (IsFilled)
       {
-        Style = IsFilled ? SKPaintStyle.Fill : SKPaintStyle.Stroke,
-        Color = StrokeColor.WithAlpha(Opacity),
-        StrokeWidth = StrokeWidth,
-        IsAntialias = true,
-        BlendMode = BlendMode
-      };
-      if (FillColor.HasValue && IsFilled)
-      {
-        using var fillPaint = new SKPaint
-        {
-          Style = SKPaintStyle.Fill,
-          Color = FillColor.Value.WithAlpha(Opacity),
-          IsAntialias = true,
-          BlendMode = BlendMode
-        };
-        canvas.DrawPath(Path, fillPaint);
+          using var fillPaint = new SKPaint
+          {
+              Style = SKPaintStyle.Fill,
+              IsAntialias = true,
+              BlendMode = BlendMode
+          };
+
+          if (FillColor.HasValue)
+          {
+              fillPaint.Color = FillColor.Value.WithAlpha(Opacity);
+          }
+          else
+          {
+              // Fallback: use StrokeColor as fill if no FillColor (matching legacy behavior)
+              fillPaint.Color = StrokeColor.WithAlpha(Opacity);
+          }
+          canvas.DrawPath(Path, fillPaint);
       }
-      canvas.DrawPath(Path, paint);
+
+      // Draw Stroke
+      if (StrokeWidth > 0)
+      {
+          // Only draw stroke if it's an outline (not filled) OR if it has an explicit fill color (so we preserve border)
+          // If it is filled but has NO fill color, it is a "solid blob" using StrokeColor, so we skip stroking to avoid double-draw/expansion
+          bool shouldStroke = !IsFilled || (IsFilled && FillColor.HasValue);
+
+          if (shouldStroke)
+          {
+              using var strokePaint = new SKPaint
+              {
+                  Style = SKPaintStyle.Stroke,
+                  Color = StrokeColor.WithAlpha(Opacity),
+                  StrokeWidth = StrokeWidth,
+                  IsAntialias = true,
+                  BlendMode = BlendMode,
+                  StrokeCap = SKStrokeCap.Round,
+                  StrokeJoin = SKStrokeJoin.Round
+              };
+              canvas.DrawPath(Path, strokePaint);
+          }
+      }
+      
       canvas.Restore();
     }
 
@@ -168,6 +193,13 @@ namespace LunaDraw.Logic.Models
 
       path.Transform(TransformMatrix);
       return path;
+    }
+
+    public SKPath GetGeometryPath()
+    {
+        var path = new SKPath(Path);
+        path.Transform(TransformMatrix);
+        return path;
     }
   }
 }

@@ -84,62 +84,88 @@ namespace LunaDraw.Logic.Tools
         if (element == currentDrawablePath) continue;
         if (!element.IsVisible) continue;
 
-        // Get element geometry
-        // Note: GetPath() returns the fill-path (outline) for stroked elements
-        using var elementPath = element.GetPath();
+        // Determine if this is a "pure stroke" (like a freehand line or line shape) vs a "filled shape"
+        // A DrawablePath is a pure stroke if IsFilled is false.
+        // A DrawableLine is always a stroke.
+        bool isPureStroke = (element is DrawablePath dp && !dp.IsFilled) || (element is DrawableLine);
 
-        // Check for intersection first (optimization)
-        using var intersection = new SKPath();
-        if (eraserOutline.Op(elementPath, SKPathOp.Intersect, intersection) && !intersection.IsEmpty)
+        SKPath elementPath;
+        if (isPureStroke)
         {
-          // Calculate the difference (Element - Eraser)
-          var resultPath = new SKPath();
-          if (elementPath.Op(eraserOutline, SKPathOp.Difference, resultPath))
-          {
-            if (resultPath.IsEmpty)
+            // OLD BEHAVIOR for strokes: Get the visual outline
+            elementPath = element.GetPath();
+        }
+        else
+        {
+            // NEW BEHAVIOR for shapes: Get the geometry contour
+            elementPath = element.GetGeometryPath();
+        }
+
+        using (elementPath)
+        {
+            // Check for intersection first (optimization)
+            using var intersection = new SKPath();
+            if (eraserOutline.Op(elementPath, SKPathOp.Intersect, intersection) && !intersection.IsEmpty)
             {
-              // Element completely erased
-              elementsToRemove.Add(element);
+              // Calculate the difference (Element - Eraser)
+              var resultPath = new SKPath();
+              if (elementPath.Op(eraserOutline, SKPathOp.Difference, resultPath))
+              {
+                if (resultPath.IsEmpty)
+                {
+                  // Element completely erased
+                  elementsToRemove.Add(element);
+                }
+                else
+                {
+                  // Create new element with the remaining geometry
+                  var newElement = new DrawablePath
+                  {
+                    Path = resultPath,
+                    TransformMatrix = SKMatrix.CreateIdentity(),
+                    IsVisible = element.IsVisible,
+                    Opacity = element.Opacity,
+                    ZIndex = element.ZIndex,
+                    IsSelected = element.IsSelected,
+                    IsGlowEnabled = element.IsGlowEnabled,
+                    GlowColor = element.GlowColor,
+                    GlowRadius = element.GlowRadius
+                  };
+
+                  if (isPureStroke)
+                  {
+                      // Result of eroding a stroke is a filled shape (the leftover pieces of the outline)
+                      newElement.StrokeWidth = 0;
+                      newElement.IsFilled = true;
+                      newElement.StrokeColor = element.StrokeColor; // Use original stroke color as the "fill" color of the blob
+                      newElement.FillColor = null; // Ensure logic picks up StrokeColor
+                  }
+                  else
+                  {
+                      // Result of eroding a shape preserves shape properties
+                      newElement.StrokeWidth = element.StrokeWidth;
+                      newElement.StrokeColor = element.StrokeColor;
+                      newElement.FillColor = element.FillColor;
+                      
+                      // Determine IsFilled state
+                      // If it was a shape (Rect/Ellipse), it effectively has area, so IsFilled=true.
+                      // If it was a filled path, IsFilled=true.
+                      // If it was a stroke with fill (DrawablePath with IsFilled=true), preserve it.
+                      // Generally, if we used GetGeometryPath (which implies area logic), IsFilled should be true for the resulting path to show up as a shape.
+                      newElement.IsFilled = true; 
+                  }
+
+                  if (element is DrawablePath originalPath)
+                  {
+                    newElement.BlendMode = originalPath.BlendMode;
+                  }
+
+                  elementsToRemove.Add(element);
+                  elementsToAdd.Add(newElement);
+                }
+                modified = true;
+              }
             }
-            else
-            {
-              // Create new element with the remaining geometry
-              var newElement = new DrawablePath
-              {
-                Path = resultPath,
-                StrokeWidth = 0,
-                IsFilled = true,
-                BlendMode = SKBlendMode.SrcOver,
-                Opacity = element.Opacity,
-                ZIndex = element.ZIndex,
-                IsSelected = element.IsSelected
-              };
-
-              // Try to get a better color match
-              SKColor finalColor = SKColors.Black;
-              if (element is DrawablePath p)
-              {
-                // If the source was filled, use its fill-driving color (which is StrokeColor in this codebase).
-                // If it was a stroke, use its StrokeColor.
-                finalColor = p.StrokeColor;
-              }
-              else if (element.GetType().GetProperty("StrokeColor")?.GetValue(element) is SKColor sc)
-              {
-                finalColor = sc;
-              }
-              else if (element.GetType().GetProperty("FillColor")?.GetValue(element) is SKColor fc)
-              {
-                finalColor = fc;
-              }
-
-              // DrawablePath uses StrokeColor property for drawing, even when IsFilled is true.
-              newElement.StrokeColor = finalColor;
-
-              elementsToRemove.Add(element);
-              elementsToAdd.Add(newElement);
-            }
-            modified = true;
-          }
         }
       }
 

@@ -160,5 +160,14 @@ namespace LunaDraw.Logic.Models
       path.Transform(TransformMatrix);
       return path;
     }
+
+    public SKPath GetGeometryPath()
+    {
+        var path = new SKPath();
+        path.MoveTo(StartPoint);
+        path.LineTo(EndPoint);
+        path.Transform(TransformMatrix);
+        return path;
+    }
   }
 }

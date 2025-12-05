@@ -522,5 +522,10 @@ namespace LunaDraw.Logic.Models
       combinedPath.Transform(TransformMatrix);
       return combinedPath;
     }
+
+    public SKPath GetGeometryPath()
+    {
+        return GetPath(); // For stamps, the "geometry path" is the combined visual path.
+    }
   }
 }

@@ -97,5 +97,12 @@ namespace LunaDraw.Logic.Models
         /// </summary>
         /// <returns>The SKPath representing the element.</returns>
         SKPath GetPath();
+
+        /// <summary>
+        /// Gets the underlying geometry path without stroke expansion.
+        /// Used for operations that need the base shape.
+        /// </summary>
+        /// <returns>The SKPath representing the base geometry.</returns>
+        SKPath GetGeometryPath();
     }
 }

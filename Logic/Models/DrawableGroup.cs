@@ -145,5 +145,22 @@ namespace LunaDraw.Logic.Models
       }
       return path;
     }
+
+    public SKPath GetGeometryPath()
+    {
+        var path = new SKPath();
+        foreach (var child in Children)
+        {
+            using var childPath = child.GetGeometryPath();
+            // Union all child geometry paths
+            var result = new SKPath();
+            if (path.Op(childPath, SKPathOp.Union, result))
+            {
+                path.Dispose();
+                path = result;
+            }
+        }
+        return path;
+    }
   }
 }
