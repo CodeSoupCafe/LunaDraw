@@ -16,6 +16,7 @@ namespace LunaDraw.Logic.Models
     private string name = "Layer";
     private bool isVisible = true;
     private bool isLocked = false;
+    private MaskingMode maskingMode = MaskingMode.None;
     
     private QuadTree<IDrawableElement> quadTree;
 
@@ -48,6 +49,12 @@ namespace LunaDraw.Logic.Models
     {
       get => isLocked;
       set => this.RaiseAndSetIfChanged(ref isLocked, value);
+    }
+
+    public MaskingMode MaskingMode
+    {
+      get => maskingMode;
+      set => this.RaiseAndSetIfChanged(ref maskingMode, value);
     }
     
     private void OnElementsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -110,7 +117,8 @@ namespace LunaDraw.Logic.Models
       {
         Name = Name,
         IsVisible = IsVisible,
-        IsLocked = IsLocked
+        IsLocked = IsLocked,
+        MaskingMode = MaskingMode
       };
 
       foreach (var element in Elements)

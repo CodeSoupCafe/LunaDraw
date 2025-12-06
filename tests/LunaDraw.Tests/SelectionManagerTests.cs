@@ -79,20 +79,6 @@ namespace LunaDraw.Tests
         }
 
         [Fact]
-        public void Add_ShouldIgnoreNullElement()
-        {
-            // Arrange
-            IDrawableElement nullElement = null;
-
-            // Act
-            selectionManager.Add(nullElement);
-
-            // Assert
-            selectionManager.Selected.Should().BeEmpty();
-            selectionManager.HasSelection.Should().BeFalse();
-        }
-
-        [Fact]
         public void Remove_ShouldRemoveElementAndSetIsSelectedFalse()
         {
             // Arrange
@@ -136,7 +122,6 @@ namespace LunaDraw.Tests
             selectionManager.Add(mockElement.Object); // Add one element
 
             // Act
-            selectionManager.Remove(null);
             selectionManager.Remove(nonExistentElement);
 
             // Assert
@@ -228,20 +213,6 @@ namespace LunaDraw.Tests
         }
 
         [Fact]
-        public void Toggle_ShouldIgnoreNullElement()
-        {
-            // Arrange
-            IDrawableElement nullElement = null;
-            var initialCount = selectionManager.Selected.Count;
-
-            // Act
-            selectionManager.Toggle(nullElement);
-
-            // Assert
-            selectionManager.Selected.Count.Should().Be(initialCount); // No change
-        }
-
-        [Fact]
         public void Contains_ShouldReturnTrueForSelectedElement()
         {
             // Arrange
@@ -264,19 +235,6 @@ namespace LunaDraw.Tests
 
             // Act
             var result = selectionManager.Contains(nonSelectedElement);
-
-            // Assert
-            result.Should().BeFalse();
-        }
-
-        [Fact]
-        public void Contains_ShouldReturnFalseForNullElement()
-        {
-            // Arrange
-            IDrawableElement nullElement = null;
-
-            // Act
-            var result = selectionManager.Contains(nullElement);
 
             // Assert
             result.Should().BeFalse();

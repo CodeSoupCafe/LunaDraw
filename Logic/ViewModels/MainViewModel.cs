@@ -172,6 +172,11 @@ namespace LunaDraw.Logic.ViewModels
     public ReactiveCommand<Unit, Unit> PasteCommand { get; }
     public ReactiveCommand<Unit, Unit> AddLayerCommand { get; }
     public ReactiveCommand<Layer, Unit> RemoveLayerCommand { get; }
+    public ReactiveCommand<Layer, Unit> MoveLayerForwardCommand { get; }
+    public ReactiveCommand<Layer, Unit> MoveLayerBackwardCommand { get; }
+    public ReactiveCommand<Layer, Unit> MoveSelectionToLayerCommand { get; }
+    public ReactiveCommand<Layer, Unit> ToggleLayerVisibilityCommand { get; }
+    public ReactiveCommand<Layer, Unit> ToggleLayerLockCommand { get; }
     public ReactiveCommand<Unit, Unit> UndoCommand { get; }
     public ReactiveCommand<Unit, Unit> RedoCommand { get; }
 
@@ -341,6 +346,103 @@ namespace LunaDraw.Logic.ViewModels
         this.layerStateManager.RemoveLayer(layer);
       }, outputScheduler: RxApp.MainThreadScheduler);
 
+      MoveLayerForwardCommand = ReactiveCommand.Create<Layer>(layer =>
+      {
+        this.layerStateManager.MoveLayerForward(layer);
+      }, outputScheduler: RxApp.MainThreadScheduler);
+
+      MoveLayerBackwardCommand = ReactiveCommand.Create<Layer>(layer =>
+      {
+        this.layerStateManager.MoveLayerBackward(layer);
+      }, outputScheduler: RxApp.MainThreadScheduler);
+
+      MoveSelectionToLayerCommand = ReactiveCommand.Create<Layer>(targetLayer =>
+      {
+          if (targetLayer == null || !SelectedElements.Any()) return;
+          this.layerStateManager.MoveElementsToLayer(SelectedElements, targetLayer);
+          // We do not clear selection here, so user can see where it went (if visible).
+      }, this.WhenAnyValue(x => x.CanDelete), RxApp.MainThreadScheduler); // Reusing CanDelete as proxy for "HasSelection"
+
+      // New Commands for Send Backward / Bring Forward
+      // "Send Backward" -> Move down in the stack (decrease ZIndex)
+      var sendBackwardCommand = ReactiveCommand.Create(() =>
+      {
+          if (CurrentLayer == null || !SelectedElements.Any()) return;
+          
+          // Handling single selection for simplicity in this iteration
+          var selected = SelectedElements.First();
+          var sortedElements = CurrentLayer.Elements.OrderBy(e => e.ZIndex).ToList();
+          int index = sortedElements.IndexOf(selected);
+
+          if (index > 0)
+          {
+              // Swap with element below
+              var elementBelow = sortedElements[index - 1];
+              sortedElements[index - 1] = selected;
+              sortedElements[index] = elementBelow;
+
+              // Re-assign ZIndices
+              for (int i = 0; i < sortedElements.Count; i++)
+              {
+                  sortedElements[i].ZIndex = i;
+              }
+              
+              messageBus.SendMessage(new CanvasInvalidateMessage());
+              this.layerStateManager.SaveState();
+          }
+
+      }, this.WhenAnyValue(x => x.CanDelete)); // Has Selection
+
+      // "Bring Forward" -> Move up in the stack (increase ZIndex)
+      var bringForwardCommand = ReactiveCommand.Create(() =>
+      {
+          if (CurrentLayer == null || !SelectedElements.Any()) return;
+          
+          var selected = SelectedElements.First();
+          var sortedElements = CurrentLayer.Elements.OrderBy(e => e.ZIndex).ToList();
+          int index = sortedElements.IndexOf(selected);
+
+          if (index < sortedElements.Count - 1)
+          {
+              // Swap with element above
+              var elementAbove = sortedElements[index + 1];
+              sortedElements[index + 1] = selected;
+              sortedElements[index] = elementAbove;
+
+              // Re-assign ZIndices
+              for (int i = 0; i < sortedElements.Count; i++)
+              {
+                  sortedElements[i].ZIndex = i;
+              }
+
+              messageBus.SendMessage(new CanvasInvalidateMessage());
+              this.layerStateManager.SaveState();
+          }
+
+      }, this.WhenAnyValue(x => x.CanDelete));
+
+      // Expose commands via properties if needed or add to a composite command?
+      // For now, I'll add them as public properties.
+      SendBackwardCommand = sendBackwardCommand;
+      BringForwardCommand = bringForwardCommand;
+
+      ToggleLayerVisibilityCommand = ReactiveCommand.Create<Layer>(layer =>
+      {
+          if (layer != null)
+          {
+              layer.IsVisible = !layer.IsVisible;
+              messageBus.SendMessage(new CanvasInvalidateMessage());
+          }
+      }, outputScheduler: RxApp.MainThreadScheduler);
+
+      ToggleLayerLockCommand = ReactiveCommand.Create<Layer>(layer =>
+      {
+          if (layer != null)
+          {
+              layer.IsLocked = !layer.IsLocked;
+          }
+      }, outputScheduler: RxApp.MainThreadScheduler);
+
       UndoCommand = ReactiveCommand.Create(() =>
       {
         var state = this.layerStateManager.HistoryManager.Undo();
@@ -358,6 +460,66 @@ namespace LunaDraw.Logic.ViewModels
           RestoreState(state);
         }
       }, this.WhenAnyValue(x => x.CanRedo), RxApp.MainThreadScheduler);
+    }
+
+    public ReactiveCommand<Unit, Unit> SendBackwardCommand { get; }
+    public ReactiveCommand<Unit, Unit> BringForwardCommand { get; }
+
+    public void SelectElementAt(SKPoint point)
+    {
+        // Hit test elements across all layers from Top to Bottom
+        IDrawableElement? hitElement = null;
+        Layer? hitLayer = null;
+
+        // Iterate layers from Top (Last) to Bottom (First)
+        foreach (var layer in Layers.Reverse())
+        {
+            if (!layer.IsVisible || layer.IsLocked) continue;
+
+            // Hit test elements in this layer, sorted by ZIndex Descending (Topmost first)
+            var hit = layer.Elements
+                           .Where(e => e.IsVisible)
+                           .OrderByDescending(e => e.ZIndex)
+                           .FirstOrDefault(e => e.HitTest(point));
+            
+            if (hit != null)
+            {
+                hitElement = hit;
+                hitLayer = layer;
+                break; // Found the top-most element
+            }
+        }
+
+        if (hitElement != null)
+        {
+            if (!SelectionManager.Contains(hitElement))
+            {
+                SelectionManager.Clear();
+                SelectionManager.Add(hitElement);
+            }
+            if (hitLayer != null)
+            {
+                CurrentLayer = hitLayer;
+            }
+        }
+        else
+        {
+            SelectionManager.Clear();
+        }
+        messageBus.SendMessage(new CanvasInvalidateMessage());
+    }
+
+    public void ReorderLayer(Layer source, Layer target)
+    {
+        if (source == null || target == null || source == target) return;
+        int oldIndex = Layers.IndexOf(source);
+        int newIndex = Layers.IndexOf(target);
+        if (oldIndex >= 0 && newIndex >= 0)
+        {
+            layerStateManager.MoveLayer(oldIndex, newIndex);
+            // Ensure the dragged layer stays selected
+            CurrentLayer = source;
+        }
     }
 
     private void RestoreState(List<Layer> state)

@@ -133,7 +133,7 @@ namespace LunaDraw.Tests
         public void ProcessTouch_WhenLayerIsNull_ShouldNotProcessTouch()
         {
             // Arrange
-            mockLayerStateManager.Setup(m => m.CurrentLayer).Returns((Layer)null);
+            mockLayerStateManager.Setup(m => m.CurrentLayer).Returns(default(Layer));
             var touchLocation = new SKPoint(100, 100);
             var eventArgs = new SKTouchEventArgs(1, SKTouchAction.Pressed, touchLocation, true);
             

@@ -17,6 +17,14 @@ namespace LunaDraw.Tests
     {
         private static readonly Mock<IMessageBus> MockBus = new Mock<IMessageBus>();
 
+        public static TheoryData<IDrawingTool> ToolData =>
+            new TheoryData<IDrawingTool>
+            {
+                { new RectangleTool(MockBus.Object)},
+                { new EllipseTool(MockBus.Object) },
+                { new LineTool(MockBus.Object) }
+            };
+
         public static TheoryData<IDrawingTool, Type> ToolTypesData =>
             new TheoryData<IDrawingTool, Type>
             {
@@ -45,8 +53,8 @@ namespace LunaDraw.Tests
         }
 
         [Theory]
-        [MemberData(nameof(ToolTypesData))]
-        public void OnTouchReleased_ShouldAddOneElement(IDrawingTool tool, Type expectedElementType)
+        [MemberData(nameof(ToolData))]
+        public void OnTouchReleased_ShouldAddOneElement(IDrawingTool tool)
         {
             // Arrange
             var layer = new Layer();
@@ -73,8 +81,8 @@ namespace LunaDraw.Tests
         }
 
         [Theory]
-        [MemberData(nameof(ToolTypesData))]
-        public void OnTouchReleased_ShouldSetStrokeColor(IDrawingTool tool, Type expectedElementType)
+        [MemberData(nameof(ToolData))]
+        public void OnTouchReleased_ShouldSetStrokeColor(IDrawingTool tool)
         {
             // Arrange
             var layer = new Layer();
@@ -87,8 +95,8 @@ namespace LunaDraw.Tests
         }
 
         [Theory]
-        [MemberData(nameof(ToolTypesData))]
-        public void OnTouchReleased_ShouldSetStrokeWidth(IDrawingTool tool, Type expectedElementType)
+        [MemberData(nameof(ToolData))]
+        public void OnTouchReleased_ShouldSetStrokeWidth(IDrawingTool tool)
         {
             // Arrange
             var layer = new Layer();
@@ -101,8 +109,8 @@ namespace LunaDraw.Tests
         }
         
         [Theory]
-        [MemberData(nameof(ToolTypesData))]
-        public void OnTouchCancelled_ShouldNotAddShape(IDrawingTool tool, Type expectedElementType)
+        [MemberData(nameof(ToolData))]
+        public void OnTouchCancelled_ShouldNotAddShape(IDrawingTool tool)
         {
             // Arrange
             var layer = new Layer();

@@ -11,6 +11,10 @@ namespace LunaDraw.Logic.Services
         HistoryManager HistoryManager { get; }
         void AddLayer();
         void RemoveLayer(Layer layer);
+        void MoveLayerForward(Layer layer);
+        void MoveLayerBackward(Layer layer);
+        void MoveLayer(int oldIndex, int newIndex);
+        void MoveElementsToLayer(IEnumerable<IDrawableElement> elements, Layer targetLayer);
         void SaveState();
     }
 }

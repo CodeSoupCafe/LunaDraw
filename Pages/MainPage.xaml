@@ -21,12 +21,12 @@
       <views:ToolbarView Grid.Column="0"
                          x:Name="toolbarView"/>
 
-            <skiasharp:SKGLView Grid.Column="1"
-                              x:Name="canvasView"
-                              PaintSurface="OnCanvasViewPaintSurface"
-                              EnableTouchEvents="True"
-                              Touch="OnTouch"
-                              IgnorePixelScaling="False">
+      <skiasharp:SKGLView Grid.Column="1"
+                          x:Name="canvasView"
+                          PaintSurface="OnCanvasViewPaintSurface"
+                          EnableTouchEvents="True"
+                          Touch="OnTouch"
+                          IgnorePixelScaling="False">
         <skiasharp:SKGLView.GestureRecognizers>
           <TapGestureRecognizer Tapped="OnCanvasTapped" />
         </skiasharp:SKGLView.GestureRecognizers>
@@ -60,14 +60,23 @@
                                      BindingContext="{Binding Source={x:Reference toolbarView}, Path=BindingContext}"/>
     </components:FlyoutPanel>
 
-    <!-- Mini Map -->
-    <Border AbsoluteLayout.LayoutBounds="1,0, 200, 200"
-            AbsoluteLayout.LayoutFlags="PositionProportional"
-            Margin="20"
-            Stroke="Gray"
+    <!-- Layer Control (Top Right) -->
+    <components:LayerControlView BindingContext="{Binding}" 
+                                 WidthRequest="300"
+                                 AbsoluteLayout.LayoutBounds="1,0, -1, -1"
+                                 AbsoluteLayout.LayoutFlags="PositionProportional"
+                                 Margin="20"/>
+
+    <!-- Mini Map (Bottom Right) -->
+    <Border Stroke="Gray"
             StrokeThickness="1"
-            BackgroundColor="White">
-            <components:MiniMapView BindingContext="{Binding}" />
+            BackgroundColor="White"
+            HeightRequest="200"
+            WidthRequest="200"
+            AbsoluteLayout.LayoutBounds="1,1, -1, -1"
+            AbsoluteLayout.LayoutFlags="PositionProportional"
+            Margin="20">
+        <components:MiniMapView BindingContext="{Binding}" />
     </Border>
   </AbsoluteLayout>
 </ContentPage>

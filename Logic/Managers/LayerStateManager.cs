@@ -39,6 +39,7 @@ namespace LunaDraw.Logic.Services
       Layers.Add(newLayer);
       CurrentLayer = newLayer;
       SaveState();
+      messageBus.SendMessage(new CanvasInvalidateMessage());
     }
 
     public void RemoveLayer(Layer layer)
@@ -48,7 +49,64 @@ namespace LunaDraw.Logic.Services
         Layers.Remove(layer);
         CurrentLayer = Layers.First();
         SaveState();
+        messageBus.SendMessage(new CanvasInvalidateMessage());
       }
+    }
+
+    public void MoveLayerForward(Layer layer)
+    {
+      int index = Layers.IndexOf(layer);
+      if (index >= 0 && index < Layers.Count - 1)
+      {
+        Layers.Move(index, index + 1);
+        SaveState();
+        messageBus.SendMessage(new CanvasInvalidateMessage());
+      }
+    }
+
+    public void MoveLayerBackward(Layer layer)
+    {
+      int index = Layers.IndexOf(layer);
+      if (index > 0)
+      {
+        Layers.Move(index, index - 1);
+        SaveState();
+        messageBus.SendMessage(new CanvasInvalidateMessage());
+      }
+    }
+
+    public void MoveLayer(int oldIndex, int newIndex)
+    {
+        if (oldIndex >= 0 && oldIndex < Layers.Count && newIndex >= 0 && newIndex < Layers.Count)
+        {
+            Layers.Move(oldIndex, newIndex);
+            SaveState();
+            messageBus.SendMessage(new CanvasInvalidateMessage());
+        }
+    }
+
+    public void MoveElementsToLayer(IEnumerable<IDrawableElement> elements, Layer targetLayer)
+    {
+        if (!Layers.Contains(targetLayer)) return;
+
+        bool changed = false;
+        foreach (var element in elements.ToList()) // ToList to avoid modification during enumeration
+        {
+            // Find the layer containing this element
+            var sourceLayer = Layers.FirstOrDefault(l => l.Elements.Contains(element));
+            if (sourceLayer != null && sourceLayer != targetLayer)
+            {
+                sourceLayer.Elements.Remove(element);
+                targetLayer.Elements.Add(element);
+                changed = true;
+            }
+        }
+
+        if (changed)
+        {
+            SaveState();
+            messageBus.SendMessage(new CanvasInvalidateMessage());
+        }
     }
 
     public void SaveState()

@@ -95,7 +95,8 @@ namespace LunaDraw.Logic.Models
       path.AddRect(Rectangle);
 
       // Check if filled and point is inside the fill path
-      if (FillColor.HasValue && path.Contains(localPoint.X, localPoint.Y))
+      // Only if fill is not fully transparent
+      if (FillColor.HasValue && FillColor.Value.Alpha > 0 && path.Contains(localPoint.X, localPoint.Y))
       {
         return true;
       }

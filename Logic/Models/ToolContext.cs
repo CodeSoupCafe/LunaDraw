@@ -18,6 +18,7 @@ namespace LunaDraw.Logic.Models
         public float Spacing { get; set; }
         public required BrushShape BrushShape { get; set; }
         public required IEnumerable<IDrawableElement> AllElements { get; set; }
+        public IEnumerable<Layer> Layers { get; set; }
         public required SelectionManager SelectionManager { get; set; }
         public float Scale { get; set; } = 1.0f;
         public bool IsGlowEnabled { get; init; }

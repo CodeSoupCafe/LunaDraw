@@ -124,7 +124,36 @@ namespace LunaDraw.Logic.Models
       // Check if path contains point with tolerance
       if (IsFilled)
       {
-        return Path.Contains(localPoint.X, localPoint.Y);
+          // Only hit fill if it is NOT fully transparent
+          bool isTransparentFill = false;
+          if (FillColor.HasValue)
+          {
+              if (FillColor.Value.Alpha == 0) isTransparentFill = true;
+          }
+          else
+          {
+              // If no fill color, it uses stroke color. Check stroke color alpha.
+              if (StrokeColor.Alpha == 0) isTransparentFill = true;
+          }
+
+          if (!isTransparentFill && Path.Contains(localPoint.X, localPoint.Y))
+          {
+              return true;
+          }
+          
+          // If fill is transparent or we didn't hit the fill, check stroke if visible
+          if (StrokeWidth > 0 && StrokeColor.Alpha > 0)
+          {
+               using var paint = new SKPaint
+               {
+                  Style = SKPaintStyle.Stroke,
+                  StrokeWidth = StrokeWidth + 5 // Add tolerance
+               };
+               using var strokedPath = new SKPath();
+               paint.GetFillPath(Path, strokedPath);
+               return strokedPath.Contains(localPoint.X, localPoint.Y);
+          }
+          return false;
       }
       else
       {

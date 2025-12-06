@@ -55,10 +55,36 @@ namespace LunaDraw.Logic.Tools
         }
       }
 
-      var hitElement = context.AllElements
+      IDrawableElement? hitElement = null;
+
+      if (context.Layers != null)
+      {
+          // Iterate layers from Top (Last) to Bottom (First)
+          foreach (var layer in context.Layers.Reverse())
+          {
+              if (!layer.IsVisible) continue;
+
+              // Hit test elements in this layer, sorted by ZIndex Descending (Topmost first)
+              var hit = layer.Elements
+                             .Where(e => e.IsVisible)
+                             .OrderByDescending(e => e.ZIndex)
+                             .FirstOrDefault(e => e.HitTest(point));
+              
+              if (hit != null)
+              {
+                  hitElement = hit;
+                  break; // Found the top-most element
+              }
+          }
+      }
+      else
+      {
+           // Fallback to old behavior if Layers not provided (shouldn't happen with updated context)
+          hitElement = context.AllElements
                               .Where(e => e.IsVisible)
                               .OrderByDescending(e => e.ZIndex)
                               .FirstOrDefault(e => e.HitTest(point));
+      }
 
       if (hitElement != null)
       {
