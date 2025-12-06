@@ -27,7 +27,7 @@
                        FontAttributes="Bold"
                        VerticalOptions="Center" />
                 <Button x:Name="CollapseButton"
-                        Text="▼" 
+                        Text="▶" 
                         BackgroundColor="Transparent"
                         TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource White}}"
                         Clicked="OnCollapseClicked"
@@ -38,7 +38,7 @@
             </Grid>
 
             <!-- Content -->
-            <Grid Grid.Row="1" x:Name="ContentGrid" RowDefinitions="*, Auto" RowSpacing="10">
+            <Grid Grid.Row="1" x:Name="ContentGrid" RowDefinitions="*, Auto" RowSpacing="10" IsVisible="False">
                 
                 <!-- Layer List -->
                 <CollectionView ItemsSource="{Binding Layers}"

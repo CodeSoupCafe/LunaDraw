@@ -94,23 +94,25 @@ namespace LunaDraw.Logic.Models
       using var path = new SKPath();
       path.AddRect(Rectangle);
 
-      // Check if filled and point is inside the fill path
-      // Only if fill is not fully transparent
+      // Check if filled and point is inside the fill path, ONLY if fill is not fully transparent (Alpha > 0)
       if (FillColor.HasValue && FillColor.Value.Alpha > 0 && path.Contains(localPoint.X, localPoint.Y))
       {
         return true;
       }
 
-      // Check if point is near the stroke
-      using var paint = new SKPaint
+      // If fill was transparent or not hit, check if point is near the visible stroke (Alpha > 0)
+      if (StrokeWidth > 0 && StrokeColor.Alpha > 0) // Only hit visible strokes
       {
-        Style = SKPaintStyle.Stroke,
-        StrokeWidth = StrokeWidth + 10 // Add tolerance
-      };
-      using var strokedPath = new SKPath();
-      paint.GetFillPath(path, strokedPath);
-
-      return strokedPath.Contains(localPoint.X, localPoint.Y);
+          using var paint = new SKPaint
+          {
+            Style = SKPaintStyle.Stroke,
+            StrokeWidth = StrokeWidth + 3 // Reduced tolerance for hit testing
+          };
+          using var strokedPath = new SKPath();
+          paint.GetFillPath(path, strokedPath);
+          return strokedPath.Contains(localPoint.X, localPoint.Y);
+      }
+      return false; // No visible fill or stroke hit
     }
 
     public IDrawableElement Clone()

@@ -174,16 +174,36 @@ namespace LunaDraw.Logic.Tools
 
       if (modified)
       {
-        foreach (var item in elementsToRemove)
+        var finalElements = new List<IDrawableElement>();
+
+        // Add all elements that were NOT removed
+        foreach (var element in elements) // 'elements' is a copy from the start of the method
         {
-          context.CurrentLayer.Elements.Remove(item);
+            if (!elementsToRemove.Contains(element))
+            {
+                finalElements.Add(element);
+            }
         }
-        foreach (var item in elementsToAdd)
+        
+        // Add all newly created elements (fragments from erased items)
+        finalElements.AddRange(elementsToAdd);
+
+        // Clear the ObservableCollection once, then re-populate it
+        context.CurrentLayer.Elements.Clear();
+        foreach (var item in finalElements.OrderBy(e => e.ZIndex)) // Add in sorted ZIndex order
         {
-          context.CurrentLayer.Elements.Add(item);
+            context.CurrentLayer.Elements.Add(item);
+        }
+
+        // Normalize Z-indices on the actual collection elements *after* they are in the collection
+        var currentLayerElementsInCollection = context.CurrentLayer.Elements.OrderBy(e => e.ZIndex).ToList();
+        for (int i = 0; i < currentLayerElementsInCollection.Count; i++)
+        {
+            currentLayerElementsInCollection[i].ZIndex = i;
         }
 
         messageBus.SendMessage(new DrawingStateChangedMessage());
+        messageBus.SendMessage(new CanvasInvalidateMessage());
       }
       messageBus.SendMessage(new CanvasInvalidateMessage());
 

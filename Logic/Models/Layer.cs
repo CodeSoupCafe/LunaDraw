@@ -59,13 +59,26 @@ namespace LunaDraw.Logic.Models
     
     private void OnElementsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
-        // Assign ZIndex to new items based on current count to maintain draw order
         if (e.NewItems != null)
         {
-            int startCount = Elements.Count - e.NewItems.Count;
+            // Find the maximum existing ZIndex in the layer from elements whose ZIndex is not 0
+            // This caters to cases where ZIndex might have been explicitly set (non-zero)
+            int maxZIndex = -1; // Default to -1 so first element gets ZIndex 0
+            if (Elements.Any())
+            {
+                maxZIndex = Elements.Where(el => !e.NewItems.Contains(el)) // Exclude newly added items themselves
+                                    .DefaultIfEmpty(new DrawablePath { ZIndex = -1, Path = new SKPath() }) // Provide a default if no other elements
+                                    .Max(el => el.ZIndex);
+            }
+
             foreach (IDrawableElement item in e.NewItems)
             {
-                if (item.ZIndex == 0) item.ZIndex = startCount++;
+                // Only assign ZIndex if it hasn't been explicitly set (i.e., it's default 0)
+                if (item.ZIndex == 0)
+                {
+                    item.ZIndex = maxZIndex + 1; // Assign a ZIndex higher than any existing element
+                    maxZIndex = item.ZIndex; // Update maxZIndex for subsequent new items in this batch
+                }
             }
         }
 

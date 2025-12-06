@@ -448,20 +448,89 @@ namespace LunaDraw.Logic.Models
 
     public bool HitTest(SKPoint point)
     {
+      if (Points == null || !Points.Any() || Shape?.Path == null) return false;
+
       if (!TransformMatrix.TryInvert(out var inverseMatrix))
         return false;
 
       var localPoint = inverseMatrix.MapPoint(point);
 
-      // Simple bounding box check for now
-      float halfSize = Size;
-      float minX = Points.Min(p => p.X);
-      float minY = Points.Min(p => p.Y);
-      float maxX = Points.Max(p => p.X);
-      float maxY = Points.Max(p => p.Y);
-      var localBounds = new SKRect(minX - halfSize, minY - halfSize, maxX + halfSize, maxY + halfSize);
+      // We need to iterate through each stamp and perform a hit test on its individual path
+      // replicating the jitter and transformations
+      float baseScale = Size / 20f;
+      using var scaledPath = new SKPath(Shape.Path);
+      var initialScaleMatrix = SKMatrix.CreateScale(baseScale, baseScale);
+      scaledPath.Transform(initialScaleMatrix); // Apply base scale once
 
-      return localBounds.Contains(localPoint);
+      // Prepare paint for stroke hit testing outside the loop for efficiency
+      using var strokeHitPaint = new SKPaint
+      {
+          Style = SKPaintStyle.Stroke,
+          StrokeWidth = 3 // Use a small constant tolerance for stroke hit
+      };
+
+      for (int index = 0; index < Points.Count; index++)
+      {
+        var stampPoint = Points[index];
+        // Deterministic Random based on index
+        var random = new Random(index * 1337);
+
+        // Calculate current stamp's transformations
+        float currentScaleFactor = 1.0f;
+        if (SizeJitter > 0)
+        {
+            currentScaleFactor = 1.0f + ((float)random.NextDouble() - 0.5f) * 2.0f * SizeJitter;
+            if (currentScaleFactor < 0.1f) currentScaleFactor = 0.1f;
+        }
+        
+        float currentRotationDelta = 0f;
+        if (AngleJitter > 0)
+        {
+            currentRotationDelta = ((float)random.NextDouble() - 0.5f) * 2.0f * AngleJitter;
+        }
+        float baseRotation = (Rotations != null && index < Rotations.Count) ? Rotations[index] : 0f;
+        float finalRotation = baseRotation + currentRotationDelta;
+
+        // Create the individual stamp's path with its transformations
+        using var stampPath = new SKPath(scaledPath); // Start with the pre-scaled shape path
+        
+        // Apply individual stamp's jittered scale and rotation
+        SKMatrix stampTransform = SKMatrix.CreateScale(currentScaleFactor, currentScaleFactor, 0, 0);
+        stampTransform = stampTransform.PostConcat(SKMatrix.CreateRotation(finalRotation, 0, 0));
+        stampPath.Transform(stampTransform);
+
+        // Translate to stamp's center point
+        stampPath.Transform(SKMatrix.CreateTranslation(stampPoint.X, stampPoint.Y));
+
+        // Check for visible fill hit (Alpha > 0)
+        SKColor effectiveFillColor = StrokeColor; // Stamps are usually filled with stroke color for simplicity
+        if (HueJitter > 0 || IsRainbowEnabled)
+        {
+            // Replicate color jitter/rainbow for hit test if needed,
+            // but for simplicity, we assume if stamp is generally visible, it can be hit.
+            // If the color itself makes it transparent, that will be caught by Alpha > 0.
+            // For true pixel-perfect, would need to render to bitmap.
+        }
+        
+        // If stamp opacity * element opacity makes it transparent, it shouldn't hit.
+        // For stamps, Flow * Opacity is the effective alpha applied to color.
+        byte effectiveAlpha = (byte)(Flow * (Opacity / 255f));
+
+        if (effectiveAlpha > 0 && stampPath.Contains(localPoint.X, localPoint.Y))
+        {
+            return true;
+        }
+
+        // Check for visible stroke hit (if any - stamps usually don't have separate strokes)
+        // If the shape has a stroke, it would be part of the 'scaledPath' definition.
+        // For simplicity, we assume stamps are primarily solid shapes, so fill hit is primary.
+        // If shape is defined with an internal stroke and that needs separate hit logic,
+        // it would be more complex, but likely not the case for simple stamp brushes.
+        // If StrokeWidth > 0 && StrokeColor.Alpha > 0, we could check strokeHitPaint.
+        // For now, only checking fill for stamps.
+      }
+      
+      return false; // No stamp hit
     }
 
     public IDrawableElement Clone()
