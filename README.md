@@ -12,6 +12,10 @@ LunaDraw is a child-centric drawing application designed for children aged 3–8
 
 > ### **Vibe-Coded**
 > The application is heavily vibe-coded and guided by best practices in the [Cline Rules](.clinerules/.clinerules.md) using [SPARC Agentic Development](https://gist.github.com/ruvnet/7d4e1d5c9233ab0a1d2a66bf5ec3e58f); mostly using [Gemini 3](https://gemini.google.com/). Hallucinations are always possible. It is recognized and should be by all that AI is still sometimes as helpful as a sack of hair.
+>
+> There are some very poor implementations by the AI such as string names of commands.
+>
+> The code is quite fragile in a lot of places.
 
 ## Features
 

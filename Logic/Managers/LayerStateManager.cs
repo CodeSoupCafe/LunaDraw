@@ -1,10 +1,9 @@
 using System.Collections.ObjectModel;
-using LunaDraw.Logic.Managers;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using ReactiveUI;
 
-namespace LunaDraw.Logic.Services
+namespace LunaDraw.Logic.Managers
 {
   public class LayerStateManager : ReactiveObject, ILayerStateManager
   {

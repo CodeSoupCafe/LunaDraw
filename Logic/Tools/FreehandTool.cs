@@ -1,7 +1,6 @@
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.ViewModels;
-using LunaDraw.Logic.Extensions;
 using ReactiveUI;
 
 using SkiaSharp;
@@ -165,7 +164,7 @@ namespace LunaDraw.Logic.Tools
         SKColor color = viewModel.StrokeColor;
         if (viewModel.IsRainbowEnabled)
         {
-            float hue = (index * 10) % 360;
+            float hue = index * 10 % 360;
             color = SKColor.FromHsl(hue, 100, 50);
         }
         else if (viewModel.HueJitter > 0)

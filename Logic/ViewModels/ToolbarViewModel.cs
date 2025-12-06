@@ -2,7 +2,7 @@ using System.Reactive;
 using System.Reactive.Linq;
 
 using LunaDraw.Logic.Models;
-using LunaDraw.Logic.Services;
+using LunaDraw.Logic.Managers;
 using LunaDraw.Logic.Tools;
 
 using ReactiveUI;

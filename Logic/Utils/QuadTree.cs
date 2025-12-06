@@ -18,7 +18,7 @@ namespace LunaDraw.Logic.Utils
             this.level = level;
             this.bounds = bounds;
             this.getBounds = getBounds;
-            objects = new List<T>();
+            objects = [];
         }
 
         public void Clear()
@@ -58,8 +58,8 @@ namespace LunaDraw.Logic.Utils
             double verticalMidpoint = bounds.Left + (bounds.Width / 2f);
             double horizontalMidpoint = bounds.Top + (bounds.Height / 2f);
 
-            bool topQuadrant = (pRect.Top < horizontalMidpoint && pRect.Bottom < horizontalMidpoint);
-            bool bottomQuadrant = (pRect.Top > horizontalMidpoint);
+            bool topQuadrant = pRect.Top < horizontalMidpoint && pRect.Bottom < horizontalMidpoint;
+            bool bottomQuadrant = pRect.Top > horizontalMidpoint;
 
             if (pRect.Left < verticalMidpoint && pRect.Right < verticalMidpoint)
             {

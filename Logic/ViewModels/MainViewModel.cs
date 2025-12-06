@@ -12,7 +12,6 @@ using ReactiveUI;
 
 using SkiaSharp;
 using SkiaSharp.Views.Maui;
-using SkiaSharp.Views.Maui.Controls;
 
 namespace LunaDraw.Logic.ViewModels
 {
@@ -426,6 +425,63 @@ namespace LunaDraw.Logic.ViewModels
       SendBackwardCommand = sendBackwardCommand;
       BringForwardCommand = bringForwardCommand;
 
+      // New Commands for Send Element to Back / Bring Element to Front
+      SendElementToBackCommand = ReactiveCommand.Create(() =>
+      {
+          if (CurrentLayer == null || !SelectedElements.Any()) return;
+
+          var selected = SelectedElements.First(); // Assuming single selection for simplicity
+          var elements = CurrentLayer.Elements.ToList(); // Get a mutable list
+          
+          if (elements.Remove(selected)) // Remove the selected element
+          {
+              elements.Insert(0, selected); // Insert it at the beginning
+
+              // Re-assign ZIndices based on new order
+              for (int i = 0; i < elements.Count; i++)
+              {
+                  elements[i].ZIndex = i;
+              }
+              // Update the observable collection (this will trigger UI update)
+              CurrentLayer.Elements.Clear();
+              foreach (var el in elements)
+              {
+                  CurrentLayer.Elements.Add(el);
+              }
+
+              messageBus.SendMessage(new CanvasInvalidateMessage());
+              this.layerStateManager.SaveState();
+          }
+      }, this.WhenAnyValue(x => x.CanDelete)); // CanExecute if there's a selection
+
+      BringElementToFrontCommand = ReactiveCommand.Create(() =>
+      {
+          if (CurrentLayer == null || !SelectedElements.Any()) return;
+
+          var selected = SelectedElements.First(); // Assuming single selection for simplicity
+          var elements = CurrentLayer.Elements.ToList(); // Get a mutable list
+
+          if (elements.Remove(selected)) // Remove the selected element
+          {
+              elements.Add(selected); // Add it to the end
+
+              // Re-assign ZIndices based on new order
+              for (int i = 0; i < elements.Count; i++)
+              {
+                  elements[i].ZIndex = i;
+              }
+              // Update the observable collection (this will trigger UI update)
+              CurrentLayer.Elements.Clear();
+              foreach (var el in elements)
+              {
+                  CurrentLayer.Elements.Add(el);
+              }
+
+              messageBus.SendMessage(new CanvasInvalidateMessage());
+              this.layerStateManager.SaveState();
+          }
+      }, this.WhenAnyValue(x => x.CanDelete)); // CanExecute if there's a selection
+
       ToggleLayerVisibilityCommand = ReactiveCommand.Create<Layer>(layer =>
       {
           if (layer != null)
@@ -464,6 +520,8 @@ namespace LunaDraw.Logic.ViewModels
 
     public ReactiveCommand<Unit, Unit> SendBackwardCommand { get; }
     public ReactiveCommand<Unit, Unit> BringForwardCommand { get; }
+    public ReactiveCommand<Unit, Unit> SendElementToBackCommand { get; }
+    public ReactiveCommand<Unit, Unit> BringElementToFrontCommand { get; }
 
     public void SelectElementAt(SKPoint point)
     {

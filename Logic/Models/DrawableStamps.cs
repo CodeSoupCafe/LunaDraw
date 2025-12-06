@@ -366,7 +366,7 @@ namespace LunaDraw.Logic.Models
         if (IsRainbowEnabled)
         {
             // Rainbow cycles through Hue based on index
-            float hue = (index * 10) % 360; // 10 degrees per stamp
+            float hue = index * 10 % 360; // 10 degrees per stamp
             color = SKColor.FromHsl(hue, 100, 50);
         }
         else if (HueJitter > 0 && !isGlowPass)

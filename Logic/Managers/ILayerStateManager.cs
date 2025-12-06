@@ -1,8 +1,7 @@
 using System.Collections.ObjectModel;
 using LunaDraw.Logic.Models;
-using LunaDraw.Logic.Managers;
 
-namespace LunaDraw.Logic.Services
+namespace LunaDraw.Logic.Managers
 {
     public interface ILayerStateManager
     {

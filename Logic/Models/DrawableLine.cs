@@ -28,10 +28,10 @@ namespace LunaDraw.Logic.Models
       get
       {
         var localBounds = new SKRect(
-            System.Math.Min(StartPoint.X, EndPoint.X),
-            System.Math.Min(StartPoint.Y, EndPoint.Y),
-            System.Math.Max(StartPoint.X, EndPoint.X),
-            System.Math.Max(StartPoint.Y, EndPoint.Y)
+            Math.Min(StartPoint.X, EndPoint.X),
+            Math.Min(StartPoint.Y, EndPoint.Y),
+            Math.Max(StartPoint.X, EndPoint.X),
+            Math.Max(StartPoint.Y, EndPoint.Y)
         );
         return TransformMatrix.MapRect(localBounds);
       }

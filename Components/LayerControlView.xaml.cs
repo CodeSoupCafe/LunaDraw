@@ -1,5 +1,3 @@
-using Microsoft.Maui.Controls;
-using Microsoft.Maui.ApplicationModel.DataTransfer;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.ViewModels;
 
@@ -7,17 +5,32 @@ namespace LunaDraw.Components
 {
     public partial class LayerControlView : ContentView
     {
-        public List<MaskingMode> MaskingModes { get; } = Enum.GetValues(typeof(MaskingMode)).Cast<MaskingMode>().ToList();
+        public static readonly BindableProperty IsLayerPanelExpandedProperty =
+            BindableProperty.Create(nameof(IsLayerPanelExpanded), typeof(bool), typeof(LayerControlView), false, propertyChanged: OnIsLayerPanelExpandedChanged);
+
+        public bool IsLayerPanelExpanded
+        {
+            get => (bool)GetValue(IsLayerPanelExpandedProperty);
+            set => SetValue(IsLayerPanelExpandedProperty, value);
+        }
+
+        public List<MaskingMode> MaskingModes { get; } = Enum.GetValues<MaskingMode>().Cast<MaskingMode>().ToList();
 
         public LayerControlView()
         {
             InitializeComponent();
         }
 
+        private static void OnIsLayerPanelExpandedChanged(BindableObject bindable, object oldValue, object newValue)
+        {
+            var control = (LayerControlView)bindable;
+            control.ContentGrid.IsVisible = (bool)newValue;
+            control.CollapseButton.Text = (bool)newValue ? "▼" : "▶";
+        }
+
         private void OnCollapseClicked(object sender, EventArgs e)
         {
-            ContentGrid.IsVisible = !ContentGrid.IsVisible;
-            CollapseButton.Text = ContentGrid.IsVisible ? "▼" : "▶";
+            IsLayerPanelExpanded = !IsLayerPanelExpanded;
         }
 
         private void OnDragStarting(object sender, DragStartingEventArgs e)

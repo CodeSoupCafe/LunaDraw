@@ -62,7 +62,6 @@
 
     <!-- Layer Control (Top Right) -->
     <components:LayerControlView BindingContext="{Binding}" 
-                                 WidthRequest="300"
                                  AbsoluteLayout.LayoutBounds="1,0, -1, -1"
                                  AbsoluteLayout.LayoutFlags="PositionProportional"
                                  Margin="20"/>

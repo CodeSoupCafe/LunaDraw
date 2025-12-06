@@ -1,5 +1,4 @@
 using LunaDraw.Logic.Models;
-using System.Collections.Generic;
 
 namespace LunaDraw.Logic.Messages
 {

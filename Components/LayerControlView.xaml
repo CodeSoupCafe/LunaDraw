@@ -12,17 +12,23 @@
     <ContentView.Resources>
         <converters:BoolToEyeIconConverter x:Key="BoolToEyeIconConverter" />
         <converters:BoolToLockIconConverter x:Key="BoolToLockIconConverter" />
+        <converters:BoolToLayerPanelWidthConverter x:Key="BoolToLayerPanelWidthConverter" />
     </ContentView.Resources>
 
     <Border Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
             StrokeThickness="1"
             BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray800}}"
             Padding="10"
-            StrokeShape="RoundRectangle 10">
+            StrokeShape="RoundRectangle 10"
+            x:Name="LayerControlBorder"
+            WidthRequest="{Binding Source={x:Reference Root}, Path=IsLayerPanelExpanded, Converter={StaticResource BoolToLayerPanelWidthConverter}}">
         
         <Grid RowDefinitions="Auto, *">
             <!-- Header -->
             <Grid Grid.Row="0" ColumnDefinitions="*, Auto" Margin="0,0,0,5">
+                <Grid.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnCollapseClicked" />
+                </Grid.GestureRecognizers>
                 <Label Text="Layers" 
                        FontAttributes="Bold"
                        VerticalOptions="Center" />
@@ -46,7 +52,7 @@
                                 SelectionMode="Single"
                                 HeightRequest="200"
                                 MaximumHeightRequest="300">
-                    <CollectionView.ItemTemplate>
+                   <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="models:Layer">
                             <Border StrokeThickness="0"
                                     Padding="5"

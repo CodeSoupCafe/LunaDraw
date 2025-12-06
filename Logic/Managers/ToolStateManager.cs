@@ -4,7 +4,7 @@ using LunaDraw.Logic.Tools;
 using ReactiveUI;
 using SkiaSharp;
 
-namespace LunaDraw.Logic.Services
+namespace LunaDraw.Logic.Managers
 {
   public class ToolStateManager : ReactiveObject, IToolStateManager
   {

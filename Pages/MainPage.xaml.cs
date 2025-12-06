@@ -1,6 +1,5 @@
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.ViewModels;
-using LunaDraw.Logic.Extensions;
 
 using ReactiveUI;
 
@@ -52,23 +51,31 @@ public partial class MainPage : ContentPage
 
   private void InitializeContextMenu()
   {
-      canvasContextMenu = new MenuFlyout();
+      canvasContextMenu = [];
+
+      var arrangeSubMenu = new MenuFlyoutSubItem { Text = "Arrange" };
+
+      var sendToBackItem = new MenuFlyoutItem { Text = "Send To Back" };
+      sendToBackItem.SetBinding(MenuItem.CommandProperty, new Binding("SendElementToBackCommand", source: viewModel));
+      arrangeSubMenu.Add(sendToBackItem);
 
       var sendBackwardItem = new MenuFlyoutItem { Text = "Send Backward" };
-      sendBackwardItem.SetBinding(MenuFlyoutItem.CommandProperty, new Binding("SendBackwardCommand", source: viewModel));
-      canvasContextMenu.Add(sendBackwardItem);
+      sendBackwardItem.SetBinding(MenuItem.CommandProperty, new Binding("SendBackwardCommand", source: viewModel));
+      arrangeSubMenu.Add(sendBackwardItem);
 
       var bringForwardItem = new MenuFlyoutItem { Text = "Bring Forward" };
-      bringForwardItem.SetBinding(MenuFlyoutItem.CommandProperty, new Binding("BringForwardCommand", source: viewModel));
-      canvasContextMenu.Add(bringForwardItem);
+      bringForwardItem.SetBinding(MenuItem.CommandProperty, new Binding("BringForwardCommand", source: viewModel));
+      arrangeSubMenu.Add(bringForwardItem);
+
+      var sendToFrontItem = new MenuFlyoutItem { Text = "Send To Front" };
+      sendToFrontItem.SetBinding(MenuItem.CommandProperty, new Binding("BringElementToFrontCommand", source: viewModel));
+      arrangeSubMenu.Add(sendToFrontItem);
       
+      canvasContextMenu.Add(arrangeSubMenu);
       canvasContextMenu.Add(new MenuFlyoutSeparator());
 
-      var addLayerItem = new MenuFlyoutItem { Text = "Add Layer" };
-      addLayerItem.SetBinding(MenuFlyoutItem.CommandProperty, new Binding("AddLayerCommand", source: viewModel));
-      canvasContextMenu.Add(addLayerItem);
+      moveToLayerSubMenu = new MenuFlyoutSubItem { Text = "Move to",  };
 
-      moveToLayerSubMenu = new MenuFlyoutSubItem { Text = "Move to Layer" };
       canvasContextMenu.Add(moveToLayerSubMenu);
 
       // Assign to View using Attached Property
@@ -81,6 +88,10 @@ public partial class MainPage : ContentPage
 
       // Populate "Move to Layer" submenu dynamically
       moveToLayerSubMenu.Clear();
+
+      var addLayerItem = new MenuFlyoutItem { Text = "New Layer" };
+      addLayerItem.SetBinding(MenuItem.CommandProperty, new Binding("AddLayerCommand", source: viewModel));
+      moveToLayerSubMenu.Add(addLayerItem);
 
       bool hasSelection = viewModel.SelectedElements.Any();
       moveToLayerSubMenu.IsEnabled = hasSelection;
