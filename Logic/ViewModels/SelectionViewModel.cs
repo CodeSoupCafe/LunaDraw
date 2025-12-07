@@ -192,7 +192,8 @@ namespace LunaDraw.Logic.ViewModels
         var elementBelow = sortedElements[index - 1];
         sortedElements[index - 1] = selected;
         sortedElements[index] = elementBelow;
-        ReassignZIndices(sortedElements);
+
+        SelectionViewModel.ReassignZIndices(sortedElements);
         messageBus.SendMessage(new CanvasInvalidateMessage());
         layerStateManager.SaveState();
       }
@@ -212,7 +213,8 @@ namespace LunaDraw.Logic.ViewModels
         var elementAbove = sortedElements[index + 1];
         sortedElements[index + 1] = selected;
         sortedElements[index] = elementAbove;
-        ReassignZIndices(sortedElements);
+
+        SelectionViewModel.ReassignZIndices(sortedElements);
         messageBus.SendMessage(new CanvasInvalidateMessage());
         layerStateManager.SaveState();
       }
@@ -228,15 +230,7 @@ namespace LunaDraw.Logic.ViewModels
 
       if (elements.Remove(selected))
       {
-        elements.Insert(0, selected);
-        // Clear and re-add to trigger ObservableCollection updates properly 
-        // or just updating properties if Elements wasn't an ObservableCollection?
-        // It is ObservableCollection.
-        // Simpler:
-        currentLayer.Elements.Clear();
-        foreach (var el in elements) currentLayer.Elements.Add(el);
-
-        ReassignZIndices(elements);
+        SelectionViewModel.ReassignZIndices(elements);
         messageBus.SendMessage(new CanvasInvalidateMessage());
         layerStateManager.SaveState();
       }
@@ -257,13 +251,14 @@ namespace LunaDraw.Logic.ViewModels
         currentLayer.Elements.Clear();
         foreach (var el in elements) currentLayer.Elements.Add(el);
 
-        ReassignZIndices(elements);
+
+        SelectionViewModel.ReassignZIndices(elements);
         messageBus.SendMessage(new CanvasInvalidateMessage());
         layerStateManager.SaveState();
       }
     }
 
-    private void ReassignZIndices(IList<IDrawableElement> elements)
+    private static void ReassignZIndices(IList<IDrawableElement> elements)
     {
       for (int i = 0; i < elements.Count; i++)
       {

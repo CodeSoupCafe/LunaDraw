@@ -16,14 +16,14 @@ namespace LunaDraw.Logic.Managers
 
         public SKBitmap GetBitmap(string path, int targetWidth, int targetHeight)
         {
-            var key = GenerateKey(path, targetWidth, targetHeight);
+            var key = BitmapCacheManager.GenerateKey(path, targetWidth, targetHeight);
 
             if (cache.TryGetValue(key, out var weakRef) && weakRef.TryGetTarget(out var bitmap))
             {
                 return bitmap;
             }
 
-            var newBitmap = LoadDownsampledBitmap(path, targetWidth, targetHeight);
+            var newBitmap = BitmapCacheManager.LoadDownsampledBitmap(path, targetWidth, targetHeight);
             if (newBitmap != null)
             {
                 cache.AddOrUpdate(key,
@@ -36,7 +36,7 @@ namespace LunaDraw.Logic.Managers
 
         public async Task<SKBitmap> GetBitmapAsync(string path, int targetWidth, int targetHeight)
         {
-            var key = GenerateKey(path, targetWidth, targetHeight);
+            var key = BitmapCacheManager.GenerateKey(path, targetWidth, targetHeight);
 
             if (cache.TryGetValue(key, out var weakRef) && weakRef.TryGetTarget(out var bitmap))
             {
@@ -45,7 +45,7 @@ namespace LunaDraw.Logic.Managers
 
             return await Task.Run(() =>
             {
-                var newBitmap = LoadDownsampledBitmap(path, targetWidth, targetHeight);
+                var newBitmap = BitmapCacheManager.LoadDownsampledBitmap(path, targetWidth, targetHeight);
                 if (newBitmap != null)
                 {
                     cache.AddOrUpdate(key,
@@ -57,12 +57,12 @@ namespace LunaDraw.Logic.Managers
             });
         }
 
-        private string GenerateKey(string path, int width, int height)
+        private static string GenerateKey(string path, int width, int height)
         {
             return $"{path}_{width}x{height}";
         }
 
-        private SKBitmap LoadDownsampledBitmap(string path, int targetWidth, int targetHeight)
+        private static SKBitmap LoadDownsampledBitmap(string path, int targetWidth, int targetHeight)
         {
             try
             {

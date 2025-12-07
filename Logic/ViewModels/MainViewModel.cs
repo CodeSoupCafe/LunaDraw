@@ -26,24 +26,24 @@ namespace LunaDraw.Logic.ViewModels
       SelectionViewModel selectionVM,
       HistoryViewModel historyVM) : ReactiveObject
   {
-        // Dependencies
-        public IToolStateManager ToolStateManager { get; } = toolStateManager;
-        public ILayerStateManager LayerStateManager { get; } = layerStateManager;
-        public ICanvasInputHandler CanvasInputHandler { get; } = canvasInputHandler;
-        public NavigationModel NavigationModel { get; } = navigationModel;
-        public SelectionManager SelectionManager { get; } = selectionManager;
-        private readonly IMessageBus messageBus = messageBus;
+    // Dependencies
+    public IToolStateManager ToolStateManager { get; } = toolStateManager;
+    public ILayerStateManager LayerStateManager { get; } = layerStateManager;
+    public ICanvasInputHandler CanvasInputHandler { get; } = canvasInputHandler;
+    public NavigationModel NavigationModel { get; } = navigationModel;
+    public SelectionManager SelectionManager { get; } = selectionManager;
+    private readonly IMessageBus messageBus = messageBus;
 
-        // Sub-ViewModels
-        public LayerPanelViewModel LayerPanelVM { get; } = layerPanelVM;
-        public SelectionViewModel SelectionVM { get; } = selectionVM;
-        public HistoryViewModel HistoryVM { get; } = historyVM;
+    // Sub-ViewModels
+    public LayerPanelViewModel LayerPanelVM { get; } = layerPanelVM;
+    public SelectionViewModel SelectionVM { get; } = selectionVM;
+    public HistoryViewModel HistoryVM { get; } = historyVM;
 
-        public SKRect CanvasSize { get; set; }
+    public SKRect CanvasSize { get; set; }
 
-        // Facades for View/CodeBehind access
-        public ObservableCollection<Layer> Layers => LayerStateManager.Layers;
-    
+    // Facades for View/CodeBehind access
+    public ObservableCollection<Layer> Layers => LayerStateManager.Layers;
+
     public Layer? CurrentLayer
     {
       get => LayerStateManager.CurrentLayer;
@@ -55,20 +55,19 @@ namespace LunaDraw.Logic.ViewModels
       get => ToolStateManager.ActiveTool;
       set => ToolStateManager.ActiveTool = value;
     }
-    
+
     public ReadOnlyObservableCollection<IDrawableElement> SelectedElements => SelectionManager.Selected;
 
     public void ReorderLayer(Layer source, Layer target)
     {
-        if (source == null || target == null || source == target) return;
-        int oldIndex = Layers.IndexOf(source);
-        int newIndex = Layers.IndexOf(target);
-        if (oldIndex >= 0 && newIndex >= 0)
-        {
-            LayerStateManager.MoveLayer(oldIndex, newIndex);
-            // Ensure the dragged layer stays selected
-            CurrentLayer = source;
-        }
+      if (source == null || target == null || source == target) return;
+      int oldIndex = Layers.IndexOf(source);
+      int newIndex = Layers.IndexOf(target);
+      if (oldIndex >= 0 && newIndex >= 0)
+      {
+        LayerStateManager.MoveLayer(oldIndex, newIndex);
+        CurrentLayer = source;
+      }
     }
 
     public void ProcessTouch(SKTouchEventArgs e)
@@ -80,7 +79,7 @@ namespace LunaDraw.Logic.ViewModels
     {
       return new ToolContext
       {
-        CurrentLayer = LayerStateManager.CurrentLayer!, 
+        CurrentLayer = LayerStateManager.CurrentLayer!,
         StrokeColor = ToolStateManager.StrokeColor,
         FillColor = ToolStateManager.FillColor,
         StrokeWidth = ToolStateManager.StrokeWidth,
@@ -91,7 +90,7 @@ namespace LunaDraw.Logic.ViewModels
         AllElements = LayerStateManager.Layers.SelectMany(l => l.Elements),
         Layers = LayerStateManager.Layers,
         SelectionManager = SelectionManager,
-        Scale = NavigationModel.TotalMatrix.ScaleX,
+        Scale = NavigationModel.ViewMatrix.ScaleX,
         IsGlowEnabled = ToolStateManager.IsGlowEnabled,
         GlowColor = ToolStateManager.GlowColor,
         GlowRadius = ToolStateManager.GlowRadius,
@@ -100,7 +99,7 @@ namespace LunaDraw.Logic.ViewModels
         SizeJitter = ToolStateManager.SizeJitter,
         AngleJitter = ToolStateManager.AngleJitter,
         HueJitter = ToolStateManager.HueJitter,
-        CanvasMatrix = NavigationModel.UserMatrix
+        CanvasMatrix = NavigationModel.ViewMatrix
       };
     }
   }

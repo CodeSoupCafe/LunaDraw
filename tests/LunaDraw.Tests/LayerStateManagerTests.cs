@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 using System.Reactive.Subjects;
-using FluentAssertions;
+
 using LunaDraw.Logic.Managers;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
@@ -36,7 +36,7 @@ namespace LunaDraw.Tests
             var layers = layerStateManager.Layers;
 
             // Assert
-            layers.Should().HaveCount(1);
+            Assert.Single(layers);
         }
 
         [Fact]
@@ -46,7 +46,7 @@ namespace LunaDraw.Tests
             var currentLayer = layerStateManager.CurrentLayer;
 
             // Assert
-            currentLayer.Should().NotBeNull();
+            Assert.NotNull(currentLayer);
         }
 
         [Fact]
@@ -56,7 +56,7 @@ namespace LunaDraw.Tests
             var layerName = layerStateManager.CurrentLayer?.Name;
 
             // Assert
-            layerName.Should().Be("Layer 1");
+            Assert.Equal("Layer 1", layerName);
         }
 
         [Fact]
@@ -69,7 +69,7 @@ namespace LunaDraw.Tests
             layerStateManager.AddLayer();
 
             // Assert
-            layerStateManager.Layers.Should().HaveCount(2);
+            Assert.Equal(2, layerStateManager.Layers.Count);
         }
 
         [Fact]
@@ -82,7 +82,7 @@ namespace LunaDraw.Tests
             layerStateManager.AddLayer();
 
             // Assert
-            layerStateManager.CurrentLayer.Should().NotBe(initialLayer);
+            Assert.NotEqual(initialLayer, layerStateManager.CurrentLayer);
         }
 
         [Fact]
@@ -92,7 +92,7 @@ namespace LunaDraw.Tests
             layerStateManager.AddLayer();
 
             // Assert
-            layerStateManager.CurrentLayer!.Name.Should().Be("Layer 2");
+            Assert.Equal("Layer 2", layerStateManager.CurrentLayer!.Name);
         }
 
         [Fact]
@@ -106,7 +106,7 @@ namespace LunaDraw.Tests
             layerStateManager.RemoveLayer(layerToRemove);
 
             // Assert
-            layerStateManager.Layers.Should().HaveCount(1);
+            Assert.Single(layerStateManager.Layers);
         }
 
         [Fact]
@@ -120,7 +120,7 @@ namespace LunaDraw.Tests
             layerStateManager.RemoveLayer(layerToRemove);
 
             // Assert
-            layerStateManager.CurrentLayer!.Name.Should().Be("Layer 1");
+            Assert.Equal("Layer 1", layerStateManager.CurrentLayer!.Name);
         }
 
         [Fact]
@@ -133,7 +133,7 @@ namespace LunaDraw.Tests
             layerStateManager.RemoveLayer(layer1);
 
             // Assert
-            layerStateManager.Layers.Should().HaveCount(1);
+            Assert.Single(layerStateManager.Layers);
         }
 
         [Fact]
@@ -142,8 +142,8 @@ namespace LunaDraw.Tests
             // Arrange
             // HistoryManager saves state in constructor of LayerStateManager.
             // So, CanUndo should be false initially because historyIndex is 0.
-            layerStateManager.HistoryManager.CanUndo.Should().BeFalse(); // FIX HERE
-            layerStateManager.HistoryManager.CanRedo.Should().BeFalse(); // No redo possible yet
+            Assert.False(layerStateManager.HistoryManager.CanUndo); // FIX HERE
+            Assert.False(layerStateManager.HistoryManager.CanRedo); // No redo possible yet
 
             // Act
             drawingStateSubject.OnNext(new DrawingStateChangedMessage());
@@ -151,8 +151,8 @@ namespace LunaDraw.Tests
             // Assert
             // After another state save, CanUndo should now be true.
             // If there were any redo states, they should be cleared, so CanRedo should be false
-            layerStateManager.HistoryManager.CanUndo.Should().BeTrue(); // FIX HERE
-            layerStateManager.HistoryManager.CanRedo.Should().BeFalse();
+            Assert.True(layerStateManager.HistoryManager.CanUndo); // FIX HERE
+            Assert.False(layerStateManager.HistoryManager.CanRedo);
         }
     }
 }

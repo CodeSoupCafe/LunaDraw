@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using FluentAssertions;
+
 using LunaDraw.Logic.Managers;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
@@ -51,7 +51,7 @@ namespace LunaDraw.Tests
             var name = fillTool.Name;
 
             // Assert
-            name.Should().Be("Fill");
+            Assert.Equal("Fill", name);
         }
 
         [Fact]
@@ -62,7 +62,7 @@ namespace LunaDraw.Tests
             var type = fillTool.Type;
 
             // Assert
-            type.Should().Be(ToolType.Fill);
+            Assert.Equal(ToolType.Fill, type);
         }
 
         [Fact]
@@ -124,7 +124,7 @@ namespace LunaDraw.Tests
             fillTool.OnTouchPressed(point, context);
 
             // Assert
-            mockElement.Object.FillColor.Should().Be(expectedFillColor);
+            Assert.Equal(expectedFillColor, mockElement.Object.FillColor);
         }
 
         [Fact]
@@ -207,9 +207,9 @@ namespace LunaDraw.Tests
             fillTool.OnTouchPressed(point, context);
 
             // Assert
-            mockElementTop.Object.FillColor.Should().Be(expectedFillColor);
-            mockElementBottom.Object.FillColor.Should().Be(SKColors.Black); // Should not be filled
-            mockElementInvisible.Object.FillColor.Should().Be(SKColors.Black); // Should not be filled
+            Assert.Equal(expectedFillColor, mockElementTop.Object.FillColor);
+            Assert.Equal(SKColors.Black, mockElementBottom.Object.FillColor);
+            Assert.Equal(SKColors.Black, mockElementInvisible.Object.FillColor); // Should not be filled
         }
 
         [Fact]

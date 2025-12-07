@@ -22,6 +22,8 @@ namespace LunaDraw.Tests
         private readonly CanvasInputHandler handler;
         private readonly Mock<IDrawingTool> mockActiveTool;
 
+        private const float SmoothingFactor = 0.1f; // Matching CanvasInputHandler
+
         public CanvasInputHandlerRobustTests()
         {
             mockToolStateManager = new Mock<IToolStateManager>();
@@ -50,7 +52,7 @@ namespace LunaDraw.Tests
         [Fact]
         public void Constructor_InitializesCorrectly()
         {
-            Assert.NotNull(_handler);
+            Assert.NotNull(handler);
         }
 
         [Fact]
@@ -136,7 +138,7 @@ namespace LunaDraw.Tests
             // Add a mock item to selection
             var mockDrawable = new Mock<IDrawableElement>();
             selectionManager.Add(mockDrawable.Object);
-            Assert.True(_selectionManager.HasSelection);
+            Assert.True(selectionManager.HasSelection);
 
             var touch = new SKTouchEventArgs(1, SKTouchAction.Pressed, new SKPoint(10, 10), true);
 
@@ -174,7 +176,7 @@ namespace LunaDraw.Tests
         public void ProcessTouch_MultiTouch_PinchZoom_UpdatesUserMatrix()
         {
             // Arrange
-            var initialMatrix = navigationModel.UserMatrix;
+            var initialMatrix = navigationModel.ViewMatrix;
 
             // Start with two fingers
             // P1: (0,0)
@@ -196,10 +198,11 @@ namespace LunaDraw.Tests
             handler.ProcessTouch(touchMove, SKRect.Empty);
 
             // Assert
-            var newMatrix = navigationModel.UserMatrix;
+            var newMatrix = navigationModel.ViewMatrix;
             Assert.NotEqual(initialMatrix, newMatrix);
             // Scale should be roughly 2.0
-            Assert.True(newMatrix.ScaleX > 1.5f);
+            Assert.True(Math.Abs(navigationModel.ViewMatrix.ScaleX - (1 + (2.0f - 1) * SmoothingFactor)) < 0.1f);
+            Assert.True(Math.Abs(navigationModel.ViewMatrix.ScaleY - (1 + (2.0f - 1) * SmoothingFactor)) < 0.1f);
         }
 
         [Fact]

@@ -20,13 +20,13 @@ namespace LunaDraw.Components
     private IMessageBus? messageBus;
     private IMessageBus? MessageBus
     {
-        get
-        {
-            if (messageBus != null) return messageBus;
-            messageBus = Handler?.MauiContext?.Services.GetService<IMessageBus>()
-                         ?? IPlatformApplication.Current?.Services.GetService<IMessageBus>();
-            return messageBus;
-        }
+      get
+      {
+        if (messageBus != null) return messageBus;
+        messageBus = Handler?.MauiContext?.Services.GetService<IMessageBus>()
+                     ?? IPlatformApplication.Current?.Services.GetService<IMessageBus>();
+        return messageBus;
+      }
     }
 
     public MiniMapView()
@@ -35,10 +35,9 @@ namespace LunaDraw.Components
 
       this.Loaded += (s, e) =>
       {
-          // Redraw when canvas is invalidated (drawing changes)
-          MessageBus?.Listen<CanvasInvalidateMessage>()
-              .Throttle(TimeSpan.FromMilliseconds(30), RxApp.MainThreadScheduler) // Throttle to avoid excessive redraws
-              .Subscribe(_ => miniMapCanvas?.InvalidateSurface());
+        MessageBus?.Listen<CanvasInvalidateMessage>()
+            .Throttle(TimeSpan.FromMilliseconds(30), RxApp.MainThreadScheduler)
+            .Subscribe(_ => miniMapCanvas?.InvalidateSurface());
       };
     }
 
@@ -63,7 +62,7 @@ namespace LunaDraw.Components
 
       canvas.Clear(SKColors.White);
 
-      // 1. Calculate Bounds of all elements
+      // Calculate bounds of all elements
       var contentBounds = SKRect.Empty;
       bool hasContent = false;
 
@@ -86,27 +85,23 @@ namespace LunaDraw.Components
 
       if (!hasContent)
       {
-        // Default to standard size if empty
         contentBounds = new SKRect(0, 0, 1000, 1000);
       }
 
-      // Add some padding to bounds
       contentBounds.Inflate(50, 50);
 
-      // 2. Calculate Fit Matrix (World -> MiniMap)
-      // Scale to fit contentBounds into info.Rect
+      // Calculate fit matrix (world to minimap)
       float scaleX = info.Width / contentBounds.Width;
       float scaleY = info.Height / contentBounds.Height;
       float scale = Math.Min(scaleX, scaleY);
 
-      // Center it
       float tx = (info.Width - contentBounds.Width * scale) / 2 - contentBounds.Left * scale;
       float ty = (info.Height - contentBounds.Height * scale) / 2 - contentBounds.Top * scale;
 
       fitMatrix = SKMatrix.CreateScale(scale, scale);
       fitMatrix = SKMatrix.Concat(SKMatrix.CreateTranslation(tx, ty), fitMatrix);
 
-      // 3. Draw Content
+      // Draw content
       canvas.Save();
       canvas.Concat(fitMatrix);
 
@@ -117,7 +112,7 @@ namespace LunaDraw.Components
           foreach (var element in layer.Elements)
           {
             if (element.IsVisible)
-            { 
+            {
               element.Draw(canvas);
             }
           }
@@ -125,21 +120,19 @@ namespace LunaDraw.Components
       }
       canvas.Restore();
 
-      // 4. Draw Viewport Indicator
-      // Viewport is the inverse of the Main Canvas Matrix applied to the Main Canvas Screen Rect
-      if (viewModel.NavigationModel.TotalMatrix.TryInvert(out var mainInverse))
+      // Draw viewport indicator
+      if (viewModel.NavigationModel.ViewMatrix.TryInvert(out var mainInverse))
       {
-        // Main Canvas Screen Size (Approximate if not bound, but we can use the ViewModel's stored size)
         var mainScreenRect = viewModel.CanvasSize;
         if (mainScreenRect.Width > 0)
         {
-          // Map Screen Rect Corners -> World Points
+          // Map screen corners to world points
           var tl = mainInverse.MapPoint(new SKPoint(mainScreenRect.Left, mainScreenRect.Top));
           var tr = mainInverse.MapPoint(new SKPoint(mainScreenRect.Right, mainScreenRect.Top));
           var br = mainInverse.MapPoint(new SKPoint(mainScreenRect.Right, mainScreenRect.Bottom));
           var bl = mainInverse.MapPoint(new SKPoint(mainScreenRect.Left, mainScreenRect.Bottom));
 
-          // Map World Points -> MiniMap Points
+          // Map world points to minimap points
           var mTl = fitMatrix.MapPoint(tl);
           var mTr = fitMatrix.MapPoint(tr);
           var mBr = fitMatrix.MapPoint(br);
@@ -175,59 +168,31 @@ namespace LunaDraw.Components
     {
       if (viewModel == null) return;
 
-      // Only process if the user is actually touching/clicking (avoids hover issues)
-      if (!e.InContact)
-        return;
+      if (!e.InContact) return;
 
       var canvasView = sender as SKCanvasView;
       if (canvasView == null) return;
 
       switch (e.ActionType)
-      { 
+      {
         case SKTouchAction.Pressed:
         case SKTouchAction.Moved:
-          // Convert DIPs (Touch Location) to Pixels (Canvas Coordinates)
-          // SKTouchEventArgs.Location is ALREADY in pixels (canvas coordinates) for SKCanvasView.
-          // We do NOT need to multiply by density.
           var touchPointPixels = e.Location;
 
-          // Move main view to this location
           if (fitMatrix.TryInvert(out var inverseFit))
           {
             var worldPoint = inverseFit.MapPoint(touchPointPixels);
 
-            // We want to center the Main View on this worldPoint.
-            // Main View Matrix: Scale * Translation.
-            // We want to keep current Scale.
-
-            float currentScaleX = viewModel.NavigationModel.TotalMatrix.ScaleX;
-            float currentScaleY = viewModel.NavigationModel.TotalMatrix.ScaleY;
-
-            // If rotated, extracting scale is harder. 
-            // Let's assume we want to Pan the view so that worldPoint is at Center of Screen.
-
-            // Target: TotalMatrix.MapPoint(worldPoint) = ScreenCenter
-            // TotalMatrix = [Existing Rotation/Scale] * [New Translation] ? 
-            // No, we just want to adjust Translation.
-
-            // Let's calculate the required translation.
-            // ViewPoint = Matrix * WorldPoint
-            // We want ViewPoint = ScreenCenter.
-
-            // If we reconstruct the matrix:
-            // NewMatrix = OldMatrix without Translation * NewTranslation? 
-            // This clears rotation if we aren't careful.
-
-            // Better approach: Calculate the difference.
-            var currentViewPoint = viewModel.NavigationModel.TotalMatrix.MapPoint(worldPoint);
+            // Calculate where this world point currently appears on screen
+            var currentViewPoint = viewModel.NavigationModel.ViewMatrix.MapPoint(worldPoint);
             var screenCenter = new SKPoint(viewModel.CanvasSize.Width / 2, viewModel.CanvasSize.Height / 2);
 
+            // Calculate the delta to center it
             var delta = screenCenter - currentViewPoint;
 
-            // Translate the view by delta
+            // Apply translation to view matrix
             var translation = SKMatrix.CreateTranslation(delta.X, delta.Y);
-            // Update UserMatrix using PostConcat to accumulate transformations (Legacy style)
-            viewModel.NavigationModel.UserMatrix = viewModel.NavigationModel.UserMatrix.PostConcat(translation);
+            viewModel.NavigationModel.ViewMatrix = viewModel.NavigationModel.ViewMatrix.PostConcat(translation);
 
             MessageBus?.SendMessage(new CanvasInvalidateMessage());
           }

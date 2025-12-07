@@ -1,6 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Reactive.Linq;
-using FluentAssertions;
+
 using LunaDraw.Logic.Managers;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
@@ -83,8 +83,8 @@ namespace LunaDraw.Tests
             viewModel.SelectionVM.DeleteSelectedCommand.Execute().Subscribe();
 
             // Assert
-            layer.Elements.Should().NotContain(element);
-            selectionManager.Selected.Should().BeEmpty();
+            Assert.DoesNotContain(element, layer.Elements);
+            Assert.Empty(selectionManager.Selected);
             messageBusMock.Verify(x => x.SendMessage(It.IsAny<CanvasInvalidateMessage>()), Times.Once);
             layerStateManagerMock.Verify(x => x.SaveState(), Times.Once);
         }
@@ -107,11 +107,11 @@ namespace LunaDraw.Tests
             viewModel.SelectionVM.GroupSelectedCommand.Execute().Subscribe();
 
             // Assert
-            layer.Elements.Should().NotContain(element1);
-            layer.Elements.Should().NotContain(element2);
-            layer.Elements.Should().ContainSingle(e => e is DrawableGroup);
-            selectionManager.Selected.Should().HaveCount(1);
-            selectionManager.Selected.First().Should().BeOfType<DrawableGroup>();
+            Assert.DoesNotContain(element1, layer.Elements);
+            Assert.DoesNotContain(element2, layer.Elements);
+            Assert.Single(layer.Elements, e => e is DrawableGroup);
+            Assert.Single(selectionManager.Selected);
+            Assert.IsType<DrawableGroup>(selectionManager.Selected.First());
         }
         
         [Fact]
@@ -136,7 +136,7 @@ namespace LunaDraw.Tests
             viewModel.SelectionVM.PasteCommand.Execute().Subscribe();
 
             // Assert
-            layer.Elements.Should().HaveCount(2); // Original + Paste
+            Assert.Equal(2, layer.Elements.Count);
             messageBusMock.Verify(x => x.SendMessage(It.IsAny<CanvasInvalidateMessage>()), Times.AtLeastOnce);
         }
     }
