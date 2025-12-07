@@ -4,16 +4,12 @@ using SkiaSharp;
 
 namespace LunaDraw.Logic.Tools
 {
-  public class EllipseTool : ShapeTool<DrawableEllipse>
+  public class EllipseTool(IMessageBus messageBus) : ShapeTool<DrawableEllipse>(messageBus)
   {
     public override string Name => "Ellipse";
     public override ToolType Type => ToolType.Ellipse;
 
-    public EllipseTool(IMessageBus messageBus) : base(messageBus)
-    {
-    }
-
-    protected override DrawableEllipse CreateShape(ToolContext context)
+        protected override DrawableEllipse CreateShape(ToolContext context)
     {
       return new DrawableEllipse
       {

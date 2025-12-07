@@ -1,8 +1,11 @@
 using System.Reactive;
 using System.Reactive.Linq;
+using System.Threading.Tasks;
+using Microsoft.Maui.Storage;
 
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Managers;
+using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Tools;
 
 using ReactiveUI;
@@ -13,23 +16,26 @@ namespace LunaDraw.Logic.ViewModels
 {
     public class ToolbarViewModel : ReactiveObject
     {
-        private readonly MainViewModel mainViewModel;
         private readonly IToolStateManager toolStateManager;
+        private readonly ILayerStateManager layerStateManager;
+        private readonly SelectionViewModel selectionVM;
+        private readonly HistoryViewModel historyVM;
         private readonly IMessageBus messageBus;
+        private readonly IBitmapCacheManager bitmapCacheManager;
 
-        // Forward properties from MainViewModel or ToolState
+        // Forward properties from ToolState
         public List<IDrawingTool> AvailableTools => toolStateManager.AvailableTools;
         public List<BrushShape> AvailableBrushShapes => toolStateManager.AvailableBrushShapes;
 
-        // Commands delegate to MainViewModel (for now, until commands are moved to services/viewmodels)
-        public ReactiveCommand<IDrawingTool, Unit> SelectToolCommand => mainViewModel.SelectToolCommand;
-        public ReactiveCommand<Unit, Unit> UndoCommand => mainViewModel.UndoCommand;
-        public ReactiveCommand<Unit, Unit> RedoCommand => mainViewModel.RedoCommand;
-        public ReactiveCommand<Unit, Unit> CopyCommand => mainViewModel.CopyCommand;
-        public ReactiveCommand<Unit, Unit> PasteCommand => mainViewModel.PasteCommand;
-        public ReactiveCommand<Unit, Unit> DeleteSelectedCommand => mainViewModel.DeleteSelectedCommand;
-        public ReactiveCommand<Unit, Unit> GroupSelectedCommand => mainViewModel.GroupSelectedCommand;
-        public ReactiveCommand<Unit, Unit> UngroupSelectedCommand => mainViewModel.UngroupSelectedCommand;
+        // Delegated Commands
+        public ReactiveCommand<IDrawingTool, Unit> SelectToolCommand { get; }
+        public ReactiveCommand<Unit, Unit> UndoCommand => historyVM.UndoCommand;
+        public ReactiveCommand<Unit, Unit> RedoCommand => historyVM.RedoCommand;
+        public ReactiveCommand<Unit, Unit> CopyCommand => selectionVM.CopyCommand;
+        public ReactiveCommand<Unit, Unit> PasteCommand => selectionVM.PasteCommand;
+        public ReactiveCommand<Unit, Unit> DeleteSelectedCommand => selectionVM.DeleteSelectedCommand;
+        public ReactiveCommand<Unit, Unit> GroupSelectedCommand => selectionVM.GroupSelectedCommand;
+        public ReactiveCommand<Unit, Unit> UngroupSelectedCommand => selectionVM.UngroupSelectedCommand;
 
         // Local Commands
         public ReactiveCommand<Unit, Unit> ShowSettingsCommand { get; }
@@ -39,6 +45,7 @@ namespace LunaDraw.Logic.ViewModels
         public ReactiveCommand<Unit, Unit> SelectLineCommand { get; }
         public ReactiveCommand<Unit, Unit> ShowBrushesFlyoutCommand { get; }
         public ReactiveCommand<BrushShape, Unit> SelectBrushShapeCommand { get; }
+        public ReactiveCommand<Unit, Unit> ImportImageCommand { get; }
 
         // OAPH properties for reactive binding
         private IDrawingTool activeTool;
@@ -125,70 +132,79 @@ namespace LunaDraw.Logic.ViewModels
             set => this.RaiseAndSetIfChanged(ref lastActiveShapeTool, value);
         }
 
-        public ToolbarViewModel(MainViewModel mainViewModel, IToolStateManager toolStateManager, IMessageBus messageBus)
+        public ToolbarViewModel(
+            IToolStateManager toolStateManager,
+            ILayerStateManager layerStateManager,
+            SelectionViewModel selectionVM,
+            HistoryViewModel historyVM,
+            IMessageBus messageBus,
+            IBitmapCacheManager bitmapCacheManager)
         {
-            this.mainViewModel = mainViewModel;
             this.toolStateManager = toolStateManager;
+            this.layerStateManager = layerStateManager;
+            this.selectionVM = selectionVM;
+            this.historyVM = historyVM;
             this.messageBus = messageBus;
+            this.bitmapCacheManager = bitmapCacheManager;
 
-            // Subscribe to ToolState changes via MainViewModel or directly?
-            // Using MainViewModel properties to maintain consistency if they are wrapped there,
-            // but better to use ToolState directly if possible.
-            // However, since MainViewModel exposes the same instances, it should be fine.
-            
             // Initialize ActiveTool and subscribe
             activeTool = this.toolStateManager.ActiveTool;
             
-            // We subscribe to the ViewModel's property which is already synced with the Service
-            // This ensures we are downstream of the MainViewModel's glue code if any exists.
-            this.mainViewModel.WhenAnyValue(x => x.ActiveTool)
+            this.toolStateManager.WhenAnyValue(x => x.ActiveTool)
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(tool => ActiveTool = tool);
 
-            strokeColor = this.mainViewModel.WhenAnyValue(x => x.StrokeColor)
-              .ToProperty(this, x => x.StrokeColor, this.mainViewModel.StrokeColor);
+            // Create SelectToolCommand locally
+            SelectToolCommand = ReactiveCommand.Create<IDrawingTool>(tool =>
+            {
+                this.toolStateManager.ActiveTool = tool;
+            }, outputScheduler: RxApp.MainThreadScheduler);
 
-            fillColor = this.mainViewModel.WhenAnyValue(x => x.FillColor)
-              .ToProperty(this, x => x.FillColor, this.mainViewModel.FillColor);
+            // Subscribe directly to IToolStateManager
+            strokeColor = this.toolStateManager.WhenAnyValue(x => x.StrokeColor)
+              .ToProperty(this, x => x.StrokeColor, this.toolStateManager.StrokeColor);
 
-            strokeWidth = this.mainViewModel.WhenAnyValue(x => x.StrokeWidth)
-              .ToProperty(this, x => x.StrokeWidth, this.mainViewModel.StrokeWidth);
+            fillColor = this.toolStateManager.WhenAnyValue(x => x.FillColor)
+              .ToProperty(this, x => x.FillColor, this.toolStateManager.FillColor);
 
-            opacity = this.mainViewModel.WhenAnyValue(x => x.Opacity)
-              .ToProperty(this, x => x.Opacity, this.mainViewModel.Opacity);
+            strokeWidth = this.toolStateManager.WhenAnyValue(x => x.StrokeWidth)
+              .ToProperty(this, x => x.StrokeWidth, this.toolStateManager.StrokeWidth);
 
-            flow = this.mainViewModel.WhenAnyValue(x => x.Flow)
-              .ToProperty(this, x => x.Flow, this.mainViewModel.Flow);
+            opacity = this.toolStateManager.WhenAnyValue(x => x.Opacity)
+              .ToProperty(this, x => x.Opacity, this.toolStateManager.Opacity);
 
-            spacing = this.mainViewModel.WhenAnyValue(x => x.Spacing)
-              .ToProperty(this, x => x.Spacing, this.mainViewModel.Spacing);
+            flow = this.toolStateManager.WhenAnyValue(x => x.Flow)
+              .ToProperty(this, x => x.Flow, this.toolStateManager.Flow);
 
-            currentBrushShape = this.mainViewModel.WhenAnyValue(x => x.CurrentBrushShape)
-              .ToProperty(this, x => x.CurrentBrushShape, this.mainViewModel.CurrentBrushShape);
+            spacing = this.toolStateManager.WhenAnyValue(x => x.Spacing)
+              .ToProperty(this, x => x.Spacing, this.toolStateManager.Spacing);
 
-            isGlowEnabled = this.mainViewModel.WhenAnyValue(x => x.IsGlowEnabled)
-              .ToProperty(this, x => x.IsGlowEnabled, initialValue: this.mainViewModel.IsGlowEnabled);
+            currentBrushShape = this.toolStateManager.WhenAnyValue(x => x.CurrentBrushShape)
+              .ToProperty(this, x => x.CurrentBrushShape, this.toolStateManager.CurrentBrushShape);
 
-            glowColor = this.mainViewModel.WhenAnyValue(x => x.GlowColor)
-              .ToProperty(this, x => x.GlowColor, initialValue: this.mainViewModel.GlowColor);
+            isGlowEnabled = this.toolStateManager.WhenAnyValue(x => x.IsGlowEnabled)
+              .ToProperty(this, x => x.IsGlowEnabled, initialValue: this.toolStateManager.IsGlowEnabled);
 
-            glowRadius = this.mainViewModel.WhenAnyValue(x => x.GlowRadius)
-              .ToProperty(this, x => x.GlowRadius, initialValue: this.mainViewModel.GlowRadius);
+            glowColor = this.toolStateManager.WhenAnyValue(x => x.GlowColor)
+              .ToProperty(this, x => x.GlowColor, initialValue: this.toolStateManager.GlowColor);
 
-            isRainbowEnabled = this.mainViewModel.WhenAnyValue(x => x.IsRainbowEnabled)
-              .ToProperty(this, x => x.IsRainbowEnabled, initialValue: this.mainViewModel.IsRainbowEnabled);
+            glowRadius = this.toolStateManager.WhenAnyValue(x => x.GlowRadius)
+              .ToProperty(this, x => x.GlowRadius, initialValue: this.toolStateManager.GlowRadius);
 
-            scatterRadius = this.mainViewModel.WhenAnyValue(x => x.ScatterRadius)
-              .ToProperty(this, x => x.ScatterRadius, initialValue: this.mainViewModel.ScatterRadius);
+            isRainbowEnabled = this.toolStateManager.WhenAnyValue(x => x.IsRainbowEnabled)
+              .ToProperty(this, x => x.IsRainbowEnabled, initialValue: this.toolStateManager.IsRainbowEnabled);
 
-            sizeJitter = this.mainViewModel.WhenAnyValue(x => x.SizeJitter)
-              .ToProperty(this, x => x.SizeJitter, initialValue: this.mainViewModel.SizeJitter);
+            scatterRadius = this.toolStateManager.WhenAnyValue(x => x.ScatterRadius)
+              .ToProperty(this, x => x.ScatterRadius, initialValue: this.toolStateManager.ScatterRadius);
 
-            angleJitter = this.mainViewModel.WhenAnyValue(x => x.AngleJitter)
-              .ToProperty(this, x => x.AngleJitter, initialValue: this.mainViewModel.AngleJitter);
+            sizeJitter = this.toolStateManager.WhenAnyValue(x => x.SizeJitter)
+              .ToProperty(this, x => x.SizeJitter, initialValue: this.toolStateManager.SizeJitter);
 
-            hueJitter = this.mainViewModel.WhenAnyValue(x => x.HueJitter)
-              .ToProperty(this, x => x.HueJitter, initialValue: this.mainViewModel.HueJitter);
+            angleJitter = this.toolStateManager.WhenAnyValue(x => x.AngleJitter)
+              .ToProperty(this, x => x.AngleJitter, initialValue: this.toolStateManager.AngleJitter);
+
+            hueJitter = this.toolStateManager.WhenAnyValue(x => x.HueJitter)
+              .ToProperty(this, x => x.HueJitter, initialValue: this.toolStateManager.HueJitter);
 
             isAnyFlyoutOpen = this.WhenAnyValue(x => x.IsSettingsOpen, x => x.IsShapesFlyoutOpen, x => x.IsBrushesFlyoutOpen)
               .Select(values => values.Item1 || values.Item2 || values.Item3)
@@ -275,6 +291,51 @@ namespace LunaDraw.Logic.ViewModels
                 LastActiveShapeTool = tool;
                 SelectToolCommand.Execute(tool).Subscribe();
                 IsShapesFlyoutOpen = false;
+            });
+
+            ImportImageCommand = ReactiveCommand.CreateFromTask(async () =>
+            {
+                try
+                {
+                    var result = await FilePicker.Default.PickAsync(new PickOptions
+                    {
+                        PickerTitle = "Select an image to import",
+                        FileTypes = FilePickerFileType.Images
+                    });
+
+                    if (result != null)
+                    {
+                        string path = result.FullPath;
+
+                        // On platforms where FullPath is not available, copy to cache
+                        if (string.IsNullOrEmpty(path))
+                        {
+                            path = Path.Combine(FileSystem.CacheDirectory, result.FileName);
+                            using var sourceStream = await result.OpenReadAsync();
+                            using var destStream = File.Create(path);
+                            await sourceStream.CopyToAsync(destStream);
+                        }
+
+                        // Load with downsampling (max 2048x2048)
+                        var bitmap = await this.bitmapCacheManager.GetBitmapAsync(path, 2048, 2048);
+                        
+                        if (bitmap != null)
+                        {
+                            var drawableImage = new DrawableImage(bitmap)
+                            {
+                                SourcePath = path
+                            };
+                            
+                            this.layerStateManager.CurrentLayer?.Elements.Add(drawableImage);
+                            this.messageBus.SendMessage(new CanvasInvalidateMessage());
+                            this.layerStateManager.SaveState();
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                     System.Diagnostics.Debug.WriteLine($"Error importing image: {ex.Message}");
+                }
             });
         }
     }

@@ -17,18 +17,18 @@ namespace LunaDraw.Logic.Models
     private bool isVisible = true;
     private bool isLocked = false;
     private MaskingMode maskingMode = MaskingMode.None;
-    
+
     private QuadTree<IDrawableElement> quadTree;
 
     public Guid Id { get; } = Guid.NewGuid();
 
     public Layer()
     {
-        // Initialize QuadTree with large bounds (arbitrary large world)
-        var worldBounds = new SKRect(-500000, -500000, 500000, 500000);
-        quadTree = new QuadTree<IDrawableElement>(0, worldBounds, e => e.Bounds);
+      // Initialize QuadTree with large bounds (arbitrary large world)
+      var worldBounds = new SKRect(-500000, -500000, 500000, 500000);
+      quadTree = new QuadTree<IDrawableElement>(0, worldBounds, e => e.Bounds);
 
-        Elements.CollectionChanged += OnElementsCollectionChanged;
+      Elements.CollectionChanged += OnElementsCollectionChanged;
     }
 
     public string Name
@@ -56,72 +56,72 @@ namespace LunaDraw.Logic.Models
       get => maskingMode;
       set => this.RaiseAndSetIfChanged(ref maskingMode, value);
     }
-    
+
     private void OnElementsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
-        if (e.NewItems != null)
+      if (e.NewItems != null)
+      {
+        // Find the maximum existing ZIndex in the layer from elements whose ZIndex is not 0
+        // This caters to cases where ZIndex might have been explicitly set (non-zero)
+        int maxZIndex = -1; // Default to -1 so first element gets ZIndex 0
+        if (Elements.Any())
         {
-            // Find the maximum existing ZIndex in the layer from elements whose ZIndex is not 0
-            // This caters to cases where ZIndex might have been explicitly set (non-zero)
-            int maxZIndex = -1; // Default to -1 so first element gets ZIndex 0
-            if (Elements.Any())
-            {
-                maxZIndex = Elements.Where(el => !e.NewItems.Contains(el)) // Exclude newly added items themselves
-                                    .DefaultIfEmpty(new DrawablePath { ZIndex = -1, Path = new SKPath() }) // Provide a default if no other elements
-                                    .Max(el => el.ZIndex);
-            }
-
-            foreach (IDrawableElement item in e.NewItems)
-            {
-                // Only assign ZIndex if it hasn't been explicitly set (i.e., it's default 0)
-                if (item.ZIndex == 0)
-                {
-                    item.ZIndex = maxZIndex + 1; // Assign a ZIndex higher than any existing element
-                    maxZIndex = item.ZIndex; // Update maxZIndex for subsequent new items in this batch
-                }
-            }
+          maxZIndex = Elements.Where(el => !e.NewItems.Contains(el)) // Exclude newly added items themselves
+                              .DefaultIfEmpty(new DrawablePath { ZIndex = -1, Path = new SKPath() }) // Provide a default if no other elements
+                              .Max(el => el.ZIndex);
         }
 
-        RebuildQuadTree();
+        foreach (IDrawableElement item in e.NewItems)
+        {
+          // Only assign ZIndex if it hasn't been explicitly set (i.e., it's default 0)
+          if (item.ZIndex == 0)
+          {
+            item.ZIndex = maxZIndex + 1; // Assign a ZIndex higher than any existing element
+            maxZIndex = item.ZIndex; // Update maxZIndex for subsequent new items in this batch
+          }
+        }
+      }
+
+      RebuildQuadTree();
     }
-    
+
     private void RebuildQuadTree()
     {
-        quadTree.Clear();
-        foreach (var element in Elements)
-        {
-            quadTree.Insert(element);
-        }
+      quadTree.Clear();
+      foreach (var element in Elements)
+      {
+        quadTree.Insert(element);
+      }
     }
-    
-    public void InvalidateCache()
+
+    public static void InvalidateCache()
     {
-         // No cache to invalidate
+      // No cache to invalidate
     }
-    
+
     public void Draw(SKCanvas canvas)
     {
-        // Get visible rect in World Coordinates (Local Clip Bounds handles the matrix transform automatically)
-        var visibleRect = canvas.LocalClipBounds;
+      // Get visible rect in World Coordinates (Local Clip Bounds handles the matrix transform automatically)
+      var visibleRect = canvas.LocalClipBounds;
 
-        // Use QuadTree to find elements that are potentially visible
-        var visibleElements = new List<IDrawableElement>();
-        quadTree.Retrieve(visibleElements, visibleRect);
-        
-        // Sort by ZIndex to ensure correct draw order
-        visibleElements.Sort((a, b) => a.ZIndex.CompareTo(b.ZIndex));
-        
-        foreach (var element in visibleElements)
+      // Use QuadTree to find elements that are potentially visible
+      var visibleElements = new List<IDrawableElement>();
+      quadTree.Retrieve(visibleElements, visibleRect);
+
+      // Sort by ZIndex to ensure correct draw order
+      visibleElements.Sort((a, b) => a.ZIndex.CompareTo(b.ZIndex));
+
+      foreach (var element in visibleElements)
+      {
+        if (element.IsVisible)
         {
-             if (element.IsVisible)
-             {
-                 // Double check intersection just in case QuadTree is loose
-                 if (element.Bounds.IntersectsWith(visibleRect))
-                 {
-                     element.Draw(canvas);
-                 }
-             }
+          // Double check intersection just in case QuadTree is loose
+          if (element.Bounds.IntersectsWith(visibleRect))
+          {
+            element.Draw(canvas);
+          }
         }
+      }
     }
 
     public Layer Clone()

@@ -31,10 +31,14 @@ namespace LunaDraw.Tests
                 selectionManager.Add(element);
             }
 
+            var layer = new Layer();
+            layer.Elements.Add(element);
+
             var context = new ToolContext
             {
-                CurrentLayer = new Layer(),
+                CurrentLayer = layer,
                 AllElements = elements,
+                Layers = new List<Layer> { layer },
                 SelectionManager = selectionManager,
                 BrushShape = BrushShape.Circle()
             };

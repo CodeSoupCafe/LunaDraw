@@ -2,24 +2,16 @@ using SkiaSharp;
 
 namespace LunaDraw.Logic.Utils
 {
-    public class QuadTree<T> where T : class
+    public class QuadTree<T>(int level, SKRect bounds, Func<T, SKRect> getBounds) where T : class
     {
         private readonly int maxObjects = 10;
         private readonly int maxLevels = 5;
 
-        private readonly int level;
-        private readonly List<T> objects;
-        private readonly SKRect bounds;
-        private readonly Func<T, SKRect> getBounds;
+        private readonly int level = level;
+        private readonly List<T> objects = [];
+        private readonly SKRect bounds = bounds;
+        private readonly Func<T, SKRect> getBounds = getBounds;
         private QuadTree<T>[]? nodes;
-
-        public QuadTree(int level, SKRect bounds, Func<T, SKRect> getBounds)
-        {
-            this.level = level;
-            this.bounds = bounds;
-            this.getBounds = getBounds;
-            objects = [];
-        }
 
         public void Clear()
         {

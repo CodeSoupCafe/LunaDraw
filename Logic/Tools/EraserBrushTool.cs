@@ -1,6 +1,5 @@
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
-using LunaDraw.Logic.ViewModels;
 
 using ReactiveUI;
 
@@ -8,21 +7,16 @@ using SkiaSharp;
 
 namespace LunaDraw.Logic.Tools
 {
-  public class EraserBrushTool : IDrawingTool
+  public class EraserBrushTool(IMessageBus messageBus) : IDrawingTool
   {
     public string Name => "Eraser";
     public ToolType Type => ToolType.Eraser;
 
     private SKPath? currentPath;
     private DrawablePath? currentDrawablePath;
-    private readonly IMessageBus messageBus;
+    private readonly IMessageBus messageBus = messageBus;
 
-    public EraserBrushTool(IMessageBus messageBus)
-    {
-        this.messageBus = messageBus;
-    }
-
-    public void OnTouchPressed(SKPoint point, ToolContext context)
+        public void OnTouchPressed(SKPoint point, ToolContext context)
     {
       if (context.CurrentLayer?.IsLocked == true) return;
 
@@ -85,12 +79,26 @@ namespace LunaDraw.Logic.Tools
         if (!element.IsVisible) continue;
 
         // Determine if this is a "pure stroke" (like a freehand line or line shape) vs a "filled shape"
-        // A DrawablePath is a pure stroke if IsFilled is false.
-        // A DrawableLine is always a stroke.
-        // A shape (like Rect/Ellipse) with no FillColor is visually just a stroke.
-        bool isPureStroke = (element is DrawablePath dp && !dp.IsFilled) || 
-                            (element is DrawableLine) ||
-                            (element.FillColor == null);
+        bool isPureStroke;
+        if (element is DrawablePath dp)
+        {
+            // A DrawablePath is a pure stroke only if it is explicitly NOT filled.
+            // If it has a FillShader (e.g. erased image) or IsFilled=true, it is a shape.
+            isPureStroke = !dp.IsFilled;
+        }
+        else if (element is DrawableLine)
+        {
+            isPureStroke = true;
+        }
+        else if (element is DrawableImage)
+        {
+            isPureStroke = false;
+        }
+        else
+        {
+            // For other shapes (Rect, Ellipse), they are pure strokes if they have no fill.
+            isPureStroke = element.FillColor == null;
+        }
 
         SKPath elementPath;
         if (isPureStroke)
@@ -125,7 +133,7 @@ namespace LunaDraw.Logic.Tools
                   var newElement = new DrawablePath
                   {
                     Path = resultPath,
-                    TransformMatrix = SKMatrix.CreateIdentity(),
+                    TransformMatrix = SKMatrix.CreateIdentity(), // We might need to adjust this depending on how GetGeometryPath works
                     IsVisible = element.IsVisible,
                     Opacity = element.Opacity,
                     ZIndex = element.ZIndex,
@@ -140,8 +148,8 @@ namespace LunaDraw.Logic.Tools
                       // Result of eroding a stroke is a filled shape (the leftover pieces of the outline)
                       newElement.StrokeWidth = 0;
                       newElement.IsFilled = true;
-                      newElement.StrokeColor = element.StrokeColor; // Use original stroke color as the "fill" color of the blob
-                      newElement.FillColor = null; // Ensure logic picks up StrokeColor
+                      newElement.StrokeColor = element.StrokeColor; 
+                      newElement.FillColor = null; 
                   }
                   else
                   {
@@ -149,13 +157,31 @@ namespace LunaDraw.Logic.Tools
                       newElement.StrokeWidth = element.StrokeWidth;
                       newElement.StrokeColor = element.StrokeColor;
                       newElement.FillColor = element.FillColor;
-                      
-                      // Determine IsFilled state
-                      // If it was a shape (Rect/Ellipse), it effectively has area, so IsFilled=true.
-                      // If it was a filled path, IsFilled=true.
-                      // If it was a stroke with fill (DrawablePath with IsFilled=true), preserve it.
-                      // Generally, if we used GetGeometryPath (which implies area logic), IsFilled should be true for the resulting path to show up as a shape.
                       newElement.IsFilled = true; 
+
+                      // TRANSFORM FIX:
+                      // Put the path back into the original element's coordinate space
+                      if (element.TransformMatrix.TryInvert(out var inverseMatrix))
+                      {
+                           newElement.Path.Transform(inverseMatrix);
+                           newElement.TransformMatrix = element.TransformMatrix;
+                      }
+                      
+                      // Handle Image Shader creation specifically here
+                      if (element is DrawableImage iamge)
+                      {
+                           // Since we reverted to Local Space, the shader is simple (Identity matrix)
+                           var shader = SKShader.CreateBitmap(iamge.Bitmap, SKShaderTileMode.Decal, SKShaderTileMode.Decal);
+                           newElement.FillShader = shader;
+                           newElement.IsFilled = true;
+                           
+                           // Ensure we carry over opacity and stuff
+                           newElement.Opacity = iamge.Opacity;
+                      }
+                      else if (element is DrawablePath oldPath)
+                      {
+                          newElement.FillShader = oldPath.FillShader;
+                      }
                   }
 
                   if (element is DrawablePath originalPath)
@@ -223,7 +249,7 @@ namespace LunaDraw.Logic.Tools
       messageBus.SendMessage(new CanvasInvalidateMessage());
     }
 
-    public void DrawPreview(SKCanvas canvas, MainViewModel viewModel)
+    public void DrawPreview(SKCanvas canvas, ToolContext context)
     {
       // Optional: Draw a circle cursor for eraser size
     }

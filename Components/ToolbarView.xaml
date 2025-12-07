@@ -120,6 +120,16 @@
             <Label Text="Shapes"
                    HorizontalTextAlignment="Center"/>
           </StackLayout>
+
+          <StackLayout HorizontalOptions="Center">
+            <Button x:Name="ImageButton"
+                    Style="{StaticResource ToolbarButtonStyle}"
+                    Text="🖼️"
+                    Command="{Binding ImportImageCommand}"/>
+            <Label Text="Image"
+                   HorizontalTextAlignment="Center"/>
+          </StackLayout>
+
          <StackLayout HorizontalOptions="Center">
             <Button x:Name="EraserButton"
                     Style="{StaticResource ToolbarButtonStyle}"

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using FluentAssertions;
+
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Services;
 using LunaDraw.Logic.Tools;
@@ -63,7 +63,7 @@ namespace LunaDraw.Tests
             PerformDrawAction(tool, layer);
 
             // Assert
-            layer.Elements.Should().HaveCount(1);
+            Assert.Single(layer.Elements);
         }
 
         [Theory]
@@ -77,7 +77,7 @@ namespace LunaDraw.Tests
             PerformDrawAction(tool, layer);
 
             // Assert
-            layer.Elements.First().Should().BeOfType(expectedElementType);
+            Assert.IsType(expectedElementType, layer.Elements.First());
         }
 
         [Theory]
@@ -91,7 +91,7 @@ namespace LunaDraw.Tests
             PerformDrawAction(tool, layer);
 
             // Assert
-            layer.Elements.First().StrokeColor.Should().Be(SKColors.Red);
+            Assert.Equal(SKColors.Red, layer.Elements.First().StrokeColor);
         }
 
         [Theory]
@@ -105,7 +105,7 @@ namespace LunaDraw.Tests
             PerformDrawAction(tool, layer);
 
             // Assert
-            layer.Elements.First().StrokeWidth.Should().Be(2f);
+            Assert.Equal(2f, layer.Elements.First().StrokeWidth);
         }
         
         [Theory]
@@ -128,7 +128,7 @@ namespace LunaDraw.Tests
             tool.OnTouchCancelled(context);
 
             // Assert
-            layer.Elements.Should().BeEmpty();
+            Assert.Empty(layer.Elements);
         }
     }
 }
