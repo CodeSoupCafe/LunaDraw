@@ -1,8 +1,11 @@
 using System.Reactive;
 using System.Reactive.Linq;
+using System.Threading.Tasks;
+using Microsoft.Maui.Storage;
 
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Managers;
+using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Tools;
 
 using ReactiveUI;
@@ -14,6 +17,7 @@ namespace LunaDraw.Logic.ViewModels
     public class ToolbarViewModel : ReactiveObject
     {
         private readonly IToolStateManager toolStateManager;
+        private readonly ILayerStateManager layerStateManager;
         private readonly SelectionViewModel selectionVM;
         private readonly HistoryViewModel historyVM;
         private readonly IMessageBus messageBus;
@@ -40,6 +44,7 @@ namespace LunaDraw.Logic.ViewModels
         public ReactiveCommand<Unit, Unit> SelectLineCommand { get; }
         public ReactiveCommand<Unit, Unit> ShowBrushesFlyoutCommand { get; }
         public ReactiveCommand<BrushShape, Unit> SelectBrushShapeCommand { get; }
+        public ReactiveCommand<Unit, Unit> ImportImageCommand { get; }
 
         // OAPH properties for reactive binding
         private IDrawingTool activeTool;
@@ -127,12 +132,14 @@ namespace LunaDraw.Logic.ViewModels
         }
 
         public ToolbarViewModel(
-            IToolStateManager toolStateManager, 
+            IToolStateManager toolStateManager,
+            ILayerStateManager layerStateManager,
             SelectionViewModel selectionVM,
             HistoryViewModel historyVM,
             IMessageBus messageBus)
         {
             this.toolStateManager = toolStateManager;
+            this.layerStateManager = layerStateManager;
             this.selectionVM = selectionVM;
             this.historyVM = historyVM;
             this.messageBus = messageBus;
@@ -281,6 +288,40 @@ namespace LunaDraw.Logic.ViewModels
                 LastActiveShapeTool = tool;
                 SelectToolCommand.Execute(tool).Subscribe();
                 IsShapesFlyoutOpen = false;
+            });
+
+            ImportImageCommand = ReactiveCommand.CreateFromTask(async () =>
+            {
+                try
+                {
+                    var result = await FilePicker.Default.PickAsync(new PickOptions
+                    {
+                        PickerTitle = "Select an image to import",
+                        FileTypes = FilePickerFileType.Images
+                    });
+
+                    if (result != null)
+                    {
+                        using var stream = await result.OpenReadAsync();
+                        // Decode to bitmap
+                        var bitmap = SKBitmap.Decode(stream);
+                        
+                        if (bitmap != null)
+                        {
+                            var drawableImage = new DrawableImage(bitmap);
+                            
+                            // Center in the visible area? Or just add.
+                            // Adding to current layer.
+                            this.layerStateManager.CurrentLayer?.Elements.Add(drawableImage);
+                            this.messageBus.SendMessage(new CanvasInvalidateMessage());
+                            this.layerStateManager.SaveState();
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                     System.Diagnostics.Debug.WriteLine($"Error importing image: {ex.Message}");
+                }
             });
         }
     }
