@@ -8,21 +8,16 @@ using SkiaSharp;
 
 namespace LunaDraw.Logic.Tools
 {
-  public class LineTool : IDrawingTool
+  public class LineTool(IMessageBus messageBus) : IDrawingTool
   {
     public string Name => "Line";
     public ToolType Type => ToolType.Line;
 
     private SKPoint startPoint;
     private DrawableLine? currentLine;
-    private readonly IMessageBus messageBus;
+    private readonly IMessageBus messageBus = messageBus;
 
-    public LineTool(IMessageBus messageBus)
-    {
-        this.messageBus = messageBus;
-    }
-
-    public void OnTouchPressed(SKPoint point, ToolContext context)
+        public void OnTouchPressed(SKPoint point, ToolContext context)
     {
       if (context.CurrentLayer?.IsLocked == true) return;
 

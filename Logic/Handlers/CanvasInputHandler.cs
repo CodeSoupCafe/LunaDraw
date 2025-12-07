@@ -10,13 +10,18 @@ using SkiaSharp.Views.Maui;
 
 namespace LunaDraw.Logic.Services
 {
-  public class CanvasInputHandler : ICanvasInputHandler
+  public class CanvasInputHandler(
+      IToolStateManager toolStateManager,
+      ILayerStateManager layerStateManager,
+      SelectionManager selectionManager,
+      NavigationModel navigationModel,
+      IMessageBus messageBus) : ICanvasInputHandler
   {
-    private readonly IToolStateManager toolStateManager;
-    private readonly ILayerStateManager layerStateManager;
-    private readonly SelectionManager selectionManager;
-    private readonly NavigationModel navigationModel;
-    private readonly IMessageBus messageBus;
+    private readonly IToolStateManager toolStateManager = toolStateManager;
+    private readonly ILayerStateManager layerStateManager = layerStateManager;
+    private readonly SelectionManager selectionManager = selectionManager;
+    private readonly NavigationModel navigationModel = navigationModel;
+    private readonly IMessageBus messageBus = messageBus;
 
     private readonly Dictionary<long, SKPoint> activeTouches = [];
     private bool isMultiTouching = false;
@@ -35,21 +40,7 @@ namespace LunaDraw.Logic.Services
     private const float ScaleThreshold = 0.001f;
     private const float RotationThreshold = 0.01f; // radians
 
-    public CanvasInputHandler(
-        IToolStateManager toolStateManager,
-        ILayerStateManager layerStateManager,
-        SelectionManager selectionManager,
-        NavigationModel navigationModel,
-        IMessageBus messageBus)
-    {
-      this.toolStateManager = toolStateManager;
-      this.layerStateManager = layerStateManager;
-      this.selectionManager = selectionManager;
-      this.navigationModel = navigationModel;
-      this.messageBus = messageBus;
-    }
-
-    public void ProcessTouch(SKTouchEventArgs e, SKRect canvasViewPort)
+        public void ProcessTouch(SKTouchEventArgs e, SKRect canvasViewPort)
     {
       if (layerStateManager.CurrentLayer == null) return;
 

@@ -2,11 +2,11 @@ using SkiaSharp;
 
 namespace LunaDraw.Logic.Models
 {
-    public class DrawableImage : IDrawableElement
+    public class DrawableImage(SKBitmap bitmap) : IDrawableElement
     {
         public Guid Id { get; } = Guid.NewGuid();
-        public string SourcePath { get; set; }
-        public SKBitmap Bitmap { get; set; }
+        public string? SourcePath { get; set; }
+        public SKBitmap Bitmap { get; set; } = bitmap;
         public SKMatrix TransformMatrix { get; set; } = SKMatrix.CreateIdentity();
 
         public bool IsVisible { get; set; } = true;
@@ -28,11 +28,6 @@ namespace LunaDraw.Logic.Models
 
         public SKRect Bounds => TransformMatrix.MapRect(new SKRect(0, 0, Bitmap.Width, Bitmap.Height));
 
-        public DrawableImage(SKBitmap bitmap)
-        {
-            Bitmap = bitmap;
-        }
-
         public void Draw(SKCanvas canvas)
         {
             if (!IsVisible || Bitmap == null) return;
@@ -46,7 +41,6 @@ namespace LunaDraw.Logic.Models
             using var paint = new SKPaint
             {
                 IsAntialias = true,
-                FilterQuality = SKFilterQuality.Low,
                 Color = SKColors.White.WithAlpha(Opacity) // Alpha affects the bitmap draw
             };
 
@@ -81,7 +75,10 @@ namespace LunaDraw.Logic.Models
             }
 
             // Draw the Bitmap
-            canvas.DrawBitmap(Bitmap, bounds, paint);
+            using (var image = SKImage.FromBitmap(Bitmap))
+            {
+                canvas.DrawImage(image, bounds, new SKSamplingOptions(SKFilterMode.Linear), paint);
+            }
 
             // Draw Border if set
             if (StrokeWidth > 0 && StrokeColor.Alpha > 0)

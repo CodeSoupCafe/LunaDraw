@@ -7,21 +7,16 @@ using SkiaSharp;
 
 namespace LunaDraw.Logic.Tools
 {
-  public class EraserBrushTool : IDrawingTool
+  public class EraserBrushTool(IMessageBus messageBus) : IDrawingTool
   {
     public string Name => "Eraser";
     public ToolType Type => ToolType.Eraser;
 
     private SKPath? currentPath;
     private DrawablePath? currentDrawablePath;
-    private readonly IMessageBus messageBus;
+    private readonly IMessageBus messageBus = messageBus;
 
-    public EraserBrushTool(IMessageBus messageBus)
-    {
-        this.messageBus = messageBus;
-    }
-
-    public void OnTouchPressed(SKPoint point, ToolContext context)
+        public void OnTouchPressed(SKPoint point, ToolContext context)
     {
       if (context.CurrentLayer?.IsLocked == true) return;
 

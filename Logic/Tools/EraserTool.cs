@@ -8,20 +8,15 @@ using SkiaSharp;
 
 namespace LunaDraw.Logic.Tools
 {
-  public class EraserTool : IDrawingTool
+  public class EraserTool(IMessageBus messageBus) : IDrawingTool
   {
     public string Name => "Eraser";
     public ToolType Type => ToolType.Eraser;
 
     private bool isErasing;
-    private readonly IMessageBus messageBus;
+    private readonly IMessageBus messageBus = messageBus;
 
-    public EraserTool(IMessageBus messageBus)
-    {
-        this.messageBus = messageBus;
-    }
-
-    public void OnTouchPressed(SKPoint point, ToolContext context)
+        public void OnTouchPressed(SKPoint point, ToolContext context)
     {
       isErasing = true;
       Erase(point, context);

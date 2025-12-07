@@ -8,18 +8,13 @@ using SkiaSharp;
 
 namespace LunaDraw.Logic.Tools
 {
-  public class FillTool : IDrawingTool
+  public class FillTool(IMessageBus messageBus) : IDrawingTool
   {
     public string Name => "Fill";
     public ToolType Type => ToolType.Fill;
-    private readonly IMessageBus messageBus;
+    private readonly IMessageBus messageBus = messageBus;
 
-    public FillTool(IMessageBus messageBus)
-    {
-        this.messageBus = messageBus;
-    }
-
-    public void OnTouchPressed(SKPoint point, ToolContext context)
+        public void OnTouchPressed(SKPoint point, ToolContext context)
     {
       if (context.CurrentLayer?.IsLocked == true) return;
 

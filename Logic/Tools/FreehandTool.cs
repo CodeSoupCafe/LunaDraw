@@ -7,7 +7,7 @@ using SkiaSharp;
 
 namespace LunaDraw.Logic.Tools
 {
-  public class FreehandTool : IDrawingTool
+  public class FreehandTool(IMessageBus messageBus) : IDrawingTool
   {
     public string Name => "Stamps";
     public ToolType Type => ToolType.Freehand;
@@ -16,14 +16,9 @@ namespace LunaDraw.Logic.Tools
     private SKPoint lastStampPoint;
     private bool isDrawing;
     private readonly Random random = new Random();
-    private readonly IMessageBus messageBus;
+    private readonly IMessageBus messageBus = messageBus;
 
-    public FreehandTool(IMessageBus messageBus)
-    {
-        this.messageBus = messageBus;
-    }
-
-    public void OnTouchPressed(SKPoint point, ToolContext context)
+        public void OnTouchPressed(SKPoint point, ToolContext context)
     {
       if (context.CurrentLayer?.IsLocked == true) return;
 

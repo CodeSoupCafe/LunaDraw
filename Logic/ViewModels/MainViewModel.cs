@@ -15,48 +15,34 @@ using SkiaSharp.Views.Maui;
 
 namespace LunaDraw.Logic.ViewModels
 {
-  public class MainViewModel : ReactiveObject
+  public class MainViewModel(
+      IToolStateManager toolStateManager,
+      ILayerStateManager layerStateManager,
+      ICanvasInputHandler canvasInputHandler,
+      NavigationModel navigationModel,
+      SelectionManager selectionManager,
+      IMessageBus messageBus,
+      LayerPanelViewModel layerPanelVM,
+      SelectionViewModel selectionVM,
+      HistoryViewModel historyVM) : ReactiveObject
   {
-    // Dependencies
-    public IToolStateManager ToolStateManager { get; }
-    public ILayerStateManager LayerStateManager { get; }
-    public ICanvasInputHandler CanvasInputHandler { get; }
-    public NavigationModel NavigationModel { get; }
-    public SelectionManager SelectionManager { get; }
-    private readonly IMessageBus messageBus;
+        // Dependencies
+        public IToolStateManager ToolStateManager { get; } = toolStateManager;
+        public ILayerStateManager LayerStateManager { get; } = layerStateManager;
+        public ICanvasInputHandler CanvasInputHandler { get; } = canvasInputHandler;
+        public NavigationModel NavigationModel { get; } = navigationModel;
+        public SelectionManager SelectionManager { get; } = selectionManager;
+        private readonly IMessageBus messageBus = messageBus;
 
-    // Sub-ViewModels
-    public LayerPanelViewModel LayerPanelVM { get; }
-    public SelectionViewModel SelectionVM { get; }
-    public HistoryViewModel HistoryVM { get; }
+        // Sub-ViewModels
+        public LayerPanelViewModel LayerPanelVM { get; } = layerPanelVM;
+        public SelectionViewModel SelectionVM { get; } = selectionVM;
+        public HistoryViewModel HistoryVM { get; } = historyVM;
 
-    public SKRect CanvasSize { get; set; }
+        public SKRect CanvasSize { get; set; }
 
-    public MainViewModel(
-        IToolStateManager toolStateManager,
-        ILayerStateManager layerStateManager,
-        ICanvasInputHandler canvasInputHandler,
-        NavigationModel navigationModel,
-        SelectionManager selectionManager,
-        IMessageBus messageBus,
-        LayerPanelViewModel layerPanelVM,
-        SelectionViewModel selectionVM,
-        HistoryViewModel historyVM)
-    {
-      ToolStateManager = toolStateManager;
-      LayerStateManager = layerStateManager;
-      CanvasInputHandler = canvasInputHandler;
-      NavigationModel = navigationModel;
-      SelectionManager = selectionManager;
-      this.messageBus = messageBus;
-
-      LayerPanelVM = layerPanelVM;
-      SelectionVM = selectionVM;
-      HistoryVM = historyVM;
-    }
-
-    // Facades for View/CodeBehind access
-    public ObservableCollection<Layer> Layers => LayerStateManager.Layers;
+        // Facades for View/CodeBehind access
+        public ObservableCollection<Layer> Layers => LayerStateManager.Layers;
     
     public Layer? CurrentLayer
     {

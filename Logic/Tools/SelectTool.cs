@@ -11,7 +11,7 @@ namespace LunaDraw.Logic.Tools
   public enum SelectionState { None, Selecting, Dragging, Resizing }
   public enum ResizeHandle { None, TopLeft, TopRight, BottomLeft, BottomRight, Top, Right, Bottom, Left }
 
-  public class SelectTool : IDrawingTool
+  public class SelectTool(IMessageBus messageBus) : IDrawingTool
   {
     public string Name => "Select";
     public ToolType Type => ToolType.Select;
@@ -22,14 +22,9 @@ namespace LunaDraw.Logic.Tools
     private SKRect originalBounds;
     private Dictionary<IDrawableElement, SKMatrix> originalTransforms = [];
     private SKPoint resizeStartPoint;
-    private readonly IMessageBus messageBus;
+    private readonly IMessageBus messageBus = messageBus;
 
-    public SelectTool(IMessageBus messageBus)
-    {
-        this.messageBus = messageBus;
-    }
-
-    public void OnTouchPressed(SKPoint point, ToolContext context)
+        public void OnTouchPressed(SKPoint point, ToolContext context)
     {
       if (context.CurrentLayer?.IsLocked == true) return;
 

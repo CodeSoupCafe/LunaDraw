@@ -7,18 +7,12 @@ using SkiaSharp;
 
 namespace LunaDraw.Logic.Tools
 {
-    public abstract class ShapeTool<T> : IDrawingTool where T : class, IDrawableElement
+    public abstract class ShapeTool<T>(IMessageBus messageBus) : IDrawingTool where T : class, IDrawableElement
     {
         public abstract string Name { get; }
         public abstract ToolType Type { get; }
 
-        protected readonly IMessageBus MessageBus;
-
-        protected ShapeTool(IMessageBus messageBus)
-        {
-            MessageBus = messageBus;
-        }
-
+        protected readonly IMessageBus MessageBus = messageBus;
         protected SKPoint StartPoint;
         protected T? CurrentShape;
 
