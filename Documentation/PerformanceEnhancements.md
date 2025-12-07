@@ -3,7 +3,8 @@ Most of these principles apply broadly to **all SkiaSharp rendering**, not just 
 ## Universal SkiaSharp Performance Principles
 
 **Memory Management & Disposal**
-This is critical for *everything* in SkiaSharp - not just images. Any `IDisposable` object (SKPaint, SKPath, SKShader, SKTypeface, SKSurface, etc.) must be disposed properly. Failure to do so causes:
+This is critical for _everything_ in SkiaSharp - not just images. Any `IDisposable` object (SKPaint, SKPath, SKShader, SKTypeface, SKSurface, etc.) must be disposed properly. Failure to do so causes:
+
 - Memory leaks in managed memory
 - Native memory leaks (SkiaSharp is a wrapper around native Skia)
 - GPU resource exhaustion with OpenGL backend
@@ -17,7 +18,7 @@ protected override void OnPaintSurface(SKPaintGLSurfaceEventArgs e)
 }
 
 // GOOD - reuse or dispose
-private readonly SKPaint _paint = new SKPaint { Color = SKColors.Red };
+private readonly SKPaint paint = new SKPaint { Color = SKColors.Red };
 
 // OR use 'using'
 using (var paint = new SKPaint { Color = SKColors.Red })
@@ -41,19 +42,20 @@ protected override void OnPaintSurface(SKPaintGLSurfaceEventArgs e)
 }
 
 // GOOD - cache the path
-private SKPath _cachedPath;
+private SKPath cachedPath;
 
 private void InitializePath()
 {
-    _cachedPath = new SKPath();
-    _cachedPath.MoveTo(0, 0);
-    _cachedPath.LineTo(100, 100);
+    cachedPath = new SKPath();
+    cachedPath.MoveTo(0, 0);
+    cachedPath.LineTo(100, 100);
     // ... complex path construction
 }
 ```
 
 **GPU Texture/Resource Limits**
 Not just for images - affects:
+
 - Large canvases/surfaces
 - Complex gradients and shaders
 - Many draw calls per frame
@@ -74,8 +76,8 @@ protected override void OnPaintSurface(SKPaintGLSurfaceEventArgs e)
 }
 
 // GOOD - reuse or use stack allocation
-private SKRect _rect = new SKRect(0, 0, 100, 100);
-private SKPoint[] _points = new SKPoint[100];
+private SKRect rect = new SKRect(0, 0, 100, 100);
+private SKPoint[] points = new SKPoint[100];
 
 protected override void OnPaintSurface(SKPaintGLSurfaceEventArgs e)
 {
@@ -93,13 +95,13 @@ private SKPicture CacheComplexDrawing()
     using (var recorder = new SKPictureRecorder())
     {
         var canvas = recorder.BeginRecording(bounds);
-        
+
         // Complex drawing operations
         for (int i = 0; i < 1000; i++)
         {
             canvas.DrawCircle(x[i], y[i], radius[i], paint);
         }
-        
+
         return recorder.EndRecording();
     }
 }
@@ -110,6 +112,7 @@ canvas.DrawPicture(_cachedPicture);
 
 **Async Operations for Heavy Work**
 Applies to any CPU-intensive operation:
+
 - Generating complex paths
 - Text layout calculations
 - Building gradients
@@ -139,14 +142,14 @@ using (var surface = SKSurface.Create(info))
 }
 
 // GOOD - reuse surfaces when possible
-private SKSurface _offscreenSurface;
+private SKSurface offscreenSurface;
 
 private void EnsureSurface(SKImageInfo info)
 {
-    if (_offscreenSurface == null || _offscreenSurface.Canvas.LocalClipBounds.Width != info.Width)
+    if (_offscreenSurface == null || offscreenSurface.Canvas.LocalClipBounds.Width != info.Width)
     {
-        _offscreenSurface?.Dispose();
-        _offscreenSurface = SKSurface.Create(info);
+        offscreenSurface?.Dispose();
+        offscreenSurface = SKSurface.Create(info);
     }
 }
 ```
@@ -154,6 +157,7 @@ private void EnsureSurface(SKImageInfo info)
 ## Techniques Specific to Images
 
 These are mostly image-only:
+
 - **Downsampling during decode** - only applies to loading images from files
 - **Codec usage** - image format specific
 - **Mipmaps** - primarily for images (though could apply to cached renders)
@@ -186,6 +190,7 @@ var pixels = pixmap.GetPixelSpan(); // GPU -> CPU transfer
 
 **Use Hardware Acceleration Features**
 Take advantage of GPU capabilities:
+
 - Use shader-based effects instead of CPU pixel manipulation
 - Leverage GPU-accelerated filters
 - Use SKColorFilter and SKImageFilter for effects
@@ -193,6 +198,7 @@ Take advantage of GPU capabilities:
 ## Bottom Line
 
 **~80% of SkiaSharp performance best practices apply universally:**
+
 - Proper disposal and resource management
 - Caching expensive objects (paths, paints, pictures)
 - Minimizing allocations in hot paths
@@ -201,8 +207,9 @@ Take advantage of GPU capabilities:
 - Understanding GPU resource limits with OpenGL
 
 **~20% are image-specific:**
+
 - Downsampling on decode
 - Codec management
 - Image format considerations
 
-The performance principles for images are just more *visible* because images are large and make the problems obvious faster. But the same issues affect all SkiaSharp rendering - they just manifest at different scales.
+The performance principles for images are just more _visible_ because images are large and make the problems obvious faster. But the same issues affect all SkiaSharp rendering - they just manifest at different scales.

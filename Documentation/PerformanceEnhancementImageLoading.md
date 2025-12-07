@@ -28,12 +28,12 @@ using (var stream = File.OpenRead(imagePath))
     using (var codec = SKCodec.Create(stream))
     {
         var info = codec.Info;
-        
+
         // Calculate target size (e.g., fit to view dimensions)
         var targetWidth = 800;
         var scale = targetWidth / (float)info.Width;
         var targetHeight = (int)(info.Height * scale);
-        
+
         var targetInfo = new SKImageInfo(targetWidth, targetHeight);
         using (var bitmap = SKBitmap.Decode(codec, targetInfo))
         {
@@ -48,18 +48,18 @@ using (var stream = File.OpenRead(imagePath))
 Create a cache to avoid re-decoding:
 
 ```csharp
-private readonly Dictionary<string, SKBitmap> _bitmapCache = new();
+private readonly Dictionary<string, SKBitmap> bitmapCache = new();
 
 public SKBitmap GetCachedBitmap(string path, int maxWidth)
 {
     var cacheKey = $"{path}_{maxWidth}";
-    
+
     if (!_bitmapCache.ContainsKey(cacheKey))
     {
-        _bitmapCache[cacheKey] = LoadDownsampledBitmap(path, maxWidth);
+        bitmapCache[cacheKey] = LoadDownsampledBitmap(path, maxWidth);
     }
-    
-    return _bitmapCache[cacheKey];
+
+    return bitmapCache[cacheKey];
 }
 ```
 
@@ -72,7 +72,7 @@ protected override void OnPaintSurface(SKPaintGLSurfaceEventArgs e)
 {
     var canvas = e.Surface.Canvas;
     canvas.Clear(SKColors.White);
-    
+
     using (var bitmap = GetCachedBitmap(imagePath, 1024))
     {
         canvas.DrawBitmap(bitmap, destRect);
@@ -89,7 +89,7 @@ For OpenGL rendering, create GPU-backed images:
 protected override void OnPaintSurface(SKPaintGLSurfaceEventArgs e)
 {
     var canvas = e.Surface.Canvas;
-    
+
     // Create texture-backed image from bitmap
     using (var bitmap = LoadDownsampledBitmap(path, maxSize))
     using (var image = SKImage.FromBitmap(bitmap))
@@ -104,18 +104,18 @@ protected override void OnPaintSurface(SKPaintGLSurfaceEventArgs e)
 Don't load all images upfront. Load them on-demand:
 
 ```csharp
-private SKBitmap _currentBitmap;
+private SKBitmap currentBitmap;
 
 private void LoadImageAsync(string path)
 {
     Task.Run(() =>
     {
         var bitmap = LoadDownsampledBitmap(path, targetSize);
-        
+
         MainThread.BeginInvokeOnMainThread(() =>
         {
-            _currentBitmap?.Dispose();
-            _currentBitmap = bitmap;
+            currentBitmap?.Dispose();
+            currentBitmap = bitmap;
             skglView.InvalidateSurface();
         });
     });
@@ -131,21 +131,21 @@ private List<SKBitmap> GenerateMipmaps(SKBitmap original)
 {
     var mipmaps = new List<SKBitmap> { original };
     var current = original;
-    
+
     while (current.Width > 1 && current.Height > 1)
     {
         var half = new SKBitmap(
-            current.Width / 2, 
-            current.Height / 2, 
-            current.ColorType, 
+            current.Width / 2,
+            current.Height / 2,
+            current.ColorType,
             current.AlphaType
         );
-        
+
         current.ScalePixels(half, SKFilterQuality.High);
         mipmaps.Add(half);
         current = half;
     }
-    
+
     return mipmaps;
 }
 ```
@@ -161,12 +161,12 @@ private SKImageInfo CalculateSafeSize(SKImageInfo original)
 {
     if (original.Width <= MAX_TEXTURE_SIZE && original.Height <= MAX_TEXTURE_SIZE)
         return original;
-    
+
     var scale = Math.Min(
         MAX_TEXTURE_SIZE / (float)original.Width,
         MAX_TEXTURE_SIZE / (float)original.Height
     );
-    
+
     return new SKImageInfo(
         (int)(original.Width * scale),
         (int)(original.Height * scale)
@@ -179,7 +179,7 @@ private SKImageInfo CalculateSafeSize(SKImageInfo original)
 If drawing the same image repeatedly, cache it as an SKPicture or pre-render to a surface:
 
 ```csharp
-private SKPicture _cachedPicture;
+private SKPicture cachedPicture;
 
 private void CacheDrawing(SKBitmap bitmap)
 {
@@ -187,7 +187,7 @@ private void CacheDrawing(SKBitmap bitmap)
     {
         var canvas = recorder.BeginRecording(SKRect.Create(bitmap.Width, bitmap.Height));
         canvas.DrawBitmap(bitmap, 0, 0);
-        _cachedPicture = recorder.EndRecording();
+        cachedPicture = recorder.EndRecording();
     }
 }
 

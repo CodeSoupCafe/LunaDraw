@@ -12,13 +12,13 @@ namespace LunaDraw.Logic.Managers
 
     public class BitmapCacheManager : IBitmapCacheManager
     {
-        private readonly ConcurrentDictionary<string, WeakReference<SKBitmap>> _cache = new();
+        private readonly ConcurrentDictionary<string, WeakReference<SKBitmap>> cache = new();
 
         public SKBitmap GetBitmap(string path, int targetWidth, int targetHeight)
         {
             var key = GenerateKey(path, targetWidth, targetHeight);
 
-            if (_cache.TryGetValue(key, out var weakRef) && weakRef.TryGetTarget(out var bitmap))
+            if (cache.TryGetValue(key, out var weakRef) && weakRef.TryGetTarget(out var bitmap))
             {
                 return bitmap;
             }
@@ -26,8 +26,8 @@ namespace LunaDraw.Logic.Managers
             var newBitmap = LoadDownsampledBitmap(path, targetWidth, targetHeight);
             if (newBitmap != null)
             {
-                _cache.AddOrUpdate(key, 
-                    new WeakReference<SKBitmap>(newBitmap), 
+                cache.AddOrUpdate(key,
+                    new WeakReference<SKBitmap>(newBitmap),
                     (_, __) => new WeakReference<SKBitmap>(newBitmap));
             }
 
@@ -36,25 +36,25 @@ namespace LunaDraw.Logic.Managers
 
         public async Task<SKBitmap> GetBitmapAsync(string path, int targetWidth, int targetHeight)
         {
-             var key = GenerateKey(path, targetWidth, targetHeight);
-             
-             if (_cache.TryGetValue(key, out var weakRef) && weakRef.TryGetTarget(out var bitmap))
-             {
-                 return bitmap;
-             }
+            var key = GenerateKey(path, targetWidth, targetHeight);
 
-             return await Task.Run(() => 
-             {
-                 var newBitmap = LoadDownsampledBitmap(path, targetWidth, targetHeight);
-                 if (newBitmap != null)
-                 {
-                    _cache.AddOrUpdate(key, 
-                        new WeakReference<SKBitmap>(newBitmap), 
-                        (_, __) => new WeakReference<SKBitmap>(newBitmap));
-                 }
+            if (cache.TryGetValue(key, out var weakRef) && weakRef.TryGetTarget(out var bitmap))
+            {
+                return bitmap;
+            }
 
-                 return newBitmap ?? new SKBitmap();
-             });
+            return await Task.Run(() =>
+            {
+                var newBitmap = LoadDownsampledBitmap(path, targetWidth, targetHeight);
+                if (newBitmap != null)
+                {
+                    cache.AddOrUpdate(key,
+                         new WeakReference<SKBitmap>(newBitmap),
+                         (_, __) => new WeakReference<SKBitmap>(newBitmap));
+                }
+
+                return newBitmap ?? new SKBitmap();
+            });
         }
 
         private string GenerateKey(string path, int width, int height)
@@ -64,27 +64,27 @@ namespace LunaDraw.Logic.Managers
 
         private SKBitmap LoadDownsampledBitmap(string path, int targetWidth, int targetHeight)
         {
-            try 
+            try
             {
                 if (!File.Exists(path))
                 {
-                     System.Diagnostics.Debug.WriteLine($"[BitmapCache] File not found: {path}");
+                    System.Diagnostics.Debug.WriteLine($"[BitmapCache] File not found: {path}");
 
-                     return new SKBitmap();
+                    return new SKBitmap();
                 }
 
                 using var stream = File.OpenRead(path);
                 using var codec = SKCodec.Create(stream);
-                
-                if (codec == null) 
+
+                if (codec == null)
                 {
                     System.Diagnostics.Debug.WriteLine($"[BitmapCache] Failed to create codec for: {path}");
-                    
+
                     return new SKBitmap();
                 }
 
                 var info = codec.Info;
-                
+
                 // Calculate scale
                 float scale = 1.0f;
                 if (targetWidth > 0 && targetHeight > 0)
@@ -93,7 +93,7 @@ namespace LunaDraw.Logic.Managers
                     float scaleY = (float)targetHeight / info.Height;
                     scale = Math.Min(scaleX, scaleY);
                 }
-                
+
                 if (scale >= 1.0f || (targetWidth == 0 && targetHeight == 0))
                 {
                     return SKBitmap.Decode(codec);
@@ -101,13 +101,13 @@ namespace LunaDraw.Logic.Managers
 
                 // Get supported dimensions for this scale
                 var supportedInfo = codec.GetScaledDimensions(scale);
-                
+
                 // Use the supported dimensions for decoding
                 var decodeInfo = new SKImageInfo(supportedInfo.Width, supportedInfo.Height, info.ColorType, info.AlphaType);
-                
+
                 var bitmap = new SKBitmap(decodeInfo);
                 var result = codec.GetPixels(decodeInfo, bitmap.GetPixels());
-                
+
                 if (result == SKCodecResult.Success || result == SKCodecResult.IncompleteInput)
                 {
                     return bitmap;
@@ -124,21 +124,21 @@ namespace LunaDraw.Logic.Managers
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[BitmapCache] Exception loading bitmap: {ex}");
-                
+
                 return new SKBitmap();
             }
         }
 
         public void ClearCache()
         {
-            foreach (var weakRef in _cache.Values)
+            foreach (var weakRef in cache.Values)
             {
                 if (weakRef.TryGetTarget(out var bitmap))
                 {
                     bitmap?.Dispose();
                 }
             }
-            _cache.Clear();
+            cache.Clear();
         }
 
         public void Dispose()

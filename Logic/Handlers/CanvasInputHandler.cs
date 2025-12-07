@@ -40,7 +40,7 @@ namespace LunaDraw.Logic.Services
     private const float ScaleThreshold = 0.001f;
     private const float RotationThreshold = 0.01f; // radians
 
-        public void ProcessTouch(SKTouchEventArgs e, SKRect canvasViewPort)
+    public void ProcessTouch(SKTouchEventArgs e, SKRect canvasViewPort)
     {
       if (layerStateManager.CurrentLayer == null) return;
 
@@ -50,23 +50,23 @@ namespace LunaDraw.Logic.Services
       // Handle Right Click for Context Selection
       if (e.MouseButton == SKMouseButton.Right)
       {
-          if (e.ActionType == SKTouchAction.Pressed)
+        if (e.ActionType == SKTouchAction.Pressed)
+        {
+          // Switch to Select Tool
+          var selectTool = toolStateManager.AvailableTools.FirstOrDefault(t => t.Type == ToolType.Select);
+          if (selectTool != null)
           {
-              // Switch to Select Tool
-              var selectTool = toolStateManager.AvailableTools.FirstOrDefault(t => t.Type == ToolType.Select);
-              if (selectTool != null)
-              {
-                  toolStateManager.ActiveTool = selectTool;
-              }
-
-              SKMatrix inverse = SKMatrix.CreateIdentity();
-              if (navigationModel.TotalMatrix.TryInvert(out inverse))
-              {
-                  var worldPoint = inverse.MapPoint(adjustedLocation);
-                  PerformContextSelection(worldPoint);
-              }
+            toolStateManager.ActiveTool = selectTool;
           }
-          return; // Stop processing to prevent drawing/dragging
+
+          SKMatrix inverse = SKMatrix.CreateIdentity();
+          if (navigationModel.TotalMatrix.TryInvert(out inverse))
+          {
+            var worldPoint = inverse.MapPoint(adjustedLocation);
+            PerformContextSelection(worldPoint);
+          }
+        }
+        return; // Stop processing to prevent drawing/dragging
       }
 
       switch (e.ActionType)
@@ -129,44 +129,44 @@ namespace LunaDraw.Logic.Services
 
     private void PerformContextSelection(SKPoint point)
     {
-        IDrawableElement? hitElement = null;
-        Layer? hitLayer = null;
+      IDrawableElement? hitElement = null;
+      Layer? hitLayer = null;
 
-        // Iterate layers from Top (Last) to Bottom (First)
-        foreach (var layer in layerStateManager.Layers.Reverse())
-        {
-            if (!layer.IsVisible || layer.IsLocked) continue;
+      // Iterate layers from Top (Last) to Bottom (First)
+      foreach (var layer in layerStateManager.Layers.Reverse())
+      {
+        if (!layer.IsVisible || layer.IsLocked) continue;
 
-            var hit = layer.Elements
-                           .Where(e => e.IsVisible)
-                           .OrderByDescending(e => e.ZIndex)
-                           .FirstOrDefault(e => e.HitTest(point));
-            
-            if (hit != null)
-            {
-                hitElement = hit;
-                hitLayer = layer;
-                break;
-            }
-        }
+        var hit = layer.Elements
+                       .Where(e => e.IsVisible)
+                       .OrderByDescending(e => e.ZIndex)
+                       .FirstOrDefault(e => e.HitTest(point));
 
-        if (hitElement != null)
+        if (hit != null)
         {
-            if (!selectionManager.Contains(hitElement))
-            {
-                selectionManager.Clear();
-                selectionManager.Add(hitElement);
-            }
-            if (hitLayer != null)
-            {
-                layerStateManager.CurrentLayer = hitLayer;
-            }
+          hitElement = hit;
+          hitLayer = layer;
+          break;
         }
-        else
+      }
+
+      if (hitElement != null)
+      {
+        if (!selectionManager.Contains(hitElement))
         {
-            selectionManager.Clear();
+          selectionManager.Clear();
+          selectionManager.Add(hitElement);
         }
-        messageBus.SendMessage(new CanvasInvalidateMessage());
+        if (hitLayer != null)
+        {
+          layerStateManager.CurrentLayer = hitLayer;
+        }
+      }
+      else
+      {
+        selectionManager.Clear();
+      }
+      messageBus.SendMessage(new CanvasInvalidateMessage());
     }
 
     private void InitializeGestureSnapshot()
@@ -376,7 +376,7 @@ namespace LunaDraw.Logic.Services
             break;
           case SKTouchAction.Moved:
             toolStateManager.ActiveTool.OnTouchMoved(worldPoint, context);
-            // No need to update _activeTouches here as it's done in ProcessTouch
+            // No need to update activeTouches here as it's done in ProcessTouch
             break;
           case SKTouchAction.Released:
             toolStateManager.ActiveTool.OnTouchReleased(worldPoint, context);
@@ -397,12 +397,12 @@ namespace LunaDraw.Logic.Services
         // Auto-select layer based on selection
         if (selectionManager.Selected.Count > 0)
         {
-            var selectedElement = selectionManager.Selected[0];
-            var layer = layerStateManager.Layers.FirstOrDefault(l => l.Elements.Contains(selectedElement));
-            if (layer != null && layer != layerStateManager.CurrentLayer)
-            {
-                layerStateManager.CurrentLayer = layer;
-            }
+          var selectedElement = selectionManager.Selected[0];
+          var layer = layerStateManager.Layers.FirstOrDefault(l => l.Elements.Contains(selectedElement));
+          if (layer != null && layer != layerStateManager.CurrentLayer)
+          {
+            layerStateManager.CurrentLayer = layer;
+          }
         }
         return;
       }
