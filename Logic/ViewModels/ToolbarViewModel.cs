@@ -21,6 +21,7 @@ namespace LunaDraw.Logic.ViewModels
         private readonly SelectionViewModel selectionVM;
         private readonly HistoryViewModel historyVM;
         private readonly IMessageBus messageBus;
+        private readonly IBitmapCacheManager bitmapCacheManager;
 
         // Forward properties from ToolState
         public List<IDrawingTool> AvailableTools => toolStateManager.AvailableTools;
@@ -136,13 +137,15 @@ namespace LunaDraw.Logic.ViewModels
             ILayerStateManager layerStateManager,
             SelectionViewModel selectionVM,
             HistoryViewModel historyVM,
-            IMessageBus messageBus)
+            IMessageBus messageBus,
+            IBitmapCacheManager bitmapCacheManager)
         {
             this.toolStateManager = toolStateManager;
             this.layerStateManager = layerStateManager;
             this.selectionVM = selectionVM;
             this.historyVM = historyVM;
             this.messageBus = messageBus;
+            this.bitmapCacheManager = bitmapCacheManager;
 
             // Initialize ActiveTool and subscribe
             activeTool = this.toolStateManager.ActiveTool;
@@ -302,16 +305,27 @@ namespace LunaDraw.Logic.ViewModels
 
                     if (result != null)
                     {
-                        using var stream = await result.OpenReadAsync();
-                        // Decode to bitmap
-                        var bitmap = SKBitmap.Decode(stream);
+                        string path = result.FullPath;
+
+                        // On platforms where FullPath is not available, copy to cache
+                        if (string.IsNullOrEmpty(path))
+                        {
+                            path = Path.Combine(FileSystem.CacheDirectory, result.FileName);
+                            using var sourceStream = await result.OpenReadAsync();
+                            using var destStream = File.Create(path);
+                            await sourceStream.CopyToAsync(destStream);
+                        }
+
+                        // Load with downsampling (max 2048x2048)
+                        var bitmap = await this.bitmapCacheManager.GetBitmapAsync(path, 2048, 2048);
                         
                         if (bitmap != null)
                         {
-                            var drawableImage = new DrawableImage(bitmap);
+                            var drawableImage = new DrawableImage(bitmap)
+                            {
+                                SourcePath = path
+                            };
                             
-                            // Center in the visible area? Or just add.
-                            // Adding to current layer.
                             this.layerStateManager.CurrentLayer?.Elements.Add(drawableImage);
                             this.messageBus.SendMessage(new CanvasInvalidateMessage());
                             this.layerStateManager.SaveState();

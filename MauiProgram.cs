@@ -42,6 +42,7 @@ public static class MauiProgram
         // Register Logic Services
         builder.Services.AddSingleton<ICanvasInputHandler, CanvasInputHandler>();
         builder.Services.AddSingleton<ClipboardManager>();
+        builder.Services.AddSingleton<IBitmapCacheManager, BitmapCacheManager>();
 
         // Register ViewModels
         builder.Services.AddSingleton<LayerPanelViewModel>();
