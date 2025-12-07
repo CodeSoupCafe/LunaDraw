@@ -127,18 +127,18 @@ namespace LunaDraw.Logic.Tools
       messageBus.SendMessage(new CanvasInvalidateMessage());
     }
 
-    public void DrawPreview(SKCanvas canvas, MainViewModel viewModel)
+    public void DrawPreview(SKCanvas canvas, ToolContext context)
     {
       if (currentPoints == null || currentPoints.Count == 0) return;
 
-      // Get current shape from viewModel
-      var shape = viewModel.CurrentBrushShape;
+      // Get current shape from context
+      var shape = context.BrushShape;
       if (shape?.Path == null) return;
 
-      float size = viewModel.StrokeWidth;
+      float size = context.StrokeWidth;
       float baseScale = size / 20f;
-      byte flow = viewModel.Flow;
-      byte opacity = viewModel.Opacity;
+      byte flow = context.Flow;
+      byte opacity = context.Opacity;
 
       using var scaledPath = new SKPath(shape.Path);
       var scaleMatrix = SKMatrix.CreateScale(baseScale, baseScale);
@@ -161,16 +161,16 @@ namespace LunaDraw.Logic.Tools
         var random = new Random(index * 1337); 
 
         // Calculate color
-        SKColor color = viewModel.StrokeColor;
-        if (viewModel.IsRainbowEnabled)
+        SKColor color = context.StrokeColor;
+        if (context.IsRainbowEnabled)
         {
             float hue = index * 10 % 360;
             color = SKColor.FromHsl(hue, 100, 50);
         }
-        else if (viewModel.HueJitter > 0)
+        else if (context.HueJitter > 0)
         {
             color.ToHsl(out float h, out float s, out float l);
-            float jitter = ((float)random.NextDouble() - 0.5f) * 2.0f * viewModel.HueJitter * 360f;
+            float jitter = ((float)random.NextDouble() - 0.5f) * 2.0f * context.HueJitter * 360f;
             h = (h + jitter) % 360f;
             if (h < 0) h += 360f;
             color = SKColor.FromHsl(h, s, l);
@@ -188,16 +188,16 @@ namespace LunaDraw.Logic.Tools
         }
 
         // Rotation Jitter
-        if (viewModel.AngleJitter > 0)
+        if (context.AngleJitter > 0)
         {
-            float rotation = ((float)random.NextDouble() - 0.5f) * 2.0f * viewModel.AngleJitter;
+            float rotation = ((float)random.NextDouble() - 0.5f) * 2.0f * context.AngleJitter;
             canvas.RotateDegrees(rotation);
         }
 
         // Size Jitter
-        if (viewModel.SizeJitter > 0)
+        if (context.SizeJitter > 0)
         {
-            float scaleFactor = 1.0f + ((float)random.NextDouble() - 0.5f) * 2.0f * viewModel.SizeJitter;
+            float scaleFactor = 1.0f + ((float)random.NextDouble() - 0.5f) * 2.0f * context.SizeJitter;
             if (scaleFactor < 0.1f) scaleFactor = 0.1f;
             canvas.Scale(scaleFactor);
         }

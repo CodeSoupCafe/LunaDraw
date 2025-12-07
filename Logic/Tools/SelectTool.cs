@@ -148,11 +148,11 @@ namespace LunaDraw.Logic.Tools
       messageBus.SendMessage(new CanvasInvalidateMessage());
     }
 
-    public void DrawPreview(SKCanvas canvas, MainViewModel viewModel)
+    public void DrawPreview(SKCanvas canvas, ToolContext context)
     {
-      if (viewModel.SelectionManager.Selected.Any())
+      if (context.SelectionManager.Selected.Any())
       {
-        var bounds = viewModel.SelectionManager.GetBounds();
+        var bounds = context.SelectionManager.GetBounds();
         if (bounds.IsEmpty) return;
 
         // Draw selection rectangle
@@ -168,7 +168,14 @@ namespace LunaDraw.Logic.Tools
         // Draw resize handles
         if (currentState != SelectionState.Resizing)
         {
-          float handleDrawScale = 1.0f / viewModel.NavigationModel.TotalMatrix.ScaleX; // Inverse of canvas scale
+          float scale = context.Scale;
+          // Note: context.Scale is just TotalMatrix.ScaleX in MainViewModel logic.
+          // But here we need inverse scale for drawing constant size handles? 
+          // GetResizeHandle used (1/ScaleX).
+          // If context.Scale is ScaleX, then handleDrawScale = 1.0f / context.Scale.
+          
+          float handleDrawScale = 1.0f / (Math.Abs(context.Scale) < 0.0001f ? 1.0f : context.Scale);
+          
           DrawResizeHandle(canvas, new SKPoint(bounds.Left, bounds.Top), handleDrawScale);
           DrawResizeHandle(canvas, new SKPoint(bounds.Right, bounds.Top), handleDrawScale);
           DrawResizeHandle(canvas, new SKPoint(bounds.Left, bounds.Bottom), handleDrawScale);

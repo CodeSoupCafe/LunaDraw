@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Reactive.Subjects;
 using FluentAssertions;
+using LunaDraw.Logic.Managers;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Services; // Keep this for LayerStateManager

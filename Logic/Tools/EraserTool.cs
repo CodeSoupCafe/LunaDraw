@@ -62,7 +62,7 @@ namespace LunaDraw.Logic.Tools
       }
     }
 
-    public void DrawPreview(SKCanvas canvas, MainViewModel viewModel)
+    public void DrawPreview(SKCanvas canvas, ToolContext context)
     {
     }
   }

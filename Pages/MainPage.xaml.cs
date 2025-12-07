@@ -56,19 +56,19 @@ public partial class MainPage : ContentPage
       var arrangeSubMenu = new MenuFlyoutSubItem { Text = "Arrange" };
 
       var sendToBackItem = new MenuFlyoutItem { Text = "Send To Back" };
-      sendToBackItem.SetBinding(MenuItem.CommandProperty, new Binding("SendElementToBackCommand", source: viewModel));
+      sendToBackItem.SetBinding(MenuItem.CommandProperty, new Binding("SelectionVM.SendElementToBackCommand", source: viewModel));
       arrangeSubMenu.Add(sendToBackItem);
 
       var sendBackwardItem = new MenuFlyoutItem { Text = "Send Backward" };
-      sendBackwardItem.SetBinding(MenuItem.CommandProperty, new Binding("SendBackwardCommand", source: viewModel));
+      sendBackwardItem.SetBinding(MenuItem.CommandProperty, new Binding("SelectionVM.SendBackwardCommand", source: viewModel));
       arrangeSubMenu.Add(sendBackwardItem);
 
       var bringForwardItem = new MenuFlyoutItem { Text = "Bring Forward" };
-      bringForwardItem.SetBinding(MenuItem.CommandProperty, new Binding("BringForwardCommand", source: viewModel));
+      bringForwardItem.SetBinding(MenuItem.CommandProperty, new Binding("SelectionVM.BringForwardCommand", source: viewModel));
       arrangeSubMenu.Add(bringForwardItem);
 
       var sendToFrontItem = new MenuFlyoutItem { Text = "Send To Front" };
-      sendToFrontItem.SetBinding(MenuItem.CommandProperty, new Binding("BringElementToFrontCommand", source: viewModel));
+      sendToFrontItem.SetBinding(MenuItem.CommandProperty, new Binding("SelectionVM.BringElementToFrontCommand", source: viewModel));
       arrangeSubMenu.Add(sendToFrontItem);
       
       canvasContextMenu.Add(arrangeSubMenu);
@@ -90,7 +90,7 @@ public partial class MainPage : ContentPage
       moveToLayerSubMenu.Clear();
 
       var addLayerItem = new MenuFlyoutItem { Text = "New Layer" };
-      addLayerItem.SetBinding(MenuItem.CommandProperty, new Binding("AddLayerCommand", source: viewModel));
+      addLayerItem.SetBinding(MenuItem.CommandProperty, new Binding("LayerPanelVM.AddLayerCommand", source: viewModel));
       moveToLayerSubMenu.Add(addLayerItem);
 
       bool hasSelection = viewModel.SelectedElements.Any();
@@ -107,7 +107,7 @@ public partial class MainPage : ContentPage
           var item = new MenuFlyoutItem
           {
               Text = layer.Name,
-              Command = viewModel.MoveSelectionToLayerCommand,
+              Command = viewModel.SelectionVM.MoveSelectionToLayerCommand,
               CommandParameter = layer
           };
           moveToLayerSubMenu.Add(item);
@@ -209,7 +209,8 @@ public partial class MainPage : ContentPage
         }
     }
 
-    viewModel.ActiveTool.DrawPreview(canvas, viewModel);
+    // UPDATED: Create tool context for preview
+    viewModel.ActiveTool.DrawPreview(canvas, viewModel.CreateToolContext());
     
     canvas.Restore();
   }

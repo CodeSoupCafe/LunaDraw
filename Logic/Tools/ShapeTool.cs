@@ -64,7 +64,7 @@ namespace LunaDraw.Logic.Tools
             MessageBus.SendMessage(new CanvasInvalidateMessage());
         }
 
-        public virtual void DrawPreview(SKCanvas canvas, MainViewModel viewModel)
+        public virtual void DrawPreview(SKCanvas canvas, ToolContext context)
         {
             if (CurrentShape != null)
             {

@@ -58,10 +58,14 @@ namespace LunaDraw.Tests
       var element = new MockDrawableElement();
       var elements = new List<IDrawableElement> { element };
       var selectionManager = new SelectionManager();
+      var layer = new Layer();
+      layer.Elements.Add(element);
+      
       var context = new ToolContext
       {
-        CurrentLayer = new Layer(),
+        CurrentLayer = layer,
         AllElements = elements,
+        Layers = new List<Layer> { layer },
         SelectionManager = selectionManager,
         BrushShape = BrushShape.Circle()
       };
@@ -89,10 +93,14 @@ namespace LunaDraw.Tests
       // Pre-select the element so we can hit the handle
       selectionManager.Add(element);
 
+      var layer = new Layer();
+      layer.Elements.Add(element);
+
       var context = new ToolContext
       {
-        CurrentLayer = new Layer(),
+        CurrentLayer = layer,
         AllElements = elements,
+        Layers = new List<Layer> { layer },
         SelectionManager = selectionManager,
         BrushShape = BrushShape.Circle()
       };
