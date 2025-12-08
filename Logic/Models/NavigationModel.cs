@@ -14,6 +14,20 @@ namespace LunaDraw.Logic.Models
             set => this.RaiseAndSetIfChanged(ref viewMatrix, value);
         }
 
+        private float canvasWidth;
+        public float CanvasWidth
+        {
+            get => canvasWidth;
+            set => this.RaiseAndSetIfChanged(ref canvasWidth, value);
+        }
+
+        private float canvasHeight;
+        public float CanvasHeight
+        {
+            get => canvasHeight;
+            set => this.RaiseAndSetIfChanged(ref canvasHeight, value);
+        }
+
         public void Reset()
         {
             ViewMatrix = SKMatrix.CreateIdentity();

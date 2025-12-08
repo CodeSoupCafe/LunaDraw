@@ -1,6 +1,7 @@
 using System.Reactive;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
+using CommunityToolkit.Maui.Storage;
 using Microsoft.Maui.Storage;
 
 using LunaDraw.Logic.Models;
@@ -22,6 +23,8 @@ namespace LunaDraw.Logic.ViewModels
         private readonly HistoryViewModel historyVM;
         private readonly IMessageBus messageBus;
         private readonly IBitmapCacheManager bitmapCacheManager;
+        private readonly NavigationModel navigationModel;
+        private readonly IFileSaver fileSaver;
 
         // Forward properties from ToolState
         public List<IDrawingTool> AvailableTools => toolStateManager.AvailableTools;
@@ -46,6 +49,7 @@ namespace LunaDraw.Logic.ViewModels
         public ReactiveCommand<Unit, Unit> ShowBrushesFlyoutCommand { get; }
         public ReactiveCommand<BrushShape, Unit> SelectBrushShapeCommand { get; }
         public ReactiveCommand<Unit, Unit> ImportImageCommand { get; }
+        public ReactiveCommand<Unit, Unit> SaveImageCommand { get; }
 
         // OAPH properties for reactive binding
         private IDrawingTool activeTool;
@@ -138,7 +142,9 @@ namespace LunaDraw.Logic.ViewModels
             SelectionViewModel selectionVM,
             HistoryViewModel historyVM,
             IMessageBus messageBus,
-            IBitmapCacheManager bitmapCacheManager)
+            IBitmapCacheManager bitmapCacheManager,
+            NavigationModel navigationModel,
+            IFileSaver fileSaver)
         {
             this.toolStateManager = toolStateManager;
             this.layerStateManager = layerStateManager;
@@ -146,6 +152,8 @@ namespace LunaDraw.Logic.ViewModels
             this.historyVM = historyVM;
             this.messageBus = messageBus;
             this.bitmapCacheManager = bitmapCacheManager;
+            this.navigationModel = navigationModel;
+            this.fileSaver = fileSaver;
 
             // Initialize ActiveTool and subscribe
             activeTool = this.toolStateManager.ActiveTool;
@@ -335,6 +343,90 @@ namespace LunaDraw.Logic.ViewModels
                 catch (Exception ex)
                 {
                      System.Diagnostics.Debug.WriteLine($"Error importing image: {ex.Message}");
+                }
+            });
+
+            SaveImageCommand = ReactiveCommand.CreateFromTask(async () =>
+            {
+                try
+                {
+                    if (this.navigationModel.CanvasWidth <= 0 || this.navigationModel.CanvasHeight <= 0)
+                        return;
+
+                    using var surface = SKSurface.Create(new SKImageInfo((int)this.navigationModel.CanvasWidth, (int)this.navigationModel.CanvasHeight));
+                    var canvas = surface.Canvas;
+                    canvas.Clear(SKColors.White);
+
+                    canvas.Save();
+
+                    // Apply the view transformation matrix
+                    canvas.SetMatrix(this.navigationModel.ViewMatrix);
+
+                    // Draw layers with masking support
+                    var layers = this.layerStateManager.Layers;
+                    for (int i = 0; i < layers.Count; i++)
+                    {
+                        var layer = layers[i];
+                        if (!layer.IsVisible) continue;
+
+                        if (layer.MaskingMode == Logic.Models.MaskingMode.Clip)
+                        {
+                            layer.Draw(canvas);
+                        }
+                        else
+                        {
+                            // Check if next layers are clipping layers
+                            bool hasClippingLayers = false;
+                            int nextIndex = i + 1;
+                            while (nextIndex < layers.Count && layers[nextIndex].MaskingMode == Logic.Models.MaskingMode.Clip)
+                            {
+                                if (layers[nextIndex].IsVisible) hasClippingLayers = true;
+                                nextIndex++;
+                            }
+
+                            if (hasClippingLayers)
+                            {
+                                canvas.SaveLayer();
+                                layer.Draw(canvas);
+
+                                using (var paint = new SKPaint { BlendMode = SKBlendMode.SrcATop })
+                                {
+                                    for (int j = i + 1; j < layers.Count; j++)
+                                    {
+                                        var clipLayer = layers[j];
+                                        if (clipLayer.MaskingMode != Logic.Models.MaskingMode.Clip) break;
+
+                                        if (clipLayer.IsVisible)
+                                        {
+                                            canvas.SaveLayer(paint);
+                                            clipLayer.Draw(canvas);
+                                            canvas.Restore();
+                                        }
+
+                                        i = j;
+                                    }
+                                }
+
+                                canvas.Restore();
+                            }
+                            else
+                            {
+                                layer.Draw(canvas);
+                            }
+                        }
+                    }
+
+                    canvas.Restore();
+
+                    using var image = surface.Snapshot();
+                    using var data = image.Encode(SKEncodedImageFormat.Png, 100);
+                    using var stream = data.AsStream();
+
+                    var result = await this.fileSaver.SaveAsync("lunadraw_canvas.png", stream);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error saving image: {ex.Message}");
                 }
             });
         }
