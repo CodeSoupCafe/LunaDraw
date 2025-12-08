@@ -93,7 +93,7 @@
 
                                     <!-- Visible Toggle (Eye) -->
                                     <Button Text="{Binding IsVisible, Converter={StaticResource BoolToEyeIconConverter}}" 
-                                            Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:MainViewModel}}, Path=ToggleLayerVisibilityCommand}"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:MainViewModel}}, Path=LayerPanelVM.ToggleLayerVisibilityCommand}"
                                             CommandParameter="{Binding .}"
                                             Padding="0"
                                             BackgroundColor="Transparent"
@@ -106,7 +106,7 @@
 
                                     <!-- Lock Toggle -->
                                     <Button Text="{Binding IsLocked, Converter={StaticResource BoolToLockIconConverter}}" 
-                                            Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:MainViewModel}}, Path=ToggleLayerLockCommand}"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:MainViewModel}}, Path=LayerPanelVM.ToggleLayerLockCommand}"
                                             CommandParameter="{Binding .}"
                                             Padding="0"
                                             BackgroundColor="Transparent"
@@ -125,7 +125,7 @@
                 <!-- Controls -->
                 <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="10">
                     <Button Text="+" 
-                            Command="{Binding AddLayerCommand}"
+                            Command="{Binding LayerPanelVM.AddLayerCommand}"
                             ToolTipProperties.Text="Add Layer"
                             FontSize="30"
                             HeightRequest="60"
@@ -134,7 +134,7 @@
                             TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
                             Grid.Column="0"/>
                     <Button Text="🗑️" 
-                            Command="{Binding RemoveLayerCommand}"
+                            Command="{Binding LayerPanelVM.RemoveLayerCommand}"
                             CommandParameter="{Binding CurrentLayer}"
                             ToolTipProperties.Text="Remove Layer"
                             FontSize="24"
