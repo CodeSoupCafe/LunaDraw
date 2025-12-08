@@ -184,16 +184,12 @@ namespace LunaDraw.Logic.ViewModels
       if (currentLayer == null || !SelectedElements.Any()) return;
 
       var selected = SelectedElements.First();
-      var sortedElements = currentLayer.Elements.OrderBy(e => e.ZIndex).ToList();
-      int index = sortedElements.IndexOf(selected);
+      var index = currentLayer.Elements.IndexOf(selected);
 
       if (index > 0)
       {
-        var elementBelow = sortedElements[index - 1];
-        sortedElements[index - 1] = selected;
-        sortedElements[index] = elementBelow;
-
-        SelectionViewModel.ReassignZIndices(sortedElements);
+        currentLayer.Elements.Move(index, index - 1);
+        ReassignZIndices(currentLayer.Elements);
         messageBus.SendMessage(new CanvasInvalidateMessage());
         layerStateManager.SaveState();
       }
@@ -205,16 +201,12 @@ namespace LunaDraw.Logic.ViewModels
       if (currentLayer == null || !SelectedElements.Any()) return;
 
       var selected = SelectedElements.First();
-      var sortedElements = currentLayer.Elements.OrderBy(e => e.ZIndex).ToList();
-      int index = sortedElements.IndexOf(selected);
+      var index = currentLayer.Elements.IndexOf(selected);
 
-      if (index < sortedElements.Count - 1)
+      if (index < currentLayer.Elements.Count - 1)
       {
-        var elementAbove = sortedElements[index + 1];
-        sortedElements[index + 1] = selected;
-        sortedElements[index] = elementAbove;
-
-        SelectionViewModel.ReassignZIndices(sortedElements);
+        currentLayer.Elements.Move(index, index + 1);
+        ReassignZIndices(currentLayer.Elements);
         messageBus.SendMessage(new CanvasInvalidateMessage());
         layerStateManager.SaveState();
       }
@@ -226,11 +218,12 @@ namespace LunaDraw.Logic.ViewModels
       if (currentLayer == null || !SelectedElements.Any()) return;
 
       var selected = SelectedElements.First();
-      var elements = currentLayer.Elements.ToList();
+      var index = currentLayer.Elements.IndexOf(selected);
 
-      if (elements.Remove(selected))
+      if (index > 0)
       {
-        SelectionViewModel.ReassignZIndices(elements);
+        currentLayer.Elements.Move(index, 0);
+        ReassignZIndices(currentLayer.Elements);
         messageBus.SendMessage(new CanvasInvalidateMessage());
         layerStateManager.SaveState();
       }
@@ -242,17 +235,12 @@ namespace LunaDraw.Logic.ViewModels
       if (currentLayer == null || !SelectedElements.Any()) return;
 
       var selected = SelectedElements.First();
-      var elements = currentLayer.Elements.ToList();
+      var index = currentLayer.Elements.IndexOf(selected);
 
-      if (elements.Remove(selected))
+      if (index < currentLayer.Elements.Count - 1)
       {
-        elements.Add(selected);
-
-        currentLayer.Elements.Clear();
-        foreach (var el in elements) currentLayer.Elements.Add(el);
-
-
-        SelectionViewModel.ReassignZIndices(elements);
+        currentLayer.Elements.Move(index, currentLayer.Elements.Count - 1);
+        ReassignZIndices(currentLayer.Elements);
         messageBus.SendMessage(new CanvasInvalidateMessage());
         layerStateManager.SaveState();
       }

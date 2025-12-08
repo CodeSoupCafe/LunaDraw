@@ -462,13 +462,6 @@ namespace LunaDraw.Logic.Models
       var initialScaleMatrix = SKMatrix.CreateScale(baseScale, baseScale);
       scaledPath.Transform(initialScaleMatrix); // Apply base scale once
 
-      // Prepare paint for stroke hit testing outside the loop for efficiency
-      using var strokeHitPaint = new SKPaint
-      {
-          Style = SKPaintStyle.Stroke,
-          StrokeWidth = 3 // Use a small constant tolerance for stroke hit
-      };
-
       for (int index = 0; index < Points.Count; index++)
       {
         var stampPoint = Points[index];
@@ -479,6 +472,7 @@ namespace LunaDraw.Logic.Models
         float currentScaleFactor = 1.0f;
         if (SizeJitter > 0)
         {
+            float unusedJitter = (float)random.NextDouble() * SizeJitter; // Match DrawSingleStamp consumption
             currentScaleFactor = 1.0f + ((float)random.NextDouble() - 0.5f) * 2.0f * SizeJitter;
             if (currentScaleFactor < 0.1f) currentScaleFactor = 0.1f;
         }
@@ -496,7 +490,7 @@ namespace LunaDraw.Logic.Models
         
         // Apply individual stamp's jittered scale and rotation
         SKMatrix stampTransform = SKMatrix.CreateScale(currentScaleFactor, currentScaleFactor, 0, 0);
-        stampTransform = stampTransform.PostConcat(SKMatrix.CreateRotation(finalRotation, 0, 0));
+        stampTransform = stampTransform.PostConcat(SKMatrix.CreateRotationDegrees(finalRotation, 0, 0));
         stampPath.Transform(stampTransform);
 
         // Translate to stamp's center point
@@ -504,13 +498,6 @@ namespace LunaDraw.Logic.Models
 
         // Check for visible fill hit (Alpha > 0)
         SKColor effectiveFillColor = StrokeColor; // Stamps are usually filled with stroke color for simplicity
-        if (HueJitter > 0 || IsRainbowEnabled)
-        {
-            // Replicate color jitter/rainbow for hit test if needed,
-            // but for simplicity, we assume if stamp is generally visible, it can be hit.
-            // If the color itself makes it transparent, that will be caught by Alpha > 0.
-            // For true pixel-perfect, would need to render to bitmap.
-        }
         
         // If stamp opacity * element opacity makes it transparent, it shouldn't hit.
         // For stamps, Flow * Opacity is the effective alpha applied to color.
@@ -520,14 +507,6 @@ namespace LunaDraw.Logic.Models
         {
             return true;
         }
-
-        // Check for visible stroke hit (if any - stamps usually don't have separate strokes)
-        // If the shape has a stroke, it would be part of the 'scaledPath' definition.
-        // For simplicity, we assume stamps are primarily solid shapes, so fill hit is primary.
-        // If shape is defined with an internal stroke and that needs separate hit logic,
-        // it would be more complex, but likely not the case for simple stamp brushes.
-        // If StrokeWidth > 0 && StrokeColor.Alpha > 0, we could check strokeHitPaint.
-        // For now, only checking fill for stamps.
       }
       
       return false; // No stamp hit
@@ -577,14 +556,38 @@ namespace LunaDraw.Logic.Models
     {
       // Returning a combined path is expensive but necessary if we want to convert to standard path
       var combinedPath = new SKPath();
-      float scale = Size / 20f;
+      float baseScale = Size / 20f;
       using var scaledPath = new SKPath(Shape.Path);
-      var scaleMatrix = SKMatrix.CreateScale(scale, scale);
+      var scaleMatrix = SKMatrix.CreateScale(baseScale, baseScale);
       scaledPath.Transform(scaleMatrix);
 
-      foreach (var point in Points)
+      for (int i = 0; i < Points.Count; i++)
       {
+        var point = Points[i];
+        var random = new Random(i * 1337);
+
+        float currentScaleFactor = 1.0f;
+        if (SizeJitter > 0)
+        {
+            float unusedJitter = (float)random.NextDouble() * SizeJitter; // Match DrawSingleStamp consumption
+            currentScaleFactor = 1.0f + ((float)random.NextDouble() - 0.5f) * 2.0f * SizeJitter;
+            if (currentScaleFactor < 0.1f) currentScaleFactor = 0.1f;
+        }
+
+        float currentRotationDelta = 0f;
+        if (AngleJitter > 0)
+        {
+            currentRotationDelta = ((float)random.NextDouble() - 0.5f) * 2.0f * AngleJitter;
+        }
+        float baseRotation = (Rotations != null && i < Rotations.Count) ? Rotations[i] : 0f;
+        float finalRotation = baseRotation + currentRotationDelta;
+
         var p = new SKPath(scaledPath);
+        
+        SKMatrix stampTransform = SKMatrix.CreateScale(currentScaleFactor, currentScaleFactor, 0, 0);
+        stampTransform = stampTransform.PostConcat(SKMatrix.CreateRotationDegrees(finalRotation, 0, 0));
+        p.Transform(stampTransform);
+
         p.Transform(SKMatrix.CreateTranslation(point.X, point.Y));
         combinedPath.AddPath(p);
       }
