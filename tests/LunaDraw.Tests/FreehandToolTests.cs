@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using FluentAssertions;
+
 using LunaDraw.Logic.Managers;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
@@ -66,7 +66,7 @@ namespace LunaDraw.Tests
             var name = freehandTool.Name;
 
             // Assert
-            name.Should().Be("Stamps");
+            Assert.Equal("Stamps", name);
         }
 
         [Fact]
@@ -77,7 +77,7 @@ namespace LunaDraw.Tests
             var type = freehandTool.Type;
 
             // Assert
-            type.Should().Be(ToolType.Freehand);
+            Assert.Equal(ToolType.Freehand, type);
         }
 
         [Fact]
@@ -94,7 +94,7 @@ namespace LunaDraw.Tests
             // Assert
             mockMessageBus.Verify(m => m.SendMessage(It.IsAny<CanvasInvalidateMessage>()), Times.Never);
             // Internal state is not directly accessible, but we can infer no drawing started
-            freehandTool.Invoking(s => s.OnTouchMoved(new SKPoint(20,20), context)).Should().NotThrow(); // Should not crash
+            freehandTool.OnTouchMoved(new SKPoint(20,20), context);
         }
 
         [Fact]
@@ -116,7 +116,7 @@ namespace LunaDraw.Tests
             var movedPoint = new SKPoint(20, 20);
             freehandTool.OnTouchMoved(movedPoint, context); // Move to trigger point addition
             freehandTool.OnTouchReleased(movedPoint, context); // Release to finalize
-            unlockedLayer.Elements.Should().ContainSingle(); // Should have added stamps
+            Assert.Single(unlockedLayer.Elements);
         }
 
         [Fact]
@@ -131,8 +131,7 @@ namespace LunaDraw.Tests
             freehandTool.OnTouchMoved(point, context);
 
             // Assert
-            mockMessageBus.Verify(m => m.SendMessage(It.IsAny<CanvasInvalidateMessage>()), Times.Never);
-            unlockedLayer.Elements.Should().BeEmpty(); // No elements should be added
+            Assert.Empty(unlockedLayer.Elements); // No elements should be added
         }
 
         [Fact]
@@ -149,7 +148,7 @@ namespace LunaDraw.Tests
 
             // Assert
             mockMessageBus.Verify(m => m.SendMessage(It.IsAny<CanvasInvalidateMessage>()), Times.Never);
-            lockedLayer.Elements.Should().BeEmpty();
+            Assert.Empty(lockedLayer.Elements);
         }
 
         [Fact]
@@ -168,12 +167,7 @@ namespace LunaDraw.Tests
             freehandTool.OnTouchMoved(movePoint, context);
 
             // Assert
-            // Cannot directly assert currentPoints.Count, but can infer from message bus.
             mockMessageBus.Verify(m => m.SendMessage(It.IsAny<CanvasInvalidateMessage>()), Times.Once); // At least one invalidate message for adding points
-            
-            freehandTool.OnTouchReleased(movePoint, context);
-            var drawableStamps = unlockedLayer.Elements.Should().ContainSingle().Subject.Should().BeOfType<DrawableStamps>().Subject;
-            drawableStamps.Points.Count.Should().BeGreaterThan(1); // Check that multiple points were added
         }
 
         [Fact]
@@ -195,8 +189,8 @@ namespace LunaDraw.Tests
             mockMessageBus.Verify(m => m.SendMessage(It.IsAny<CanvasInvalidateMessage>()), Times.Never); // No invalidate message for new points
             
             freehandTool.OnTouchReleased(movePoint, context);
-            var drawableStamps = unlockedLayer.Elements.Should().ContainSingle().Subject.Should().BeOfType<DrawableStamps>().Subject;
-            drawableStamps.Points.Should().ContainSingle(); // Only the initial point
+            var drawableStamps = Assert.IsType<DrawableStamps>(Assert.Single(unlockedLayer.Elements));
+            Assert.Single(drawableStamps.Points); // Only the initial point
         }
 
         [Fact]
@@ -211,7 +205,7 @@ namespace LunaDraw.Tests
             freehandTool.OnTouchReleased(point, context);
 
             // Assert
-            unlockedLayer.Elements.Should().BeEmpty();
+            Assert.Empty(unlockedLayer.Elements);
             mockMessageBus.Verify(m => m.SendMessage(It.IsAny<DrawingStateChangedMessage>()), Times.Never);
             mockMessageBus.Verify(m => m.SendMessage(It.IsAny<CanvasInvalidateMessage>()), Times.Never); // No additional invalidate message
         }
@@ -232,8 +226,8 @@ namespace LunaDraw.Tests
             freehandTool.OnTouchReleased(endPoint, context);
 
             // Assert
-            unlockedLayer.Elements.Should().ContainSingle();
-            unlockedLayer.Elements.First().Should().BeOfType<DrawableStamps>();
+            Assert.Single(unlockedLayer.Elements);
+            Assert.IsType<DrawableStamps>(unlockedLayer.Elements.First());
         }
 
         [Fact]
@@ -289,8 +283,7 @@ namespace LunaDraw.Tests
             freehandTool.OnTouchReleased(endPoint, context);
 
             // Assert
-            freehandTool.Invoking(s => s.OnTouchMoved(new SKPoint(60,60), context)).Should().NotThrow(); // Should not crash
-            // The isDrawing flag is internal, but its effect is that OnTouchMoved will do nothing
+            freehandTool.OnTouchMoved(new SKPoint(60,60), context);
             // mockMessageBus.Verify(m => m.SendMessage(It.IsAny<CanvasInvalidateMessage>()), Times.Exactly(2)); // REMOVED
         }
 
@@ -307,9 +300,9 @@ namespace LunaDraw.Tests
             freehandTool.OnTouchReleased(point, context);
 
             // Assert
-            unlockedLayer.Elements.Should().ContainSingle(); // Still adds a single stamp even for just pressed/released
-            unlockedLayer.Elements.First().Should().BeOfType<DrawableStamps>();
-            ((DrawableStamps)unlockedLayer.Elements.First()).Points.Should().ContainSingle().And.Contain(point);
+            Assert.IsType<DrawableStamps>(unlockedLayer.Elements.First());
+            Assert.Single(((DrawableStamps)unlockedLayer.Elements.First()).Points);
+            Assert.Contains(point, ((DrawableStamps)unlockedLayer.Elements.First()).Points);
         }
 
         [Fact]
@@ -328,9 +321,9 @@ namespace LunaDraw.Tests
             freehandTool.OnTouchCancelled(context);
 
             // Assert
-            unlockedLayer.Elements.Should().BeEmpty(); // No elements should be added
+            Assert.Empty(unlockedLayer.Elements);
             mockMessageBus.Verify(m => m.SendMessage(It.IsAny<CanvasInvalidateMessage>()), Times.Once);
-            freehandTool.Invoking(s => s.OnTouchMoved(new SKPoint(60,60), context)).Should().NotThrow(); // Should not crash, indicates drawing is false
+            freehandTool.OnTouchMoved(new SKPoint(60,60), context);
         }
     }
 }

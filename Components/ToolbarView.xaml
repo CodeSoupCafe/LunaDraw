@@ -81,7 +81,8 @@
                    HorizontalTextAlignment="Center"/>
           </StackLayout>
            <StackLayout HorizontalOptions="Center">
-            <Border WidthRequest="72"
+            <Border x:Name="BrushButton"
+                    WidthRequest="72"
                     HeightRequest="72"
                     Padding="8"
                     Margin="0,4"
@@ -99,7 +100,8 @@
                    HorizontalTextAlignment="Center"/>
           </StackLayout>
           <StackLayout HorizontalOptions="Center">
-            <Border WidthRequest="72"
+            <Border x:Name="ShapesButton"
+                    WidthRequest="72"
                     HeightRequest="72"
                     Padding="8"
                     Margin="0,4"
@@ -118,6 +120,16 @@
             <Label Text="Shapes"
                    HorizontalTextAlignment="Center"/>
           </StackLayout>
+
+          <StackLayout HorizontalOptions="Center">
+            <Button x:Name="ImageButton"
+                    Style="{StaticResource ToolbarButtonStyle}"
+                    Text="🖼️"
+                    Command="{Binding ImportImageCommand}"/>
+            <Label Text="Image"
+                   HorizontalTextAlignment="Center"/>
+          </StackLayout>
+
          <StackLayout HorizontalOptions="Center">
             <Button x:Name="EraserButton"
                     Style="{StaticResource ToolbarButtonStyle}"

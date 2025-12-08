@@ -12,6 +12,10 @@ LunaDraw is a child-centric drawing application designed for children aged 3–8
 
 > ### **Vibe-Coded**
 > The application is heavily vibe-coded and guided by best practices in the [Cline Rules](.clinerules/.clinerules.md) using [SPARC Agentic Development](https://gist.github.com/ruvnet/7d4e1d5c9233ab0a1d2a66bf5ec3e58f); mostly using [Gemini 3](https://gemini.google.com/). Hallucinations are always possible. It is recognized and should be by all that AI is still sometimes as helpful as a sack of hair.
+>
+> There are some very poor implementations by the AI such as string names of commands.
+>
+> The code is quite fragile in a lot of places.
 
 ## Features
 
@@ -58,6 +62,15 @@ The application is built using **.NET MAUI** targeting Windows, Android, iOS, an
 - .NET 8.0 or later (Project targets .NET 10.0 preview/nightly builds based on configuration).
 - Visual Studio 2022 or VS Code with C# Dev Kit.
 
+### Setting Up VS Code for Deployment
+
+1. Install the latest version of **[Visual Studio Code](https://code.visualstudio.com/)**.
+2. Open the LunaDraw project folder in Visual Studio Code.
+3. Install the recommended extensions (search in the Extensions view `Ctrl+Shift+X`):
+   - **[C# Dev Kit](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csdevkit)** (Essential for C# and MAUI development)
+   - **[.NET MAUI](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.dotnet-maui)** (Provides MAUI tooling and debug support)
+4. Follow the official **[.NET MAUI in VS Code Guide](https://learn.microsoft.com/en-us/dotnet/maui/get-started/installation?tabs=vsc)** to ensure all workloads and prerequisites are correctly installed.
+
 ### Building the Project
 
 1. Clone the repository.
@@ -67,7 +80,7 @@ The application is built using **.NET MAUI** targeting Windows, Android, iOS, an
 
 ## Testing
 
-The solution includes a unit test project `LunaDraw.Tests` using xUnit.
+The solution includes a unit test project `LunaDraw.Tests` using xUnit, Moq, and FluentValidation.
 
 To run tests:
 
@@ -81,15 +94,6 @@ For more detailed information, please refer to the `Documentation` directory:
 
 - [Architecture Design](Documentation/ArchitectureDesign.md)
 - [Features](Documentation/Features.md)
-
-### Setting Up VS Code for Deployment
-
-1. Install the latest version of **[Visual Studio Code](https://code.visualstudio.com/)**.
-2. Open the LunaDraw project folder in Visual Studio Code.
-3. Install the recommended extensions (search in the Extensions view `Ctrl+Shift+X`):
-   - **[C# Dev Kit](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csdevkit)** (Essential for C# and MAUI development)
-   - **[.NET MAUI](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.dotnet-maui)** (Provides MAUI tooling and debug support)
-4. Follow the official **[.NET MAUI in VS Code Guide](https://learn.microsoft.com/en-us/dotnet/maui/get-started/installation?tabs=vsc)** to ensure all workloads and prerequisites are correctly installed.
 
 ## Deployment
 

@@ -1,7 +1,5 @@
 using System.Globalization;
 using LunaDraw.Logic.Tools;
-using Microsoft.Maui.Controls;
-using Microsoft.Maui.Graphics;
 
 namespace LunaDraw.Converters;
 

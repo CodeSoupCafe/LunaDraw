@@ -20,6 +20,7 @@ namespace LunaDraw.Logic.Models
     public float StrokeWidth { get; set; }
     public SKBlendMode BlendMode { get; set; } = SKBlendMode.SrcOver;
     public bool IsFilled { get; set; }
+    public SKShader? FillShader { get; set; }
 
     public bool IsGlowEnabled { get; set; } = false;
     public SKColor GlowColor { get; set; } = SKColors.Transparent;
@@ -71,7 +72,13 @@ namespace LunaDraw.Logic.Models
               BlendMode = BlendMode
           };
 
-          if (FillColor.HasValue)
+          if (FillShader != null)
+          {
+              fillPaint.Shader = FillShader;
+              // Modulate with opacity/color if needed, but usually white for image shaders
+              fillPaint.Color = SKColors.White.WithAlpha(Opacity);
+          }
+          else if (FillColor.HasValue)
           {
               fillPaint.Color = FillColor.Value.WithAlpha(Opacity);
           }
@@ -88,7 +95,8 @@ namespace LunaDraw.Logic.Models
       {
           // Only draw stroke if it's an outline (not filled) OR if it has an explicit fill color (so we preserve border)
           // If it is filled but has NO fill color, it is a "solid blob" using StrokeColor, so we skip stroking to avoid double-draw/expansion
-          bool shouldStroke = !IsFilled || (IsFilled && FillColor.HasValue);
+          // BUT if we have a FillShader, we definitely want the stroke if it exists.
+          bool shouldStroke = !IsFilled || (IsFilled && (FillColor.HasValue || FillShader != null));
 
           if (shouldStroke)
           {
@@ -153,7 +161,8 @@ namespace LunaDraw.Logic.Models
         StrokeColor = StrokeColor,
         StrokeWidth = StrokeWidth,
         BlendMode = BlendMode,
-        IsFilled = IsFilled
+        IsFilled = IsFilled,
+        FillShader = FillShader // Share shader reference
       };
     }
 

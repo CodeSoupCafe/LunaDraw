@@ -2,7 +2,7 @@ using SkiaSharp;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Tools;
 
-namespace LunaDraw.Logic.Services
+namespace LunaDraw.Logic.Managers
 {
     public interface IToolStateManager
     {

@@ -2,353 +2,307 @@ using LunaDraw.Logic.Managers;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Tools;
-
 using ReactiveUI;
-
 using SkiaSharp;
 using SkiaSharp.Views.Maui;
 
 namespace LunaDraw.Logic.Services
 {
-  public class CanvasInputHandler : ICanvasInputHandler
+  public class CanvasInputHandler(
+      IToolStateManager toolStateManager,
+      ILayerStateManager layerStateManager,
+      SelectionManager selectionManager,
+      NavigationModel navigationModel,
+      IMessageBus messageBus) : ICanvasInputHandler
   {
-    private readonly IToolStateManager toolStateManager;
-    private readonly ILayerStateManager layerStateManager;
-    private readonly SelectionManager selectionManager;
-    private readonly NavigationModel navigationModel;
-    private readonly IMessageBus messageBus;
+    private readonly IToolStateManager toolStateManager = toolStateManager;
+    private readonly ILayerStateManager layerStateManager = layerStateManager;
+    private readonly SelectionManager selectionManager = selectionManager;
+    private readonly NavigationModel navigationModel = navigationModel;
+    private readonly IMessageBus messageBus = messageBus;
 
     private readonly Dictionary<long, SKPoint> activeTouches = [];
-    private bool isMultiTouching = false;
-    private bool isManipulatingSelection = false;
+    private bool isMultiTouch = false;
+    private bool manipulatingSelection = false;
 
-    // Multi-touch gesture state (snapshot at gesture start)
-    private SKPoint gestureStartCentroid;
-    private float gestureStartDistance;
-    private float gestureStartAngle;
-    private SKPoint previousCentroid;
-    private float previousDistance;
-    private float previousAngle;
+    // Gesture state
+    private SKPoint startCentroid;
+    private float startDistance;
+    private float startAngle;
+    private SKMatrix startMatrix;
+    private Dictionary<IDrawableElement, SKMatrix> startElementMatrices = [];
 
-    // Movement deadzone threshold to reduce jitter on tiny movements
-    private const float MovementThreshold = 2.0f;
-    private const float ScaleThreshold = 0.001f;
-    private const float RotationThreshold = 0.01f; // radians
-
-    public CanvasInputHandler(
-        IToolStateManager toolStateManager,
-        ILayerStateManager layerStateManager,
-        SelectionManager selectionManager,
-        NavigationModel navigationModel,
-        IMessageBus messageBus)
-    {
-      this.toolStateManager = toolStateManager;
-      this.layerStateManager = layerStateManager;
-      this.selectionManager = selectionManager;
-      this.navigationModel = navigationModel;
-      this.messageBus = messageBus;
-    }
+    // Smoothing
+    private SKMatrix previousOutputMatrix = SKMatrix.CreateIdentity();
+    private Dictionary<IDrawableElement, SKMatrix> previousElementMatrices = [];
+    private const float SmoothingFactor = 0.1f; // Lower = more smoothing (0.3 was original)
 
     public void ProcessTouch(SKTouchEventArgs e, SKRect canvasViewPort)
     {
       if (layerStateManager.CurrentLayer == null) return;
 
-      // e.Location is already relative to the SKCanvasView (pixel coordinates)
-      var adjustedLocation = e.Location;
+      var location = e.Location;
 
+      // Right click = select
+      if (e.MouseButton == SKMouseButton.Right)
+      {
+        if (e.ActionType == SKTouchAction.Pressed)
+        {
+          var selectTool = toolStateManager.AvailableTools.FirstOrDefault(t => t.Type == ToolType.Select);
+          if (selectTool != null) toolStateManager.ActiveTool = selectTool;
+
+          if (navigationModel.ViewMatrix.TryInvert(out var inverse))
+          {
+            PerformContextSelection(inverse.MapPoint(location));
+          }
+        }
+        return;
+      }
+
+      // Track touches
       switch (e.ActionType)
       {
         case SKTouchAction.Pressed:
-          activeTouches[e.Id] = adjustedLocation;
+          activeTouches[e.Id] = location;
           break;
         case SKTouchAction.Released:
         case SKTouchAction.Cancelled:
           activeTouches.Remove(e.Id);
           break;
+        case SKTouchAction.Moved:
+          activeTouches[e.Id] = location;
+          break;
       }
 
-      // Handle Multi-Touch State Transition
+      // Multi-touch state management
       if (activeTouches.Count >= 2)
       {
-        if (!isMultiTouching)
+        if (!isMultiTouch)
         {
-          isMultiTouching = true;
+          isMultiTouch = true;
 
-          // Cancel any active drawing tool
+          // Cancel drawing
           if (toolStateManager.ActiveTool is IDrawingTool tool)
           {
-            var context = CreateToolContext();
-            tool.OnTouchCancelled(context);
+            tool.OnTouchCancelled(CreateToolContext());
           }
 
-          // Determine manipulation target (View vs Selection) ONCE at the start of multi-touch
-          DetermineMultiTouchTarget();
+          // Snapshot state
+          var touches = activeTouches.OrderBy(kvp => kvp.Key).Take(2).Select(kvp => kvp.Value).ToArray();
+          startCentroid = new SKPoint((touches[0].X + touches[1].X) / 2f, (touches[0].Y + touches[1].Y) / 2f);
+          startDistance = Distance(touches[0], touches[1]);
+          startAngle = (float)Math.Atan2(touches[1].Y - touches[0].Y, touches[1].X - touches[0].X);
+          startMatrix = navigationModel.ViewMatrix;
+          previousOutputMatrix = navigationModel.ViewMatrix;
 
-          // Initialize gesture snapshot
-          InitializeGestureSnapshot();
+          // Check if manipulating selection
+          manipulatingSelection = false;
+          if (layerStateManager.CurrentLayer?.IsLocked == false && selectionManager.Selected.Any())
+          {
+            if (navigationModel.ViewMatrix.TryInvert(out var inv))
+            {
+              foreach (var touch in activeTouches.Values)
+              {
+                var worldPt = inv.MapPoint(touch);
+                if (selectionManager.Selected.Any(el => el.HitTest(worldPt)))
+                {
+                  manipulatingSelection = true;
+                  startElementMatrices = selectionManager.Selected.ToDictionary(el => el, el => el.TransformMatrix);
+                  break;
+                }
+              }
+            }
+          }
+        }
+
+        // Handle multi-touch ONCE after all touch updates
+        if (e.ActionType == SKTouchAction.Moved)
+        {
+          HandleMultiTouch();
         }
       }
       else
       {
-        isMultiTouching = false;
-        isManipulatingSelection = false;
-      }
+        isMultiTouch = false;
+        manipulatingSelection = false;
+        startElementMatrices.Clear();
+        previousOutputMatrix = SKMatrix.CreateIdentity();
 
-      // Handle Navigation (Multi-touch)
-      if (activeTouches.Count >= 2 && e.ActionType == SKTouchAction.Moved && activeTouches.ContainsKey(e.Id))
-      {
-        HandleMultiTouch(adjustedLocation, e.Id);
-        return;
-      }
-
-      // Handle Drawing/Tools (Single touch)
-      if (activeTouches.Count <= 1)
-      {
-        HandleSingleTouch(adjustedLocation, e.ActionType);
-      }
-
-      // Update stored location for Moved events if not handled by navigation
-      if (e.ActionType == SKTouchAction.Moved && activeTouches.ContainsKey(e.Id))
-      {
-        activeTouches[e.Id] = adjustedLocation;
-      }
-    }
-
-    private void InitializeGestureSnapshot()
-    {
-      // Get the two primary fingers
-      var sortedKeys = activeTouches.Keys.OrderBy(k => k).ToList();
-      if (sortedKeys.Count < 2) return;
-
-      long id1 = sortedKeys[0];
-      long id2 = sortedKeys[1];
-
-      SKPoint p1 = activeTouches[id1];
-      SKPoint p2 = activeTouches[id2];
-
-      // Store initial gesture state
-      gestureStartCentroid = CalculateCentroid(p1, p2);
-      gestureStartDistance = Distance(p1, p2);
-      gestureStartAngle = CalculateAngle(p1, p2);
-
-      // Initialize "previous" values to current state
-      previousCentroid = gestureStartCentroid;
-      previousDistance = gestureStartDistance;
-      previousAngle = gestureStartAngle;
-    }
-
-    private void DetermineMultiTouchTarget()
-    {
-      isManipulatingSelection = false;
-      var selectedElements = selectionManager.Selected;
-
-      if (layerStateManager.CurrentLayer?.IsLocked == false && selectedElements.Any())
-      {
-        SKMatrix inverseView;
-        bool canInvert = navigationModel.TotalMatrix.TryInvert(out inverseView);
-
-        if (canInvert)
+        // Single touch
+        if (navigationModel.ViewMatrix.TryInvert(out var inverse))
         {
-          // Check if ANY active touch is on a selected element
-          foreach (var touchPoint in activeTouches.Values)
+          var worldPoint = inverse.MapPoint(location);
+          var context = CreateToolContext();
+
+          switch (e.ActionType)
           {
-            var worldPoint = inverseView.MapPoint(touchPoint);
-            if (selectedElements.Any(el => el.HitTest(worldPoint)))
+            case SKTouchAction.Pressed:
+              HandleTouchPressed(worldPoint, context);
+              break;
+            case SKTouchAction.Moved:
+              toolStateManager.ActiveTool.OnTouchMoved(worldPoint, context);
+              break;
+            case SKTouchAction.Released:
+              toolStateManager.ActiveTool.OnTouchReleased(worldPoint, context);
+              break;
+          }
+        }
+      }
+    }
+
+    private void HandleMultiTouch()
+    {
+      var touches = activeTouches.OrderBy(kvp => kvp.Key).Take(2).Select(kvp => kvp.Value).ToArray();
+      if (touches.Length < 2) return;
+
+      // Current centroid (average of both fingers)
+      var centroid = new SKPoint((touches[0].X + touches[1].X) / 2f, (touches[0].Y + touches[1].Y) / 2f);
+
+      // Calculate current gesture state
+      float distance = Distance(touches[0], touches[1]);
+      float angle = (float)Math.Atan2(touches[1].Y - touches[0].Y, touches[1].X - touches[0].X);
+
+      // Calculate transform from start
+      var translation = centroid - startCentroid;
+      float scale = startDistance > 0.001f ? distance / startDistance : 1.0f;
+      float rotation = angle - startAngle;
+
+      // Aggressive deadzones to filter out noise
+      if (Math.Abs(scale - 1.0f) < 0.05f) scale = 1.0f;
+      if (Math.Abs(rotation) < 0.2f) rotation = 0f; // ~11 degrees
+
+      // Build transform around start centroid
+      var transform = SKMatrix.CreateIdentity();
+      transform = transform.PostConcat(SKMatrix.CreateTranslation(-startCentroid.X, -startCentroid.Y));
+      transform = transform.PostConcat(SKMatrix.CreateScale(scale, scale));
+      transform = transform.PostConcat(SKMatrix.CreateRotation(rotation));
+      transform = transform.PostConcat(SKMatrix.CreateTranslation(startCentroid.X, startCentroid.Y));
+      transform = transform.PostConcat(SKMatrix.CreateTranslation(translation.X, translation.Y));
+
+      if (manipulatingSelection)
+      {
+        if (navigationModel.ViewMatrix.TryInvert(out var invView))
+        {
+          var worldTransform = SKMatrix.Concat(invView, SKMatrix.Concat(transform, navigationModel.ViewMatrix));
+
+          foreach (var element in selectionManager.Selected)
+          {
+            if (startElementMatrices.TryGetValue(element, out var startMat))
             {
-              isManipulatingSelection = true;
-              return;
+              var elementTarget = SKMatrix.Concat(worldTransform, startMat);
+
+              // Smooth element transforms too
+              if (!previousElementMatrices.ContainsKey(element))
+              {
+                previousElementMatrices[element] = element.TransformMatrix;
+              }
+
+              var smoothedElementMatrix = LerpMatrix(previousElementMatrices[element], elementTarget, SmoothingFactor);
+              element.TransformMatrix = smoothedElementMatrix;
+              previousElementMatrices[element] = smoothedElementMatrix;
             }
           }
         }
       }
+      else
+      {
+        // Calculate target matrix
+        var targetMatrix = SKMatrix.Concat(transform, startMatrix);
+
+        // Smooth the output using exponential moving average
+        var smoothedMatrix = LerpMatrix(previousOutputMatrix, targetMatrix, SmoothingFactor);
+        previousOutputMatrix = smoothedMatrix;
+
+        navigationModel.ViewMatrix = smoothedMatrix;
+      }
+
+      messageBus.SendMessage(new CanvasInvalidateMessage());
     }
 
-    private void HandleMultiTouch(SKPoint newLocation, long id)
+    private SKMatrix LerpMatrix(SKMatrix a, SKMatrix b, float t)
     {
-      // 1. Identify the two primary fingers
-      var sortedKeys = activeTouches.Keys.OrderBy(k => k).ToList();
-      if (sortedKeys.Count < 2) return;
-
-      long id1 = sortedKeys[0];
-      long id2 = sortedKeys[1];
-
-      // 2. Get CURRENT positions BEFORE updating dictionary
-      // One finger is at its old position (in dictionary), the other just moved
-      SKPoint currentP1 = (id == id1) ? newLocation : activeTouches[id1];
-      SKPoint currentP2 = (id == id2) ? newLocation : activeTouches[id2];
-
-      // 3. Calculate current gesture state
-      SKPoint currentCentroid = CalculateCentroid(currentP1, currentP2);
-      float currentDistance = Distance(currentP1, currentP2);
-      float currentAngle = CalculateAngle(currentP1, currentP2);
-
-      // 4. Calculate deltas from PREVIOUS frame (not from gesture start)
-      SKPoint centroidDelta = currentCentroid - previousCentroid;
-      float scaleDelta = (previousDistance > 0.001f) ? currentDistance / previousDistance : 1.0f;
-      float rotationDelta = currentAngle - previousAngle;
-
-      // 5. Apply thresholds to reduce jitter on tiny movements
-      bool shouldTransform = false;
-
-      if (Math.Abs(centroidDelta.X) > MovementThreshold || Math.Abs(centroidDelta.Y) > MovementThreshold)
+      return new SKMatrix
       {
-        shouldTransform = true;
-      }
+        ScaleX = a.ScaleX + (b.ScaleX - a.ScaleX) * t,
+        ScaleY = a.ScaleY + (b.ScaleY - a.ScaleY) * t,
+        SkewX = a.SkewX + (b.SkewX - a.SkewX) * t,
+        SkewY = a.SkewY + (b.SkewY - a.SkewY) * t,
+        TransX = a.TransX + (b.TransX - a.TransX) * t,
+        TransY = a.TransY + (b.TransY - a.TransY) * t,
+        Persp0 = a.Persp0 + (b.Persp0 - a.Persp0) * t,
+        Persp1 = a.Persp1 + (b.Persp1 - a.Persp1) * t,
+        Persp2 = a.Persp2 + (b.Persp2 - a.Persp2) * t
+      };
+    }
 
-      if (Math.Abs(scaleDelta - 1.0f) > ScaleThreshold)
+    private void PerformContextSelection(SKPoint worldPoint)
+    {
+      IDrawableElement? hit = null;
+      Layer? hitLayer = null;
+
+      foreach (var layer in layerStateManager.Layers.Reverse())
       {
-        shouldTransform = true;
-      }
+        if (!layer.IsVisible || layer.IsLocked) continue;
 
-      if (Math.Abs(rotationDelta) > RotationThreshold)
-      {
-        shouldTransform = true;
-      }
+        hit = layer.Elements
+          .Where(e => e.IsVisible)
+          .OrderByDescending(e => e.ZIndex)
+          .FirstOrDefault(e => e.HitTest(worldPoint));
 
-      // 6. Build transformation matrix if movement exceeds threshold
-      if (shouldTransform)
-      {
-        // Use PREVIOUS centroid as the pivot point for transformation
-        SKMatrix matrix = BuildTransformationMatrix(
-          previousCentroid,
-          scaleDelta,
-          rotationDelta,
-          centroidDelta
-        );
-
-        // Safety check for invalid matrix values
-        if (!float.IsNaN(matrix.ScaleX) && !float.IsInfinity(matrix.ScaleX))
+        if (hit != null)
         {
-          // 7. Apply to Model
-          if (isManipulatingSelection)
-          {
-            ApplySelectionTransform(matrix);
-          }
-          else
-          {
-            // Apply to UserMatrix (View transformation)
-            navigationModel.UserMatrix = SKMatrix.Concat(matrix, navigationModel.UserMatrix);
-          }
-
-          messageBus.SendMessage(new CanvasInvalidateMessage());
-        }
-
-        // 8. Update previous state for next frame
-        previousCentroid = currentCentroid;
-        previousDistance = currentDistance;
-        previousAngle = currentAngle;
-      }
-
-      // 9. Update the touch dictionary for the finger that moved
-      activeTouches[id] = newLocation;
-    }
-
-    private SKMatrix BuildTransformationMatrix(
-      SKPoint pivot,
-      float scale,
-      float rotation,
-      SKPoint translation)
-    {
-      SKMatrix matrix = SKMatrix.CreateIdentity();
-
-      // Step 1: Translate pivot to origin
-      matrix = matrix.PostConcat(SKMatrix.CreateTranslation(-pivot.X, -pivot.Y));
-
-      // Step 2: Apply scale around origin
-      matrix = matrix.PostConcat(SKMatrix.CreateScale(scale, scale));
-
-      // Step 3: Apply rotation around origin
-      matrix = matrix.PostConcat(SKMatrix.CreateRotation(rotation));
-
-      // Step 4: Translate pivot back
-      matrix = matrix.PostConcat(SKMatrix.CreateTranslation(pivot.X, pivot.Y));
-
-      // Step 5: Apply pan/translation
-      matrix = matrix.PostConcat(SKMatrix.CreateTranslation(translation.X, translation.Y));
-
-      return matrix;
-    }
-
-    private SKPoint CalculateCentroid(SKPoint p1, SKPoint p2)
-    {
-      return new SKPoint((p1.X + p2.X) / 2.0f, (p1.Y + p2.Y) / 2.0f);
-    }
-
-    private float CalculateAngle(SKPoint p1, SKPoint p2)
-    {
-      return (float)Math.Atan2(p2.Y - p1.Y, p2.X - p1.X);
-    }
-
-    private void ApplySelectionTransform(SKMatrix touchDelta)
-    {
-      var selectedElements = selectionManager.Selected;
-      if (layerStateManager.CurrentLayer?.IsLocked == false && selectedElements.Any())
-      {
-        SKMatrix inverseView;
-        SKMatrix currentTotal = navigationModel.TotalMatrix;
-        if (currentTotal.TryInvert(out inverseView))
-        {
-          // Convert screen-space delta to world-space delta
-          // DeltaWorld = View^-1 * DeltaScreen * View
-          var worldDelta = SKMatrix.Concat(inverseView, SKMatrix.Concat(touchDelta, currentTotal));
-
-          foreach (var element in selectedElements)
-          {
-            element.TransformMatrix = SKMatrix.Concat(worldDelta, element.TransformMatrix);
-          }
+          hitLayer = layer;
+          break;
         }
       }
-    }
 
-    private float Distance(SKPoint p1, SKPoint p2) => (float)Math.Sqrt(Math.Pow(p2.X - p1.X, 2) + Math.Pow(p2.Y - p1.Y, 2));
-
-    private void HandleSingleTouch(SKPoint location, SKTouchAction actionType)
-    {
-      // Transform point to World Coordinates using the TotalMatrix (which includes FitToScreen + User transforms)
-      SKMatrix inverse = SKMatrix.CreateIdentity();
-      bool canInvert = navigationModel.TotalMatrix.TryInvert(out inverse);
-
-      if (canInvert)
+      if (hit != null)
       {
-        var worldPoint = inverse.MapPoint(location);
-
-        var context = CreateToolContext();
-
-        switch (actionType)
+        if (!selectionManager.Contains(hit))
         {
-          case SKTouchAction.Pressed:
-            HandleTouchPressed(worldPoint, context);
-            break;
-          case SKTouchAction.Moved:
-            toolStateManager.ActiveTool.OnTouchMoved(worldPoint, context);
-            // No need to update _activeTouches here as it's done in ProcessTouch
-            break;
-          case SKTouchAction.Released:
-            toolStateManager.ActiveTool.OnTouchReleased(worldPoint, context);
-            break;
+          selectionManager.Clear();
+          selectionManager.Add(hit);
         }
+        if (hitLayer != null) layerStateManager.CurrentLayer = hitLayer;
       }
+      else
+      {
+        selectionManager.Clear();
+      }
+
+      messageBus.SendMessage(new CanvasInvalidateMessage());
     }
 
-    private void HandleTouchPressed(SKPoint point, ToolContext context)
+    private void HandleTouchPressed(SKPoint worldPoint, ToolContext context)
     {
-      // If we're using the select tool, let it handle all selection logic
+      if (layerStateManager.CurrentLayer?.IsLocked == true) return;
+
       if (toolStateManager.ActiveTool.Type == ToolType.Select)
       {
-        toolStateManager.ActiveTool.OnTouchPressed(point, context);
+        toolStateManager.ActiveTool.OnTouchPressed(worldPoint, context);
+
+        if (selectionManager.Selected.Count > 0)
+        {
+          var layer = layerStateManager.Layers.FirstOrDefault(l => l.Elements.Contains(selectionManager.Selected[0]));
+          if (layer != null && layer != layerStateManager.CurrentLayer)
+          {
+            layerStateManager.CurrentLayer = layer;
+          }
+        }
         return;
       }
 
-      // For other tools, clear selection and proceed with drawing
       if (selectionManager.Selected.Any())
       {
         selectionManager.Clear();
         messageBus.SendMessage(new CanvasInvalidateMessage());
       }
 
-      // Pass to the active tool for drawing operations
-      toolStateManager.ActiveTool.OnTouchPressed(point, context);
+      toolStateManager.ActiveTool.OnTouchPressed(worldPoint, context);
     }
+
+    private float Distance(SKPoint p1, SKPoint p2) =>
+      (float)Math.Sqrt((p2.X - p1.X) * (p2.X - p1.X) + (p2.Y - p1.Y) * (p2.Y - p1.Y));
 
     private ToolContext CreateToolContext()
     {
@@ -363,8 +317,9 @@ namespace LunaDraw.Logic.Services
         Spacing = toolStateManager.Spacing,
         BrushShape = toolStateManager.CurrentBrushShape,
         AllElements = layerStateManager.Layers.SelectMany(l => l.Elements),
+        Layers = layerStateManager.Layers,
         SelectionManager = selectionManager,
-        Scale = navigationModel.TotalMatrix.ScaleX,
+        Scale = navigationModel.ViewMatrix.ScaleX,
         IsGlowEnabled = toolStateManager.IsGlowEnabled,
         GlowColor = toolStateManager.GlowColor,
         GlowRadius = toolStateManager.GlowRadius,
@@ -373,7 +328,7 @@ namespace LunaDraw.Logic.Services
         SizeJitter = toolStateManager.SizeJitter,
         AngleJitter = toolStateManager.AngleJitter,
         HueJitter = toolStateManager.HueJitter,
-        CanvasMatrix = navigationModel.UserMatrix
+        CanvasMatrix = navigationModel.ViewMatrix
       };
     }
   }

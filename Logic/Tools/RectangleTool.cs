@@ -4,16 +4,12 @@ using SkiaSharp;
 
 namespace LunaDraw.Logic.Tools
 {
-  public class RectangleTool : ShapeTool<DrawableRectangle>
+  public class RectangleTool(IMessageBus messageBus) : ShapeTool<DrawableRectangle>(messageBus)
   {
     public override string Name => "Rectangle";
     public override ToolType Type => ToolType.Rectangle;
 
-    public RectangleTool(IMessageBus messageBus) : base(messageBus)
-    {
-    }
-
-    protected override DrawableRectangle CreateShape(ToolContext context)
+        protected override DrawableRectangle CreateShape(ToolContext context)
     {
       return new DrawableRectangle
       {

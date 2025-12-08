@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using FluentAssertions;
+
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Services;
 using LunaDraw.Logic.Tools;
@@ -16,6 +16,14 @@ namespace LunaDraw.Tests
     public class ShapeToolsTests
     {
         private static readonly Mock<IMessageBus> MockBus = new Mock<IMessageBus>();
+
+        public static TheoryData<IDrawingTool> ToolData =>
+            new TheoryData<IDrawingTool>
+            {
+                { new RectangleTool(MockBus.Object)},
+                { new EllipseTool(MockBus.Object) },
+                { new LineTool(MockBus.Object) }
+            };
 
         public static TheoryData<IDrawingTool, Type> ToolTypesData =>
             new TheoryData<IDrawingTool, Type>
@@ -45,8 +53,8 @@ namespace LunaDraw.Tests
         }
 
         [Theory]
-        [MemberData(nameof(ToolTypesData))]
-        public void OnTouchReleased_ShouldAddOneElement(IDrawingTool tool, Type expectedElementType)
+        [MemberData(nameof(ToolData))]
+        public void OnTouchReleased_ShouldAddOneElement(IDrawingTool tool)
         {
             // Arrange
             var layer = new Layer();
@@ -55,7 +63,7 @@ namespace LunaDraw.Tests
             PerformDrawAction(tool, layer);
 
             // Assert
-            layer.Elements.Should().HaveCount(1);
+            Assert.Single(layer.Elements);
         }
 
         [Theory]
@@ -69,12 +77,12 @@ namespace LunaDraw.Tests
             PerformDrawAction(tool, layer);
 
             // Assert
-            layer.Elements.First().Should().BeOfType(expectedElementType);
+            Assert.IsType(expectedElementType, layer.Elements.First());
         }
 
         [Theory]
-        [MemberData(nameof(ToolTypesData))]
-        public void OnTouchReleased_ShouldSetStrokeColor(IDrawingTool tool, Type expectedElementType)
+        [MemberData(nameof(ToolData))]
+        public void OnTouchReleased_ShouldSetStrokeColor(IDrawingTool tool)
         {
             // Arrange
             var layer = new Layer();
@@ -83,12 +91,12 @@ namespace LunaDraw.Tests
             PerformDrawAction(tool, layer);
 
             // Assert
-            layer.Elements.First().StrokeColor.Should().Be(SKColors.Red);
+            Assert.Equal(SKColors.Red, layer.Elements.First().StrokeColor);
         }
 
         [Theory]
-        [MemberData(nameof(ToolTypesData))]
-        public void OnTouchReleased_ShouldSetStrokeWidth(IDrawingTool tool, Type expectedElementType)
+        [MemberData(nameof(ToolData))]
+        public void OnTouchReleased_ShouldSetStrokeWidth(IDrawingTool tool)
         {
             // Arrange
             var layer = new Layer();
@@ -97,12 +105,12 @@ namespace LunaDraw.Tests
             PerformDrawAction(tool, layer);
 
             // Assert
-            layer.Elements.First().StrokeWidth.Should().Be(2f);
+            Assert.Equal(2f, layer.Elements.First().StrokeWidth);
         }
         
         [Theory]
-        [MemberData(nameof(ToolTypesData))]
-        public void OnTouchCancelled_ShouldNotAddShape(IDrawingTool tool, Type expectedElementType)
+        [MemberData(nameof(ToolData))]
+        public void OnTouchCancelled_ShouldNotAddShape(IDrawingTool tool)
         {
             // Arrange
             var layer = new Layer();
@@ -120,7 +128,7 @@ namespace LunaDraw.Tests
             tool.OnTouchCancelled(context);
 
             // Assert
-            layer.Elements.Should().BeEmpty();
+            Assert.Empty(layer.Elements);
         }
     }
 }

@@ -2,12 +2,8 @@ using LunaDraw.Logic.Models;
 
 namespace LunaDraw.Logic.Messages
 {
-    public class BrushShapeChangedMessage
+    public class BrushShapeChangedMessage(BrushShape shape)
     {
-        public BrushShape Shape { get; }
-        public BrushShapeChangedMessage(BrushShape shape)
-        {
-            Shape = shape;
-        }
+        public BrushShape Shape { get; } = shape;
     }
 }

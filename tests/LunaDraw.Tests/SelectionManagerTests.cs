@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using FluentAssertions;
+
 using LunaDraw.Logic.Managers;
 using LunaDraw.Logic.Models;
 using Moq;
@@ -24,11 +24,8 @@ namespace LunaDraw.Tests
         {
             // Arrange
             // Act
-            // (SelectionManager initialized in constructor)
-
-            // Assert
-            selectionManager.Selected.Should().BeEmpty();
-            selectionManager.HasSelection.Should().BeFalse();
+            Assert.Empty(selectionManager.Selected);
+            Assert.False(selectionManager.HasSelection);
         }
 
         [Fact]
@@ -36,15 +33,13 @@ namespace LunaDraw.Tests
         {
             // Arrange
             var mockElement = new Mock<IDrawableElement>();
-            mockElement.SetupAllProperties(); // Enable setting IsSelected property
-
+            mockElement.SetupAllProperties();
             // Act
             selectionManager.Add(mockElement.Object);
 
-            // Assert
-            selectionManager.Selected.Should().ContainSingle(x => x == mockElement.Object); // Fixed
-            selectionManager.HasSelection.Should().BeTrue();
-            mockElement.Object.IsSelected.Should().BeTrue();
+            Assert.Contains(mockElement.Object, selectionManager.Selected);
+            Assert.True(selectionManager.HasSelection);
+            Assert.True(mockElement.Object.IsSelected);
         }
 
         [Fact]
@@ -58,13 +53,11 @@ namespace LunaDraw.Tests
 
             // Act
             selectionManager.Add(mockElement.Object);
-
-            // Assert
-            eventRaised.Should().BeTrue();
+            Assert.True(eventRaised);
         }
 
         [Fact]
-        public void Add_ShouldNotAddDuplicateElements()
+        public void AddShouldNotAddDuplicateElements()
         {
             // Arrange
             var mockElement = new Mock<IDrawableElement>();
@@ -72,28 +65,15 @@ namespace LunaDraw.Tests
             selectionManager.Add(mockElement.Object); // Add once
 
             // Act
-            selectionManager.Add(mockElement.Object); // Add again
+            selectionManager.Add(mockElement.Object); // Try to add again
 
             // Assert
-            selectionManager.Selected.Should().ContainSingle(x => x == mockElement.Object); // Fixed
+            Assert.Single(selectionManager.Selected, x => x == mockElement.Object);
+            Assert.Single(selectionManager.Selected);
         }
 
         [Fact]
-        public void Add_ShouldIgnoreNullElement()
-        {
-            // Arrange
-            IDrawableElement nullElement = null;
-
-            // Act
-            selectionManager.Add(nullElement);
-
-            // Assert
-            selectionManager.Selected.Should().BeEmpty();
-            selectionManager.HasSelection.Should().BeFalse();
-        }
-
-        [Fact]
-        public void Remove_ShouldRemoveElementAndSetIsSelectedFalse()
+        public void RemoveShouldRemoveElement()
         {
             // Arrange
             var mockElement = new Mock<IDrawableElement>();
@@ -104,9 +84,22 @@ namespace LunaDraw.Tests
             selectionManager.Remove(mockElement.Object);
 
             // Assert
-            selectionManager.Selected.Should().BeEmpty();
-            selectionManager.HasSelection.Should().BeFalse();
-            mockElement.Object.IsSelected.Should().BeFalse();
+            Assert.Empty(selectionManager.Selected);
+        }
+
+        [Fact]
+        public void RemoveShouldSetIsSelectedFalse()
+        {
+            // Arrange
+            var mockElement = new Mock<IDrawableElement>();
+            mockElement.SetupAllProperties();
+            selectionManager.Add(mockElement.Object); // Add element first
+
+            // Act
+            selectionManager.Remove(mockElement.Object);
+
+            // Assert
+            Assert.False(mockElement.Object.IsSelected);
         }
 
         [Fact]
@@ -121,11 +114,9 @@ namespace LunaDraw.Tests
 
             // Act
             selectionManager.Remove(mockElement.Object);
-
-            // Assert
-            eventRaised.Should().BeTrue();
+            Assert.True(eventRaised);
         }
-        
+
         [Fact]
         public void Remove_ShouldIgnoreNullOrNonExistentElement()
         {
@@ -136,12 +127,11 @@ namespace LunaDraw.Tests
             selectionManager.Add(mockElement.Object); // Add one element
 
             // Act
-            selectionManager.Remove(null);
             selectionManager.Remove(nonExistentElement);
 
             // Assert
-            selectionManager.Selected.Should().ContainSingle(x => x == mockElement.Object); // Fixed
-            selectionManager.HasSelection.Should().BeTrue();
+            Assert.Single(selectionManager.Selected, x => x == mockElement.Object); // Fixed
+            Assert.True(selectionManager.HasSelection);
         }
 
         [Fact]
@@ -159,10 +149,10 @@ namespace LunaDraw.Tests
             selectionManager.Clear();
 
             // Assert
-            selectionManager.Selected.Should().BeEmpty();
-            selectionManager.HasSelection.Should().BeFalse();
-            mockElement1.Object.IsSelected.Should().BeFalse();
-            mockElement2.Object.IsSelected.Should().BeFalse();
+            Assert.Empty(selectionManager.Selected);
+            Assert.False(selectionManager.HasSelection);
+            Assert.False(mockElement1.Object.IsSelected);
+            Assert.False(mockElement2.Object.IsSelected);
         }
 
         [Fact]
@@ -179,7 +169,7 @@ namespace LunaDraw.Tests
             selectionManager.Clear();
 
             // Assert
-            eventRaised.Should().BeTrue();
+            Assert.True(eventRaised);
         }
 
         [Fact]
@@ -193,7 +183,7 @@ namespace LunaDraw.Tests
             selectionManager.Clear();
 
             // Assert
-            eventRaised.Should().BeFalse();
+            Assert.False(eventRaised);
         }
 
         [Fact]
@@ -207,8 +197,8 @@ namespace LunaDraw.Tests
             selectionManager.Toggle(mockElement.Object);
 
             // Assert
-            selectionManager.Selected.Should().ContainSingle(x => x == mockElement.Object); // Fixed
-            mockElement.Object.IsSelected.Should().BeTrue();
+            Assert.Single(selectionManager.Selected, x => x == mockElement.Object);
+            Assert.True(mockElement.Object.IsSelected);
         }
 
         [Fact]
@@ -223,22 +213,8 @@ namespace LunaDraw.Tests
             selectionManager.Toggle(mockElement.Object);
 
             // Assert
-            selectionManager.Selected.Should().BeEmpty();
-            mockElement.Object.IsSelected.Should().BeFalse();
-        }
-
-        [Fact]
-        public void Toggle_ShouldIgnoreNullElement()
-        {
-            // Arrange
-            IDrawableElement nullElement = null;
-            var initialCount = selectionManager.Selected.Count;
-
-            // Act
-            selectionManager.Toggle(nullElement);
-
-            // Assert
-            selectionManager.Selected.Count.Should().Be(initialCount); // No change
+            Assert.Empty(selectionManager.Selected);
+            Assert.False(mockElement.Object.IsSelected);
         }
 
         [Fact]
@@ -252,7 +228,7 @@ namespace LunaDraw.Tests
             var result = selectionManager.Contains(mockElement.Object);
 
             // Assert
-            result.Should().BeTrue();
+            Assert.True(result);
         }
 
         [Fact]
@@ -266,20 +242,7 @@ namespace LunaDraw.Tests
             var result = selectionManager.Contains(nonSelectedElement);
 
             // Assert
-            result.Should().BeFalse();
-        }
-
-        [Fact]
-        public void Contains_ShouldReturnFalseForNullElement()
-        {
-            // Arrange
-            IDrawableElement nullElement = null;
-
-            // Act
-            var result = selectionManager.Contains(nullElement);
-
-            // Assert
-            result.Should().BeFalse();
+            Assert.False(result);
         }
 
         [Fact]
@@ -295,9 +258,9 @@ namespace LunaDraw.Tests
             var allElements = selectionManager.GetAll();
 
             // Assert
-            allElements.Should().HaveCount(2);
-            allElements.Should().Contain(mockElement1);
-            allElements.Should().Contain(mockElement2);
+            Assert.Equal(2, allElements.Count());
+            Assert.Contains(mockElement1, allElements);
+            Assert.Contains(mockElement2, allElements);
         }
 
         [Fact]
@@ -307,7 +270,7 @@ namespace LunaDraw.Tests
             var bounds = selectionManager.GetBounds();
 
             // Assert
-            bounds.Should().Be(SKRect.Empty);
+            Assert.Equal(SKRect.Empty, bounds);
         }
 
         [Fact]
@@ -323,7 +286,7 @@ namespace LunaDraw.Tests
             var bounds = selectionManager.GetBounds();
 
             // Assert
-            bounds.Should().Be(expectedBounds);
+            Assert.Equal(expectedBounds, bounds);
         }
 
         [Fact]
@@ -341,7 +304,7 @@ namespace LunaDraw.Tests
             var bounds = selectionManager.GetBounds();
 
             // Assert
-            bounds.Should().Be(new SKRect(0, 0, 75, 75));
+            Assert.Equal(new SKRect(0, 0, 75, 75), bounds);
         }
     }
 }

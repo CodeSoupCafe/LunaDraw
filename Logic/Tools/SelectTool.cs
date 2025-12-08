@@ -11,7 +11,7 @@ namespace LunaDraw.Logic.Tools
   public enum SelectionState { None, Selecting, Dragging, Resizing }
   public enum ResizeHandle { None, TopLeft, TopRight, BottomLeft, BottomRight, Top, Right, Bottom, Left }
 
-  public class SelectTool : IDrawingTool
+  public class SelectTool(IMessageBus messageBus) : IDrawingTool
   {
     public string Name => "Select";
     public ToolType Type => ToolType.Select;
@@ -22,12 +22,7 @@ namespace LunaDraw.Logic.Tools
     private SKRect originalBounds;
     private Dictionary<IDrawableElement, SKMatrix> originalTransforms = [];
     private SKPoint resizeStartPoint;
-    private readonly IMessageBus messageBus;
-
-    public SelectTool(IMessageBus messageBus)
-    {
-        this.messageBus = messageBus;
-    }
+    private readonly IMessageBus messageBus = messageBus;
 
     public void OnTouchPressed(SKPoint point, ToolContext context)
     {
@@ -55,10 +50,36 @@ namespace LunaDraw.Logic.Tools
         }
       }
 
-      var hitElement = context.AllElements
-                              .Where(e => e.IsVisible)
-                              .OrderByDescending(e => e.ZIndex)
-                              .FirstOrDefault(e => e.HitTest(point));
+      IDrawableElement? hitElement = null;
+
+      if (context.Layers != null)
+      {
+        // Iterate layers from Top (Last) to Bottom (First)
+        foreach (var layer in context.Layers.Reverse())
+        {
+          if (!layer.IsVisible) continue;
+
+          // Hit test elements in this layer, sorted by ZIndex Descending (Topmost first)
+          var hit = layer.Elements
+                         .Where(e => e.IsVisible)
+                         .OrderByDescending(e => e.ZIndex)
+                         .FirstOrDefault(e => e.HitTest(point));
+
+          if (hit != null)
+          {
+            hitElement = hit;
+            break; // Found the top-most element
+          }
+        }
+      }
+      else
+      {
+        // Fallback to old behavior if Layers not provided (shouldn't happen with updated context)
+        hitElement = context.AllElements
+                            .Where(e => e.IsVisible)
+                            .OrderByDescending(e => e.ZIndex)
+                            .FirstOrDefault(e => e.HitTest(point));
+      }
 
       if (hitElement != null)
       {
@@ -122,11 +143,11 @@ namespace LunaDraw.Logic.Tools
       messageBus.SendMessage(new CanvasInvalidateMessage());
     }
 
-    public void DrawPreview(SKCanvas canvas, MainViewModel viewModel)
+    public void DrawPreview(SKCanvas canvas, ToolContext context)
     {
-      if (viewModel.SelectionManager.Selected.Any())
+      if (context.SelectionManager.Selected.Any())
       {
-        var bounds = viewModel.SelectionManager.GetBounds();
+        var bounds = context.SelectionManager.GetBounds();
         if (bounds.IsEmpty) return;
 
         // Draw selection rectangle
@@ -142,15 +163,22 @@ namespace LunaDraw.Logic.Tools
         // Draw resize handles
         if (currentState != SelectionState.Resizing)
         {
-          float handleDrawScale = 1.0f / viewModel.NavigationModel.TotalMatrix.ScaleX; // Inverse of canvas scale
-          DrawResizeHandle(canvas, new SKPoint(bounds.Left, bounds.Top), handleDrawScale);
-          DrawResizeHandle(canvas, new SKPoint(bounds.Right, bounds.Top), handleDrawScale);
-          DrawResizeHandle(canvas, new SKPoint(bounds.Left, bounds.Bottom), handleDrawScale);
-          DrawResizeHandle(canvas, new SKPoint(bounds.Right, bounds.Bottom), handleDrawScale);
-          DrawResizeHandle(canvas, new SKPoint(bounds.MidX, bounds.Top), handleDrawScale);
-          DrawResizeHandle(canvas, new SKPoint(bounds.Right, bounds.MidY), handleDrawScale);
-          DrawResizeHandle(canvas, new SKPoint(bounds.MidX, bounds.Bottom), handleDrawScale);
-          DrawResizeHandle(canvas, new SKPoint(bounds.Left, bounds.MidY), handleDrawScale);
+          float scale = context.Scale;
+          // Note: context.Scale is just TotalMatrix.ScaleX in MainViewModel logic.
+          // But here we need inverse scale for drawing constant size handles? 
+          // GetResizeHandle used (1/ScaleX).
+          // If context.Scale is ScaleX, then handleDrawScale = 1.0f / context.Scale.
+
+          float handleDrawScale = 1.0f / (Math.Abs(context.Scale) < 0.0001f ? 1.0f : context.Scale);
+
+          SelectTool.DrawResizeHandle(canvas, new SKPoint(bounds.Left, bounds.Top), handleDrawScale);
+          SelectTool.DrawResizeHandle(canvas, new SKPoint(bounds.Right, bounds.Top), handleDrawScale);
+          SelectTool.DrawResizeHandle(canvas, new SKPoint(bounds.Left, bounds.Bottom), handleDrawScale);
+          SelectTool.DrawResizeHandle(canvas, new SKPoint(bounds.Right, bounds.Bottom), handleDrawScale);
+          SelectTool.DrawResizeHandle(canvas, new SKPoint(bounds.MidX, bounds.Top), handleDrawScale);
+          SelectTool.DrawResizeHandle(canvas, new SKPoint(bounds.Right, bounds.MidY), handleDrawScale);
+          SelectTool.DrawResizeHandle(canvas, new SKPoint(bounds.MidX, bounds.Bottom), handleDrawScale);
+          SelectTool.DrawResizeHandle(canvas, new SKPoint(bounds.Left, bounds.MidY), handleDrawScale);
         }
       }
     }
@@ -159,18 +187,18 @@ namespace LunaDraw.Logic.Tools
     {
       const float baseHandleSize = 24f; // Size in screen pixels at 1:1 scale
       float scaledHandleSize = baseHandleSize / scale; // Adjust based on current zoom level
-      if (IsPointNear(point, new SKPoint(bounds.Left, bounds.Top), scaledHandleSize)) return ResizeHandle.TopLeft;
-      if (IsPointNear(point, new SKPoint(bounds.Right, bounds.Top), scaledHandleSize)) return ResizeHandle.TopRight;
-      if (IsPointNear(point, new SKPoint(bounds.Left, bounds.Bottom), scaledHandleSize)) return ResizeHandle.BottomLeft;
-      if (IsPointNear(point, new SKPoint(bounds.Right, bounds.Bottom), scaledHandleSize)) return ResizeHandle.BottomRight;
-      if (IsPointNear(point, new SKPoint(bounds.MidX, bounds.Top), scaledHandleSize)) return ResizeHandle.Top;
-      if (IsPointNear(point, new SKPoint(bounds.Right, bounds.MidY), scaledHandleSize)) return ResizeHandle.Right;
-      if (IsPointNear(point, new SKPoint(bounds.MidX, bounds.Bottom), scaledHandleSize)) return ResizeHandle.Bottom;
-      if (IsPointNear(point, new SKPoint(bounds.Left, bounds.MidY), scaledHandleSize)) return ResizeHandle.Left;
+      if (SelectTool.IsPointNear(point, new SKPoint(bounds.Left, bounds.Top), scaledHandleSize)) return ResizeHandle.TopLeft;
+      if (SelectTool.IsPointNear(point, new SKPoint(bounds.Right, bounds.Top), scaledHandleSize)) return ResizeHandle.TopRight;
+      if (SelectTool.IsPointNear(point, new SKPoint(bounds.Left, bounds.Bottom), scaledHandleSize)) return ResizeHandle.BottomLeft;
+      if (SelectTool.IsPointNear(point, new SKPoint(bounds.Right, bounds.Bottom), scaledHandleSize)) return ResizeHandle.BottomRight;
+      if (SelectTool.IsPointNear(point, new SKPoint(bounds.MidX, bounds.Top), scaledHandleSize)) return ResizeHandle.Top;
+      if (SelectTool.IsPointNear(point, new SKPoint(bounds.Right, bounds.MidY), scaledHandleSize)) return ResizeHandle.Right;
+      if (SelectTool.IsPointNear(point, new SKPoint(bounds.MidX, bounds.Bottom), scaledHandleSize)) return ResizeHandle.Bottom;
+      if (SelectTool.IsPointNear(point, new SKPoint(bounds.Left, bounds.MidY), scaledHandleSize)) return ResizeHandle.Left;
       return ResizeHandle.None;
     }
 
-    private bool IsPointNear(SKPoint p1, SKPoint p2, float tolerance)
+    private static bool IsPointNear(SKPoint p1, SKPoint p2, float tolerance)
     {
       return (p1.X - p2.X) * (p1.X - p2.X) + (p1.Y - p2.Y) * (p1.Y - p2.Y) < tolerance * tolerance;
     }
@@ -180,7 +208,7 @@ namespace LunaDraw.Logic.Tools
       if (originalTransforms == null) return;
 
       var dragDelta = currentPoint - resizeStartPoint;
-      var newBounds = CalculateNewBounds(originalBounds, activeHandle, dragDelta);
+      var newBounds = SelectTool.CalculateNewBounds(originalBounds, activeHandle, dragDelta);
 
       if (newBounds.Width < 5 || newBounds.Height < 5) return;
 
@@ -202,7 +230,7 @@ namespace LunaDraw.Logic.Tools
       }
     }
 
-    private SKRect CalculateNewBounds(SKRect bounds, ResizeHandle handle, SKPoint dragDelta)
+    private static SKRect CalculateNewBounds(SKRect bounds, ResizeHandle handle, SKPoint dragDelta)
     {
       float left = bounds.Left, top = bounds.Top, right = bounds.Right, bottom = bounds.Bottom;
 
@@ -224,7 +252,7 @@ namespace LunaDraw.Logic.Tools
       return new SKRect(left, top, right, bottom);
     }
 
-    private void DrawResizeHandle(SKCanvas canvas, SKPoint point, float scale)
+    private static void DrawResizeHandle(SKCanvas canvas, SKPoint point, float scale)
     {
       const float baseHandleSize = 4f;
       float handleSize = baseHandleSize * scale;
