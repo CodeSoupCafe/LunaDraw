@@ -113,6 +113,8 @@ public partial class MainPage : ContentPage
     int width = e.BackendRenderTarget.Width;
     int height = e.BackendRenderTarget.Height;
     viewModel.CanvasSize = new SKRect(0, 0, width, height);
+    viewModel.NavigationModel.CanvasWidth = width;
+    viewModel.NavigationModel.CanvasHeight = height;
 
     canvas.Clear(SKColors.White);
 

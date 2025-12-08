@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Maui;
+using CommunityToolkit.Maui.Storage;
 using LunaDraw.Logic.Managers;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Services;
@@ -43,6 +44,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<ICanvasInputHandler, CanvasInputHandler>();
         builder.Services.AddSingleton<ClipboardManager>();
         builder.Services.AddSingleton<IBitmapCacheManager, BitmapCacheManager>();
+        builder.Services.AddSingleton<IFileSaver>(FileSaver.Default);
 
         // Register ViewModels
         builder.Services.AddSingleton<LayerPanelViewModel>();
