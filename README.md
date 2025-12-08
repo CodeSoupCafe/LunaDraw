@@ -80,7 +80,7 @@ The application is built using **.NET MAUI** targeting Windows, Android, iOS, an
 
 ## Testing
 
-The solution includes a unit test project `LunaDraw.Tests` using xUnit, Moq, and FluentValidation.
+The solution includes a unit test project `LunaDraw.Tests` using xUnit, Moq, and AwesomeValidation.
 
 To run tests:
 
