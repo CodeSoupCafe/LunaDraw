@@ -1,3 +1,26 @@
+/* 
+ *  Copyright (c) 2025 CodeSoupCafe LLC
+ *  
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *  
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *  
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
+ *  
+ */
+
 using System.Reactive;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
@@ -17,18 +40,133 @@ namespace LunaDraw.Logic.ViewModels
 {
     public class ToolbarViewModel : ReactiveObject
     {
-        private readonly IToolStateManager toolStateManager;
-        private readonly ILayerStateManager layerStateManager;
+        private readonly ILayerFacade layerFacade;
         private readonly SelectionViewModel selectionVM;
         private readonly HistoryViewModel historyVM;
         private readonly IMessageBus messageBus;
-        private readonly IBitmapCacheManager bitmapCacheManager;
+        private readonly IBitmapCache bitmapCacheManager;
         private readonly NavigationModel navigationModel;
         private readonly IFileSaver fileSaver;
 
-        // Forward properties from ToolState
-        public List<IDrawingTool> AvailableTools => toolStateManager.AvailableTools;
-        public List<BrushShape> AvailableBrushShapes => toolStateManager.AvailableBrushShapes;
+        // Tool State Properties
+        private IDrawingTool activeTool;
+        public IDrawingTool ActiveTool
+        {
+            get => activeTool;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref activeTool, value);
+                messageBus.SendMessage(new ToolChangedMessage(value));
+            }
+        }
+
+        private SKColor strokeColor = SKColors.MediumPurple;
+        public SKColor StrokeColor
+        {
+            get => strokeColor;
+            set => this.RaiseAndSetIfChanged(ref strokeColor, value);
+        }
+
+        private SKColor? fillColor = SKColors.SteelBlue;
+        public SKColor? FillColor
+        {
+            get => fillColor;
+            set => this.RaiseAndSetIfChanged(ref fillColor, value);
+        }
+
+        private float strokeWidth = 40;
+        public float StrokeWidth
+        {
+            get => strokeWidth;
+            set => this.RaiseAndSetIfChanged(ref strokeWidth, value);
+        }
+
+        private byte opacity = 255;
+        public byte Opacity
+        {
+            get => opacity;
+            set => this.RaiseAndSetIfChanged(ref opacity, value);
+        }
+
+        private byte flow = 255;
+        public byte Flow
+        {
+            get => flow;
+            set => this.RaiseAndSetIfChanged(ref flow, value);
+        }
+
+        private float spacing = 1f;
+        public float Spacing
+        {
+            get => spacing;
+            set => this.RaiseAndSetIfChanged(ref spacing, value);
+        }
+
+        private BrushShape currentBrushShape;
+        public BrushShape CurrentBrushShape
+        {
+            get => currentBrushShape;
+            set => this.RaiseAndSetIfChanged(ref currentBrushShape, value);
+        }
+
+        private bool isGlowEnabled = false;
+        public bool IsGlowEnabled
+        {
+            get => isGlowEnabled;
+            set => this.RaiseAndSetIfChanged(ref isGlowEnabled, value);
+        }
+
+        private SKColor glowColor = SKColors.Yellow;
+        public SKColor GlowColor
+        {
+            get => glowColor;
+            set => this.RaiseAndSetIfChanged(ref glowColor, value);
+        }
+
+        private float glowRadius = 10f;
+        public float GlowRadius
+        {
+            get => glowRadius;
+            set => this.RaiseAndSetIfChanged(ref glowRadius, value);
+        }
+
+        private bool isRainbowEnabled;
+        public bool IsRainbowEnabled
+        {
+            get => isRainbowEnabled;
+            set => this.RaiseAndSetIfChanged(ref isRainbowEnabled, value);
+        }
+
+        private float scatterRadius;
+        public float ScatterRadius
+        {
+            get => scatterRadius;
+            set => this.RaiseAndSetIfChanged(ref scatterRadius, value);
+        }
+
+        private float sizeJitter;
+        public float SizeJitter
+        {
+            get => sizeJitter;
+            set => this.RaiseAndSetIfChanged(ref sizeJitter, value);
+        }
+
+        private float angleJitter;
+        public float AngleJitter
+        {
+            get => angleJitter;
+            set => this.RaiseAndSetIfChanged(ref angleJitter, value);
+        }
+
+        private float hueJitter;
+        public float HueJitter
+        {
+            get => hueJitter;
+            set => this.RaiseAndSetIfChanged(ref hueJitter, value);
+        }
+
+        public List<IDrawingTool> AvailableTools { get; }
+        public List<BrushShape> AvailableBrushShapes { get; }
 
         // Delegated Commands
         public ReactiveCommand<IDrawingTool, Unit> SelectToolCommand { get; }
@@ -50,59 +188,6 @@ namespace LunaDraw.Logic.ViewModels
         public ReactiveCommand<BrushShape, Unit> SelectBrushShapeCommand { get; }
         public ReactiveCommand<Unit, Unit> ImportImageCommand { get; }
         public ReactiveCommand<Unit, Unit> SaveImageCommand { get; }
-
-        // OAPH properties for reactive binding
-        private IDrawingTool activeTool;
-        public IDrawingTool ActiveTool
-        {
-            get => activeTool;
-            set => this.RaiseAndSetIfChanged(ref activeTool, value);
-        }
-
-        private readonly ObservableAsPropertyHelper<SKColor> strokeColor;
-        public SKColor StrokeColor => strokeColor.Value;
-
-        private readonly ObservableAsPropertyHelper<SKColor?> fillColor;
-        public SKColor? FillColor => fillColor.Value;
-
-        private readonly ObservableAsPropertyHelper<float> strokeWidth;
-        public float StrokeWidth => strokeWidth.Value;
-
-        private readonly ObservableAsPropertyHelper<byte> opacity;
-        public byte Opacity => opacity.Value;
-
-        private readonly ObservableAsPropertyHelper<byte> flow;
-        public byte Flow => flow.Value;
-
-        private readonly ObservableAsPropertyHelper<float> spacing;
-        public float Spacing => spacing.Value;
-
-        private readonly ObservableAsPropertyHelper<BrushShape> currentBrushShape;
-        public BrushShape CurrentBrushShape => currentBrushShape.Value;
-
-        private readonly ObservableAsPropertyHelper<bool> isGlowEnabled;
-        public bool IsGlowEnabled => isGlowEnabled.Value;
-
-        private readonly ObservableAsPropertyHelper<SKColor> glowColor;
-        public SKColor GlowColor => glowColor.Value;
-
-        private readonly ObservableAsPropertyHelper<float> glowRadius;
-        public float GlowRadius => glowRadius.Value;
-
-        private readonly ObservableAsPropertyHelper<bool> isRainbowEnabled;
-        public bool IsRainbowEnabled => isRainbowEnabled.Value;
-
-        private readonly ObservableAsPropertyHelper<float> scatterRadius;
-        public float ScatterRadius => scatterRadius.Value;
-
-        private readonly ObservableAsPropertyHelper<float> sizeJitter;
-        public float SizeJitter => sizeJitter.Value;
-
-        private readonly ObservableAsPropertyHelper<float> angleJitter;
-        public float AngleJitter => angleJitter.Value;
-
-        private readonly ObservableAsPropertyHelper<float> hueJitter;
-        public float HueJitter => hueJitter.Value;
 
         // UI state properties
         private bool isSettingsOpen = false;
@@ -137,17 +222,15 @@ namespace LunaDraw.Logic.ViewModels
         }
 
         public ToolbarViewModel(
-            IToolStateManager toolStateManager,
-            ILayerStateManager layerStateManager,
+            ILayerFacade layerFacade,
             SelectionViewModel selectionVM,
             HistoryViewModel historyVM,
             IMessageBus messageBus,
-            IBitmapCacheManager bitmapCacheManager,
+            IBitmapCache bitmapCacheManager,
             NavigationModel navigationModel,
             IFileSaver fileSaver)
         {
-            this.toolStateManager = toolStateManager;
-            this.layerStateManager = layerStateManager;
+            this.layerFacade = layerFacade;
             this.selectionVM = selectionVM;
             this.historyVM = historyVM;
             this.messageBus = messageBus;
@@ -155,68 +238,80 @@ namespace LunaDraw.Logic.ViewModels
             this.navigationModel = navigationModel;
             this.fileSaver = fileSaver;
 
-            // Initialize ActiveTool and subscribe
-            activeTool = this.toolStateManager.ActiveTool;
-            
-            this.toolStateManager.WhenAnyValue(x => x.ActiveTool)
-                .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(tool => ActiveTool = tool);
+            // Initialize Tools and Shapes
+            AvailableTools =
+            [
+                new SelectTool(messageBus),
+                new FreehandTool(messageBus),
+                new RectangleTool(messageBus),
+                new EllipseTool(messageBus),
+                new LineTool(messageBus),
+                new FillTool(messageBus),
+                new EraserBrushTool(messageBus)
+            ];
 
-            // Create SelectToolCommand locally
+            AvailableBrushShapes =
+            [
+                BrushShape.Circle(),
+                BrushShape.Square(),
+                BrushShape.Star(),
+                BrushShape.Heart(),
+                BrushShape.Sparkle(),
+                BrushShape.Cloud(),
+                BrushShape.Moon(),
+                BrushShape.Lightning(),
+                BrushShape.Diamond(),
+                BrushShape.Triangle(),
+                BrushShape.Hexagon()
+            ];
+
+            activeTool = new FreehandTool(messageBus);
+            currentBrushShape = AvailableBrushShapes.First();
+
+            // Initialize commands
             SelectToolCommand = ReactiveCommand.Create<IDrawingTool>(tool =>
             {
-                this.toolStateManager.ActiveTool = tool;
+                ActiveTool = tool;
             }, outputScheduler: RxApp.MainThreadScheduler);
-
-            // Subscribe directly to IToolStateManager
-            strokeColor = this.toolStateManager.WhenAnyValue(x => x.StrokeColor)
-              .ToProperty(this, x => x.StrokeColor, this.toolStateManager.StrokeColor);
-
-            fillColor = this.toolStateManager.WhenAnyValue(x => x.FillColor)
-              .ToProperty(this, x => x.FillColor, this.toolStateManager.FillColor);
-
-            strokeWidth = this.toolStateManager.WhenAnyValue(x => x.StrokeWidth)
-              .ToProperty(this, x => x.StrokeWidth, this.toolStateManager.StrokeWidth);
-
-            opacity = this.toolStateManager.WhenAnyValue(x => x.Opacity)
-              .ToProperty(this, x => x.Opacity, this.toolStateManager.Opacity);
-
-            flow = this.toolStateManager.WhenAnyValue(x => x.Flow)
-              .ToProperty(this, x => x.Flow, this.toolStateManager.Flow);
-
-            spacing = this.toolStateManager.WhenAnyValue(x => x.Spacing)
-              .ToProperty(this, x => x.Spacing, this.toolStateManager.Spacing);
-
-            currentBrushShape = this.toolStateManager.WhenAnyValue(x => x.CurrentBrushShape)
-              .ToProperty(this, x => x.CurrentBrushShape, this.toolStateManager.CurrentBrushShape);
-
-            isGlowEnabled = this.toolStateManager.WhenAnyValue(x => x.IsGlowEnabled)
-              .ToProperty(this, x => x.IsGlowEnabled, initialValue: this.toolStateManager.IsGlowEnabled);
-
-            glowColor = this.toolStateManager.WhenAnyValue(x => x.GlowColor)
-              .ToProperty(this, x => x.GlowColor, initialValue: this.toolStateManager.GlowColor);
-
-            glowRadius = this.toolStateManager.WhenAnyValue(x => x.GlowRadius)
-              .ToProperty(this, x => x.GlowRadius, initialValue: this.toolStateManager.GlowRadius);
-
-            isRainbowEnabled = this.toolStateManager.WhenAnyValue(x => x.IsRainbowEnabled)
-              .ToProperty(this, x => x.IsRainbowEnabled, initialValue: this.toolStateManager.IsRainbowEnabled);
-
-            scatterRadius = this.toolStateManager.WhenAnyValue(x => x.ScatterRadius)
-              .ToProperty(this, x => x.ScatterRadius, initialValue: this.toolStateManager.ScatterRadius);
-
-            sizeJitter = this.toolStateManager.WhenAnyValue(x => x.SizeJitter)
-              .ToProperty(this, x => x.SizeJitter, initialValue: this.toolStateManager.SizeJitter);
-
-            angleJitter = this.toolStateManager.WhenAnyValue(x => x.AngleJitter)
-              .ToProperty(this, x => x.AngleJitter, initialValue: this.toolStateManager.AngleJitter);
-
-            hueJitter = this.toolStateManager.WhenAnyValue(x => x.HueJitter)
-              .ToProperty(this, x => x.HueJitter, initialValue: this.toolStateManager.HueJitter);
 
             isAnyFlyoutOpen = this.WhenAnyValue(x => x.IsSettingsOpen, x => x.IsShapesFlyoutOpen, x => x.IsBrushesFlyoutOpen)
               .Select(values => values.Item1 || values.Item2 || values.Item3)
               .ToProperty(this, x => x.IsAnyFlyoutOpen);
+
+            // Reactive Logic: Close flyouts when ActiveTool changes
+            this.WhenAnyValue(x => x.ActiveTool)
+                .Skip(1) // Don't trigger on initialization
+                .Subscribe(_ =>
+                {
+                    IsBrushesFlyoutOpen = false;
+                    IsShapesFlyoutOpen = false;
+                    IsSettingsOpen = false;
+                });
+
+            // Listen for messages that update tool state
+            this.messageBus.Listen<BrushSettingsChangedMessage>().Subscribe(msg =>
+            {
+                if (msg.StrokeColor.HasValue) StrokeColor = msg.StrokeColor.Value;
+                if (msg.ShouldClearFillColor) FillColor = null;
+                else if (msg.FillColor.HasValue) FillColor = msg.FillColor.Value;
+                if (msg.Transparency.HasValue) Opacity = msg.Transparency.Value;
+                if (msg.Flow.HasValue) Flow = msg.Flow.Value;
+                if (msg.Spacing.HasValue) Spacing = msg.Spacing.Value;
+                if (msg.StrokeWidth.HasValue) StrokeWidth = msg.StrokeWidth.Value;
+                if (msg.IsGlowEnabled.HasValue) IsGlowEnabled = msg.IsGlowEnabled.Value;
+                if (msg.GlowColor.HasValue) GlowColor = msg.GlowColor.Value;
+                if (msg.GlowRadius.HasValue) GlowRadius = msg.GlowRadius.Value;
+                if (msg.IsRainbowEnabled.HasValue) IsRainbowEnabled = msg.IsRainbowEnabled.Value;
+                if (msg.ScatterRadius.HasValue) ScatterRadius = msg.ScatterRadius.Value;
+                if (msg.SizeJitter.HasValue) SizeJitter = msg.SizeJitter.Value;
+                if (msg.AngleJitter.HasValue) AngleJitter = msg.AngleJitter.Value;
+                if (msg.HueJitter.HasValue) HueJitter = msg.HueJitter.Value;
+            });
+
+            this.messageBus.Listen<BrushShapeChangedMessage>().Subscribe(msg =>
+            {
+                CurrentBrushShape = msg.Shape;
+            });
 
             lastActiveShapeTool = AvailableTools.FirstOrDefault(t => t is RectangleTool)
                                    ?? AvailableTools.FirstOrDefault(t => t is EllipseTool)
@@ -326,23 +421,23 @@ namespace LunaDraw.Logic.ViewModels
 
                         // Load with downsampling (max 2048x2048)
                         var bitmap = await this.bitmapCacheManager.GetBitmapAsync(path, 2048, 2048);
-                        
+
                         if (bitmap != null)
                         {
                             var drawableImage = new DrawableImage(bitmap)
                             {
                                 SourcePath = path
                             };
-                            
-                            this.layerStateManager.CurrentLayer?.Elements.Add(drawableImage);
+
+                            this.layerFacade.CurrentLayer?.Elements.Add(drawableImage);
                             this.messageBus.SendMessage(new CanvasInvalidateMessage());
-                            this.layerStateManager.SaveState();
+                            this.layerFacade.SaveState();
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                     System.Diagnostics.Debug.WriteLine($"Error importing image: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"Error importing image: {ex.Message}");
                 }
             });
 
@@ -363,7 +458,7 @@ namespace LunaDraw.Logic.ViewModels
                     canvas.SetMatrix(this.navigationModel.ViewMatrix);
 
                     // Draw layers with masking support
-                    var layers = this.layerStateManager.Layers;
+                    var layers = this.layerFacade.Layers;
                     for (int i = 0; i < layers.Count; i++)
                     {
                         var layer = layers[i];

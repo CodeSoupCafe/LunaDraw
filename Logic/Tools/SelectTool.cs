@@ -1,3 +1,26 @@
+/* 
+ *  Copyright (c) 2025 CodeSoupCafe LLC
+ *  
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *  
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *  
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
+ *  
+ */
+
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.ViewModels;
@@ -31,9 +54,9 @@ namespace LunaDraw.Logic.Tools
       lastPoint = point;
 
       // Check for resize handles if we have a selection
-      if (context.SelectionManager.Selected.Any())
+      if (context.SelectionObserver.Selected.Any())
       {
-        var bounds = context.SelectionManager.GetBounds();
+        var bounds = context.SelectionObserver.GetBounds();
         var handle = GetResizeHandle(point, bounds, context.Scale);
 
         if (handle != ResizeHandle.None)
@@ -42,7 +65,7 @@ namespace LunaDraw.Logic.Tools
           activeHandle = handle;
           resizeStartPoint = point;
           originalBounds = bounds;
-          originalTransforms = context.SelectionManager.GetAll()
+          originalTransforms = context.SelectionObserver.GetAll()
             .ToDictionary(e => e, e => e.TransformMatrix);
 
           messageBus.SendMessage(new CanvasInvalidateMessage());
@@ -83,16 +106,16 @@ namespace LunaDraw.Logic.Tools
 
       if (hitElement != null)
       {
-        if (!context.SelectionManager.Contains(hitElement))
+        if (!context.SelectionObserver.Contains(hitElement))
         {
-          context.SelectionManager.Clear();
-          context.SelectionManager.Add(hitElement);
+          context.SelectionObserver.Clear();
+          context.SelectionObserver.Add(hitElement);
         }
         currentState = SelectionState.Dragging;
       }
       else
       {
-        context.SelectionManager.Clear();
+        context.SelectionObserver.Clear();
         currentState = SelectionState.None;
       }
 
@@ -107,7 +130,7 @@ namespace LunaDraw.Logic.Tools
       {
         case SelectionState.Dragging:
           var delta = point - lastPoint;
-          foreach (var element in context.SelectionManager.GetAll())
+          foreach (var element in context.SelectionObserver.GetAll())
           {
             element.Translate(delta);
           }
@@ -145,9 +168,9 @@ namespace LunaDraw.Logic.Tools
 
     public void DrawPreview(SKCanvas canvas, ToolContext context)
     {
-      if (context.SelectionManager.Selected.Any())
+      if (context.SelectionObserver.Selected.Any())
       {
-        var bounds = context.SelectionManager.GetBounds();
+        var bounds = context.SelectionObserver.GetBounds();
         if (bounds.IsEmpty) return;
 
         // Draw selection rectangle
@@ -219,7 +242,7 @@ namespace LunaDraw.Logic.Tools
 
       var transformFromOriginal = new SKMatrix(sx, 0, tx, 0, sy, ty, 0, 0, 1);
 
-      foreach (var element in context.SelectionManager.GetAll())
+      foreach (var element in context.SelectionObserver.GetAll())
       {
         if (originalTransforms.TryGetValue(element, out var originalMatrix))
         {

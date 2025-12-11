@@ -1,3 +1,26 @@
+/* 
+ *  Copyright (c) 2025 CodeSoupCafe LLC
+ *  
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *  
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *  
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
+ *  
+ */
+
 using CommunityToolkit.Maui.Storage;
 using LunaDraw.Logic.Managers;
 using LunaDraw.Logic.Messages;
@@ -16,38 +39,38 @@ namespace LunaDraw.Tests
     public class ToolbarViewModelTests
     {
         private readonly Mock<IToolStateManager> toolStateManagerMock;
-        private readonly Mock<ILayerStateManager> layerStateManagerMock;
+        private readonly Mock<ILayerFacade> layerFacadeMock;
         private readonly Mock<IMessageBus> messageBusMock;
         private readonly Mock<IBitmapCacheManager> bitmapCacheManagerMock;
         private readonly Mock<IFileSaver> fileSaverMock;
         private readonly NavigationModel navigationModel;
         private readonly SelectionViewModel selectionViewModel;
         private readonly HistoryViewModel historyViewModel;
-        private readonly HistoryManager historyManager;
+        private readonly HistoryMemento historyMemento;
 
         public ToolbarViewModelTests()
         {
             toolStateManagerMock = new Mock<IToolStateManager>();
-            layerStateManagerMock = new Mock<ILayerStateManager>();
+            layerFacadeMock = new Mock<ILayerFacade>();
             messageBusMock = new Mock<IMessageBus>();
             bitmapCacheManagerMock = new Mock<IBitmapCacheManager>();
             fileSaverMock = new Mock<IFileSaver>();
             navigationModel = new NavigationModel();
-            historyManager = new HistoryManager();
+            historyMemento = new HistoryMemento();
 
             // Setup default behavior for mocks
             toolStateManagerMock.Setup(x => x.AvailableTools).Returns(new List<IDrawingTool>());
             toolStateManagerMock.Setup(x => x.AvailableBrushShapes).Returns(new List<BrushShape>());
-            
-            layerStateManagerMock.Setup(x => x.Layers).Returns(new ObservableCollection<Layer>());
-            layerStateManagerMock.Setup(x => x.HistoryManager).Returns(historyManager);
-            
+
+            layerFacadeMock.Setup(x => x.Layers).Returns(new ObservableCollection<Layer>());
+            layerFacadeMock.Setup(x => x.HistoryMemento).Returns(historyMemento);
+
             // Setup dependencies for ViewModels
-            var selectionManager = new SelectionManager();
+            var selectionObserver = new SelectionObserver();
             var clipboardManager = new ClipboardManager();
-            selectionViewModel = new SelectionViewModel(selectionManager, layerStateManagerMock.Object, clipboardManager, messageBusMock.Object);
-            
-            historyViewModel = new HistoryViewModel(layerStateManagerMock.Object, messageBusMock.Object);
+            selectionViewModel = new SelectionViewModel(selectionObserver, layerFacadeMock.Object, clipboardManager, messageBusMock.Object);
+
+            historyViewModel = new HistoryViewModel(layerFacadeMock.Object, messageBusMock.Object);
         }
 
         [Fact]
@@ -59,7 +82,7 @@ namespace LunaDraw.Tests
 
             var viewModel = new ToolbarViewModel(
                 toolStateManagerMock.Object,
-                layerStateManagerMock.Object,
+                layerFacadeMock.Object,
                 selectionViewModel,
                 historyViewModel,
                 messageBusMock.Object,
@@ -83,7 +106,7 @@ namespace LunaDraw.Tests
 
             var viewModel = new ToolbarViewModel(
                 toolStateManagerMock.Object,
-                layerStateManagerMock.Object,
+                layerFacadeMock.Object,
                 selectionViewModel,
                 historyViewModel,
                 messageBusMock.Object,

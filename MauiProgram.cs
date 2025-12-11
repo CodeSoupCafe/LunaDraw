@@ -1,4 +1,27 @@
-﻿using CommunityToolkit.Maui;
+/* 
+ *  Copyright (c) 2025 CodeSoupCafe LLC
+ *  
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *  
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *  
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
+ *  
+ */
+
+using CommunityToolkit.Maui;
 using CommunityToolkit.Maui.Storage;
 using LunaDraw.Logic.Managers;
 using LunaDraw.Logic.Models;
@@ -15,52 +38,52 @@ namespace LunaDraw;
 
 public static class MauiProgram
 {
-	public static MauiApp CreateMauiApp()
-	{
-		var builder = MauiApp.CreateBuilder();
+    public static MauiApp CreateMauiApp()
+    {
+        var builder = MauiApp.CreateBuilder();
 
         // Initialize Splat and ReactiveUI
         Locator.CurrentMutable.InitializeSplat();
         Locator.CurrentMutable.InitializeReactiveUI();
 
-		builder
- 			.UseMauiApp<App>()
- 			.UseSkiaSharp()
- 			.UseMauiCommunityToolkit()
-			.ConfigureFonts(fonts =>
-			{
-				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-				fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
-			});
+        builder
+             .UseMauiApp<App>()
+             .UseSkiaSharp()
+             .UseMauiCommunityToolkit()
+            .ConfigureFonts(fonts =>
+            {
+                fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
+                fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+            });
 
         // Register Core State Managers
         builder.Services.AddSingleton<IMessageBus>(new ReactiveUI.MessageBus());
         builder.Services.AddSingleton<NavigationModel>();
-        builder.Services.AddSingleton<SelectionManager>();
-        builder.Services.AddSingleton<IToolStateManager, ToolStateManager>();
-        builder.Services.AddSingleton<ILayerStateManager, LayerStateManager>();
-        
+        builder.Services.AddSingleton<SelectionObserver>();
+        // builder.Services.AddSingleton<IToolStateManager, ToolStateManager>(); // Removed
+        builder.Services.AddSingleton<ILayerFacade, LayerFacade>();
+
         // Register Logic Services
         builder.Services.AddSingleton<ICanvasInputHandler, CanvasInputHandler>();
-        builder.Services.AddSingleton<ClipboardManager>();
-        builder.Services.AddSingleton<IBitmapCacheManager, BitmapCacheManager>();
+        builder.Services.AddSingleton<ClipboardMemento>();
+        builder.Services.AddSingleton<IBitmapCache, BitmapCache>();
         builder.Services.AddSingleton<IFileSaver>(FileSaver.Default);
 
         // Register ViewModels
         builder.Services.AddSingleton<LayerPanelViewModel>();
         builder.Services.AddSingleton<SelectionViewModel>();
         builder.Services.AddSingleton<HistoryViewModel>();
-        
+
         builder.Services.AddTransient<MainViewModel>();
-        builder.Services.AddTransient<ToolbarViewModel>();
+        builder.Services.AddSingleton<ToolbarViewModel>(); // Changed to Singleton
 
         // Register Pages
         builder.Services.AddTransient<MainPage>();
 
 #if DEBUG
-		builder.Logging.AddDebug();
+        builder.Logging.AddDebug();
 #endif
 
-		return builder.Build();
-	}
+        return builder.Build();
+    }
 }

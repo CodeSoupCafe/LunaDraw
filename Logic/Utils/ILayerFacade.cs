@@ -21,37 +21,22 @@
  *  
  */
 
+using System.Collections.ObjectModel;
 using LunaDraw.Logic.Models;
-using ReactiveUI;
-using SkiaSharp;
 
-namespace LunaDraw.Logic.Tools
+namespace LunaDraw.Logic.Managers
 {
-  public class RectangleTool(IMessageBus messageBus) : ShapeTool<DrawableRectangle>(messageBus)
-  {
-    public override string Name => "Rectangle";
-    public override ToolType Type => ToolType.Rectangle;
-
-        protected override DrawableRectangle CreateShape(ToolContext context)
+    public interface ILayerFacade
     {
-      return new DrawableRectangle
-      {
-        StrokeColor = context.StrokeColor,
-        StrokeWidth = context.StrokeWidth,
-        Opacity = context.Opacity,
-        FillColor = context.FillColor
-      };
+        ObservableCollection<Layer> Layers { get; }
+        Layer? CurrentLayer { get; set; }
+        HistoryMemento HistoryMemento { get; }
+        void AddLayer();
+        void RemoveLayer(Layer layer);
+        void MoveLayerForward(Layer layer);
+        void MoveLayerBackward(Layer layer);
+        void MoveLayer(int oldIndex, int newIndex);
+        void MoveElementsToLayer(IEnumerable<IDrawableElement> elements, Layer targetLayer);
+        void SaveState();
     }
-
-    protected override void UpdateShape(DrawableRectangle shape, SKRect bounds, SKMatrix transform)
-    {
-      shape.TransformMatrix = transform;
-      shape.Rectangle = bounds;
-    }
-
-    protected override bool IsShapeValid(DrawableRectangle shape)
-    {
-      return shape.Rectangle.Width > 0 || shape.Rectangle.Height > 0;
-    }
-  }
 }

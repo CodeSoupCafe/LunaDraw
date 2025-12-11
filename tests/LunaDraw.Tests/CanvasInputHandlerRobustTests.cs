@@ -1,3 +1,26 @@
+/* 
+ *  Copyright (c) 2025 CodeSoupCafe LLC
+ *  
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *  
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *  
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
+ *  
+ */
+
 using System.Collections.ObjectModel;
 using Moq;
 using Xunit;
@@ -15,9 +38,9 @@ namespace LunaDraw.Tests
     public class CanvasInputHandlerRobustTests
     {
         private readonly Mock<IToolStateManager> mockToolStateManager;
-        private readonly Mock<ILayerStateManager> mockLayerStateManager;
+        private readonly Mock<ILayerFacade> mockLayerFacade;
         private readonly Mock<IMessageBus> mockMessageBus;
-        private readonly SelectionManager selectionManager;
+        private readonly SelectionObserver selectionObserver;
         private readonly NavigationModel navigationModel;
         private readonly CanvasInputHandler handler;
         private readonly Mock<IDrawingTool> mockActiveTool;
@@ -27,9 +50,9 @@ namespace LunaDraw.Tests
         public CanvasInputHandlerRobustTests()
         {
             mockToolStateManager = new Mock<IToolStateManager>();
-            mockLayerStateManager = new Mock<ILayerStateManager>();
+            mockLayerFacade = new Mock<ILayerFacade>();
             mockMessageBus = new Mock<IMessageBus>();
-            selectionManager = new SelectionManager();
+            selectionObserver = new SelectionObserver();
             navigationModel = new NavigationModel();
             mockActiveTool = new Mock<IDrawingTool>();
 
@@ -37,13 +60,13 @@ namespace LunaDraw.Tests
             mockToolStateManager.Setup(m => m.ActiveTool).Returns(mockActiveTool.Object);
             mockToolStateManager.Setup(m => m.StrokeColor).Returns(SKColors.Black); // setup some defaults for ToolContext
 
-            mockLayerStateManager.Setup(m => m.CurrentLayer).Returns(new Layer());
-            mockLayerStateManager.Setup(m => m.Layers).Returns(new ObservableCollection<Layer>());
+            mockLayerFacade.Setup(m => m.CurrentLayer).Returns(new Layer());
+            mockLayerFacade.Setup(m => m.Layers).Returns(new ObservableCollection<Layer>());
 
             handler = new CanvasInputHandler(
                 mockToolStateManager.Object,
-                mockLayerStateManager.Object,
-                selectionManager,
+                mockLayerFacade.Object,
+                selectionObserver,
                 navigationModel,
                 mockMessageBus.Object
             );
@@ -59,7 +82,7 @@ namespace LunaDraw.Tests
         public void ProcessTouch_NoCurrentLayer_DoesNothing()
         {
             // Arrange
-            mockLayerStateManager.Setup(m => m.CurrentLayer).Returns((Layer?)null);
+            mockLayerFacade.Setup(m => m.CurrentLayer).Returns((Layer?)null);
             var touch = new SKTouchEventArgs(1, SKTouchAction.Pressed, new SKPoint(10, 10), true);
 
             // Act
@@ -137,8 +160,8 @@ namespace LunaDraw.Tests
 
             // Add a mock item to selection
             var mockDrawable = new Mock<IDrawableElement>();
-            selectionManager.Add(mockDrawable.Object);
-            Assert.True(selectionManager.HasSelection);
+            selectionObserver.Add(mockDrawable.Object);
+            Assert.True(selectionObserver.HasSelection);
 
             var touch = new SKTouchEventArgs(1, SKTouchAction.Pressed, new SKPoint(10, 10), true);
 
@@ -148,12 +171,12 @@ namespace LunaDraw.Tests
             // Assert
             if (shouldClear)
             {
-                Assert.False(selectionManager.HasSelection);
+                Assert.False(selectionObserver.HasSelection);
                 mockMessageBus.Verify(m => m.SendMessage(It.IsAny<CanvasInvalidateMessage>()), Times.AtLeastOnce);
             }
             else
             {
-                Assert.True(selectionManager.HasSelection);
+                Assert.True(selectionObserver.HasSelection);
             }
         }
 
@@ -216,7 +239,7 @@ namespace LunaDraw.Tests
             mockDrawable.SetupProperty(m => m.IsSelected);
             mockDrawable.Setup(m => m.HitTest(It.IsAny<SKPoint>())).Returns(true); // Always hit
 
-            selectionManager.Add(mockDrawable.Object);
+            selectionObserver.Add(mockDrawable.Object);
 
             // Start with two fingers ON the selected element (HitTest returns true)
             handler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Pressed, new SKPoint(0, 0), true), SKRect.Empty);
@@ -247,11 +270,11 @@ namespace LunaDraw.Tests
             mockDrawable.SetupProperty(m => m.IsSelected);
             mockDrawable.Setup(m => m.HitTest(It.IsAny<SKPoint>())).Returns(true);
 
-            selectionManager.Add(mockDrawable.Object);
+            selectionObserver.Add(mockDrawable.Object);
 
             // Lock the layer
             var layer = new Layer { IsLocked = true };
-            mockLayerStateManager.Setup(m => m.CurrentLayer).Returns(layer);
+            mockLayerFacade.Setup(m => m.CurrentLayer).Returns(layer);
 
             // Start touch
             handler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Pressed, new SKPoint(0, 0), true), SKRect.Empty);

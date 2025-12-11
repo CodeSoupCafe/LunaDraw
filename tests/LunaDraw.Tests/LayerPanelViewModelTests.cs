@@ -1,3 +1,26 @@
+/* 
+ *  Copyright (c) 2025 CodeSoupCafe LLC
+ *  
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *  
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *  
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
+ *  
+ */
+
 using System;
 using System.Linq;
 using System.Reactive.Linq;
@@ -15,7 +38,7 @@ namespace LunaDraw.Tests
     public class LayerPanelViewModelTests
     {
         private readonly Mock<IMessageBus> mockBus;
-        private readonly LayerStateManager layerStateManager;
+        private readonly LayerFacade layerFacade;
         private readonly LayerPanelViewModel viewModel;
         private readonly Subject<DrawingStateChangedMessage> drawingStateSubject;
 
@@ -25,8 +48,8 @@ namespace LunaDraw.Tests
             drawingStateSubject = new Subject<DrawingStateChangedMessage>();
             mockBus.Setup(x => x.Listen<DrawingStateChangedMessage>()).Returns(drawingStateSubject);
 
-            layerStateManager = new LayerStateManager(mockBus.Object);
-            viewModel = new LayerPanelViewModel(layerStateManager, mockBus.Object);
+            layerFacade = new LayerFacade(mockBus.Object);
+            viewModel = new LayerPanelViewModel(layerFacade, mockBus.Object);
         }
 
         [Fact]
@@ -36,7 +59,7 @@ namespace LunaDraw.Tests
             viewModel.AddLayerCommand.Execute().Subscribe();
 
             // Assert
-            Assert.Equal(2, layerStateManager.Layers.Count);
+            Assert.Equal(2, layerFacade.Layers.Count);
             Assert.Equal("Layer 2", viewModel.CurrentLayer?.Name);
         }
 
@@ -53,34 +76,34 @@ namespace LunaDraw.Tests
             viewModel.RemoveLayerCommand.Execute().Subscribe();
 
             // Assert
-            Assert.Single(layerStateManager.Layers);
+            Assert.Single(layerFacade.Layers);
             Assert.Equal("Layer 1", viewModel.CurrentLayer?.Name);
         }
-        
+
         [Fact]
         public void RemoveLayer_ShouldBeDisabled_WhenOneLayer()
         {
-             // Arrange
-             // Only Layer 1 exists initially
+            // Arrange
+            // Only Layer 1 exists initially
 
-             // Act
-             bool canExecute = viewModel.RemoveLayerCommand.CanExecute.FirstAsync().Wait();
+            // Act
+            bool canExecute = viewModel.RemoveLayerCommand.CanExecute.FirstAsync().Wait();
 
-             // Assert
-             Assert.False(canExecute);
+            // Assert
+            Assert.False(canExecute);
         }
 
         [Fact]
         public void RemoveLayer_ShouldBeEnabled_WhenTwoLayers()
         {
-             // Arrange
-             viewModel.AddLayerCommand.Execute().Subscribe();
+            // Arrange
+            viewModel.AddLayerCommand.Execute().Subscribe();
 
-             // Act
-             bool canExecute = viewModel.RemoveLayerCommand.CanExecute.FirstAsync().Wait();
+            // Act
+            bool canExecute = viewModel.RemoveLayerCommand.CanExecute.FirstAsync().Wait();
 
-             // Assert
-             Assert.True(canExecute);
+            // Assert
+            Assert.True(canExecute);
         }
     }
 }
