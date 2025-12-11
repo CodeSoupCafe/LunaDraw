@@ -57,6 +57,7 @@ namespace LunaDraw.Logic.ViewModels
       SendElementToBackCommand = ReactiveCommand.Create(SendElementToBack, hasSelection, RxApp.MainThreadScheduler);
       BringElementToFrontCommand = ReactiveCommand.Create(BringElementToFront, hasSelection, RxApp.MainThreadScheduler);
       MoveSelectionToLayerCommand = ReactiveCommand.Create<Layer>(MoveSelectionToLayer, hasSelection, RxApp.MainThreadScheduler);
+      MoveSelectionToNewLayerCommand = ReactiveCommand.Create(MoveSelectionToNewLayer, hasSelection, RxApp.MainThreadScheduler);
     }
 
     public ReadOnlyObservableCollection<IDrawableElement> SelectedElements => selectionManager.Selected;
@@ -84,6 +85,20 @@ namespace LunaDraw.Logic.ViewModels
     public ReactiveCommand<Unit, Unit> SendElementToBackCommand { get; }
     public ReactiveCommand<Unit, Unit> BringElementToFrontCommand { get; }
     public ReactiveCommand<Layer, Unit> MoveSelectionToLayerCommand { get; }
+    public ReactiveCommand<Unit, Unit> MoveSelectionToNewLayerCommand { get; }
+
+    private void MoveSelectionToNewLayer()
+    {
+      if (!SelectedElements.Any()) return;
+
+      layerStateManager.AddLayer();
+      var newLayer = layerStateManager.CurrentLayer;
+
+      if (newLayer != null)
+      {
+        layerStateManager.MoveElementsToLayer(SelectedElements, newLayer);
+      }
+    }
 
     private void MoveSelectionToLayer(Layer targetLayer)
     {

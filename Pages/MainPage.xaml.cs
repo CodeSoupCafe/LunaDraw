@@ -85,7 +85,7 @@ public partial class MainPage : ContentPage
     moveToLayerSubMenu.Clear();
 
     var addLayerItem = new MenuFlyoutItem { Text = "New Layer" };
-    addLayerItem.SetBinding(MenuItem.CommandProperty, new Binding("LayerPanelVM.AddLayerCommand", source: viewModel));
+    addLayerItem.SetBinding(MenuItem.CommandProperty, new Binding("SelectionVM.MoveSelectionToNewLayerCommand", source: viewModel));
     moveToLayerSubMenu.Add(addLayerItem);
 
     bool hasSelection = viewModel.SelectedElements.Any();
