@@ -47,8 +47,8 @@
             <Grid Grid.Row="1" x:Name="ContentGrid" RowDefinitions="*, Auto" RowSpacing="10" IsVisible="False">
                 
                 <!-- Layer List -->
-                <CollectionView ItemsSource="{Binding Layers}"
-                                SelectedItem="{Binding CurrentLayer}"
+                <CollectionView ItemsSource="{Binding LayerPanelVM.Layers}"
+                                SelectedItem="{Binding LayerPanelVM.CurrentLayer}"
                                 SelectionMode="Single"
                                 HeightRequest="200"
                                 MaximumHeightRequest="300">
@@ -135,14 +135,19 @@
                             Grid.Column="0"/>
                     <Button Text="🗑️" 
                             Command="{Binding LayerPanelVM.RemoveLayerCommand}"
-                            CommandParameter="{Binding CurrentLayer}"
                             ToolTipProperties.Text="Remove Layer"
                             FontSize="24"
                             HeightRequest="60"
                             CornerRadius="10"
                             BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"
                             TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
-                            Grid.Column="1"/>
+                            Grid.Column="1">
+                        <Button.Triggers>
+                            <Trigger TargetType="Button" Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5" />
+                            </Trigger>
+                        </Button.Triggers>
+                    </Button>
                 </Grid>
             </Grid>
         </Grid>

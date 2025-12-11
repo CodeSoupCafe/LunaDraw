@@ -45,8 +45,14 @@ namespace LunaDraw.Logic.Managers
     {
       if (Layers.Count > 1)
       {
+        // Select a different layer before removing the current one to avoid UI selection issues
+        var nextLayer = Layers.FirstOrDefault(l => l != layer);
+        if (nextLayer != null)
+        {
+            CurrentLayer = nextLayer;
+        }
+
         Layers.Remove(layer);
-        CurrentLayer = Layers.First();
         SaveState();
         messageBus.SendMessage(new CanvasInvalidateMessage());
       }

@@ -1,5 +1,7 @@
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Reactive;
+using System.Reactive.Linq;
 using LunaDraw.Logic.Managers;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
@@ -26,10 +28,28 @@ namespace LunaDraw.Logic.ViewModels
                 layerStateManager.AddLayer();
             }, outputScheduler: RxApp.MainThreadScheduler);
 
-            RemoveLayerCommand = ReactiveCommand.Create<Layer>(layer =>
+            var layersChanged = Observable.FromEventPattern<NotifyCollectionChangedEventHandler, NotifyCollectionChangedEventArgs>(
+                h => layerStateManager.Layers.CollectionChanged += h,
+                h => layerStateManager.Layers.CollectionChanged -= h)
+                .Select(_ => Unit.Default)
+                .StartWith(Unit.Default);
+
+            var currentLayerChanged = layerStateManager.WhenAnyValue(x => x.CurrentLayer)
+                .Select(_ => Unit.Default);
+
+            var canRemoveLayer = Observable.Merge(layersChanged, currentLayerChanged)
+                .Select(_ => layerStateManager.CurrentLayer != null && layerStateManager.Layers.Count > 1)
+                .ObserveOn(RxApp.MainThreadScheduler);
+
+            RemoveLayerCommand = ReactiveCommand.Create(() =>
             {
-                layerStateManager.RemoveLayer(layer);
-            }, outputScheduler: RxApp.MainThreadScheduler);
+                if (layerStateManager.CurrentLayer != null)
+                {
+                    layerStateManager.RemoveLayer(layerStateManager.CurrentLayer);
+                }
+            }, 
+            canExecute: canRemoveLayer, 
+            outputScheduler: RxApp.MainThreadScheduler);
 
             MoveLayerForwardCommand = ReactiveCommand.Create<Layer>(layer =>
             {
@@ -68,7 +88,7 @@ namespace LunaDraw.Logic.ViewModels
         }
 
         public ReactiveCommand<Unit, Unit> AddLayerCommand { get; }
-        public ReactiveCommand<Layer, Unit> RemoveLayerCommand { get; }
+        public ReactiveCommand<Unit, Unit> RemoveLayerCommand { get; }
         public ReactiveCommand<Layer, Unit> MoveLayerForwardCommand { get; }
         public ReactiveCommand<Layer, Unit> MoveLayerBackwardCommand { get; }
         public ReactiveCommand<Layer, Unit> ToggleLayerVisibilityCommand { get; }
