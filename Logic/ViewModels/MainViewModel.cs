@@ -22,9 +22,11 @@
  */
 
 using System.Collections.ObjectModel;
+using System.Windows.Input;
 using System.Reactive.Linq;
 
 using LunaDraw.Logic.Managers;
+using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Services;
 using LunaDraw.Logic.Tools;
@@ -36,29 +38,25 @@ using SkiaSharp.Views.Maui;
 
 namespace LunaDraw.Logic.ViewModels;
 
-public class MainViewModel(
-    ToolbarViewModel toolbarViewModel,
-    ILayerFacade layerFacade,
-    ICanvasInputHandler canvasInputHandler,
-    NavigationModel navigationModel,
-    SelectionObserver selectionObserver,
-    IMessageBus messageBus,
-    LayerPanelViewModel layerPanelVM,
-    SelectionViewModel selectionVM,
-    HistoryViewModel historyVM) : ReactiveObject
+public class MainViewModel : ReactiveObject
 {
   // Dependencies
-  public ToolbarViewModel ToolbarViewModel { get; } = toolbarViewModel;
-  public ILayerFacade LayerFacade { get; } = layerFacade;
-  public ICanvasInputHandler CanvasInputHandler { get; } = canvasInputHandler;
-  public NavigationModel NavigationModel { get; } = navigationModel;
-  public SelectionObserver SelectionObserver { get; } = selectionObserver;
-  private readonly IMessageBus messageBus = messageBus;
+  public ToolbarViewModel ToolbarViewModel { get; }
+  public ILayerFacade LayerFacade { get; }
+  public ICanvasInputHandler CanvasInputHandler { get; }
+  public NavigationModel NavigationModel { get; }
+  public SelectionObserver SelectionObserver { get; }
+  private readonly IMessageBus messageBus;
 
   // Sub-ViewModels
-  public LayerPanelViewModel LayerPanelVM { get; } = layerPanelVM;
-  public SelectionViewModel SelectionVM { get; } = selectionVM;
-  public HistoryViewModel HistoryVM { get; } = historyVM;
+  public LayerPanelViewModel LayerPanelVM { get; }
+  public SelectionViewModel SelectionVM { get; }
+  public HistoryViewModel HistoryVM { get; }
+
+  // Commands
+  public ICommand ZoomInCommand { get; }
+  public ICommand ZoomOutCommand { get; }
+  public ICommand ResetZoomCommand { get; }
 
   public SKRect CanvasSize { get; set; }
 
@@ -70,6 +68,33 @@ public class MainViewModel(
     get => LayerFacade.CurrentLayer;
     set => LayerFacade.CurrentLayer = value;
   }
+
+  public MainViewModel(
+    ToolbarViewModel toolbarViewModel,
+    ILayerFacade layerFacade,
+    ICanvasInputHandler canvasInputHandler,
+    NavigationModel navigationModel,
+    SelectionObserver selectionObserver,
+    IMessageBus messageBus,
+    LayerPanelViewModel layerPanelVM,
+    SelectionViewModel selectionVM,
+    HistoryViewModel historyVM)
+  {
+      ToolbarViewModel = toolbarViewModel;
+      LayerFacade = layerFacade;
+      CanvasInputHandler = canvasInputHandler;
+      NavigationModel = navigationModel;
+      SelectionObserver = selectionObserver;
+      this.messageBus = messageBus;
+      LayerPanelVM = layerPanelVM;
+      SelectionVM = selectionVM;
+      HistoryVM = historyVM;
+
+      ZoomInCommand = ReactiveCommand.Create(ZoomIn);
+      ZoomOutCommand = ReactiveCommand.Create(ZoomOut);
+      ResetZoomCommand = ReactiveCommand.Create(ResetZoom);
+  }
+
 
   public IDrawingTool ActiveTool
   {
@@ -122,5 +147,29 @@ public class MainViewModel(
       HueJitter = ToolbarViewModel.HueJitter,
       CanvasMatrix = NavigationModel.ViewMatrix
     };
+  }
+
+  private void ZoomIn() => Zoom(1.2f);
+  private void ZoomOut() => Zoom(1f / 1.2f);
+
+  private void ResetZoom()
+  {
+      NavigationModel.Reset();
+      messageBus.SendMessage(new CanvasInvalidateMessage());
+  }
+
+  private void Zoom(float scaleFactor)
+  {
+      if (CanvasSize.Width <= 0 || CanvasSize.Height <= 0) return;
+
+      var center = new SKPoint(CanvasSize.Width / 2, CanvasSize.Height / 2);
+
+      // Scale around center
+      var zoomMatrix = SKMatrix.CreateScale(scaleFactor, scaleFactor, center.X, center.Y);
+
+      // Apply to existing view matrix
+      NavigationModel.ViewMatrix = SKMatrix.Concat(zoomMatrix, NavigationModel.ViewMatrix);
+
+      messageBus.SendMessage(new CanvasInvalidateMessage());
   }
 }

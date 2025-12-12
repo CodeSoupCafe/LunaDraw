@@ -8,148 +8,165 @@
              x:Class="LunaDraw.Components.LayerControlView"
              x:DataType="viewModels:MainViewModel"
              x:Name="Root">
-    
-    <ContentView.Resources>
-        <converters:BoolToEyeIconConverter x:Key="BoolToEyeIconConverter" />
-        <converters:BoolToLockIconConverter x:Key="BoolToLockIconConverter" />
-        <converters:BoolToLayerPanelWidthConverter x:Key="BoolToLayerPanelWidthConverter" />
-    </ContentView.Resources>
 
-    <Border Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
-            StrokeThickness="1"
-            BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray800}}"
-            Padding="10"
-            StrokeShape="RoundRectangle 10"
-            x:Name="LayerControlBorder"
-            WidthRequest="{Binding Source={x:Reference Root}, Path=IsLayerPanelExpanded, Converter={StaticResource BoolToLayerPanelWidthConverter}}">
-        
-        <Grid RowDefinitions="Auto, *">
-            <!-- Header -->
-            <Grid Grid.Row="0" ColumnDefinitions="*, Auto" Margin="0,0,0,5">
-                <Grid.GestureRecognizers>
-                    <TapGestureRecognizer Tapped="OnCollapseClicked" />
-                </Grid.GestureRecognizers>
-                <Label Text="Layers" 
-                       FontAttributes="Bold"
-                       VerticalOptions="Center" />
-                <Button x:Name="CollapseButton"
-                        Text="▶" 
-                        BackgroundColor="Transparent"
-                        TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource White}}"
-                        Clicked="OnCollapseClicked"
-                        Grid.Column="1"
-                        Padding="0"
-                        HeightRequest="30"
-                        WidthRequest="30"/>
-            </Grid>
+  <ContentView.Resources>
+    <converters:BoolToEyeIconConverter x:Key="BoolToEyeIconConverter"/>
+    <converters:BoolToLockIconConverter x:Key="BoolToLockIconConverter"/>
+    <converters:BoolToLayerPanelWidthConverter x:Key="BoolToLayerPanelWidthConverter"/>
+  </ContentView.Resources>
 
-            <!-- Content -->
-            <Grid Grid.Row="1" x:Name="ContentGrid" RowDefinitions="*, Auto" RowSpacing="10" IsVisible="False">
-                
-                <!-- Layer List -->
-                <CollectionView ItemsSource="{Binding LayerPanelVM.Layers}"
-                                SelectedItem="{Binding LayerPanelVM.CurrentLayer}"
-                                SelectionMode="Single"
-                                HeightRequest="200"
-                                MaximumHeightRequest="300">
-                   <CollectionView.ItemTemplate>
-                        <DataTemplate x:DataType="models:Layer">
-                            <Border StrokeThickness="0"
-                                    Padding="5"
-                                    BackgroundColor="Transparent">
-                                <Border.GestureRecognizers>
-                                    <DropGestureRecognizer AllowDrop="True" Drop="OnDrop" DragOver="OnDragOver" />
-                                </Border.GestureRecognizers>
-                                <VisualStateManager.VisualStateGroups>
-                                    <VisualStateGroup Name="CommonStates">
-                                        <VisualState Name="Normal" />
-                                        <VisualState Name="Selected">
-                                            <VisualState.Setters>
-                                                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}" />
-                                            </VisualState.Setters>
-                                        </VisualState>
-                                    </VisualStateGroup>
-                                </VisualStateManager.VisualStateGroups>
-                                
-                                <Grid ColumnDefinitions="50, *, 50, 50" ColumnSpacing="5" VerticalOptions="Center">
-                                    
-                                    <!-- Drag Handle -->
-                                    <Label Text="≡" 
-                                           FontSize="30"
-                                           VerticalOptions="Center"
-                                           HorizontalOptions="Center"
-                                           TextColor="Gray">
-                                        <Label.GestureRecognizers>
-                                            <DragGestureRecognizer CanDrag="True" DragStarting="OnDragStarting" />
-                                        </Label.GestureRecognizers>
-                                    </Label>
+  <Border Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
+          StrokeThickness="1"
+          BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray800}}"
+          Padding="10"
+          StrokeShape="RoundRectangle 10"
+          x:Name="LayerControlBorder"
+          WidthRequest="{Binding Source={x:Reference Root}, Path=IsLayerPanelExpanded, Converter={StaticResource BoolToLayerPanelWidthConverter}}">
 
-                                    <!-- Layer Name -->
-                                    <Entry Text="{Binding Name}" 
-                                           FontSize="18"
-                                           VerticalOptions="Center"
-                                           Grid.Column="1"
-                                           BackgroundColor="Transparent"/>
+    <Grid RowDefinitions="Auto, *">
+      <!-- Header -->
+      <Grid Grid.Row="0"
+            ColumnDefinitions="*, Auto"
+            Margin="0,0,0,5">
+        <Grid.GestureRecognizers>
+          <TapGestureRecognizer Tapped="OnCollapseClicked"/>
+        </Grid.GestureRecognizers>
+        <Label Text="Layers"
+               FontAttributes="Bold"
+               VerticalOptions="Center"/>
+        <Button x:Name="CollapseButton"
+                Text="▶"
+                BackgroundColor="Transparent"
+                TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource White}}"
+                Clicked="OnCollapseClicked"
+                Grid.Column="1"
+                Padding="0"
+                HeightRequest="30"
+                WidthRequest="30"/>
+      </Grid>
 
-                                    <!-- Visible Toggle (Eye) -->
-                                    <Button Text="{Binding IsVisible, Converter={StaticResource BoolToEyeIconConverter}}" 
-                                            Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:MainViewModel}}, Path=LayerPanelVM.ToggleLayerVisibilityCommand}"
-                                            CommandParameter="{Binding .}"
-                                            Padding="0"
-                                            BackgroundColor="Transparent"
-                                            TextColor="Black"
-                                            FontSize="24"
-                                            BorderWidth="0"
-                                            HeightRequest="50"
-                                            WidthRequest="50"
-                                            Grid.Column="2"/>
+      <!-- Content -->
+      <Grid Grid.Row="1"
+            x:Name="ContentGrid"
+            RowDefinitions="*, Auto"
+            RowSpacing="10"
+            IsVisible="False">
 
-                                    <!-- Lock Toggle -->
-                                    <Button Text="{Binding IsLocked, Converter={StaticResource BoolToLockIconConverter}}" 
-                                            Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:MainViewModel}}, Path=LayerPanelVM.ToggleLayerLockCommand}"
-                                            CommandParameter="{Binding .}"
-                                            Padding="0"
-                                            BackgroundColor="Transparent"
-                                            TextColor="Black"
-                                            FontSize="24"
-                                            BorderWidth="0"
-                                            HeightRequest="50"
-                                            WidthRequest="50"
-                                            Grid.Column="3"/>
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
+        <!-- Layer List -->
+        <CollectionView ItemsSource="{Binding LayerPanelVM.Layers}"
+                        SelectedItem="{Binding LayerPanelVM.CurrentLayer}"
+                        SelectionMode="Single"
+                        HeightRequest="200"
+                        MaximumHeightRequest="300">
+          <CollectionView.ItemTemplate>
+            <DataTemplate x:DataType="models:Layer">
+              <Border StrokeThickness="0"
+                      Padding="5"
+                      BackgroundColor="Transparent">
+                <Border.GestureRecognizers>
+                  <DropGestureRecognizer AllowDrop="True"
+                                         Drop="OnDrop"
+                                         DragOver="OnDragOver"/>
+                </Border.GestureRecognizers>
+                <VisualStateManager.VisualStateGroups>
+                  <VisualStateGroup Name="CommonStates">
+                    <VisualState Name="Normal"/>
+                    <VisualState Name="Selected">
+                      <VisualState.Setters>
+                        <Setter Property="BackgroundColor"
+                                Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"/>
+                      </VisualState.Setters>
+                    </VisualState>
+                  </VisualStateGroup>
+                </VisualStateManager.VisualStateGroups>
 
-                <!-- Controls -->
-                <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="10">
-                    <Button Text="+" 
-                            Command="{Binding LayerPanelVM.AddLayerCommand}"
-                            ToolTipProperties.Text="Add Layer"
-                            FontSize="30"
-                            HeightRequest="60"
-                            CornerRadius="10"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"
-                            TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
-                            Grid.Column="0"/>
-                    <Button Text="🗑️" 
-                            Command="{Binding LayerPanelVM.RemoveLayerCommand}"
-                            ToolTipProperties.Text="Remove Layer"
-                            FontSize="24"
-                            HeightRequest="60"
-                            CornerRadius="10"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"
-                            TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
-                            Grid.Column="1">
-                        <Button.Triggers>
-                            <Trigger TargetType="Button" Property="IsEnabled" Value="False">
-                                <Setter Property="Opacity" Value="0.5" />
-                            </Trigger>
-                        </Button.Triggers>
-                    </Button>
+                <Grid ColumnDefinitions="50, *, 50, 50"
+                      ColumnSpacing="5"
+                      VerticalOptions="Center">
+
+                  <!-- Drag Handle -->
+                  <Label Text="≡"
+                         FontSize="30"
+                         VerticalOptions="Center"
+                         HorizontalOptions="Center"
+                         TextColor="Gray">
+                    <Label.GestureRecognizers>
+                      <DragGestureRecognizer CanDrag="True"
+                                             DragStarting="OnDragStarting"/>
+                    </Label.GestureRecognizers>
+                  </Label>
+
+                  <!-- Layer Name -->
+                  <Entry Text="{Binding Name}"
+                         FontSize="18"
+                         VerticalOptions="Center"
+                         Grid.Column="1"
+                         BackgroundColor="Transparent"/>
+
+                  <!-- Visible Toggle (Eye) -->
+                  <Button Text="{Binding IsVisible, Converter={StaticResource BoolToEyeIconConverter}}"
+                          Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:MainViewModel}}, Path=LayerPanelVM.ToggleLayerVisibilityCommand}"
+                          CommandParameter="{Binding .}"
+                          Padding="0"
+                          BackgroundColor="Transparent"
+                          TextColor="Black"
+                          FontSize="24"
+                          BorderWidth="0"
+                          HeightRequest="50"
+                          WidthRequest="50"
+                          Grid.Column="2"/>
+
+                  <!-- Lock Toggle -->
+                  <Button Text="{Binding IsLocked, Converter={StaticResource BoolToLockIconConverter}}"
+                          Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:MainViewModel}}, Path=LayerPanelVM.ToggleLayerLockCommand}"
+                          CommandParameter="{Binding .}"
+                          Padding="0"
+                          BackgroundColor="Transparent"
+                          TextColor="Black"
+                          FontSize="24"
+                          BorderWidth="0"
+                          HeightRequest="50"
+                          WidthRequest="50"
+                          Grid.Column="3"/>
                 </Grid>
-            </Grid>
+              </Border>
+            </DataTemplate>
+          </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- Controls -->
+        <Grid Grid.Row="1"
+              ColumnDefinitions="*,*"
+              ColumnSpacing="10">
+          <Button Text="+"
+                  Command="{Binding LayerPanelVM.AddLayerCommand}"
+                  ToolTipProperties.Text="Add Layer"
+                  FontSize="30"
+                  HeightRequest="60"
+                  CornerRadius="10"
+                  BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"
+                  TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
+                  Grid.Column="0"/>
+          <Button Text="🗑️"
+                  Command="{Binding LayerPanelVM.RemoveLayerCommand}"
+                  ToolTipProperties.Text="Remove Layer"
+                  FontSize="24"
+                  HeightRequest="60"
+                  CornerRadius="10"
+                  BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"
+                  TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
+                  Grid.Column="1">
+            <Button.Triggers>
+              <Trigger TargetType="Button"
+                       Property="IsEnabled"
+                       Value="False">
+                <Setter Property="Opacity"
+                        Value="0.5"/>
+              </Trigger>
+            </Button.Triggers>
+          </Button>
         </Grid>
-    </Border>
+      </Grid>
+    </Grid>
+  </Border>
 </ContentView>

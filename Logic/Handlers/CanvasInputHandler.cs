@@ -131,7 +131,9 @@ public class CanvasInputHandler(
 
         // Check if manipulating selection
         manipulatingSelection = false;
-        if (layerFacade.CurrentLayer?.IsLocked == false && selectionObserver.Selected.Any())
+        if (toolbarViewModel.ActiveTool.Type == ToolType.Select && 
+            layerFacade.CurrentLayer?.IsLocked == false && 
+            selectionObserver.Selected.Any())
         {
           if (navigationModel.ViewMatrix.TryInvert(out var inv))
           {
