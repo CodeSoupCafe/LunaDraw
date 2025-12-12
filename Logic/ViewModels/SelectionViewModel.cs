@@ -1,3 +1,26 @@
+/* 
+ *  Copyright (c) 2025 CodeSoupCafe LLC
+ *  
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *  
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *  
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
+ *  
+ */
+
 using System.Collections.ObjectModel;
 using System.Reactive;
 using System.Reactive.Linq;
@@ -11,19 +34,19 @@ namespace LunaDraw.Logic.ViewModels
 {
   public class SelectionViewModel : ReactiveObject
   {
-    private readonly SelectionManager selectionManager;
-    private readonly ILayerStateManager layerStateManager;
-    private readonly ClipboardManager clipboardManager;
+    private readonly SelectionObserver selectionObserver;
+    private readonly ILayerFacade layerFacade;
+    private readonly ClipboardMemento clipboardManager;
     private readonly IMessageBus messageBus;
 
     public SelectionViewModel(
-        SelectionManager selectionManager,
-        ILayerStateManager layerStateManager,
-        ClipboardManager clipboardManager,
+        SelectionObserver selectionObserver,
+        ILayerFacade layerFacade,
+        ClipboardMemento clipboardManager,
         IMessageBus messageBus)
     {
-      this.selectionManager = selectionManager;
-      this.layerStateManager = layerStateManager;
+      this.selectionObserver = selectionObserver;
+      this.layerFacade = layerFacade;
       this.clipboardManager = clipboardManager;
       this.messageBus = messageBus;
 
@@ -57,9 +80,10 @@ namespace LunaDraw.Logic.ViewModels
       SendElementToBackCommand = ReactiveCommand.Create(SendElementToBack, hasSelection, RxApp.MainThreadScheduler);
       BringElementToFrontCommand = ReactiveCommand.Create(BringElementToFront, hasSelection, RxApp.MainThreadScheduler);
       MoveSelectionToLayerCommand = ReactiveCommand.Create<Layer>(MoveSelectionToLayer, hasSelection, RxApp.MainThreadScheduler);
+      MoveSelectionToNewLayerCommand = ReactiveCommand.Create(MoveSelectionToNewLayer, hasSelection, RxApp.MainThreadScheduler);
     }
 
-    public ReadOnlyObservableCollection<IDrawableElement> SelectedElements => selectionManager.Selected;
+    public ReadOnlyObservableCollection<IDrawableElement> SelectedElements => selectionObserver.Selected;
 
     private readonly ObservableAsPropertyHelper<bool> canDelete;
     public bool CanDelete => canDelete.Value;
@@ -84,16 +108,30 @@ namespace LunaDraw.Logic.ViewModels
     public ReactiveCommand<Unit, Unit> SendElementToBackCommand { get; }
     public ReactiveCommand<Unit, Unit> BringElementToFrontCommand { get; }
     public ReactiveCommand<Layer, Unit> MoveSelectionToLayerCommand { get; }
+    public ReactiveCommand<Unit, Unit> MoveSelectionToNewLayerCommand { get; }
+
+    private void MoveSelectionToNewLayer()
+    {
+      if (!SelectedElements.Any()) return;
+
+      layerFacade.AddLayer();
+      var newLayer = layerFacade.CurrentLayer;
+
+      if (newLayer != null)
+      {
+        layerFacade.MoveElementsToLayer(SelectedElements, newLayer);
+      }
+    }
 
     private void MoveSelectionToLayer(Layer targetLayer)
     {
       if (targetLayer == null || !SelectedElements.Any()) return;
-      layerStateManager.MoveElementsToLayer(SelectedElements, targetLayer);
+      layerFacade.MoveElementsToLayer(SelectedElements, targetLayer);
     }
 
     private void DeleteSelected()
     {
-      var currentLayer = layerStateManager.CurrentLayer;
+      var currentLayer = layerFacade.CurrentLayer;
       if (currentLayer is null || !SelectedElements.Any()) return;
 
       var elementsToRemove = SelectedElements.ToList();
@@ -101,14 +139,14 @@ namespace LunaDraw.Logic.ViewModels
       {
         currentLayer.Elements.Remove(element);
       }
-      selectionManager.Clear();
+      selectionObserver.Clear();
       messageBus.SendMessage(new CanvasInvalidateMessage());
-      layerStateManager.SaveState();
+      layerFacade.SaveState();
     }
 
     private void GroupSelected()
     {
-      var currentLayer = layerStateManager.CurrentLayer;
+      var currentLayer = layerFacade.CurrentLayer;
       if (currentLayer is null || !SelectedElements.Any()) return;
 
       var elementsToGroup = SelectedElements.ToList();
@@ -120,15 +158,15 @@ namespace LunaDraw.Logic.ViewModels
         group.Children.Add(element);
       }
       currentLayer.Elements.Add(group);
-      selectionManager.Clear();
-      selectionManager.Add(group);
+      selectionObserver.Clear();
+      selectionObserver.Add(group);
       messageBus.SendMessage(new CanvasInvalidateMessage());
-      layerStateManager.SaveState();
+      layerFacade.SaveState();
     }
 
     private void UngroupSelected()
     {
-      var currentLayer = layerStateManager.CurrentLayer;
+      var currentLayer = layerFacade.CurrentLayer;
       if (currentLayer is null) return;
       var group = SelectedElements.FirstOrDefault() as DrawableGroup;
       if (group != null)
@@ -138,9 +176,9 @@ namespace LunaDraw.Logic.ViewModels
         {
           currentLayer.Elements.Add(child);
         }
-        selectionManager.Clear();
+        selectionObserver.Clear();
         messageBus.SendMessage(new CanvasInvalidateMessage());
-        layerStateManager.SaveState();
+        layerFacade.SaveState();
       }
     }
 
@@ -151,7 +189,7 @@ namespace LunaDraw.Logic.ViewModels
 
     private void Cut()
     {
-      var currentLayer = layerStateManager.CurrentLayer;
+      var currentLayer = layerFacade.CurrentLayer;
       if (currentLayer is null || !SelectedElements.Any()) return;
       clipboardManager.Copy(SelectedElements);
 
@@ -160,14 +198,14 @@ namespace LunaDraw.Logic.ViewModels
       {
         currentLayer.Elements.Remove(element);
       }
-      selectionManager.Clear();
+      selectionObserver.Clear();
       messageBus.SendMessage(new CanvasInvalidateMessage());
-      layerStateManager.SaveState();
+      layerFacade.SaveState();
     }
 
     private void Paste()
     {
-      var currentLayer = layerStateManager.CurrentLayer;
+      var currentLayer = layerFacade.CurrentLayer;
       if (currentLayer is null || !clipboardManager.HasItems) return;
       foreach (var element in clipboardManager.Paste())
       {
@@ -175,86 +213,74 @@ namespace LunaDraw.Logic.ViewModels
         currentLayer.Elements.Add(element);
       }
       messageBus.SendMessage(new CanvasInvalidateMessage());
-      layerStateManager.SaveState();
+      layerFacade.SaveState();
     }
 
     private void SendBackward()
     {
-      var currentLayer = layerStateManager.CurrentLayer;
+      var currentLayer = layerFacade.CurrentLayer;
       if (currentLayer == null || !SelectedElements.Any()) return;
 
       var selected = SelectedElements.First();
-      var sortedElements = currentLayer.Elements.OrderBy(e => e.ZIndex).ToList();
-      int index = sortedElements.IndexOf(selected);
+      var index = currentLayer.Elements.IndexOf(selected);
 
       if (index > 0)
       {
-        var elementBelow = sortedElements[index - 1];
-        sortedElements[index - 1] = selected;
-        sortedElements[index] = elementBelow;
-
-        SelectionViewModel.ReassignZIndices(sortedElements);
+        currentLayer.Elements.Move(index, index - 1);
+        ReassignZIndices(currentLayer.Elements);
         messageBus.SendMessage(new CanvasInvalidateMessage());
-        layerStateManager.SaveState();
+        layerFacade.SaveState();
       }
     }
 
     private void BringForward()
     {
-      var currentLayer = layerStateManager.CurrentLayer;
+      var currentLayer = layerFacade.CurrentLayer;
       if (currentLayer == null || !SelectedElements.Any()) return;
 
       var selected = SelectedElements.First();
-      var sortedElements = currentLayer.Elements.OrderBy(e => e.ZIndex).ToList();
-      int index = sortedElements.IndexOf(selected);
+      var index = currentLayer.Elements.IndexOf(selected);
 
-      if (index < sortedElements.Count - 1)
+      if (index < currentLayer.Elements.Count - 1)
       {
-        var elementAbove = sortedElements[index + 1];
-        sortedElements[index + 1] = selected;
-        sortedElements[index] = elementAbove;
-
-        SelectionViewModel.ReassignZIndices(sortedElements);
+        currentLayer.Elements.Move(index, index + 1);
+        ReassignZIndices(currentLayer.Elements);
         messageBus.SendMessage(new CanvasInvalidateMessage());
-        layerStateManager.SaveState();
+        layerFacade.SaveState();
       }
     }
 
     private void SendElementToBack()
     {
-      var currentLayer = layerStateManager.CurrentLayer;
+      var currentLayer = layerFacade.CurrentLayer;
       if (currentLayer == null || !SelectedElements.Any()) return;
 
       var selected = SelectedElements.First();
-      var elements = currentLayer.Elements.ToList();
+      var index = currentLayer.Elements.IndexOf(selected);
 
-      if (elements.Remove(selected))
+      if (index > 0)
       {
-        SelectionViewModel.ReassignZIndices(elements);
+        currentLayer.Elements.Move(index, 0);
+        ReassignZIndices(currentLayer.Elements);
         messageBus.SendMessage(new CanvasInvalidateMessage());
-        layerStateManager.SaveState();
+        layerFacade.SaveState();
       }
     }
 
     private void BringElementToFront()
     {
-      var currentLayer = layerStateManager.CurrentLayer;
+      var currentLayer = layerFacade.CurrentLayer;
       if (currentLayer == null || !SelectedElements.Any()) return;
 
       var selected = SelectedElements.First();
-      var elements = currentLayer.Elements.ToList();
+      var index = currentLayer.Elements.IndexOf(selected);
 
-      if (elements.Remove(selected))
+      if (index < currentLayer.Elements.Count - 1)
       {
-        elements.Add(selected);
-
-        currentLayer.Elements.Clear();
-        foreach (var el in elements) currentLayer.Elements.Add(el);
-
-
-        SelectionViewModel.ReassignZIndices(elements);
+        currentLayer.Elements.Move(index, currentLayer.Elements.Count - 1);
+        ReassignZIndices(currentLayer.Elements);
         messageBus.SendMessage(new CanvasInvalidateMessage());
-        layerStateManager.SaveState();
+        layerFacade.SaveState();
       }
     }
 

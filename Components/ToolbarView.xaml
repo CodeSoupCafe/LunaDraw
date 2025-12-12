@@ -130,6 +130,15 @@
                    HorizontalTextAlignment="Center"/>
           </StackLayout>
 
+          <StackLayout HorizontalOptions="Center">
+            <Button x:Name="SaveButton"
+                    Style="{StaticResource ToolbarButtonStyle}"
+                    Text="💾"
+                    Command="{Binding SaveImageCommand}"/>
+            <Label Text="Save"
+                   HorizontalTextAlignment="Center"/>
+          </StackLayout>
+
          <StackLayout HorizontalOptions="Center">
             <Button x:Name="EraserButton"
                     Style="{StaticResource ToolbarButtonStyle}"

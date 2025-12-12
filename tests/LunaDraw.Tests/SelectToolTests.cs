@@ -1,3 +1,26 @@
+/* 
+ *  Copyright (c) 2025 CodeSoupCafe LLC
+ *  
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *  
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *  
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
+ *  
+ */
+
 using System;
 using System.Collections.Generic;
 using LunaDraw.Logic.Models;
@@ -25,10 +48,10 @@ namespace LunaDraw.Tests
             element.HitTestResult = hit;
 
             var elements = new List<IDrawableElement> { element };
-            var selectionManager = new SelectionManager();
+            var selectionObserver = new SelectionObserver();
             if (initiallySelected)
             {
-                selectionManager.Add(element);
+                selectionObserver.Add(element);
             }
 
             var layer = new Layer();
@@ -39,7 +62,7 @@ namespace LunaDraw.Tests
                 CurrentLayer = layer,
                 AllElements = elements,
                 Layers = new List<Layer> { layer },
-                SelectionManager = selectionManager,
+                SelectionObserver = selectionObserver,
                 BrushShape = BrushShape.Circle()
             };
             var tool = new SelectTool(mockBus.Object);
@@ -49,7 +72,7 @@ namespace LunaDraw.Tests
             tool.OnTouchPressed(point, context);
 
             // Assert
-            Assert.Equal(expectedSelected, selectionManager.Contains(element));
+            Assert.Equal(expectedSelected, selectionObserver.Contains(element));
         }
 
         private class TestDrawableElement : IDrawableElement
@@ -62,15 +85,15 @@ namespace LunaDraw.Tests
             public int ZIndex { get; set; }
             public byte Opacity { get; set; } = 255;
             public SKColor? FillColor { get; set; } = null;
-        public SKColor StrokeColor { get; set; }
-        public float StrokeWidth { get; set; }
-        public bool IsGlowEnabled { get; set; }
-        public SKColor GlowColor { get; set; }
-        public float GlowRadius { get; set; }
-        public bool HitTestResult { get; set; }
+            public SKColor StrokeColor { get; set; }
+            public float StrokeWidth { get; set; }
+            public bool IsGlowEnabled { get; set; }
+            public SKColor GlowColor { get; set; }
+            public float GlowRadius { get; set; }
+            public bool HitTestResult { get; set; }
 
-        public void Draw(SKCanvas canvas) { }
-        public bool HitTest(SKPoint point) => HitTestResult;
+            public void Draw(SKCanvas canvas) { }
+            public bool HitTest(SKPoint point) => HitTestResult;
             public IDrawableElement Clone() => new TestDrawableElement
             {
                 IsVisible = this.IsVisible,
