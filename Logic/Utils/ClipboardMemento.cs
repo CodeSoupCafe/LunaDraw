@@ -23,35 +23,24 @@
 
 using LunaDraw.Logic.Models;
 using ReactiveUI;
-using SkiaSharp;
 
-namespace LunaDraw.Logic.Tools
+namespace LunaDraw.Logic.Managers
 {
-  public class RectangleTool(IMessageBus messageBus) : ShapeTool<DrawableRectangle>(messageBus)
-  {
-    public override string Name => "Rectangle";
-    public override ToolType Type => ToolType.Rectangle;
-
-        protected override DrawableRectangle CreateShape(ToolContext context)
+    public class ClipboardMemento : ReactiveObject
     {
-      return new DrawableRectangle
-      {
-        StrokeColor = context.StrokeColor,
-        StrokeWidth = context.StrokeWidth,
-        Opacity = context.Opacity,
-        FillColor = context.FillColor
-      };
-    }
+        private List<IDrawableElement> clipboard = new();
 
-    protected override void UpdateShape(DrawableRectangle shape, SKRect bounds, SKMatrix transform)
-    {
-      shape.TransformMatrix = transform;
-      shape.Rectangle = bounds;
-    }
+        public void Copy(IEnumerable<IDrawableElement> elements)
+        {
+            clipboard = elements.Select(e => e.Clone()).ToList();
+            this.RaisePropertyChanged(nameof(HasItems));
+        }
 
-    protected override bool IsShapeValid(DrawableRectangle shape)
-    {
-      return shape.Rectangle.Width > 0 || shape.Rectangle.Height > 0;
+        public IEnumerable<IDrawableElement> Paste()
+        {
+            return clipboard.Select(e => e.Clone());
+        }
+
+        public bool HasItems => clipboard.Count > 0;
     }
-  }
 }

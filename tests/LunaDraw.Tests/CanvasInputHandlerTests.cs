@@ -1,50 +1,82 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using Moq;
 using Xunit;
 using SkiaSharp;
 using SkiaSharp.Views.Maui;
 using ReactiveUI;
+using System.Reactive.Concurrency;
+using System.Reactive.Linq;
 using LunaDraw.Logic.Services;
 using LunaDraw.Logic.Managers;
+using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Tools;
-
+using LunaDraw.Logic.ViewModels;
+using CommunityToolkit.Maui.Storage;
 
 namespace LunaDraw.Tests
 {
     public class CanvasInputHandlerTests
     {
-        private readonly Mock<IToolStateManager> mockToolStateManager;
-        private readonly Mock<ILayerStateManager> mockLayerStateManager;
+        private readonly ToolbarViewModel toolbarViewModel;
+        private readonly Mock<ILayerFacade> mockLayerFacade;
         private readonly Mock<IMessageBus> mockMessageBus;
         private readonly Mock<IDrawingTool> mockDrawingTool;
-        private readonly SelectionManager selectionManager;
+        private readonly Mock<IBitmapCache> mockBitmapCache;
+        private readonly Mock<IFileSaver> mockFileSaver;
+        private readonly SelectionObserver selectionObserver;
         private readonly NavigationModel navigationModel;
         private readonly CanvasInputHandler canvasInputHandler;
 
-        private const float SmoothingFactor = 0.1f; // Matching CanvasInputHandler
+        private const float SmoothingFactor = 0.1f; 
 
         public CanvasInputHandlerTests()
         {
-            mockToolStateManager = new Mock<IToolStateManager>();
-            mockLayerStateManager = new Mock<ILayerStateManager>();
+            RxApp.MainThreadScheduler = Scheduler.Immediate;
+
+            mockLayerFacade = new Mock<ILayerFacade>();
             mockMessageBus = new Mock<IMessageBus>();
             mockDrawingTool = new Mock<IDrawingTool>();
+            mockBitmapCache = new Mock<IBitmapCache>();
+            mockFileSaver = new Mock<IFileSaver>();
 
-            mockToolStateManager.Setup(m => m.ActiveTool).Returns(mockDrawingTool.Object);
-            mockLayerStateManager.Setup(m => m.CurrentLayer).Returns(new Layer());
-            mockLayerStateManager.Setup(m => m.Layers).Returns(new ObservableCollection<Layer>());
-            mockDrawingTool.Setup(t => t.Type).Returns(ToolType.Freehand); // Default for drawing tools
+            mockLayerFacade.Setup(m => m.CurrentLayer).Returns(new Layer());
+            mockLayerFacade.Setup(m => m.Layers).Returns(new ObservableCollection<Layer>());
+            mockLayerFacade.Setup(m => m.HistoryMemento).Returns(new HistoryMemento());
+            mockDrawingTool.Setup(t => t.Type).Returns(ToolType.Freehand);
 
-            selectionManager = new SelectionManager();
+            // Ensure MessageBus returns observables for ToolbarViewModel constructor
+            mockMessageBus.Setup(x => x.Listen<BrushSettingsChangedMessage>()).Returns(Observable.Empty<BrushSettingsChangedMessage>());
+            mockMessageBus.Setup(x => x.Listen<BrushShapeChangedMessage>()).Returns(Observable.Empty<BrushShapeChangedMessage>());
+
+            selectionObserver = new SelectionObserver();
             navigationModel = new NavigationModel();
 
+            // Instantiate real ViewModels
+            var clipboardMemento = new ClipboardMemento();
+            var selectionVM = new SelectionViewModel(selectionObserver, mockLayerFacade.Object, clipboardMemento, mockMessageBus.Object);
+            var historyVM = new HistoryViewModel(mockLayerFacade.Object, mockMessageBus.Object);
+
+            toolbarViewModel = new ToolbarViewModel(
+                mockLayerFacade.Object,
+                selectionVM,
+                historyVM,
+                mockMessageBus.Object,
+                mockBitmapCache.Object,
+                navigationModel,
+                mockFileSaver.Object
+            );
+
+            // Inject mock tool
+            toolbarViewModel.ActiveTool = mockDrawingTool.Object;
+
             canvasInputHandler = new CanvasInputHandler(
-                mockToolStateManager.Object,
-                mockLayerStateManager.Object,
-                selectionManager,
+                toolbarViewModel,
+                mockLayerFacade.Object,
+                selectionObserver,
                 navigationModel,
                 mockMessageBus.Object
             );
@@ -54,15 +86,30 @@ namespace LunaDraw.Tests
         public void HandleMultiTouch_MissingTouchKey_IgnoresTouch()
         {
             // Arrange
-            // Setup for this specific test
-            mockToolStateManager.Setup(m => m.ActiveTool).Returns(new Mock<IDrawingTool>().Object);
-            mockLayerStateManager.Setup(m => m.CurrentLayer).Returns(new Layer());
-            mockLayerStateManager.Setup(m => m.Layers).Returns(new ObservableCollection<Layer>());
+            // Create a local handler with clean state if needed, or use the class one.
+            // The original test created a new one. We can do the same.
             
+            var clipboardMemento = new ClipboardMemento();
+            var localSelectionVM = new SelectionViewModel(selectionObserver, mockLayerFacade.Object, clipboardMemento, mockMessageBus.Object);
+            var localHistoryVM = new HistoryViewModel(mockLayerFacade.Object, mockMessageBus.Object);
+            
+            var localToolbarVM = new ToolbarViewModel(
+                mockLayerFacade.Object,
+                localSelectionVM,
+                localHistoryVM,
+                mockMessageBus.Object,
+                mockBitmapCache.Object,
+                navigationModel,
+                mockFileSaver.Object
+            );
+            
+            // Mock active tool inside the local VM
+            localToolbarVM.ActiveTool = new Mock<IDrawingTool>().Object;
+
             var handler = new CanvasInputHandler(
-                mockToolStateManager.Object,
-                mockLayerStateManager.Object,
-                selectionManager,
+                localToolbarVM,
+                mockLayerFacade.Object,
+                selectionObserver,
                 navigationModel,
                 mockMessageBus.Object
             );
@@ -77,7 +124,7 @@ namespace LunaDraw.Tests
 
             // Act
             var exception = Record.Exception(() => handler.ProcessTouch(touch3, SKRect.Empty));
-            
+
             // Assert
             Assert.Null(exception);
         }
@@ -88,7 +135,7 @@ namespace LunaDraw.Tests
             // Arrange
             var touchLocation = new SKPoint(100, 100);
             var eventArgs = new SKTouchEventArgs(1, SKTouchAction.Pressed, touchLocation, true);
-            
+
             // Act
             canvasInputHandler.ProcessTouch(eventArgs, SKRect.Empty);
 
@@ -102,11 +149,11 @@ namespace LunaDraw.Tests
             // Arrange
             var touchLocation = new SKPoint(100, 100);
             var eventArgsPressed = new SKTouchEventArgs(1, SKTouchAction.Pressed, touchLocation, true);
-            canvasInputHandler.ProcessTouch(eventArgsPressed, SKRect.Empty); // Simulate initial press
+            canvasInputHandler.ProcessTouch(eventArgsPressed, SKRect.Empty); 
 
             var newTouchLocation = new SKPoint(110, 110);
             var eventArgsMoved = new SKTouchEventArgs(1, SKTouchAction.Moved, newTouchLocation, true);
-            
+
             // Act
             canvasInputHandler.ProcessTouch(eventArgsMoved, SKRect.Empty);
 
@@ -120,10 +167,10 @@ namespace LunaDraw.Tests
             // Arrange
             var touchLocation = new SKPoint(100, 100);
             var eventArgsPressed = new SKTouchEventArgs(1, SKTouchAction.Pressed, touchLocation, true);
-            canvasInputHandler.ProcessTouch(eventArgsPressed, SKRect.Empty); // Simulate initial press
+            canvasInputHandler.ProcessTouch(eventArgsPressed, SKRect.Empty); 
 
             var eventArgsReleased = new SKTouchEventArgs(1, SKTouchAction.Released, touchLocation, true);
-            
+
             // Act
             canvasInputHandler.ProcessTouch(eventArgsReleased, SKRect.Empty);
 
@@ -135,10 +182,10 @@ namespace LunaDraw.Tests
         public void ProcessTouch_WhenLayerIsNull_ShouldNotProcessTouch()
         {
             // Arrange
-            mockLayerStateManager.Setup(m => m.CurrentLayer).Returns(default(Layer));
+            mockLayerFacade.Setup(m => m.CurrentLayer).Returns(default(Layer));
             var touchLocation = new SKPoint(100, 100);
             var eventArgs = new SKTouchEventArgs(1, SKTouchAction.Pressed, touchLocation, true);
-            
+
             // Act
             canvasInputHandler.ProcessTouch(eventArgs, SKRect.Empty);
 
@@ -153,12 +200,12 @@ namespace LunaDraw.Tests
         {
             // Arrange
             var touch1 = new SKTouchEventArgs(1, SKTouchAction.Pressed, new SKPoint(10, 10), true);
-            canvasInputHandler.ProcessTouch(touch1, SKRect.Empty); // First touch starts single touch mode
+            canvasInputHandler.ProcessTouch(touch1, SKRect.Empty); 
 
             var touch2 = new SKTouchEventArgs(2, SKTouchAction.Pressed, new SKPoint(20, 20), true);
-            
+
             // Act
-            canvasInputHandler.ProcessTouch(touch2, SKRect.Empty); // Second touch initiates multi-touch
+            canvasInputHandler.ProcessTouch(touch2, SKRect.Empty); 
 
             // Assert
             mockDrawingTool.Verify(x => x.OnTouchCancelled(It.IsAny<ToolContext>()), Times.Once);
@@ -177,8 +224,8 @@ namespace LunaDraw.Tests
             canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Pressed, touch2Start, true), SKRect.Empty);
 
             // Move both fingers in parallel
-            var touch1Move = new SKPoint(110, 110); // Move +10, +10
-            var touch2Move = new SKPoint(210, 110); // Move +10, +10
+            var touch1Move = new SKPoint(110, 110); 
+            var touch2Move = new SKPoint(210, 110); 
 
             // Act
             canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Moved, touch1Move, true), SKRect.Empty);
@@ -186,7 +233,7 @@ namespace LunaDraw.Tests
 
             // Assert
             var finalMatrix = navigationModel.ViewMatrix;
-Assert.True(Math.Abs(finalMatrix.TransX - 2.7252297f) < 0.001f);
+            Assert.True(Math.Abs(finalMatrix.TransX - 2.7252297f) < 0.001f);
             Assert.True(Math.Abs(finalMatrix.TransY - 2.3001537f) < 0.001f);
         }
 
@@ -196,16 +243,15 @@ Assert.True(Math.Abs(finalMatrix.TransX - 2.7252297f) < 0.001f);
             // Arrange
             var initialMatrix = navigationModel.ViewMatrix;
             var touch1Start = new SKPoint(100, 100);
-            var touch2Start = new SKPoint(200, 100); // Distance = 100
-            
+            var touch2Start = new SKPoint(200, 100); 
+
             // Simulate two fingers pressed
             canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Pressed, touch1Start, true), SKRect.Empty);
             canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Pressed, touch2Start, true), SKRect.Empty);
 
             // Simulate pinch out (increase distance)
-            // Centroid (150, 100) stays same
-            var touch1Move = new SKPoint(75, 100); // Moved left by 25
-            var touch2Move = new SKPoint(225, 100); // Moved right by 25. Distance = 150 (1.5x original)
+            var touch1Move = new SKPoint(75, 100); 
+            var touch2Move = new SKPoint(225, 100); 
 
             // Act
             canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Moved, touch1Move, true), SKRect.Empty);
@@ -223,16 +269,15 @@ Assert.True(Math.Abs(finalMatrix.TransX - 2.7252297f) < 0.001f);
             // Arrange
             var initialMatrix = navigationModel.ViewMatrix;
             var touch1Start = new SKPoint(100, 100);
-            var touch2Start = new SKPoint(200, 100); 
+            var touch2Start = new SKPoint(200, 100);
 
             // Simulate two fingers pressed
             canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Pressed, touch1Start, true), SKRect.Empty);
             canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Pressed, touch2Start, true), SKRect.Empty);
 
-            // Simulate rotation: touch1 moves up, touch2 moves down, maintaining same horizontal distance from center.
-            // Centroid (150, 100)
-            var touch1Move = new SKPoint(100, 50); 
-            var touch2Move = new SKPoint(200, 150); 
+            // Simulate rotation
+            var touch1Move = new SKPoint(100, 50);
+            var touch2Move = new SKPoint(200, 150);
 
             // Act
             canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Moved, touch1Move, true), SKRect.Empty);
@@ -240,45 +285,37 @@ Assert.True(Math.Abs(finalMatrix.TransX - 2.7252297f) < 0.001f);
 
             // Assert
             var finalMatrix = navigationModel.ViewMatrix;
-            // Verify that the matrix has changed
             Assert.NotEqual(initialMatrix, finalMatrix);
-            // Verify that scale is approximately the same (no zoom)
             Assert.True(Math.Abs(finalMatrix.ScaleX - initialMatrix.ScaleX) < 0.1f);
         }
-        
+
         [Fact]
         public void ProcessTouch_TwoFingersPanSelectedElements_ShouldUpdateElementTransformMatrix()
         {
             // Arrange
-            // Ensure active tool is Select so it doesn't clear selection on first touch
             mockDrawingTool.Setup(t => t.Type).Returns(ToolType.Select);
+            mockLayerFacade.Setup(m => m.CurrentLayer).Returns(new Layer { IsLocked = false });
 
-            // Ensure CurrentLayer is not locked
-            mockLayerStateManager.Setup(m => m.CurrentLayer).Returns(new Layer { IsLocked = false });
-
-            // Create and select a mock drawable element
             var mockElement = new Mock<IDrawableElement>();
-            mockElement.SetupProperty(e => e.TransformMatrix); // FIX HERE: Setup tracking for TransformMatrix
-            mockElement.Object.TransformMatrix = SKMatrix.CreateIdentity(); // Initialize after setup
-            mockElement.Setup(e => e.HitTest(It.IsAny<SKPoint>())).Returns(true); // Element is always hit
-            selectionManager.Add(mockElement.Object); // FIX HERE: Changed from selectionManager.Selected.Add
+            mockElement.SetupProperty(e => e.TransformMatrix); 
+            mockElement.Object.TransformMatrix = SKMatrix.CreateIdentity(); 
+            mockElement.Setup(e => e.HitTest(It.IsAny<SKPoint>())).Returns(true); 
+            selectionObserver.Add(mockElement.Object); 
 
-            // Initialize navigationModel to an identity matrix for simpler verification
             navigationModel.ViewMatrix = SKMatrix.CreateIdentity();
-            navigationModel.ViewMatrix = SKMatrix.CreateIdentity(); // Needed for inverse calculation
+            navigationModel.ViewMatrix = SKMatrix.CreateIdentity(); 
 
             var touch1Start = new SKPoint(100, 100);
             var touch2Start = new SKPoint(200, 100);
 
-            // Simulate two fingers pressed to start multi-touch on selected elements
             canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Pressed, touch1Start, true), SKRect.Empty);
             canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Pressed, touch2Start, true), SKRect.Empty);
-            
+
             var initialElementMatrix = mockElement.Object.TransformMatrix;
 
             // Move both fingers in parallel
-            var touch1Move = new SKPoint(110, 110); // Move +10, +10
-            var touch2Move = new SKPoint(210, 110); // Move +10, +10
+            var touch1Move = new SKPoint(110, 110); 
+            var touch2Move = new SKPoint(210, 110); 
 
             // Act
             canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Moved, touch1Move, true), SKRect.Empty);
@@ -295,28 +332,28 @@ Assert.True(Math.Abs(finalMatrix.TransX - 2.7252297f) < 0.001f);
         {
             // Arrange
             mockDrawingTool.Setup(t => t.Type).Returns(ToolType.Select);
-            mockLayerStateManager.Setup(m => m.CurrentLayer).Returns(new Layer { IsLocked = false });
+            mockLayerFacade.Setup(m => m.CurrentLayer).Returns(new Layer { IsLocked = false });
 
             var mockElement = new Mock<IDrawableElement>();
-            mockElement.SetupProperty(e => e.TransformMatrix); // FIX HERE: Setup tracking for TransformMatrix
-            mockElement.Object.TransformMatrix = SKMatrix.CreateIdentity(); // Initialize after setup
+            mockElement.SetupProperty(e => e.TransformMatrix); 
+            mockElement.Object.TransformMatrix = SKMatrix.CreateIdentity(); 
             mockElement.Setup(e => e.HitTest(It.IsAny<SKPoint>())).Returns(true);
-            selectionManager.Add(mockElement.Object); // FIX HERE: Changed from selectionManager.Selected.Add
+            selectionObserver.Add(mockElement.Object); 
 
             navigationModel.ViewMatrix = SKMatrix.CreateIdentity();
             navigationModel.ViewMatrix = SKMatrix.CreateIdentity();
 
             var touch1Start = new SKPoint(100, 100);
-            var touch2Start = new SKPoint(200, 100); 
+            var touch2Start = new SKPoint(200, 100);
 
             canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Pressed, touch1Start, true), SKRect.Empty);
             canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Pressed, touch2Start, true), SKRect.Empty);
-            
+
             var initialElementMatrix = mockElement.Object.TransformMatrix;
 
             // Simulate pinch out (increase distance)
-            var touch1Move = new SKPoint(75, 100); 
-            var touch2Move = new SKPoint(225, 100); 
+            var touch1Move = new SKPoint(75, 100);
+            var touch2Move = new SKPoint(225, 100);
 
             // Act
             canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Moved, touch1Move, true), SKRect.Empty);
@@ -333,28 +370,28 @@ Assert.True(Math.Abs(finalMatrix.TransX - 2.7252297f) < 0.001f);
         {
             // Arrange
             mockDrawingTool.Setup(t => t.Type).Returns(ToolType.Select);
-            mockLayerStateManager.Setup(m => m.CurrentLayer).Returns(new Layer { IsLocked = false });
+            mockLayerFacade.Setup(m => m.CurrentLayer).Returns(new Layer { IsLocked = false });
 
             var mockElement = new Mock<IDrawableElement>();
-            mockElement.SetupProperty(e => e.TransformMatrix); // FIX HERE: Setup tracking for TransformMatrix
-            mockElement.Object.TransformMatrix = SKMatrix.CreateIdentity(); // Initialize after setup
+            mockElement.SetupProperty(e => e.TransformMatrix); 
+            mockElement.Object.TransformMatrix = SKMatrix.CreateIdentity(); 
             mockElement.Setup(e => e.HitTest(It.IsAny<SKPoint>())).Returns(true);
-            selectionManager.Add(mockElement.Object); // FIX HERE: Changed from selectionManager.Selected.Add
+            selectionObserver.Add(mockElement.Object); 
 
             navigationModel.ViewMatrix = SKMatrix.CreateIdentity();
             navigationModel.ViewMatrix = SKMatrix.CreateIdentity();
 
             var touch1Start = new SKPoint(100, 100);
-            var touch2Start = new SKPoint(200, 100); 
+            var touch2Start = new SKPoint(200, 100);
 
             canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Pressed, touch1Start, true), SKRect.Empty);
             canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Pressed, touch2Start, true), SKRect.Empty);
-            
+
             var initialElementMatrix = mockElement.Object.TransformMatrix;
 
             // Simulate rotation
-            var touch1Move = new SKPoint(100, 50); 
-            var touch2Move = new SKPoint(200, 150); 
+            var touch1Move = new SKPoint(100, 50);
+            var touch2Move = new SKPoint(200, 150);
 
             // Act
             canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Moved, touch1Move, true), SKRect.Empty);
