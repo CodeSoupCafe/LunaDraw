@@ -38,52 +38,51 @@ namespace LunaDraw;
 
 public static class MauiProgram
 {
-    public static MauiApp CreateMauiApp()
-    {
-        var builder = MauiApp.CreateBuilder();
+  public static MauiApp CreateMauiApp()
+  {
+    var builder = MauiApp.CreateBuilder();
 
-        // Initialize Splat and ReactiveUI
-        Locator.CurrentMutable.InitializeSplat();
-        Locator.CurrentMutable.InitializeReactiveUI();
+    // Initialize Splat and ReactiveUI
+    Locator.CurrentMutable.InitializeSplat();
+    Locator.CurrentMutable.InitializeReactiveUI();
 
-        builder
-             .UseMauiApp<App>()
-             .UseSkiaSharp()
-             .UseMauiCommunityToolkit()
-            .ConfigureFonts(fonts =>
-            {
-                fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-                fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
-            });
+    builder
+        .UseMauiApp<App>()
+        .UseSkiaSharp()
+        .UseMauiCommunityToolkit()
+        .ConfigureFonts(fonts =>
+        {
+          fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
+          fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+        });
 
-        // Register Core State Managers
-        builder.Services.AddSingleton<IMessageBus>(new ReactiveUI.MessageBus());
-        builder.Services.AddSingleton<NavigationModel>();
-        builder.Services.AddSingleton<SelectionObserver>();
-        // builder.Services.AddSingleton<IToolStateManager, ToolStateManager>(); // Removed
-        builder.Services.AddSingleton<ILayerFacade, LayerFacade>();
+    // Register Core State Managers
+    builder.Services.AddSingleton<IMessageBus>(new ReactiveUI.MessageBus());
+    builder.Services.AddSingleton<NavigationModel>();
+    builder.Services.AddSingleton<SelectionObserver>();
+    builder.Services.AddSingleton<ILayerFacade, LayerFacade>();
 
-        // Register Logic Services
-        builder.Services.AddSingleton<ICanvasInputHandler, CanvasInputHandler>();
-        builder.Services.AddSingleton<ClipboardMemento>();
-        builder.Services.AddSingleton<IBitmapCache, BitmapCache>();
-        builder.Services.AddSingleton<IFileSaver>(FileSaver.Default);
+    // Register Logic Services
+    builder.Services.AddSingleton<ICanvasInputHandler, CanvasInputHandler>();
+    builder.Services.AddSingleton<ClipboardMemento>();
+    builder.Services.AddSingleton<IBitmapCache, BitmapCache>();
+    builder.Services.AddSingleton<IFileSaver>(FileSaver.Default);
 
-        // Register ViewModels
-        builder.Services.AddSingleton<LayerPanelViewModel>();
-        builder.Services.AddSingleton<SelectionViewModel>();
-        builder.Services.AddSingleton<HistoryViewModel>();
+    // Register ViewModels
+    builder.Services.AddSingleton<LayerPanelViewModel>();
+    builder.Services.AddSingleton<SelectionViewModel>();
+    builder.Services.AddSingleton<HistoryViewModel>();
 
-        builder.Services.AddTransient<MainViewModel>();
-        builder.Services.AddSingleton<ToolbarViewModel>(); // Changed to Singleton
+    builder.Services.AddTransient<MainViewModel>();
+    builder.Services.AddSingleton<ToolbarViewModel>();
 
-        // Register Pages
-        builder.Services.AddTransient<MainPage>();
+    // Register Pages
+    builder.Services.AddTransient<MainPage>();
 
 #if DEBUG
-        builder.Logging.AddDebug();
+    builder.Logging.AddDebug();
 #endif
 
-        return builder.Build();
-    }
+    return builder.Build();
+  }
 }

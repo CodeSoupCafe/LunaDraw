@@ -36,92 +36,84 @@ using Xunit;
 
 namespace LunaDraw.Tests
 {
-    public class ToolbarViewModelTests
+  public class ToolbarViewModelTests
+  {
+    private readonly Mock<ILayerFacade> layerFacadeMock;
+    private readonly Mock<IMessageBus> messageBusMock;
+    private readonly Mock<IBitmapCache> bitmapCacheMock;
+    private readonly Mock<IFileSaver> fileSaverMock;
+    private readonly NavigationModel navigationModel;
+    private readonly SelectionViewModel selectionViewModel;
+    private readonly HistoryViewModel historyViewModel;
+    private readonly HistoryMemento historyMemento;
+
+    public ToolbarViewModelTests()
     {
-        private readonly Mock<IToolStateManager> toolStateManagerMock;
-        private readonly Mock<ILayerFacade> layerFacadeMock;
-        private readonly Mock<IMessageBus> messageBusMock;
-        private readonly Mock<IBitmapCacheManager> bitmapCacheManagerMock;
-        private readonly Mock<IFileSaver> fileSaverMock;
-        private readonly NavigationModel navigationModel;
-        private readonly SelectionViewModel selectionViewModel;
-        private readonly HistoryViewModel historyViewModel;
-        private readonly HistoryMemento historyMemento;
+      layerFacadeMock = new Mock<ILayerFacade>();
+      messageBusMock = new Mock<IMessageBus>();
+      bitmapCacheMock = new Mock<IBitmapCache>();
+      fileSaverMock = new Mock<IFileSaver>();
+      navigationModel = new NavigationModel();
+      historyMemento = new HistoryMemento();
 
-        public ToolbarViewModelTests()
-        {
-            toolStateManagerMock = new Mock<IToolStateManager>();
-            layerFacadeMock = new Mock<ILayerFacade>();
-            messageBusMock = new Mock<IMessageBus>();
-            bitmapCacheManagerMock = new Mock<IBitmapCacheManager>();
-            fileSaverMock = new Mock<IFileSaver>();
-            navigationModel = new NavigationModel();
-            historyMemento = new HistoryMemento();
+      layerFacadeMock.Setup(x => x.Layers).Returns(new ObservableCollection<Layer>());
+      layerFacadeMock.Setup(x => x.HistoryMemento).Returns(historyMemento);
 
-            // Setup default behavior for mocks
-            toolStateManagerMock.Setup(x => x.AvailableTools).Returns(new List<IDrawingTool>());
-            toolStateManagerMock.Setup(x => x.AvailableBrushShapes).Returns(new List<BrushShape>());
+      // Setup dependencies for ViewModels
+      var selectionObserver = new SelectionObserver();
+      var clipboardManager = new ClipboardMemento();
+      selectionViewModel = new SelectionViewModel(selectionObserver, layerFacadeMock.Object, clipboardManager, messageBusMock.Object);
 
-            layerFacadeMock.Setup(x => x.Layers).Returns(new ObservableCollection<Layer>());
-            layerFacadeMock.Setup(x => x.HistoryMemento).Returns(historyMemento);
-
-            // Setup dependencies for ViewModels
-            var selectionObserver = new SelectionObserver();
-            var clipboardManager = new ClipboardManager();
-            selectionViewModel = new SelectionViewModel(selectionObserver, layerFacadeMock.Object, clipboardManager, messageBusMock.Object);
-
-            historyViewModel = new HistoryViewModel(layerFacadeMock.Object, messageBusMock.Object);
-        }
-
-        [Fact]
-        public void SaveImageCommand_ShouldNotExecute_WhenCanvasSizeIsZero()
-        {
-            // Arrange
-            navigationModel.CanvasWidth = 0;
-            navigationModel.CanvasHeight = 0;
-
-            var viewModel = new ToolbarViewModel(
-                toolStateManagerMock.Object,
-                layerFacadeMock.Object,
-                selectionViewModel,
-                historyViewModel,
-                messageBusMock.Object,
-                bitmapCacheManagerMock.Object,
-                navigationModel,
-                fileSaverMock.Object);
-
-            // Act
-            viewModel.SaveImageCommand.Execute().Subscribe();
-
-            // Assert
-            fileSaverMock.Verify(x => x.SaveAsync(It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<CancellationToken>()), Times.Never);
-        }
-
-        [Fact]
-        public async Task SaveImageCommand_ShouldExecute_WhenCanvasSizeIsValid()
-        {
-            // Arrange
-            navigationModel.CanvasWidth = 100;
-            navigationModel.CanvasHeight = 100;
-
-            var viewModel = new ToolbarViewModel(
-                toolStateManagerMock.Object,
-                layerFacadeMock.Object,
-                selectionViewModel,
-                historyViewModel,
-                messageBusMock.Object,
-                bitmapCacheManagerMock.Object,
-                navigationModel,
-                fileSaverMock.Object);
-
-            fileSaverMock.Setup(x => x.SaveAsync(It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new FileSaverResult("path", null));
-
-            // Act
-            await viewModel.SaveImageCommand.Execute().ToTask();
-
-            // Assert
-            fileSaverMock.Verify(x => x.SaveAsync(It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<CancellationToken>()), Times.Once);
-        }
+      historyViewModel = new HistoryViewModel(layerFacadeMock.Object, messageBusMock.Object);
     }
+
+    [Fact]
+    public void SaveImageCommand_ShouldNotExecute_WhenCanvasSizeIsZero()
+    {
+      // Arrange
+      navigationModel.CanvasWidth = 0;
+      navigationModel.CanvasHeight = 0;
+
+      var viewModel = new ToolbarViewModel(
+          layerFacadeMock.Object,
+          selectionViewModel,
+          historyViewModel,
+          messageBusMock.Object,
+          bitmapCacheMock.Object,
+          navigationModel,
+          fileSaverMock.Object);
+
+      // Act
+      viewModel.SaveImageCommand.Execute().Subscribe();
+
+      // Assert
+      fileSaverMock.Verify(x => x.SaveAsync(It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SaveImageCommand_ShouldExecute_WhenCanvasSizeIsValid()
+    {
+      // Arrange
+      navigationModel.CanvasWidth = 100;
+      navigationModel.CanvasHeight = 100;
+
+      var viewModel = new ToolbarViewModel(
+          layerFacadeMock.Object,
+          selectionViewModel,
+          historyViewModel,
+          messageBusMock.Object,
+          bitmapCacheMock.Object,
+          navigationModel,
+          fileSaverMock.Object);
+
+      fileSaverMock.Setup(x => x.SaveAsync(It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
+          .ReturnsAsync(new FileSaverResult("path", null));
+
+      // Act
+      await viewModel.SaveImageCommand.Execute().ToTask();
+
+      // Assert
+      fileSaverMock.Verify(x => x.SaveAsync(It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+  }
 }

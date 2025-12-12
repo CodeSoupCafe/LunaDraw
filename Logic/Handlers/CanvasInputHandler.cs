@@ -33,13 +33,13 @@ using SkiaSharp.Views.Maui;
 namespace LunaDraw.Logic.Services
 {
   public class CanvasInputHandler(
-      ToolbarViewModel toolStateManager,
+      ToolbarViewModel toolbarViewModel,
       ILayerFacade layerFacade,
       SelectionObserver selectionObserver,
       NavigationModel navigationModel,
       IMessageBus messageBus) : ICanvasInputHandler
   {
-    private readonly ToolbarViewModel toolStateManager = toolStateManager;
+    private readonly ToolbarViewModel toolbarViewModel = toolbarViewModel;
     private readonly ILayerFacade layerFacade = layerFacade;
     private readonly SelectionObserver selectionObserver = selectionObserver;
     private readonly NavigationModel navigationModel = navigationModel;
@@ -72,8 +72,8 @@ namespace LunaDraw.Logic.Services
       {
         if (e.ActionType == SKTouchAction.Pressed)
         {
-          var selectTool = toolStateManager.AvailableTools.FirstOrDefault(t => t.Type == ToolType.Select);
-          if (selectTool != null) toolStateManager.ActiveTool = selectTool;
+          var selectTool = toolbarViewModel.AvailableTools.FirstOrDefault(t => t.Type == ToolType.Select);
+          if (selectTool != null) toolbarViewModel.ActiveTool = selectTool;
 
           if (navigationModel.ViewMatrix.TryInvert(out var inverse))
           {
@@ -106,7 +106,7 @@ namespace LunaDraw.Logic.Services
           isMultiTouch = true;
 
           // Cancel drawing
-          if (toolStateManager.ActiveTool is IDrawingTool tool)
+          if (toolbarViewModel.ActiveTool is IDrawingTool tool)
           {
             tool.OnTouchCancelled(CreateToolContext());
           }
@@ -164,10 +164,10 @@ namespace LunaDraw.Logic.Services
               HandleTouchPressed(worldPoint, context);
               break;
             case SKTouchAction.Moved:
-              toolStateManager.ActiveTool.OnTouchMoved(worldPoint, context);
+              toolbarViewModel.ActiveTool.OnTouchMoved(worldPoint, context);
               break;
             case SKTouchAction.Released:
-              toolStateManager.ActiveTool.OnTouchReleased(worldPoint, context);
+              toolbarViewModel.ActiveTool.OnTouchReleased(worldPoint, context);
               break;
           }
         }
@@ -301,9 +301,9 @@ namespace LunaDraw.Logic.Services
     {
       if (layerFacade.CurrentLayer?.IsLocked == true) return;
 
-      if (toolStateManager.ActiveTool.Type == ToolType.Select)
+      if (toolbarViewModel.ActiveTool.Type == ToolType.Select)
       {
-        toolStateManager.ActiveTool.OnTouchPressed(worldPoint, context);
+        toolbarViewModel.ActiveTool.OnTouchPressed(worldPoint, context);
 
         if (selectionObserver.Selected.Count > 0)
         {
@@ -322,7 +322,7 @@ namespace LunaDraw.Logic.Services
         messageBus.SendMessage(new CanvasInvalidateMessage());
       }
 
-      toolStateManager.ActiveTool.OnTouchPressed(worldPoint, context);
+      toolbarViewModel.ActiveTool.OnTouchPressed(worldPoint, context);
     }
 
     private float Distance(SKPoint p1, SKPoint p2) =>
@@ -333,25 +333,25 @@ namespace LunaDraw.Logic.Services
       return new ToolContext
       {
         CurrentLayer = layerFacade.CurrentLayer!,
-        StrokeColor = toolStateManager.StrokeColor,
-        FillColor = toolStateManager.FillColor,
-        StrokeWidth = toolStateManager.StrokeWidth,
-        Opacity = toolStateManager.Opacity,
-        Flow = toolStateManager.Flow,
-        Spacing = toolStateManager.Spacing,
-        BrushShape = toolStateManager.CurrentBrushShape,
+        StrokeColor = toolbarViewModel.StrokeColor,
+        FillColor = toolbarViewModel.FillColor,
+        StrokeWidth = toolbarViewModel.StrokeWidth,
+        Opacity = toolbarViewModel.Opacity,
+        Flow = toolbarViewModel.Flow,
+        Spacing = toolbarViewModel.Spacing,
+        BrushShape = toolbarViewModel.CurrentBrushShape,
         AllElements = layerFacade.Layers.SelectMany(l => l.Elements),
         Layers = layerFacade.Layers,
         SelectionObserver = selectionObserver,
         Scale = navigationModel.ViewMatrix.ScaleX,
-        IsGlowEnabled = toolStateManager.IsGlowEnabled,
-        GlowColor = toolStateManager.GlowColor,
-        GlowRadius = toolStateManager.GlowRadius,
-        IsRainbowEnabled = toolStateManager.IsRainbowEnabled,
-        ScatterRadius = toolStateManager.ScatterRadius,
-        SizeJitter = toolStateManager.SizeJitter,
-        AngleJitter = toolStateManager.AngleJitter,
-        HueJitter = toolStateManager.HueJitter,
+        IsGlowEnabled = toolbarViewModel.IsGlowEnabled,
+        GlowColor = toolbarViewModel.GlowColor,
+        GlowRadius = toolbarViewModel.GlowRadius,
+        IsRainbowEnabled = toolbarViewModel.IsRainbowEnabled,
+        ScatterRadius = toolbarViewModel.ScatterRadius,
+        SizeJitter = toolbarViewModel.SizeJitter,
+        AngleJitter = toolbarViewModel.AngleJitter,
+        HueJitter = toolbarViewModel.HueJitter,
         CanvasMatrix = navigationModel.ViewMatrix
       };
     }

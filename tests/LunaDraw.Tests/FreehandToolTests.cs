@@ -44,7 +44,7 @@ namespace LunaDraw.Tests
         private readonly Mock<IMessageBus> mockMessageBus;
         private readonly FreehandTool freehandTool;
         private readonly Mock<ILayerFacade> mockLayerFacade;
-        private readonly Mock<IToolStateManager> mockToolStateManager;
+        private readonly Mock<ToolbarViewModel> mockToolbarViewModel;
         private readonly SelectionObserver selectionObserver;
         private readonly NavigationModel navigationModel;
 
@@ -54,7 +54,7 @@ namespace LunaDraw.Tests
             freehandTool = new FreehandTool(mockMessageBus.Object);
 
             mockLayerFacade = new Mock<ILayerFacade>();
-            mockToolStateManager = new Mock<IToolStateManager>();
+            mockToolbarViewModel = new Mock<ToolbarViewModel>();
             selectionObserver = new SelectionObserver();
             navigationModel = new NavigationModel();
         }

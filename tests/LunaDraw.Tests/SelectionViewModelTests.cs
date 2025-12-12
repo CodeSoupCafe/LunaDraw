@@ -36,52 +36,52 @@ using Xunit;
 
 namespace LunaDraw.Tests
 {
-    public class SelectionViewModelTests
+  public class SelectionViewModelTests
+  {
+    private readonly Mock<IMessageBus> mockBus;
+    private readonly LayerFacade layerFacade;
+    private readonly SelectionObserver selectionObserver;
+    private readonly ClipboardMemento clipboardMemento;
+    private readonly SelectionViewModel viewModel;
+
+    public SelectionViewModelTests()
     {
-        private readonly Mock<IMessageBus> mockBus;
-        private readonly LayerFacade layerFacade;
-        private readonly SelectionObserver selectionObserver;
-        private readonly ClipboardManager clipboardManager;
-        private readonly SelectionViewModel viewModel;
+      mockBus = new Mock<IMessageBus>();
+      // Setup generic listeners to avoid null reference exceptions
+      mockBus.Setup(x => x.Listen<DrawingStateChangedMessage>()).Returns(Observable.Empty<DrawingStateChangedMessage>());
+      mockBus.Setup(x => x.Listen<SelectionChangedMessage>()).Returns(Observable.Empty<SelectionChangedMessage>());
 
-        public SelectionViewModelTests()
-        {
-            mockBus = new Mock<IMessageBus>();
-            // Setup generic listeners to avoid null reference exceptions
-            mockBus.Setup(x => x.Listen<DrawingStateChangedMessage>()).Returns(Observable.Empty<DrawingStateChangedMessage>());
-            mockBus.Setup(x => x.Listen<SelectionChangedMessage>()).Returns(Observable.Empty<SelectionChangedMessage>());
+      layerFacade = new LayerFacade(mockBus.Object);
+      selectionObserver = new SelectionObserver();
+      clipboardMemento = new ClipboardMemento();
 
-            layerFacade = new LayerFacade(mockBus.Object);
-            selectionObserver = new SelectionObserver();
-            clipboardManager = new ClipboardManager();
-
-            viewModel = new SelectionViewModel(selectionObserver, layerFacade, clipboardManager, mockBus.Object);
-        }
-
-        [Fact]
-        public void MoveSelectionToNewLayer_ShouldCreateLayerAndMoveElements()
-        {
-            // Arrange
-            var layer1 = layerFacade.Layers.First();
-            var element = new DrawableRectangle { Rectangle = new SKRect(0, 0, 10, 10) };
-            layer1.Elements.Add(element);
-
-            selectionObserver.Add(element);
-
-            Assert.Equal(1, layerFacade.Layers.Count);
-            Assert.Contains(element, layer1.Elements);
-
-            // Act
-            viewModel.MoveSelectionToNewLayerCommand.Execute().Subscribe();
-
-            // Assert
-            Assert.Equal(2, layerFacade.Layers.Count);
-            var layer2 = layerFacade.Layers[1];
-
-            // Element should be in Layer 2
-            Assert.Contains(element, layer2.Elements);
-            // Element should NOT be in Layer 1
-            Assert.DoesNotContain(element, layer1.Elements);
-        }
+      viewModel = new SelectionViewModel(selectionObserver, layerFacade, clipboardMemento, mockBus.Object);
     }
+
+    [Fact]
+    public void MoveSelectionToNewLayer_ShouldCreateLayerAndMoveElements()
+    {
+      // Arrange
+      var layer1 = layerFacade.Layers.First();
+      var element = new DrawableRectangle { Rectangle = new SKRect(0, 0, 10, 10) };
+      layer1.Elements.Add(element);
+
+      selectionObserver.Add(element);
+
+      Assert.Equal(1, layerFacade.Layers.Count);
+      Assert.Contains(element, layer1.Elements);
+
+      // Act
+      viewModel.MoveSelectionToNewLayerCommand.Execute().Subscribe();
+
+      // Assert
+      Assert.Equal(2, layerFacade.Layers.Count);
+      var layer2 = layerFacade.Layers[1];
+
+      // Element should be in Layer 2
+      Assert.Contains(element, layer2.Elements);
+      // Element should NOT be in Layer 1
+      Assert.DoesNotContain(element, layer1.Elements);
+    }
+  }
 }
