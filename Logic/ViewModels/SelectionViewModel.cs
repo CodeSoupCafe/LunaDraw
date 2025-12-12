@@ -74,6 +74,7 @@ public class SelectionViewModel : ReactiveObject
     CopyCommand = ReactiveCommand.Create(Copy, hasSelection, RxApp.MainThreadScheduler);
     CutCommand = ReactiveCommand.Create(Cut, hasSelection, RxApp.MainThreadScheduler);
     PasteCommand = ReactiveCommand.Create(Paste, this.WhenAnyValue(x => x.CanPaste), RxApp.MainThreadScheduler);
+    DuplicateCommand = ReactiveCommand.Create(Duplicate, hasSelection, RxApp.MainThreadScheduler);
 
     SendBackwardCommand = ReactiveCommand.Create(SendBackward, hasSelection, RxApp.MainThreadScheduler);
     BringForwardCommand = ReactiveCommand.Create(BringForward, hasSelection, RxApp.MainThreadScheduler);
@@ -103,6 +104,7 @@ public class SelectionViewModel : ReactiveObject
   public ReactiveCommand<Unit, Unit> CopyCommand { get; }
   public ReactiveCommand<Unit, Unit> CutCommand { get; }
   public ReactiveCommand<Unit, Unit> PasteCommand { get; }
+  public ReactiveCommand<Unit, Unit> DuplicateCommand { get; }
   public ReactiveCommand<Unit, Unit> SendBackwardCommand { get; }
   public ReactiveCommand<Unit, Unit> BringForwardCommand { get; }
   public ReactiveCommand<Unit, Unit> SendElementToBackCommand { get; }
@@ -214,6 +216,12 @@ public class SelectionViewModel : ReactiveObject
     }
     messageBus.SendMessage(new CanvasInvalidateMessage());
     layerFacade.SaveState();
+  }
+
+  private void Duplicate()
+  {
+    Copy();
+    Paste();
   }
 
   private void SendBackward()

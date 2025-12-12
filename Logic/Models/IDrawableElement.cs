@@ -128,5 +128,3 @@ public interface IDrawableElement
   /// <returns>The SKPath representing the base geometry.</returns>
   SKPath GetGeometryPath();
 }
-
-}
