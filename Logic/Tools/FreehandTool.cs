@@ -175,10 +175,33 @@ namespace LunaDraw.Logic.Tools
         var point = item.Point;
         var baseRotation = item.Rotation;
 
-        // Local random for preview jitter
-        var random = new Random(index * 1337); 
+        // Local random for preview jitter (Must match DrawableStamps logic)
+        int seed;
+        unchecked 
+        {
+            seed = 17;
+            seed = seed * 23 + point.X.GetHashCode();
+            seed = seed * 23 + point.Y.GetHashCode();
+        }
+        var random = new Random(seed); 
 
-        // Calculate color
+        // 1. Size Jitter (Consume randoms first)
+        float scaleFactor = 1.0f;
+        if (context.SizeJitter > 0)
+        {
+            float unusedJitter = (float)random.NextDouble() * context.SizeJitter; 
+            scaleFactor = 1.0f + ((float)random.NextDouble() - 0.5f) * 2.0f * context.SizeJitter;
+            if (scaleFactor < 0.1f) scaleFactor = 0.1f;
+        }
+
+        // 2. Angle Jitter
+        float rotationDelta = 0f;
+        if (context.AngleJitter > 0)
+        {
+            rotationDelta = ((float)random.NextDouble() - 0.5f) * 2.0f * context.AngleJitter;
+        }
+
+        // 3. Color (Hue) Jitter
         SKColor color = context.StrokeColor;
         if (context.IsRainbowEnabled)
         {
@@ -205,18 +228,15 @@ namespace LunaDraw.Logic.Tools
             canvas.RotateDegrees(baseRotation);
         }
 
-        // Rotation Jitter
+        // Apply Jitter Rotation
         if (context.AngleJitter > 0)
         {
-            float rotation = ((float)random.NextDouble() - 0.5f) * 2.0f * context.AngleJitter;
-            canvas.RotateDegrees(rotation);
+            canvas.RotateDegrees(rotationDelta);
         }
 
-        // Size Jitter
-        if (context.SizeJitter > 0)
+        // Apply Jitter Scale
+        if (scaleFactor != 1.0f)
         {
-            float scaleFactor = 1.0f + ((float)random.NextDouble() - 0.5f) * 2.0f * context.SizeJitter;
-            if (scaleFactor < 0.1f) scaleFactor = 0.1f;
             canvas.Scale(scaleFactor);
         }
 

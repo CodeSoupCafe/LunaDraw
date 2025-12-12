@@ -123,6 +123,95 @@ namespace LunaDraw.Logic.Tools
             isPureStroke = element.FillColor == null;
         }
 
+        if (element is DrawableStamps stamps)
+        {
+            var remainingPoints = new List<SKPoint>();
+            var remainingRotations = new List<float>();
+            var stampModified = false;
+
+            // Iterate through detailed instances to handle geometry & color accurately
+            var instances = stamps.GetDetailedPaths().ToList();
+            
+            // We need to match instances back to original points by index
+            for (int i = 0; i < instances.Count; i++)
+            {
+                var (stampPath, stampColor) = instances[i];
+                var originalPoint = stamps.Points[i];
+
+                using (stampPath)
+                {
+                    // Check intersection
+                    using var intersection = new SKPath();
+                    bool intersects = eraserOutline.Op(stampPath, SKPathOp.Intersect, intersection) && !intersection.IsEmpty;
+
+                    if (!intersects)
+                    {
+                        // Completely untouched, keep as a stamp
+                        remainingPoints.Add(originalPoint);
+                        if (stamps.Rotations != null && i < stamps.Rotations.Count)
+                        {
+                            remainingRotations.Add(stamps.Rotations[i]);
+                        }
+                    }
+                    else
+                    {
+                        // Touched (Partial or Full erase) -> Convert to Path(s) or Destroy
+                        stampModified = true;
+
+                        using var resultPath = new SKPath();
+                        if (stampPath.Op(eraserOutline, SKPathOp.Difference, resultPath) && !resultPath.IsEmpty)
+                        {
+                            // Create a new DrawablePath for the fragment
+                            var newFragment = new DrawablePath
+                            {
+                                Path = new SKPath(resultPath), // Copy the result
+                                TransformMatrix = SKMatrix.CreateIdentity(), // Logic was already applied in GetDetailedPaths (including TransformMatrix)
+                                IsVisible = stamps.IsVisible,
+                                Opacity = (byte)(stamps.Opacity * stamps.Flow / 255f), // Combine Opacity and Flow
+                                ZIndex = stamps.ZIndex,
+                                IsSelected = false, // Fragments shouldn't inherit selection immediately
+                                IsGlowEnabled = stamps.IsGlowEnabled,
+                                GlowColor = stamps.GlowColor,
+                                GlowRadius = stamps.GlowRadius,
+                                IsFilled = true, // Stamps are filled shapes
+                                StrokeWidth = 0,
+                                StrokeColor = stampColor, // Use the specific jittered color
+                                FillColor = null, // Logic implies "Filled Stroke" behavior for consistency with other paths
+                                BlendMode = stamps.BlendMode
+                            };
+                            
+                            // Note: 'stampColor' is used as StrokeColor with IsFilled=true because 
+                            // in the generic path logic above (lines 169-172), eroded strokes become filled blobs 
+                            // where StrokeColor is preserved. DrawableStamps usually render as fills of the 'StrokeColor'.
+                            
+                            elementsToAdd.Add(newFragment);
+                        }
+                        // If resultPath is empty, it was fully erased. Do nothing (it's gone).
+                    }
+                }
+            }
+
+            if (stampModified)
+            {
+                if (remainingPoints.Count == 0)
+                {
+                    elementsToRemove.Add(element);
+                }
+                else
+                {
+                    // Create a new Stamps object for the remaining untouched stamps
+                    var newStamps = (DrawableStamps)stamps.Clone();
+                    newStamps.Points = remainingPoints;
+                    newStamps.Rotations = remainingRotations;
+                    
+                    elementsToRemove.Add(element);
+                    elementsToAdd.Add(newStamps);
+                }
+                modified = true;
+            }
+            continue;
+        }
+
         SKPath elementPath;
         if (isPureStroke)
         {
