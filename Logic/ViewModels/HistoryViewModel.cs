@@ -26,71 +26,70 @@ using LunaDraw.Logic.Managers;
 using ReactiveUI;
 using LunaDraw.Logic.Models;
 
-namespace LunaDraw.Logic.ViewModels
-{
-    public class HistoryViewModel : ReactiveObject
-    {
-        private readonly HistoryMemento historyMemento;
-        private readonly ILayerFacade layerFacade;
-        private readonly IMessageBus messageBus;
+namespace LunaDraw.Logic.ViewModels;
 
-        public HistoryViewModel(ILayerFacade layerFacade, IMessageBus messageBus)
-        {
-            this.layerFacade = layerFacade;
-            historyMemento = layerFacade.HistoryMemento;
-            this.messageBus = messageBus;
+  public class HistoryViewModel : ReactiveObject
+  {
+      private readonly HistoryMemento historyMemento;
+      private readonly ILayerFacade layerFacade;
+      private readonly IMessageBus messageBus;
 
-            // Observables for CanUndo/CanRedo
-            var canUndo = this.WhenAnyValue(x => x.historyMemento.CanUndo);
-            var canRedo = this.WhenAnyValue(x => x.historyMemento.CanRedo);
+      public HistoryViewModel(ILayerFacade layerFacade, IMessageBus messageBus)
+      {
+          this.layerFacade = layerFacade;
+          historyMemento = layerFacade.HistoryMemento;
+          this.messageBus = messageBus;
 
-            UndoCommand = ReactiveCommand.Create(Undo, canUndo, RxApp.MainThreadScheduler);
-            RedoCommand = ReactiveCommand.Create(Redo, canRedo, RxApp.MainThreadScheduler);
+          // Observables for CanUndo/CanRedo
+          var canUndo = this.WhenAnyValue(x => x.historyMemento.CanUndo);
+          var canRedo = this.WhenAnyValue(x => x.historyMemento.CanRedo);
 
-            // Expose properties for binding
-            canUndoProp = canUndo.ToProperty(this, x => x.CanUndo);
-            canRedoProp = canRedo.ToProperty(this, x => x.CanRedo);
-        }
+          UndoCommand = ReactiveCommand.Create(Undo, canUndo, RxApp.MainThreadScheduler);
+          RedoCommand = ReactiveCommand.Create(Redo, canRedo, RxApp.MainThreadScheduler);
 
-        private readonly ObservableAsPropertyHelper<bool> canUndoProp;
-        public bool CanUndo => canUndoProp.Value;
+          // Expose properties for binding
+          canUndoProp = canUndo.ToProperty(this, x => x.CanUndo);
+          canRedoProp = canRedo.ToProperty(this, x => x.CanRedo);
+      }
 
-        private readonly ObservableAsPropertyHelper<bool> canRedoProp;
-        public bool CanRedo => canRedoProp.Value;
+      private readonly ObservableAsPropertyHelper<bool> canUndoProp;
+      public bool CanUndo => canUndoProp.Value;
 
-        public ReactiveCommand<Unit, Unit> UndoCommand { get; }
-        public ReactiveCommand<Unit, Unit> RedoCommand { get; }
+      private readonly ObservableAsPropertyHelper<bool> canRedoProp;
+      public bool CanRedo => canRedoProp.Value;
 
-        private void Undo()
-        {
-            var state = historyMemento.Undo();
-            if (state != null)
-            {
-                RestoreState(state);
-            }
-        }
+      public ReactiveCommand<Unit, Unit> UndoCommand { get; }
+      public ReactiveCommand<Unit, Unit> RedoCommand { get; }
 
-        private void Redo()
-        {
-            var state = historyMemento.Redo();
-            if (state != null)
-            {
-                RestoreState(state);
-            }
-        }
+      private void Undo()
+      {
+          var state = historyMemento.Undo();
+          if (state != null)
+          {
+              RestoreState(state);
+          }
+      }
 
-        private void RestoreState(List<Layer> state)
-        {
-            layerFacade.Layers.Clear();
-            foreach (var layer in state)
-            {
-                layerFacade.Layers.Add(layer);
-            }
+      private void Redo()
+      {
+          var state = historyMemento.Redo();
+          if (state != null)
+          {
+              RestoreState(state);
+          }
+      }
 
-            var currentLayerId = layerFacade.CurrentLayer?.Id;
-            layerFacade.CurrentLayer = layerFacade.Layers.FirstOrDefault(l => l.Id == currentLayerId) ?? layerFacade.Layers.FirstOrDefault();
+      private void RestoreState(List<Layer> state)
+      {
+          layerFacade.Layers.Clear();
+          foreach (var layer in state)
+          {
+              layerFacade.Layers.Add(layer);
+          }
 
-            messageBus.SendMessage(new LunaDraw.Logic.Messages.CanvasInvalidateMessage());
-        }
-    }
-}
+          var currentLayerId = layerFacade.CurrentLayer?.Id;
+          layerFacade.CurrentLayer = layerFacade.Layers.FirstOrDefault(l => l.Id == currentLayerId) ?? layerFacade.Layers.FirstOrDefault();
+
+          messageBus.SendMessage(new LunaDraw.Logic.Messages.CanvasInvalidateMessage());
+      }
+  }

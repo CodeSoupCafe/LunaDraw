@@ -28,342 +28,341 @@ using ReactiveUI;
 
 using SkiaSharp;
 
-namespace LunaDraw.Logic.Tools
+namespace LunaDraw.Logic.Tools;
+
+public class EraserBrushTool(IMessageBus messageBus) : IDrawingTool
 {
-  public class EraserBrushTool(IMessageBus messageBus) : IDrawingTool
+  public string Name => "Eraser";
+  public ToolType Type => ToolType.Eraser;
+
+  private SKPath? currentPath;
+  private DrawablePath? currentDrawablePath;
+  private readonly IMessageBus messageBus = messageBus;
+
+  public void OnTouchPressed(SKPoint point, ToolContext context)
   {
-    public string Name => "Eraser";
-    public ToolType Type => ToolType.Eraser;
+    if (context.CurrentLayer?.IsLocked == true) return;
 
-    private SKPath? currentPath;
-    private DrawablePath? currentDrawablePath;
-    private readonly IMessageBus messageBus = messageBus;
+    currentPath = new SKPath();
+    currentPath.MoveTo(point);
 
-    public void OnTouchPressed(SKPoint point, ToolContext context)
+    currentDrawablePath = new DrawablePath
     {
-      if (context.CurrentLayer?.IsLocked == true) return;
+      Path = currentPath,
+      StrokeColor = SKColors.White, // Visual preview color
+      StrokeWidth = context.StrokeWidth * 2, // Eraser usually wider
+      Opacity = 255,
+      BlendMode = SKBlendMode.SrcOver,
+      ZIndex = context.CurrentLayer?.Elements.Count > 0 ? context.CurrentLayer.Elements.Max(e => e.ZIndex) + 1 : 0
+    };
 
-      currentPath = new SKPath();
-      currentPath.MoveTo(point);
+    context.CurrentLayer?.Elements.Add(currentDrawablePath);
+    messageBus.SendMessage(new CanvasInvalidateMessage());
+  }
 
-      currentDrawablePath = new DrawablePath
-      {
-        Path = currentPath,
-        StrokeColor = SKColors.White, // Visual preview color
-        StrokeWidth = context.StrokeWidth * 2, // Eraser usually wider
-        Opacity = 255,
-        BlendMode = SKBlendMode.SrcOver,
-        ZIndex = context.CurrentLayer?.Elements.Count > 0 ? context.CurrentLayer.Elements.Max(e => e.ZIndex) + 1 : 0
-      };
+  public void OnTouchMoved(SKPoint point, ToolContext context)
+  {
+    if (currentPath == null || context.CurrentLayer?.IsLocked == true) return;
 
-      context.CurrentLayer?.Elements.Add(currentDrawablePath);
-      messageBus.SendMessage(new CanvasInvalidateMessage());
+    currentPath.LineTo(point);
+    messageBus.SendMessage(new CanvasInvalidateMessage());
+  }
+
+  public void OnTouchReleased(SKPoint point, ToolContext context)
+  {
+    if (currentPath == null || context.CurrentLayer == null) return;
+
+    currentPath.LineTo(point);
+
+    // Remove the temporary "global" eraser path
+    if (currentDrawablePath != null)
+    {
+      context.CurrentLayer.Elements.Remove(currentDrawablePath);
     }
 
-    public void OnTouchMoved(SKPoint point, ToolContext context)
+    // Convert stroke to fill path (outline) for operations
+    using var strokePaint = new SKPaint
     {
-      if (currentPath == null || context.CurrentLayer?.IsLocked == true) return;
+      Style = SKPaintStyle.Stroke,
+      StrokeWidth = context.StrokeWidth * 2,
+      StrokeCap = SKStrokeCap.Round,
+      StrokeJoin = SKStrokeJoin.Round
+    };
+    using var eraserOutline = new SKPath();
+    strokePaint.GetFillPath(currentPath, eraserOutline);
 
-      currentPath.LineTo(point);
-      messageBus.SendMessage(new CanvasInvalidateMessage());
-    }
+    var elements = context.CurrentLayer.Elements.ToList();
+    var modified = false;
+    var elementsToRemove = new List<IDrawableElement>();
+    var elementsToAdd = new List<IDrawableElement>();
 
-    public void OnTouchReleased(SKPoint point, ToolContext context)
+    foreach (var element in elements)
     {
-      if (currentPath == null || context.CurrentLayer == null) return;
+      if (element == currentDrawablePath) continue;
+      if (!element.IsVisible) continue;
 
-      currentPath.LineTo(point);
-
-      // Remove the temporary "global" eraser path
-      if (currentDrawablePath != null)
+      // Determine if this is a "pure stroke" (like a freehand line or line shape) vs a "filled shape"
+      bool isPureStroke;
+      if (element is DrawablePath dp)
       {
-        context.CurrentLayer.Elements.Remove(currentDrawablePath);
+        // A DrawablePath is a pure stroke only if it is explicitly NOT filled.
+        // If it has a FillShader (e.g. erased image) or IsFilled=true, it is a shape.
+        isPureStroke = !dp.IsFilled;
+      }
+      else if (element is DrawableLine)
+      {
+        isPureStroke = true;
+      }
+      else if (element is DrawableImage)
+      {
+        isPureStroke = false;
+      }
+      else
+      {
+        // For other shapes (Rect, Ellipse), they are pure strokes if they have no fill.
+        isPureStroke = element.FillColor == null;
       }
 
-      // Convert stroke to fill path (outline) for operations
-      using var strokePaint = new SKPaint
+      if (element is DrawableStamps stamps)
       {
-        Style = SKPaintStyle.Stroke,
-        StrokeWidth = context.StrokeWidth * 2,
-        StrokeCap = SKStrokeCap.Round,
-        StrokeJoin = SKStrokeJoin.Round
-      };
-      using var eraserOutline = new SKPath();
-      strokePaint.GetFillPath(currentPath, eraserOutline);
+        var remainingPoints = new List<SKPoint>();
+        var remainingRotations = new List<float>();
+        var stampModified = false;
 
-      var elements = context.CurrentLayer.Elements.ToList();
-      var modified = false;
-      var elementsToRemove = new List<IDrawableElement>();
-      var elementsToAdd = new List<IDrawableElement>();
+        // Iterate through detailed instances to handle geometry & color accurately
+        var instances = stamps.GetDetailedPaths().ToList();
 
-      foreach (var element in elements)
-      {
-        if (element == currentDrawablePath) continue;
-        if (!element.IsVisible) continue;
-
-        // Determine if this is a "pure stroke" (like a freehand line or line shape) vs a "filled shape"
-        bool isPureStroke;
-        if (element is DrawablePath dp)
+        // We need to match instances back to original points by index
+        for (int i = 0; i < instances.Count; i++)
         {
-          // A DrawablePath is a pure stroke only if it is explicitly NOT filled.
-          // If it has a FillShader (e.g. erased image) or IsFilled=true, it is a shape.
-          isPureStroke = !dp.IsFilled;
-        }
-        else if (element is DrawableLine)
-        {
-          isPureStroke = true;
-        }
-        else if (element is DrawableImage)
-        {
-          isPureStroke = false;
-        }
-        else
-        {
-          // For other shapes (Rect, Ellipse), they are pure strokes if they have no fill.
-          isPureStroke = element.FillColor == null;
-        }
+          var (stampPath, stampColor) = instances[i];
+          var originalPoint = stamps.Points[i];
 
-        if (element is DrawableStamps stamps)
-        {
-          var remainingPoints = new List<SKPoint>();
-          var remainingRotations = new List<float>();
-          var stampModified = false;
-
-          // Iterate through detailed instances to handle geometry & color accurately
-          var instances = stamps.GetDetailedPaths().ToList();
-
-          // We need to match instances back to original points by index
-          for (int i = 0; i < instances.Count; i++)
+          using (stampPath)
           {
-            var (stampPath, stampColor) = instances[i];
-            var originalPoint = stamps.Points[i];
+            // Check intersection
+            using var intersection = new SKPath();
+            bool intersects = eraserOutline.Op(stampPath, SKPathOp.Intersect, intersection) && !intersection.IsEmpty;
 
-            using (stampPath)
+            if (!intersects)
             {
-              // Check intersection
-              using var intersection = new SKPath();
-              bool intersects = eraserOutline.Op(stampPath, SKPathOp.Intersect, intersection) && !intersection.IsEmpty;
-
-              if (!intersects)
+              // Completely untouched, keep as a stamp
+              remainingPoints.Add(originalPoint);
+              if (stamps.Rotations != null && i < stamps.Rotations.Count)
               {
-                // Completely untouched, keep as a stamp
-                remainingPoints.Add(originalPoint);
-                if (stamps.Rotations != null && i < stamps.Rotations.Count)
-                {
-                  remainingRotations.Add(stamps.Rotations[i]);
-                }
-              }
-              else
-              {
-                // Touched (Partial or Full erase) -> Convert to Path(s) or Destroy
-                stampModified = true;
-
-                using var resultPath = new SKPath();
-                if (stampPath.Op(eraserOutline, SKPathOp.Difference, resultPath) && !resultPath.IsEmpty)
-                {
-                  // Create a new DrawablePath for the fragment
-                  var newFragment = new DrawablePath
-                  {
-                    Path = new SKPath(resultPath), // Copy the result
-                    TransformMatrix = SKMatrix.CreateIdentity(), // Logic was already applied in GetDetailedPaths (including TransformMatrix)
-                    IsVisible = stamps.IsVisible,
-                    Opacity = (byte)(stamps.Opacity * stamps.Flow / 255f), // Combine Opacity and Flow
-                    ZIndex = stamps.ZIndex,
-                    IsSelected = false, // Fragments shouldn't inherit selection immediately
-                    IsGlowEnabled = stamps.IsGlowEnabled,
-                    GlowColor = stamps.GlowColor,
-                    GlowRadius = stamps.GlowRadius,
-                    IsFilled = true, // Stamps are filled shapes
-                    StrokeWidth = 0,
-                    StrokeColor = stampColor, // Use the specific jittered color
-                    FillColor = null, // Logic implies "Filled Stroke" behavior for consistency with other paths
-                    BlendMode = stamps.BlendMode
-                  };
-
-                  // Note: 'stampColor' is used as StrokeColor with IsFilled=true because 
-                  // in the generic path logic above (lines 169-172), eroded strokes become filled blobs 
-                  // where StrokeColor is preserved. DrawableStamps usually render as fills of the 'StrokeColor'.
-
-                  elementsToAdd.Add(newFragment);
-                }
-                // If resultPath is empty, it was fully erased. Do nothing (it's gone).
+                remainingRotations.Add(stamps.Rotations[i]);
               }
             }
-          }
-
-          if (stampModified)
-          {
-            if (remainingPoints.Count == 0)
+            else
             {
+              // Touched (Partial or Full erase) -> Convert to Path(s) or Destroy
+              stampModified = true;
+
+              using var resultPath = new SKPath();
+              if (stampPath.Op(eraserOutline, SKPathOp.Difference, resultPath) && !resultPath.IsEmpty)
+              {
+                // Create a new DrawablePath for the fragment
+                var newFragment = new DrawablePath
+                {
+                  Path = new SKPath(resultPath), // Copy the result
+                  TransformMatrix = SKMatrix.CreateIdentity(), // Logic was already applied in GetDetailedPaths (including TransformMatrix)
+                  IsVisible = stamps.IsVisible,
+                  Opacity = (byte)(stamps.Opacity * stamps.Flow / 255f), // Combine Opacity and Flow
+                  ZIndex = stamps.ZIndex,
+                  IsSelected = false, // Fragments shouldn't inherit selection immediately
+                  IsGlowEnabled = stamps.IsGlowEnabled,
+                  GlowColor = stamps.GlowColor,
+                  GlowRadius = stamps.GlowRadius,
+                  IsFilled = true, // Stamps are filled shapes
+                  StrokeWidth = 0,
+                  StrokeColor = stampColor, // Use the specific jittered color
+                  FillColor = null, // Logic implies "Filled Stroke" behavior for consistency with other paths
+                  BlendMode = stamps.BlendMode
+                };
+
+                // Note: 'stampColor' is used as StrokeColor with IsFilled=true because 
+                // in the generic path logic above (lines 169-172), eroded strokes become filled blobs 
+                // where StrokeColor is preserved. DrawableStamps usually render as fills of the 'StrokeColor'.
+
+                elementsToAdd.Add(newFragment);
+              }
+              // If resultPath is empty, it was fully erased. Do nothing (it's gone).
+            }
+          }
+        }
+
+        if (stampModified)
+        {
+          if (remainingPoints.Count == 0)
+          {
+            elementsToRemove.Add(element);
+          }
+          else
+          {
+            // Create a new Stamps object for the remaining untouched stamps
+            var newStamps = (DrawableStamps)stamps.Clone();
+            newStamps.Points = remainingPoints;
+            newStamps.Rotations = remainingRotations;
+
+            elementsToRemove.Add(element);
+            elementsToAdd.Add(newStamps);
+          }
+          modified = true;
+        }
+        continue;
+      }
+
+      SKPath elementPath;
+      if (isPureStroke)
+      {
+        // OLD BEHAVIOR for strokes: Get the visual outline
+        elementPath = element.GetPath();
+      }
+      else
+      {
+        // NEW BEHAVIOR for shapes: Get the geometry contour
+        elementPath = element.GetGeometryPath();
+      }
+
+      using (elementPath)
+      {
+        // Check for intersection first (optimization)
+        using var intersection = new SKPath();
+        if (eraserOutline.Op(elementPath, SKPathOp.Intersect, intersection) && !intersection.IsEmpty)
+        {
+          // Calculate the difference (Element - Eraser)
+          var resultPath = new SKPath();
+          if (elementPath.Op(eraserOutline, SKPathOp.Difference, resultPath))
+          {
+            if (resultPath.IsEmpty)
+            {
+              // Element completely erased
               elementsToRemove.Add(element);
             }
             else
             {
-              // Create a new Stamps object for the remaining untouched stamps
-              var newStamps = (DrawableStamps)stamps.Clone();
-              newStamps.Points = remainingPoints;
-              newStamps.Rotations = remainingRotations;
-
-              elementsToRemove.Add(element);
-              elementsToAdd.Add(newStamps);
-            }
-            modified = true;
-          }
-          continue;
-        }
-
-        SKPath elementPath;
-        if (isPureStroke)
-        {
-          // OLD BEHAVIOR for strokes: Get the visual outline
-          elementPath = element.GetPath();
-        }
-        else
-        {
-          // NEW BEHAVIOR for shapes: Get the geometry contour
-          elementPath = element.GetGeometryPath();
-        }
-
-        using (elementPath)
-        {
-          // Check for intersection first (optimization)
-          using var intersection = new SKPath();
-          if (eraserOutline.Op(elementPath, SKPathOp.Intersect, intersection) && !intersection.IsEmpty)
-          {
-            // Calculate the difference (Element - Eraser)
-            var resultPath = new SKPath();
-            if (elementPath.Op(eraserOutline, SKPathOp.Difference, resultPath))
-            {
-              if (resultPath.IsEmpty)
+              // Create new element with the remaining geometry
+              var newElement = new DrawablePath
               {
-                // Element completely erased
-                elementsToRemove.Add(element);
+                Path = resultPath,
+                TransformMatrix = SKMatrix.CreateIdentity(), // We might need to adjust this depending on how GetGeometryPath works
+                IsVisible = element.IsVisible,
+                Opacity = element.Opacity,
+                ZIndex = element.ZIndex,
+                IsSelected = element.IsSelected,
+                IsGlowEnabled = element.IsGlowEnabled,
+                GlowColor = element.GlowColor,
+                GlowRadius = element.GlowRadius
+              };
+
+              if (isPureStroke)
+              {
+                // Result of eroding a stroke is a filled shape (the leftover pieces of the outline)
+                newElement.StrokeWidth = 0;
+                newElement.IsFilled = true;
+                newElement.StrokeColor = element.StrokeColor;
+                newElement.FillColor = null;
               }
               else
               {
-                // Create new element with the remaining geometry
-                var newElement = new DrawablePath
-                {
-                  Path = resultPath,
-                  TransformMatrix = SKMatrix.CreateIdentity(), // We might need to adjust this depending on how GetGeometryPath works
-                  IsVisible = element.IsVisible,
-                  Opacity = element.Opacity,
-                  ZIndex = element.ZIndex,
-                  IsSelected = element.IsSelected,
-                  IsGlowEnabled = element.IsGlowEnabled,
-                  GlowColor = element.GlowColor,
-                  GlowRadius = element.GlowRadius
-                };
+                // Result of eroding a shape preserves shape properties
+                newElement.StrokeWidth = element.StrokeWidth;
+                newElement.StrokeColor = element.StrokeColor;
+                newElement.FillColor = element.FillColor;
+                newElement.IsFilled = true;
 
-                if (isPureStroke)
+                // TRANSFORM FIX:
+                // Put the path back into the original element's coordinate space
+                if (element.TransformMatrix.TryInvert(out var inverseMatrix))
                 {
-                  // Result of eroding a stroke is a filled shape (the leftover pieces of the outline)
-                  newElement.StrokeWidth = 0;
-                  newElement.IsFilled = true;
-                  newElement.StrokeColor = element.StrokeColor;
-                  newElement.FillColor = null;
+                  newElement.Path.Transform(inverseMatrix);
+                  newElement.TransformMatrix = element.TransformMatrix;
                 }
-                else
+
+                // Handle Image Shader creation specifically here
+                if (element is DrawableImage iamge)
                 {
-                  // Result of eroding a shape preserves shape properties
-                  newElement.StrokeWidth = element.StrokeWidth;
-                  newElement.StrokeColor = element.StrokeColor;
-                  newElement.FillColor = element.FillColor;
+                  // Since we reverted to Local Space, the shader is simple (Identity matrix)
+                  var shader = SKShader.CreateBitmap(iamge.Bitmap, SKShaderTileMode.Decal, SKShaderTileMode.Decal);
+                  newElement.FillShader = shader;
                   newElement.IsFilled = true;
 
-                  // TRANSFORM FIX:
-                  // Put the path back into the original element's coordinate space
-                  if (element.TransformMatrix.TryInvert(out var inverseMatrix))
-                  {
-                    newElement.Path.Transform(inverseMatrix);
-                    newElement.TransformMatrix = element.TransformMatrix;
-                  }
-
-                  // Handle Image Shader creation specifically here
-                  if (element is DrawableImage iamge)
-                  {
-                    // Since we reverted to Local Space, the shader is simple (Identity matrix)
-                    var shader = SKShader.CreateBitmap(iamge.Bitmap, SKShaderTileMode.Decal, SKShaderTileMode.Decal);
-                    newElement.FillShader = shader;
-                    newElement.IsFilled = true;
-
-                    // Ensure we carry over opacity and stuff
-                    newElement.Opacity = iamge.Opacity;
-                  }
-                  else if (element is DrawablePath oldPath)
-                  {
-                    newElement.FillShader = oldPath.FillShader;
-                  }
+                  // Ensure we carry over opacity and stuff
+                  newElement.Opacity = iamge.Opacity;
                 }
-
-                if (element is DrawablePath originalPath)
+                else if (element is DrawablePath oldPath)
                 {
-                  newElement.BlendMode = originalPath.BlendMode;
+                  newElement.FillShader = oldPath.FillShader;
                 }
-
-                elementsToRemove.Add(element);
-                elementsToAdd.Add(newElement);
               }
-              modified = true;
+
+              if (element is DrawablePath originalPath)
+              {
+                newElement.BlendMode = originalPath.BlendMode;
+              }
+
+              elementsToRemove.Add(element);
+              elementsToAdd.Add(newElement);
             }
+            modified = true;
           }
         }
       }
-
-      if (modified)
-      {
-        var finalElements = new List<IDrawableElement>();
-
-        // Add all elements that were NOT removed
-        foreach (var element in elements) // 'elements' is a copy from the start of the method
-        {
-          if (!elementsToRemove.Contains(element))
-          {
-            finalElements.Add(element);
-          }
-        }
-
-        // Add all newly created elements (fragments from erased items)
-        finalElements.AddRange(elementsToAdd);
-
-        // Clear the ObservableCollection once, then re-populate it
-        context.CurrentLayer.Elements.Clear();
-        foreach (var item in finalElements.OrderBy(e => e.ZIndex)) // Add in sorted ZIndex order
-        {
-          context.CurrentLayer.Elements.Add(item);
-        }
-
-        // Normalize Z-indices on the actual collection elements *after* they are in the collection
-        var currentLayerElementsInCollection = context.CurrentLayer.Elements.OrderBy(e => e.ZIndex).ToList();
-        for (int i = 0; i < currentLayerElementsInCollection.Count; i++)
-        {
-          currentLayerElementsInCollection[i].ZIndex = i;
-        }
-
-        messageBus.SendMessage(new DrawingStateChangedMessage());
-        messageBus.SendMessage(new CanvasInvalidateMessage());
-      }
-      messageBus.SendMessage(new CanvasInvalidateMessage());
-
-      currentPath = null;
-      currentDrawablePath = null;
     }
 
-    public void OnTouchCancelled(ToolContext context)
+    if (modified)
     {
-      if (currentDrawablePath != null && context.CurrentLayer != null)
+      var finalElements = new List<IDrawableElement>();
+
+      // Add all elements that were NOT removed
+      foreach (var element in elements) // 'elements' is a copy from the start of the method
       {
-        context.CurrentLayer.Elements.Remove(currentDrawablePath);
+        if (!elementsToRemove.Contains(element))
+        {
+          finalElements.Add(element);
+        }
       }
 
-      currentPath = null;
-      currentDrawablePath = null;
+      // Add all newly created elements (fragments from erased items)
+      finalElements.AddRange(elementsToAdd);
+
+      // Clear the ObservableCollection once, then re-populate it
+      context.CurrentLayer.Elements.Clear();
+      foreach (var item in finalElements.OrderBy(e => e.ZIndex)) // Add in sorted ZIndex order
+      {
+        context.CurrentLayer.Elements.Add(item);
+      }
+
+      // Normalize Z-indices on the actual collection elements *after* they are in the collection
+      var currentLayerElementsInCollection = context.CurrentLayer.Elements.OrderBy(e => e.ZIndex).ToList();
+      for (int i = 0; i < currentLayerElementsInCollection.Count; i++)
+      {
+        currentLayerElementsInCollection[i].ZIndex = i;
+      }
+
+      messageBus.SendMessage(new DrawingStateChangedMessage());
       messageBus.SendMessage(new CanvasInvalidateMessage());
     }
+    messageBus.SendMessage(new CanvasInvalidateMessage());
 
-    public void DrawPreview(SKCanvas canvas, ToolContext context)
+    currentPath = null;
+    currentDrawablePath = null;
+  }
+
+  public void OnTouchCancelled(ToolContext context)
+  {
+    if (currentDrawablePath != null && context.CurrentLayer != null)
     {
-      // Optional: Draw a circle cursor for eraser size
+      context.CurrentLayer.Elements.Remove(currentDrawablePath);
     }
+
+    currentPath = null;
+    currentDrawablePath = null;
+    messageBus.SendMessage(new CanvasInvalidateMessage());
+  }
+
+  public void DrawPreview(SKCanvas canvas, ToolContext context)
+  {
+    // Optional: Draw a circle cursor for eraser size
   }
 }

@@ -30,91 +30,90 @@ using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using ReactiveUI;
 
-namespace LunaDraw.Logic.ViewModels
-{
-    public class LayerPanelViewModel : ReactiveObject
-    {
-        private readonly ILayerFacade layerFacade;
-        private readonly IMessageBus messageBus;
+namespace LunaDraw.Logic.ViewModels;
 
-        public LayerPanelViewModel(ILayerFacade layerFacade, IMessageBus messageBus)
-        {
-            this.layerFacade = layerFacade;
-            this.messageBus = messageBus;
+  public class LayerPanelViewModel : ReactiveObject
+  {
+      private readonly ILayerFacade layerFacade;
+      private readonly IMessageBus messageBus;
 
-            layerFacade.WhenAnyValue(x => x.CurrentLayer)
-                .Subscribe(_ => this.RaisePropertyChanged(nameof(CurrentLayer)));
+      public LayerPanelViewModel(ILayerFacade layerFacade, IMessageBus messageBus)
+      {
+          this.layerFacade = layerFacade;
+          this.messageBus = messageBus;
 
-            // Commands
-            AddLayerCommand = ReactiveCommand.Create(() =>
-            {
-                layerFacade.AddLayer();
-            }, outputScheduler: RxApp.MainThreadScheduler);
+          layerFacade.WhenAnyValue(x => x.CurrentLayer)
+              .Subscribe(_ => this.RaisePropertyChanged(nameof(CurrentLayer)));
 
-            var layersChanged = Observable.FromEventPattern<NotifyCollectionChangedEventHandler, NotifyCollectionChangedEventArgs>(
-                h => layerFacade.Layers.CollectionChanged += h,
-                h => layerFacade.Layers.CollectionChanged -= h)
-                .Select(_ => Unit.Default)
-                .StartWith(Unit.Default);
+          // Commands
+          AddLayerCommand = ReactiveCommand.Create(() =>
+          {
+              layerFacade.AddLayer();
+          }, outputScheduler: RxApp.MainThreadScheduler);
 
-            var currentLayerChanged = layerFacade.WhenAnyValue(x => x.CurrentLayer)
-                .Select(_ => Unit.Default);
+          var layersChanged = Observable.FromEventPattern<NotifyCollectionChangedEventHandler, NotifyCollectionChangedEventArgs>(
+              h => layerFacade.Layers.CollectionChanged += h,
+              h => layerFacade.Layers.CollectionChanged -= h)
+              .Select(_ => Unit.Default)
+              .StartWith(Unit.Default);
 
-            var canRemoveLayer = Observable.Merge(layersChanged, currentLayerChanged)
-                .Select(_ => layerFacade.CurrentLayer != null && layerFacade.Layers.Count > 1)
-                .ObserveOn(RxApp.MainThreadScheduler);
+          var currentLayerChanged = layerFacade.WhenAnyValue(x => x.CurrentLayer)
+              .Select(_ => Unit.Default);
 
-            RemoveLayerCommand = ReactiveCommand.Create(() =>
-            {
-                if (layerFacade.CurrentLayer != null)
-                {
-                    layerFacade.RemoveLayer(layerFacade.CurrentLayer);
-                }
-            },
-            canExecute: canRemoveLayer,
-            outputScheduler: RxApp.MainThreadScheduler);
+          var canRemoveLayer = Observable.Merge(layersChanged, currentLayerChanged)
+              .Select(_ => layerFacade.CurrentLayer != null && layerFacade.Layers.Count > 1)
+              .ObserveOn(RxApp.MainThreadScheduler);
 
-            MoveLayerForwardCommand = ReactiveCommand.Create<Layer>(layer =>
-            {
-                layerFacade.MoveLayerForward(layer);
-            }, outputScheduler: RxApp.MainThreadScheduler);
+          RemoveLayerCommand = ReactiveCommand.Create(() =>
+          {
+              if (layerFacade.CurrentLayer != null)
+              {
+                  layerFacade.RemoveLayer(layerFacade.CurrentLayer);
+              }
+          },
+          canExecute: canRemoveLayer,
+          outputScheduler: RxApp.MainThreadScheduler);
 
-            MoveLayerBackwardCommand = ReactiveCommand.Create<Layer>(layer =>
-            {
-                layerFacade.MoveLayerBackward(layer);
-            }, outputScheduler: RxApp.MainThreadScheduler);
+          MoveLayerForwardCommand = ReactiveCommand.Create<Layer>(layer =>
+          {
+              layerFacade.MoveLayerForward(layer);
+          }, outputScheduler: RxApp.MainThreadScheduler);
 
-            ToggleLayerVisibilityCommand = ReactiveCommand.Create<Layer>(layer =>
-            {
-                if (layer != null)
-                {
-                    layer.IsVisible = !layer.IsVisible;
-                    messageBus.SendMessage(new CanvasInvalidateMessage());
-                }
-            }, outputScheduler: RxApp.MainThreadScheduler);
+          MoveLayerBackwardCommand = ReactiveCommand.Create<Layer>(layer =>
+          {
+              layerFacade.MoveLayerBackward(layer);
+          }, outputScheduler: RxApp.MainThreadScheduler);
 
-            ToggleLayerLockCommand = ReactiveCommand.Create<Layer>(layer =>
-            {
-                if (layer != null)
-                {
-                    layer.IsLocked = !layer.IsLocked;
-                }
-            }, outputScheduler: RxApp.MainThreadScheduler);
-        }
+          ToggleLayerVisibilityCommand = ReactiveCommand.Create<Layer>(layer =>
+          {
+              if (layer != null)
+              {
+                  layer.IsVisible = !layer.IsVisible;
+                  messageBus.SendMessage(new CanvasInvalidateMessage());
+              }
+          }, outputScheduler: RxApp.MainThreadScheduler);
 
-        public ObservableCollection<Layer> Layers => layerFacade.Layers;
+          ToggleLayerLockCommand = ReactiveCommand.Create<Layer>(layer =>
+          {
+              if (layer != null)
+              {
+                  layer.IsLocked = !layer.IsLocked;
+              }
+          }, outputScheduler: RxApp.MainThreadScheduler);
+      }
 
-        public Layer? CurrentLayer
-        {
-            get => layerFacade.CurrentLayer;
-            set => layerFacade.CurrentLayer = value;
-        }
+      public ObservableCollection<Layer> Layers => layerFacade.Layers;
 
-        public ReactiveCommand<Unit, Unit> AddLayerCommand { get; }
-        public ReactiveCommand<Unit, Unit> RemoveLayerCommand { get; }
-        public ReactiveCommand<Layer, Unit> MoveLayerForwardCommand { get; }
-        public ReactiveCommand<Layer, Unit> MoveLayerBackwardCommand { get; }
-        public ReactiveCommand<Layer, Unit> ToggleLayerVisibilityCommand { get; }
-        public ReactiveCommand<Layer, Unit> ToggleLayerLockCommand { get; }
-    }
-}
+      public Layer? CurrentLayer
+      {
+          get => layerFacade.CurrentLayer;
+          set => layerFacade.CurrentLayer = value;
+      }
+
+      public ReactiveCommand<Unit, Unit> AddLayerCommand { get; }
+      public ReactiveCommand<Unit, Unit> RemoveLayerCommand { get; }
+      public ReactiveCommand<Layer, Unit> MoveLayerForwardCommand { get; }
+      public ReactiveCommand<Layer, Unit> MoveLayerBackwardCommand { get; }
+      public ReactiveCommand<Layer, Unit> ToggleLayerVisibilityCommand { get; }
+      public ReactiveCommand<Layer, Unit> ToggleLayerLockCommand { get; }
+  }

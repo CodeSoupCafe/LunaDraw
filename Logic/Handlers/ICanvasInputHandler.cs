@@ -26,10 +26,9 @@ using SkiaSharp.Views.Maui;
 
 // For SKCanvasView
 
-namespace LunaDraw.Logic.Services
+namespace LunaDraw.Logic.Services;
+
+public interface ICanvasInputHandler
 {
-  public interface ICanvasInputHandler
-  {
-    void ProcessTouch(SKTouchEventArgs e, SKRect canvasViewPort);
-  }
+  void ProcessTouch(SKTouchEventArgs e, SKRect canvasViewPort);
 }
