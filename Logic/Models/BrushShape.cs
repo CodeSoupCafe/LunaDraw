@@ -38,6 +38,19 @@ public enum BrushShapeType
   Diamond,
   Triangle,
   Hexagon,
+  Unicorn,
+  Giraffe,
+  Bear,
+  Fireworks,
+  Flower,
+  Sun,
+  Snowflake,
+  Butterfly,
+  Fish,
+  Paw,
+  Leaf,
+  MusicNote,
+  Smile,
   Custom
 }
 
@@ -187,5 +200,229 @@ public class BrushShape
     }
     path.Close();
     return new BrushShape { Name = "Hexagon", Type = BrushShapeType.Hexagon, Path = path };
+  }
+
+  public static BrushShape Unicorn()
+  {
+    var path = new SKPath();
+    path.MoveTo(-4, 0);
+    path.LineTo(0, -10); // Horn tip
+    path.LineTo(2, -2);
+    path.LineTo(5, 0);   // Nose
+    path.LineTo(4, 5);
+    path.LineTo(-2, 5);
+    path.LineTo(-4, 0);
+    path.Close();
+    // Mane
+    path.MoveTo(-2, -5);
+    path.QuadTo(-6, -2, -4, 2);
+    return new BrushShape { Name = "Unicorn", Type = BrushShapeType.Unicorn, Path = path };
+  }
+
+  public static BrushShape Giraffe()
+  {
+    var path = new SKPath();
+    // Side profile view
+    path.MoveTo(-4, 8); // Neck base
+    path.LineTo(-2, -5); // Neck up to head back
+    
+    // Ossicones (Horns)
+    path.LineTo(-3, -11);
+    path.LineTo(-1, -11);
+    path.LineTo(-0.5f, -6);
+    
+    // Forehead to nose
+    path.LineTo(1, -5);
+    path.LineTo(4, 0); // Snout tip
+    path.LineTo(3, 3); // Jaw
+    path.LineTo(-1, 2); // Jaw back
+    path.LineTo(2, 8); // Neck front
+    path.Close();
+    return new BrushShape { Name = "Giraffe", Type = BrushShapeType.Giraffe, Path = path };
+  }
+
+  public static BrushShape Bear()
+  {
+    var path = new SKPath();
+    path.AddCircle(0, 0, 7); // Face
+    path.AddCircle(-6, -6, 3); // Left Ear
+    path.AddCircle(6, -6, 3); // Right Ear
+    return new BrushShape { Name = "Bear", Type = BrushShapeType.Bear, Path = path };
+  }
+
+  public static BrushShape Fireworks()
+  {
+    var path = new SKPath();
+    // A burst of dots/stars instead of lines
+    path.AddCircle(0, 0, 2); // Center
+    
+    for (int i = 0; i < 8; i++)
+    {
+        float angle = i * 45 * (float)Math.PI / 180;
+        float x = 8 * (float)Math.Sin(angle);
+        float y = -8 * (float)Math.Cos(angle);
+        
+        // Outer dots
+        path.AddCircle(x, y, 1.5f);
+        
+        // Middle dots
+        float xm = 4 * (float)Math.Sin(angle);
+        float ym = -4 * (float)Math.Cos(angle);
+        path.AddCircle(xm, ym, 1.0f);
+    }
+    return new BrushShape { Name = "Fireworks", Type = BrushShapeType.Fireworks, Path = path };
+  }
+
+  public static BrushShape Flower()
+  {
+    var path = new SKPath();
+    path.AddCircle(0, 0, 3); // Center
+    for (int i = 0; i < 5; i++)
+    {
+        float angle = i * 72 * (float)Math.PI / 180;
+        float cx = 6 * (float)Math.Sin(angle);
+        float cy = -6 * (float)Math.Cos(angle);
+        path.AddCircle(cx, cy, 3.5f);
+    }
+    return new BrushShape { Name = "Flower", Type = BrushShapeType.Flower, Path = path };
+  }
+
+  public static BrushShape Sun()
+  {
+    var path = new SKPath();
+    path.AddCircle(0, 0, 6); // Core
+    
+    // Triangular rays
+    for (int i = 0; i < 8; i++)
+    {
+        float angle = i * 45 * (float)Math.PI / 180;
+        
+        // Base of the triangle ray on the circle
+        float baseAngle1 = angle - (10 * (float)Math.PI / 180);
+        float baseAngle2 = angle + (10 * (float)Math.PI / 180);
+        
+        float x1 = 6 * (float)Math.Sin(baseAngle1);
+        float y1 = -6 * (float)Math.Cos(baseAngle1);
+        
+        float x2 = 6 * (float)Math.Sin(baseAngle2);
+        float y2 = -6 * (float)Math.Cos(baseAngle2);
+        
+        // Tip of the ray
+        float tipX = 11 * (float)Math.Sin(angle);
+        float tipY = -11 * (float)Math.Cos(angle);
+
+        path.MoveTo(x1, y1);
+        path.LineTo(tipX, tipY);
+        path.LineTo(x2, y2);
+        path.Close();
+    }
+    return new BrushShape { Name = "Sun", Type = BrushShapeType.Sun, Path = path };
+  }
+
+  public static BrushShape Snowflake()
+  {
+    var path = new SKPath();
+    // Use rectangles for arms so they have width
+    for (int i = 0; i < 3; i++) // 3 bars crossing make 6 arms
+    {
+        path.AddRect(new SKRect(-1.5f, -10, 1.5f, 10)); // Vertical-ish bar
+        path.Transform(SKMatrix.CreateRotationDegrees(60));
+    }
+    // Add some details on the ends (small diamonds)
+    var decorativePath = new SKPath();
+    for(int i = 0; i < 6; i++)
+    {
+        decorativePath.AddCircle(0, -8, 2);
+        decorativePath.Transform(SKMatrix.CreateRotationDegrees(60));
+    }
+    path.AddPath(decorativePath);
+    
+    return new BrushShape { Name = "Snowflake", Type = BrushShapeType.Snowflake, Path = path };
+  }
+
+  public static BrushShape Butterfly()
+  {
+    var path = new SKPath();
+    // Body
+    path.AddOval(new SKRect(-1, -6, 1, 6));
+    // Wings
+    path.AddOval(new SKRect(-8, -8, -1, 0)); // Top Left
+    path.AddOval(new SKRect(1, -8, 8, 0));   // Top Right
+    path.AddOval(new SKRect(-6, 0, -1, 6));  // Bottom Left
+    path.AddOval(new SKRect(1, 0, 6, 6));    // Bottom Right
+    return new BrushShape { Name = "Butterfly", Type = BrushShapeType.Butterfly, Path = path };
+  }
+
+  public static BrushShape Fish()
+  {
+    var path = new SKPath();
+    // Body
+    path.AddOval(new SKRect(-8, -5, 4, 5));
+    // Tail
+    path.MoveTo(4, 0);
+    path.LineTo(8, -4);
+    path.LineTo(8, 4);
+    path.Close();
+    return new BrushShape { Name = "Fish", Type = BrushShapeType.Fish, Path = path };
+  }
+
+  public static BrushShape Paw()
+  {
+    var path = new SKPath();
+    // Main pad
+    path.AddOval(new SKRect(-5, -2, 5, 6));
+    // Toes
+    path.AddCircle(-4, -5, 2);
+    path.AddCircle(0, -6, 2);
+    path.AddCircle(4, -5, 2);
+    return new BrushShape { Name = "Paw", Type = BrushShapeType.Paw, Path = path };
+  }
+
+  public static BrushShape Leaf()
+  {
+    var path = new SKPath();
+    // Wider body
+    path.MoveTo(0, -10);
+    path.CubicTo(8, -5, 8, 5, 0, 10);
+    path.CubicTo(-8, 5, -8, -5, 0, -10);
+    path.Close();
+    return new BrushShape { Name = "Leaf", Type = BrushShapeType.Leaf, Path = path };
+  }
+
+  public static BrushShape MusicNote()
+  {
+    var path = new SKPath();
+    path.AddOval(new SKRect(-4, 4, 2, 8)); // Head
+    path.MoveTo(1, 6);
+    path.LineTo(1, -6); // Stem
+    path.LineTo(5, -4); // Flag
+    path.LineTo(5, -2);
+    path.LineTo(1, -4);
+    path.LineTo(1, 6); // Close back to startish
+    path.Close(); 
+    return new BrushShape { Name = "MusicNote", Type = BrushShapeType.MusicNote, Path = path };
+  }
+
+  public static BrushShape Smile()
+  {
+    var path = new SKPath();
+    path.FillType = SKPathFillType.EvenOdd; // Ensure holes are subtracted
+    path.AddCircle(0, 0, 9); // Face
+    
+    // Eyes (as holes - simpler with EvenOdd, but let's reverse direction too just in case)
+    path.AddCircle(-3.5f, -3, 1.5f, SKPathDirection.CounterClockwise); 
+    path.AddCircle(3.5f, -3, 1.5f, SKPathDirection.CounterClockwise);
+    
+    // Mouth (Crescent shape)
+    var mouth = new SKPath();
+    mouth.MoveTo(-5, 2);
+    mouth.QuadTo(0, 7, 5, 2); // Bottom curve
+    mouth.QuadTo(0, 5, -5, 2); // Top curve
+    mouth.Close();
+    
+    // Add mouth to main path (it should be treated as a hole if inside and EvenOdd or winding correct)
+    path.AddPath(mouth);
+
+    return new BrushShape { Name = "Smile", Type = BrushShapeType.Smile, Path = path };
   }
 }

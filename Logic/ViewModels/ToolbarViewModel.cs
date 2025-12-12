@@ -260,7 +260,20 @@ namespace LunaDraw.Logic.ViewModels;
               BrushShape.Lightning(),
               BrushShape.Diamond(),
               BrushShape.Triangle(),
-              BrushShape.Hexagon()
+              BrushShape.Hexagon(),
+              BrushShape.Unicorn(),
+              BrushShape.Giraffe(),
+              BrushShape.Bear(),
+              BrushShape.Fireworks(),
+              BrushShape.Flower(),
+              BrushShape.Sun(),
+              BrushShape.Snowflake(),
+              BrushShape.Butterfly(),
+              BrushShape.Fish(),
+              BrushShape.Paw(),
+              BrushShape.Leaf(),
+              BrushShape.MusicNote(),
+              BrushShape.Smile()
           ];
 
           activeTool = new FreehandTool(messageBus);
