@@ -46,6 +46,7 @@ public class CanvasInputHandler(
   private readonly IMessageBus messageBus = messageBus;
 
   private readonly Dictionary<long, SKPoint> activeTouches = [];
+  private long[]? gestureFingerIds;
   private bool isMultiTouch = false;
   private bool manipulatingSelection = false;
 
@@ -101,9 +102,18 @@ public class CanvasInputHandler(
     // Multi-touch state management
     if (activeTouches.Count >= 2)
     {
+      if (isMultiTouch && gestureFingerIds != null)
+      {
+        if (!activeTouches.ContainsKey(gestureFingerIds[0]) || !activeTouches.ContainsKey(gestureFingerIds[1]))
+        {
+          isMultiTouch = false;
+        }
+      }
+
       if (!isMultiTouch)
       {
         isMultiTouch = true;
+        gestureFingerIds = activeTouches.Keys.Take(2).ToArray();
 
         // Cancel drawing
         if (toolbarViewModel.ActiveTool is IDrawingTool tool)
@@ -112,7 +122,7 @@ public class CanvasInputHandler(
         }
 
         // Snapshot state
-        var touches = activeTouches.OrderBy(kvp => kvp.Key).Take(2).Select(kvp => kvp.Value).ToArray();
+        var touches = new[] { activeTouches[gestureFingerIds[0]], activeTouches[gestureFingerIds[1]] };
         startCentroid = new SKPoint((touches[0].X + touches[1].X) / 2f, (touches[0].Y + touches[1].Y) / 2f);
         startDistance = Distance(touches[0], touches[1]);
         startAngle = (float)Math.Atan2(touches[1].Y - touches[0].Y, touches[1].X - touches[0].X);
@@ -148,6 +158,7 @@ public class CanvasInputHandler(
     else
     {
       isMultiTouch = false;
+      gestureFingerIds = null;
       manipulatingSelection = false;
       startElementMatrices.Clear();
       previousOutputMatrix = SKMatrix.CreateIdentity();
@@ -176,8 +187,10 @@ public class CanvasInputHandler(
 
   private void HandleMultiTouch()
   {
-    var touches = activeTouches.OrderBy(kvp => kvp.Key).Take(2).Select(kvp => kvp.Value).ToArray();
-    if (touches.Length < 2) return;
+    if (gestureFingerIds == null || gestureFingerIds.Length < 2) return;
+    if (!activeTouches.ContainsKey(gestureFingerIds[0]) || !activeTouches.ContainsKey(gestureFingerIds[1])) return;
+
+    var touches = new[] { activeTouches[gestureFingerIds[0]], activeTouches[gestureFingerIds[1]] };
 
     // Current centroid (average of both fingers)
     var centroid = new SKPoint((touches[0].X + touches[1].X) / 2f, (touches[0].Y + touches[1].Y) / 2f);
