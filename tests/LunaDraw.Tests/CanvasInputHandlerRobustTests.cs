@@ -33,6 +33,9 @@ using LunaDraw.Logic.Tools;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.ViewModels;
 using ReactiveUI;
+using System.Reactive.Linq;
+using System.Reactive.Concurrency;
+using CommunityToolkit.Maui.Storage;
 
 namespace LunaDraw.Tests
 {
@@ -50,19 +53,42 @@ namespace LunaDraw.Tests
 
     public CanvasInputHandlerRobustTests()
     {
-      mockToolbarViewModel = new Mock<ToolbarViewModel>();
+      RxApp.MainThreadScheduler = Scheduler.Immediate;
+
       mockLayerFacade = new Mock<ILayerFacade>();
       mockMessageBus = new Mock<IMessageBus>();
       selectionObserver = new SelectionObserver();
       navigationModel = new NavigationModel();
       mockActiveTool = new Mock<IDrawingTool>();
 
+      mockLayerFacade.Setup(m => m.Layers).Returns(new ObservableCollection<Layer>());
+      mockLayerFacade.Setup(m => m.HistoryMemento).Returns(new HistoryMemento());
+
+      // Create dependencies for ToolbarViewModel
+      var selectionVM = new SelectionViewModel(selectionObserver, mockLayerFacade.Object, new ClipboardMemento(), mockMessageBus.Object);
+      var historyVM = new HistoryViewModel(mockLayerFacade.Object, mockMessageBus.Object);
+      var mockBitmapCache = new Mock<IBitmapCache>();
+      var mockFileSaver = new Mock<IFileSaver>();
+
+      // Ensure MessageBus returns observables for ToolbarViewModel constructor
+      mockMessageBus.Setup(x => x.Listen<BrushSettingsChangedMessage>()).Returns(Observable.Empty<BrushSettingsChangedMessage>());
+      mockMessageBus.Setup(x => x.Listen<BrushShapeChangedMessage>()).Returns(Observable.Empty<BrushShapeChangedMessage>());
+
+      mockToolbarViewModel = new Mock<ToolbarViewModel>(
+          mockLayerFacade.Object,
+          selectionVM,
+          historyVM,
+          mockMessageBus.Object,
+          mockBitmapCache.Object,
+          navigationModel,
+          mockFileSaver.Object
+      );
+
       // Setup default behavior
       mockToolbarViewModel.Setup(m => m.ActiveTool).Returns(mockActiveTool.Object);
       mockToolbarViewModel.Setup(m => m.StrokeColor).Returns(SKColors.Black); // setup some defaults for ToolContext
 
       mockLayerFacade.Setup(m => m.CurrentLayer).Returns(new Layer());
-      mockLayerFacade.Setup(m => m.Layers).Returns(new ObservableCollection<Layer>());
 
       handler = new CanvasInputHandler(
           mockToolbarViewModel.Object,

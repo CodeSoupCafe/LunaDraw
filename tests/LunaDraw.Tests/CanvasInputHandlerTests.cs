@@ -7,8 +7,11 @@ using Xunit;
 using SkiaSharp;
 using SkiaSharp.Views.Maui;
 using ReactiveUI;
+using System.Reactive.Concurrency;
+using System.Reactive.Linq;
 using LunaDraw.Logic.Services;
 using LunaDraw.Logic.Managers;
+using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Tools;
 using LunaDraw.Logic.ViewModels;
@@ -32,6 +35,8 @@ namespace LunaDraw.Tests
 
         public CanvasInputHandlerTests()
         {
+            RxApp.MainThreadScheduler = Scheduler.Immediate;
+
             mockLayerFacade = new Mock<ILayerFacade>();
             mockMessageBus = new Mock<IMessageBus>();
             mockDrawingTool = new Mock<IDrawingTool>();
@@ -40,7 +45,12 @@ namespace LunaDraw.Tests
 
             mockLayerFacade.Setup(m => m.CurrentLayer).Returns(new Layer());
             mockLayerFacade.Setup(m => m.Layers).Returns(new ObservableCollection<Layer>());
+            mockLayerFacade.Setup(m => m.HistoryMemento).Returns(new HistoryMemento());
             mockDrawingTool.Setup(t => t.Type).Returns(ToolType.Freehand);
+
+            // Ensure MessageBus returns observables for ToolbarViewModel constructor
+            mockMessageBus.Setup(x => x.Listen<BrushSettingsChangedMessage>()).Returns(Observable.Empty<BrushSettingsChangedMessage>());
+            mockMessageBus.Setup(x => x.Listen<BrushShapeChangedMessage>()).Returns(Observable.Empty<BrushShapeChangedMessage>());
 
             selectionObserver = new SelectionObserver();
             navigationModel = new NavigationModel();

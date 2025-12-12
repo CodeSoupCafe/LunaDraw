@@ -31,6 +31,8 @@ using LunaDraw.Logic.Services;
 using LunaDraw.Logic.ViewModels;
 using Moq;
 using ReactiveUI;
+using System.Reactive.Concurrency;
+using CommunityToolkit.Maui.Storage;
 using SkiaSharp;
 using Xunit;
 
@@ -55,7 +57,8 @@ namespace LunaDraw.Tests
 
     public MainViewModelTests()
     {
-      mockToolbarViewModel = new Mock<ToolbarViewModel>();
+      RxApp.MainThreadScheduler = Scheduler.Immediate;
+
       layerFacadeMock = new Mock<ILayerFacade>();
       canvasInputHandlerMock = new Mock<ICanvasInputHandler>();
       navigationModel = new NavigationModel();
@@ -66,14 +69,30 @@ namespace LunaDraw.Tests
 
       layerFacadeMock.Setup(m => m.Layers).Returns(layers);
       layerFacadeMock.Setup(m => m.HistoryMemento).Returns(historyMemento);
-      // Setup property change notifications for ToolStateManager
-      mockToolbarViewModel.As<System.ComponentModel.INotifyPropertyChanged>();
 
       // Create Sub-VMs (we can test them in isolation, but here we test MainVM integration)
       // Using real instances for VM logic
       layerPanelVM = new LayerPanelViewModel(layerFacadeMock.Object, messageBusMock.Object);
       selectionVM = new SelectionViewModel(selectionObserver, layerFacadeMock.Object, new ClipboardMemento(), messageBusMock.Object);
       historyVM = new HistoryViewModel(layerFacadeMock.Object, messageBusMock.Object);
+
+      // Initialize ToolbarViewModel Mock with dependencies
+      // We need to verify that messageBus.Listen returns observables because ToolbarViewModel constructor subscribes to them
+      messageBusMock.Setup(x => x.Listen<BrushSettingsChangedMessage>()).Returns(Observable.Empty<BrushSettingsChangedMessage>());
+      messageBusMock.Setup(x => x.Listen<BrushShapeChangedMessage>()).Returns(Observable.Empty<BrushShapeChangedMessage>());
+
+      mockToolbarViewModel = new Mock<ToolbarViewModel>(
+          layerFacadeMock.Object,
+          selectionVM,
+          historyVM,
+          messageBusMock.Object,
+          new Mock<IBitmapCache>().Object,
+          navigationModel,
+          new Mock<IFileSaver>().Object
+      );
+      
+      // Setup property change notifications for ToolStateManager
+      mockToolbarViewModel.As<System.ComponentModel.INotifyPropertyChanged>();
 
       viewModel = new MainViewModel(
           mockToolbarViewModel.Object,

@@ -50,7 +50,7 @@ namespace LunaDraw.Logic.ViewModels
 
         // Tool State Properties
         private IDrawingTool activeTool;
-        public IDrawingTool ActiveTool
+        public virtual IDrawingTool ActiveTool
         {
             get => activeTool;
             set
@@ -61,105 +61,105 @@ namespace LunaDraw.Logic.ViewModels
         }
 
         private SKColor strokeColor = SKColors.MediumPurple;
-        public SKColor StrokeColor
+        public virtual SKColor StrokeColor
         {
             get => strokeColor;
             set => this.RaiseAndSetIfChanged(ref strokeColor, value);
         }
 
         private SKColor? fillColor = SKColors.SteelBlue;
-        public SKColor? FillColor
+        public virtual SKColor? FillColor
         {
             get => fillColor;
             set => this.RaiseAndSetIfChanged(ref fillColor, value);
         }
 
         private float strokeWidth = 40;
-        public float StrokeWidth
+        public virtual float StrokeWidth
         {
             get => strokeWidth;
             set => this.RaiseAndSetIfChanged(ref strokeWidth, value);
         }
 
         private byte opacity = 255;
-        public byte Opacity
+        public virtual byte Opacity
         {
             get => opacity;
             set => this.RaiseAndSetIfChanged(ref opacity, value);
         }
 
         private byte flow = 255;
-        public byte Flow
+        public virtual byte Flow
         {
             get => flow;
             set => this.RaiseAndSetIfChanged(ref flow, value);
         }
 
         private float spacing = 1f;
-        public float Spacing
+        public virtual float Spacing
         {
             get => spacing;
             set => this.RaiseAndSetIfChanged(ref spacing, value);
         }
 
         private BrushShape currentBrushShape;
-        public BrushShape CurrentBrushShape
+        public virtual BrushShape CurrentBrushShape
         {
             get => currentBrushShape;
             set => this.RaiseAndSetIfChanged(ref currentBrushShape, value);
         }
 
         private bool isGlowEnabled = false;
-        public bool IsGlowEnabled
+        public virtual bool IsGlowEnabled
         {
             get => isGlowEnabled;
             set => this.RaiseAndSetIfChanged(ref isGlowEnabled, value);
         }
 
         private SKColor glowColor = SKColors.Yellow;
-        public SKColor GlowColor
+        public virtual SKColor GlowColor
         {
             get => glowColor;
             set => this.RaiseAndSetIfChanged(ref glowColor, value);
         }
 
         private float glowRadius = 10f;
-        public float GlowRadius
+        public virtual float GlowRadius
         {
             get => glowRadius;
             set => this.RaiseAndSetIfChanged(ref glowRadius, value);
         }
 
         private bool isRainbowEnabled;
-        public bool IsRainbowEnabled
+        public virtual bool IsRainbowEnabled
         {
             get => isRainbowEnabled;
             set => this.RaiseAndSetIfChanged(ref isRainbowEnabled, value);
         }
 
         private float scatterRadius;
-        public float ScatterRadius
+        public virtual float ScatterRadius
         {
             get => scatterRadius;
             set => this.RaiseAndSetIfChanged(ref scatterRadius, value);
         }
 
         private float sizeJitter;
-        public float SizeJitter
+        public virtual float SizeJitter
         {
             get => sizeJitter;
             set => this.RaiseAndSetIfChanged(ref sizeJitter, value);
         }
 
         private float angleJitter;
-        public float AngleJitter
+        public virtual float AngleJitter
         {
             get => angleJitter;
             set => this.RaiseAndSetIfChanged(ref angleJitter, value);
         }
 
         private float hueJitter;
-        public float HueJitter
+        public virtual float HueJitter
         {
             get => hueJitter;
             set => this.RaiseAndSetIfChanged(ref hueJitter, value);

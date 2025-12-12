@@ -31,6 +31,7 @@ using Moq;
 using ReactiveUI;
 using SkiaSharp;
 using System.Collections.ObjectModel;
+using System.Reactive.Linq;
 using System.Reactive.Threading.Tasks;
 using Xunit;
 
@@ -58,6 +59,12 @@ namespace LunaDraw.Tests
 
       layerFacadeMock.Setup(x => x.Layers).Returns(new ObservableCollection<Layer>());
       layerFacadeMock.Setup(x => x.HistoryMemento).Returns(historyMemento);
+
+      // Setup MessageBus to avoid NullReference in ToolbarViewModel constructor
+      messageBusMock.Setup(x => x.Listen<BrushSettingsChangedMessage>())
+          .Returns(Observable.Empty<BrushSettingsChangedMessage>());
+      messageBusMock.Setup(x => x.Listen<BrushShapeChangedMessage>())
+          .Returns(Observable.Empty<BrushShapeChangedMessage>());
 
       // Setup dependencies for ViewModels
       var selectionObserver = new SelectionObserver();
