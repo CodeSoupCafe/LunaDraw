@@ -21,24 +21,20 @@
  *  
  */
 
-using System.Globalization;
+using WinComp = Windows.UI.Composition;
 
-namespace LunaDraw.Converters;
+namespace LunaDraw.WinUI;
 
-public class BoolToLayerPanelWidthConverter : IValueConverter
+/// <summary>
+/// Transparent or tinted backdrop for .NET 10
+/// </summary>
+public partial class TransparentBackdrop : CompositionBrushBackdrop
 {
-  public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+  protected override WinComp.CompositionBrush CreateBrush(WinComp.Compositor compositor)
   {
-    if (value is bool isExpanded)
-    {
-      return isExpanded ? 350.0 : 150.0;
-    }
-
-    return 350.0;
-  }
-
-  public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-  {
-    return 350.0;
+    // Use HostBackdropBrush to sample the area behind the window.
+    // This allows the user to see through the window (typically with blur).
+    // The TintColor property is unused here; apply tint via XAML.
+    return compositor.CreateHostBackdropBrush();
   }
 }

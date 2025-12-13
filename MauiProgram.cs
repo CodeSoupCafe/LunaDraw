@@ -67,7 +67,7 @@ public static class MauiProgram
           {
             wndLifeCycleBuilder.OnWindowCreated(window =>
               {
-                window.SystemBackdrop = new WinUI.TransparentTintBackdrop();
+                window.SystemBackdrop = new WinUI.TransparentBackdrop();
                 PlatformHelper.EnableTrueTransparency(180);   // Fully transparent
               });
           });

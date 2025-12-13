@@ -23,11 +23,11 @@
           x:Name="LayerControlBorder"
           WidthRequest="{Binding Source={x:Reference Root}, Path=IsLayerPanelExpanded, Converter={StaticResource BoolToLayerPanelWidthConverter}}">
 
-    <Grid RowDefinitions="Auto, *">
+    <VerticalStackLayout>
       <!-- Header -->
-      <Grid Grid.Row="0"
-            ColumnDefinitions="*, Auto"
-            Margin="0,0,0,5">
+      <Grid
+        ColumnDefinitions="*, Auto"
+        Margin="0,0,0,5">
         <Grid.GestureRecognizers>
           <TapGestureRecognizer Tapped="OnCollapseClicked"/>
         </Grid.GestureRecognizers>
@@ -41,23 +41,23 @@
                 Clicked="OnCollapseClicked"
                 Grid.Column="1"
                 Padding="0"
-                HeightRequest="30"
-                WidthRequest="30"/>
+                HeightRequest="72"
+                WidthRequest="72"/>
       </Grid>
 
       <!-- Content -->
-      <Grid Grid.Row="1"
-            x:Name="ContentGrid"
-            RowDefinitions="*, Auto"
-            RowSpacing="10"
-            IsVisible="False">
+      <VerticalStackLayout
+        x:Name="ContentGrid"
+        Spacing="10"
+        IsVisible="False">
 
         <!-- Layer List -->
         <CollectionView ItemsSource="{Binding LayerPanelVM.Layers}"
                         SelectedItem="{Binding LayerPanelVM.CurrentLayer}"
                         SelectionMode="Single"
-                        HeightRequest="200"
-                        MaximumHeightRequest="300">
+                        HeightRequest="250"
+                        MaximumHeightRequest="300"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Transparent}, Dark={StaticResource Transparent}}">
           <CollectionView.ItemTemplate>
             <DataTemplate x:DataType="models:Layer">
               <Border StrokeThickness="0"
@@ -80,7 +80,7 @@
                   </VisualStateGroup>
                 </VisualStateManager.VisualStateGroups>
 
-                <Grid ColumnDefinitions="50, *, 50, 50"
+                <Grid ColumnDefinitions="50, *, 72, 72"
                       ColumnSpacing="5"
                       VerticalOptions="Center">
 
@@ -112,8 +112,8 @@
                           TextColor="Black"
                           FontSize="24"
                           BorderWidth="0"
-                          HeightRequest="50"
-                          WidthRequest="50"
+                          HeightRequest="72"
+                          WidthRequest="72"
                           Grid.Column="2"/>
 
                   <!-- Lock Toggle -->
@@ -125,8 +125,8 @@
                           TextColor="Black"
                           FontSize="24"
                           BorderWidth="0"
-                          HeightRequest="50"
-                          WidthRequest="50"
+                          HeightRequest="72"
+                          WidthRequest="72"
                           Grid.Column="3"/>
                 </Grid>
               </Border>
@@ -134,45 +134,27 @@
           </CollectionView.ItemTemplate>
         </CollectionView>
 
-        <!-- Controls -->
-        <Grid Grid.Row="1"
-              RowDefinitions="Auto, Auto"
-              ColumnDefinitions="*,*"
-              ColumnSpacing="10">
-
-          <!-- Transparent Background Toggle -->
-          <Grid Grid.Row="0" 
-                Grid.ColumnSpan="2" 
-                ColumnDefinitions="*, Auto" 
-                Margin="0,0,0,10"
-                IsVisible="{Binding LayerPanelVM.IsTransparentBackgroundVisible}">
-            <Label Text="Transparent Background" 
-                   VerticalOptions="Center" 
-                   TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource White}}"/>
-            <Switch IsToggled="{Binding LayerPanelVM.IsTransparentBackground}" 
-                    Grid.Column="1"/>
-          </Grid>
-
+        <HorizontalStackLayout Spacing="10">
           <Button Text="+"
-                  Grid.Row="1"
                   Command="{Binding LayerPanelVM.AddLayerCommand}"
                   ToolTipProperties.Text="Add Layer"
                   FontSize="30"
-                  HeightRequest="60"
+                  HeightRequest="72"
+                  WidthRequest="72"
                   CornerRadius="10"
                   BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"
                   TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
-                  Grid.Column="0"/>
+                  HorizontalOptions="FillAndExpand"/>
           <Button Text="🗑️"
                   Command="{Binding LayerPanelVM.RemoveLayerCommand}"
                   ToolTipProperties.Text="Remove Layer"
                   FontSize="24"
-                  HeightRequest="60"
+                  HeightRequest="72"
+                  WidthRequest="72"
                   CornerRadius="10"
                   BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"
                   TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
-                  Grid.Row="1"
-                  Grid.Column="1">
+                  HorizontalOptions="FillAndExpand">
             <Button.Triggers>
               <Trigger TargetType="Button"
                        Property="IsEnabled"
@@ -182,8 +164,25 @@
               </Trigger>
             </Button.Triggers>
           </Button>
-        </Grid>
-      </Grid>
-    </Grid>
+        </HorizontalStackLayout>
+
+        <!-- Controls -->
+        <VerticalStackLayout Spacing="10"
+                             IsVisible="{Binding LayerPanelVM.IsTransparentBackgroundVisible}">
+          <!-- Transparent Background Toggle -->
+          <HorizontalStackLayout>
+            <Label Text="Trace Mode"
+                   HorizontalOptions="Start"
+                   VerticalOptions="Center"
+                   TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource White}}"/>
+            <Switch IsToggled="{Binding LayerPanelVM.IsTransparentBackground}"
+                    HorizontalOptions="End"/>
+          </HorizontalStackLayout>
+          <Slider Value="{Binding LayerPanelVM.WindowTransparency}"
+                  Minimum="25"
+                  Maximum="255"/>
+        </VerticalStackLayout>
+      </VerticalStackLayout>
+    </VerticalStackLayout>
   </Border>
 </ContentView>

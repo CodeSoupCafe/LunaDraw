@@ -1,8 +1,29 @@
+/* 
+ *  Copyright (c) 2025 CodeSoupCafe LLC
+ *  
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *  
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *  
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
+ *  
+ */
+
 #if WINDOWS
-using System;
 using System.Runtime.InteropServices;
 using WinRT.Interop;
-using Microsoft.Maui.ApplicationModel;
 
 namespace LunaDraw
 {
@@ -17,27 +38,27 @@ namespace LunaDraw
     /// Windows will choose between Mica and Acrylic depending on system preferences.
     /// </summary>
     Auto = 0,
-    
+
     /// <summary>
     /// Disables all backdrop effects, resulting in a solid color background.
     /// Use this for standard opaque windows without transparency effects.
     /// </summary>
     None = 1,
-    
+
     /// <summary>
     /// Applies the Mica material effect - a subtle, dynamic backdrop that samples the desktop wallpaper.
     /// Provides a soft, translucent appearance that changes with the wallpaper.
     /// Best for primary application windows.
     /// </summary>
     Mica = 2,
-    
+
     /// <summary>
     /// Applies the Acrylic material effect - a semi-transparent blur effect.
     /// Creates a frosted glass appearance with more pronounced transparency than Mica.
     /// Best for transient UI surfaces like popups and context menus.
     /// </summary>
     Acrylic = 3,
-    
+
     /// <summary>
     /// Alternative Mica variant with different visual characteristics.
     /// Provides a slightly different aesthetic than standard Mica.
@@ -184,12 +205,12 @@ namespace LunaDraw
     /// </remarks>
     public static void SetAppBackdrop(BackdropType type)
     {
-      var mauiWindow = App.Current.Windows.FirstOrDefault();
+      var mauiWindow = App.Current?.Windows[0];
       if (mauiWindow == null) return;
 
       IntPtr windowHandle = WindowNative.GetWindowHandle(mauiWindow.Handler.PlatformView);
       int backdropValue = (int)type;
-      DwmSetWindowAttribute(windowHandle, DWMWA_SYSTEMBACKDROP_TYPE, ref backdropValue, sizeof(int));
+      _ = DwmSetWindowAttribute(windowHandle, DWMWA_SYSTEMBACKDROP_TYPE, ref backdropValue, sizeof(int));
     }
 
     /// <summary>
@@ -225,16 +246,16 @@ namespace LunaDraw
     /// </remarks>
     public static bool EnableTrueTransparency(byte opacity = 255)
     {
-      var mauiWindow = App.Current.Windows.FirstOrDefault();
+      var mauiWindow = App.Current?.Windows[0];
       if (mauiWindow == null) return false;
 
       IntPtr hwnd = WindowNative.GetWindowHandle(mauiWindow.Handler.PlatformView);
 
       // Get current window style
       int exStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
-      
+
       // Add WS_EX_LAYERED flag
-      SetWindowLong(hwnd, GWL_EXSTYLE, exStyle | WS_EX_LAYERED);
+      _ = SetWindowLong(hwnd, GWL_EXSTYLE, exStyle | WS_EX_LAYERED);
 
       // Set the window to use alpha transparency
       return SetLayeredWindowAttributes(hwnd, 0, opacity, LWA_ALPHA);
@@ -277,14 +298,14 @@ namespace LunaDraw
     /// </remarks>
     public static bool ExtendGlassFrame()
     {
-      var mauiWindow = App.Current.Windows.FirstOrDefault();
+      var mauiWindow = App.Current?.Windows.FirstOrDefault();
       if (mauiWindow == null) return false;
 
       IntPtr hwnd = WindowNative.GetWindowHandle(mauiWindow.Handler.PlatformView);
 
       // Extend glass into entire window (-1 for all sides)
-      MARGINS margins = new MARGINS { cxLeftWidth = -1, cxRightWidth = -1, cyTopHeight = -1, cyBottomHeight = -1 };
-      
+      MARGINS margins = new() { cxLeftWidth = -1, cxRightWidth = -1, cyTopHeight = -1, cyBottomHeight = -1 };
+
       return DwmExtendFrameIntoClientArea(hwnd, ref margins) == 0;
     }
 
@@ -333,7 +354,7 @@ namespace LunaDraw
     /// </remarks>
     public static bool EnableClickThrough(bool enable)
     {
-      var mauiWindow = App.Current.Windows.FirstOrDefault();
+      var mauiWindow = App.Current?.Windows[0];
       if (mauiWindow == null) return false;
 
       IntPtr hwnd = WindowNative.GetWindowHandle(mauiWindow.Handler.PlatformView);
@@ -341,11 +362,11 @@ namespace LunaDraw
 
       if (enable)
       {
-        SetWindowLong(hwnd, GWL_EXSTYLE, exStyle | WS_EX_LAYERED | WS_EX_TRANSPARENT);
+        _ = SetWindowLong(hwnd, GWL_EXSTYLE, exStyle | WS_EX_LAYERED | WS_EX_TRANSPARENT);
       }
       else
       {
-        SetWindowLong(hwnd, GWL_EXSTYLE, (exStyle | WS_EX_LAYERED) & ~WS_EX_TRANSPARENT);
+        _ = SetWindowLong(hwnd, GWL_EXSTYLE, (exStyle | WS_EX_LAYERED) & ~WS_EX_TRANSPARENT);
       }
 
       return true;
@@ -423,16 +444,16 @@ namespace LunaDraw
     /// </remarks>
     public static bool UpdateLayeredWindowAlpha(IntPtr hdcSrc, int width, int height, byte alpha)
     {
-      var mauiWindow = App.Current.Windows.FirstOrDefault();
+      var mauiWindow = App.Current?.Windows[0];
       if (mauiWindow == null) return false;
 
       IntPtr hwnd = WindowNative.GetWindowHandle(mauiWindow.Handler.PlatformView);
 
-      POINT ptSrc = new POINT { x = 0, y = 0 };
-      POINT ptDst = new POINT { x = 0, y = 0 };
-      SIZE size = new SIZE { cx = width, cy = height };
-      
-      BLENDFUNCTION blend = new BLENDFUNCTION
+      POINT ptSrc = new() { x = 0, y = 0 };
+      POINT ptDst = new() { x = 0, y = 0 };
+      SIZE size = new() { cx = width, cy = height };
+
+      BLENDFUNCTION blend = new()
       {
         BlendOp = 0,  // AC_SRC_OVER
         BlendFlags = 0,
@@ -517,21 +538,21 @@ namespace LunaDraw
       {
         case TransparencyMode.LayeredWindow:
           return EnableTrueTransparency(opacity);
-        
+
         case TransparencyMode.GlassExtended:
           ExtendGlassFrame();
           return EnableTrueTransparency(opacity);
-        
+
         case TransparencyMode.ClickThrough:
           EnableTrueTransparency(opacity);
           return EnableClickThrough(true);
-        
+
         case TransparencyMode.PerPixelAlpha:
           // First enable layered window
           EnableTrueTransparency(255);
           // Then you can use UpdateLayeredWindowAlpha for custom rendering
           return true;
-        
+
         default:
           return false;
       }
@@ -550,21 +571,21 @@ namespace LunaDraw
     /// Transparency level is controlled by the opacity parameter.
     /// </summary>
     LayeredWindow,
-    
+
     /// <summary>
     /// Extends the Aero Glass effect into the client area with blur behind transparent regions.
     /// Creates the classic Windows Vista/7 glass appearance. Requires transparent XAML backgrounds
     /// to see the blur effect. Combines glass frame extension with layered window transparency.
     /// </summary>
     GlassExtended,
-    
+
     /// <summary>
     /// Enables click-through behavior where mouse events pass through transparent areas to windows beneath.
     /// Essential for overlay applications like screen annotations, HUDs, or drawing tools.
     /// Only opaque UI elements will receive mouse input; transparent areas are ignored.
     /// </summary>
     ClickThrough,
-    
+
     /// <summary>
     /// Advanced mode enabling per-pixel alpha control through custom bitmap rendering.
     /// Requires manual bitmap creation and use of UpdateLayeredWindowAlpha() method.

@@ -117,11 +117,47 @@ public class LayerPanelViewModel : ReactiveObject
     set
     {
       this.RaiseAndSetIfChanged(ref isTransparentBackground, value);
+
+      if (!isTransparentBackground)
+      {
+
+        WindowTransparency = 255;
+        UpdateWindowTransparency();
+      }
+
       messageBus.SendMessage(new CanvasInvalidateMessage());
     }
   }
 
-  public bool IsTransparentBackgroundVisible => LunaDraw.Logic.Config.FeatureFlags.EnableTransparentBackground;
+  private byte windowTransparency = 180;
+  public virtual byte WindowTransparency
+  {
+    get => windowTransparency;
+    set
+    {
+      this.RaiseAndSetIfChanged(ref windowTransparency, value);
+      if (IsTransparentBackground)
+      {
+        UpdateWindowTransparency();
+      }
+    }
+  }
+
+  private void UpdateWindowTransparency()
+  {
+#if WINDOWS
+    if (IsTransparentBackground)
+    {
+      LunaDraw.PlatformHelper.EnableTrueTransparency(WindowTransparency);
+    }
+    else
+    {
+      LunaDraw.PlatformHelper.EnableTrueTransparency(255);
+    }
+#endif
+  }
+
+  public static bool IsTransparentBackgroundVisible => Config.FeatureFlags.EnableTransparentBackground;
 
   public ReactiveCommand<Unit, Unit> AddLayerCommand { get; }
   public ReactiveCommand<Unit, Unit> RemoveLayerCommand { get; }

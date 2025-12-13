@@ -21,24 +21,47 @@
  *  
  */
 
-using System.Globalization;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Media;
 
-namespace LunaDraw.Converters;
+// Alias namespaces to avoid ambiguity and ensure correct types are used
+using WinComp = Windows.UI.Composition;
+using WinUIComp = Microsoft.UI.Composition;
 
-public class BoolToLayerPanelWidthConverter : IValueConverter
+namespace LunaDraw.WinUI;
+
+public abstract class CompositionBrushBackdrop : SystemBackdrop
 {
-  public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-  {
-    if (value is bool isExpanded)
-    {
-      return isExpanded ? 350.0 : 150.0;
-    }
+  private WinComp.CompositionBrush? brush;
+  private WinComp.Compositor? compositor;
 
-    return 350.0;
+  protected abstract WinComp.CompositionBrush CreateBrush(WinComp.Compositor compositor);
+
+  protected override void OnTargetConnected(WinUIComp.ICompositionSupportsSystemBackdrop connectedTarget, XamlRoot xamlRoot)
+  {
+    base.OnTargetConnected(connectedTarget, xamlRoot);
+
+    compositor = new WinComp.Compositor();
+
+    brush = CreateBrush(compositor);
+
+    connectedTarget.SystemBackdrop = brush;
   }
 
-  public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+  protected override void OnTargetDisconnected(WinUIComp.ICompositionSupportsSystemBackdrop disconnectedTarget)
   {
-    return 350.0;
+    base.OnTargetDisconnected(disconnectedTarget);
+
+    if (brush != null)
+    {
+      brush.Dispose();
+      brush = null;
+    }
+
+    if (compositor != null)
+    {
+      compositor.Dispose();
+      compositor = null;
+    }
   }
 }
