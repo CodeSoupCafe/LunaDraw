@@ -67,9 +67,8 @@ public static class MauiProgram
           {
             wndLifeCycleBuilder.OnWindowCreated(window =>
               {
-                //window.SystemBackdrop = new LunaDraw.WinUI.TransparentTintBackdrop();
-                // PlatformHelper.EnableCrystalTransparency();
-PlatformHelper.EnableTrueTransparency(50);   // Fully transparent
+                window.SystemBackdrop = new WinUI.TransparentTintBackdrop();
+                PlatformHelper.EnableTrueTransparency(180);   // Fully transparent
               });
           });
 #endif
@@ -84,7 +83,7 @@ PlatformHelper.EnableTrueTransparency(50);   // Fully transparent
     // Register Logic Services
     builder.Services.AddSingleton<ICanvasInputHandler, CanvasInputHandler>();
     builder.Services.AddSingleton<ClipboardMemento>();
-    builder.Services.AddSingleton<LunaDraw.Logic.Utils.IBitmapCache, LunaDraw.Logic.Utils.BitmapCache>();
+    builder.Services.AddSingleton<IBitmapCache, Logic.Utils.BitmapCache>();
     builder.Services.AddSingleton<IFileSaver>(FileSaver.Default);
 
     // Register ViewModels

@@ -7,8 +7,7 @@
              xmlns:viewModels="clr-namespace:LunaDraw.Logic.ViewModels"
              xmlns:skiasharp="clr-namespace:SkiaSharp.Views.Maui.Controls;assembly=SkiaSharp.Views.Maui.Controls"
              x:DataType="viewModels:MainViewModel"
-             x:Class="LunaDraw.Pages.MainPage"
-             BackgroundColor="Transparent">
+             x:Class="LunaDraw.Pages.MainPage">
 
   <AbsoluteLayout>
     <!-- Main Content Grid -->
