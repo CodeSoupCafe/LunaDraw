@@ -24,7 +24,7 @@
 using LunaDraw.Logic.Models;
 using ReactiveUI;
 
-namespace LunaDraw.Logic.Managers;
+namespace LunaDraw.Logic.Utils;
 
 public class HistoryMemento : ReactiveObject
 {

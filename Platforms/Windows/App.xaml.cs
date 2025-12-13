@@ -21,24 +21,79 @@
  *  
  */
 
-// To learn more about WinUI, the WinUI project structure,
-// and more about our project templates, see: http://aka.ms/winui-project-info.
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Media;
+using System;
+using System.Runtime.InteropServices;
+using WinRT;
+
+// Alias namespaces to avoid ambiguity and ensure correct types are used
+using WinComp = Windows.UI.Composition;
+using WinUIComp = Microsoft.UI.Composition;
 
 namespace LunaDraw.WinUI;
 
-/// <summary>
-/// Provides application-specific behavior to supplement the default Application class.
-/// </summary>
 public partial class App : MauiWinUIApplication
 {
-	/// <summary>
-	/// Initializes the singleton application object.  This is the first line of authored code
-	/// executed, and as such is the logical equivalent of main() or WinMain().
-	/// </summary>
-	public App()
-	{
-		this.InitializeComponent();
-	}
+  public App()
+  {
+    this.InitializeComponent();
+  }
 
-	protected override MauiApp CreateMauiApp() => MauiProgram.CreateMauiApp();
+  protected override MauiApp CreateMauiApp() => MauiProgram.CreateMauiApp();
+}
+
+public abstract class CompositionBrushBackdrop : SystemBackdrop
+{
+  private WinComp.CompositionBrush? brush;
+  private WinUIComp.ICompositionSupportsSystemBackdrop? target;
+  private WinComp.Compositor? compositor;
+
+  protected abstract WinComp.CompositionBrush CreateBrush(WinComp.Compositor compositor);
+
+  protected override void OnTargetConnected(WinUIComp.ICompositionSupportsSystemBackdrop connectedTarget, XamlRoot xamlRoot)
+  {
+    base.OnTargetConnected(connectedTarget, xamlRoot);
+
+    target = connectedTarget;
+
+    compositor = new WinComp.Compositor();
+
+    brush = CreateBrush(compositor);
+
+    connectedTarget.SystemBackdrop = brush;
+  }
+
+  protected override void OnTargetDisconnected(WinUIComp.ICompositionSupportsSystemBackdrop disconnectedTarget)
+  {
+    base.OnTargetDisconnected(disconnectedTarget);
+
+    if (brush != null)
+    {
+      brush.Dispose();
+      brush = null;
+    }
+
+    if (compositor != null)
+    {
+      compositor.Dispose();
+      compositor = null;
+    }
+
+    target = null;
+  }
+}
+
+/// <summary>
+/// Transparent or tinted backdrop for .NET 10
+/// </summary>
+public class TransparentTintBackdrop : CompositionBrushBackdrop
+{
+  protected override WinComp.CompositionBrush CreateBrush(WinComp.Compositor compositor)
+  {
+    // Use HostBackdropBrush to sample the area behind the window.
+    // This allows the user to see through the window (typically with blur).
+    // The TintColor property is unused here; apply tint via XAML.
+    return compositor.CreateHostBackdropBrush();
+  }
 }

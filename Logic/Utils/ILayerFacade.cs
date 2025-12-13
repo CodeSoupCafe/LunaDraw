@@ -24,7 +24,7 @@
 using System.Collections.ObjectModel;
 using LunaDraw.Logic.Models;
 
-namespace LunaDraw.Logic.Managers;
+namespace LunaDraw.Logic.Utils;
 
 public interface ILayerFacade
 {

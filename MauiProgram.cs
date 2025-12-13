@@ -23,7 +23,8 @@
 
 using CommunityToolkit.Maui;
 using CommunityToolkit.Maui.Storage;
-using LunaDraw.Logic.Managers;
+using Microsoft.Maui.LifecycleEvents;
+using LunaDraw.Logic.Utils;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Services;
 using LunaDraw.Logic.ViewModels;
@@ -33,6 +34,10 @@ using Microsoft.Extensions.Logging;
 using ReactiveUI;
 using SkiaSharp.Views.Maui.Controls.Hosting;
 using Splat;
+
+#if WINDOWS
+using Microsoft.UI.Xaml.Media;
+#endif
 
 namespace LunaDraw;
 
@@ -54,6 +59,20 @@ public static class MauiProgram
         {
           fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
           fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+        })
+        .ConfigureLifecycleEvents(events =>
+        {
+#if WINDOWS
+          events.AddWindows(wndLifeCycleBuilder =>
+          {
+            wndLifeCycleBuilder.OnWindowCreated(window =>
+              {
+                window.SystemBackdrop = new LunaDraw.WinUI.TransparentTintBackdrop();
+                // PlatformHelper.EnableCrystalTransparency();
+                // PlatformHelper.SetAppBackdrop(BackdropType.None);
+              });
+          });
+#endif
         });
 
     // Register Core State Managers
@@ -65,7 +84,7 @@ public static class MauiProgram
     // Register Logic Services
     builder.Services.AddSingleton<ICanvasInputHandler, CanvasInputHandler>();
     builder.Services.AddSingleton<ClipboardMemento>();
-    builder.Services.AddSingleton<IBitmapCache, BitmapCache>();
+    builder.Services.AddSingleton<LunaDraw.Logic.Utils.IBitmapCache, LunaDraw.Logic.Utils.BitmapCache>();
     builder.Services.AddSingleton<IFileSaver>(FileSaver.Default);
 
     // Register ViewModels

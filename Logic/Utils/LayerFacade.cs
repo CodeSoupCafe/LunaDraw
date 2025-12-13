@@ -26,7 +26,7 @@ using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using ReactiveUI;
 
-namespace LunaDraw.Logic.Managers;
+namespace LunaDraw.Logic.Utils;
 
 public class LayerFacade : ReactiveObject, ILayerFacade
 {

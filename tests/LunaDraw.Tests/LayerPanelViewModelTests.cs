@@ -105,5 +105,31 @@ namespace LunaDraw.Tests
             // Assert
             Assert.True(canExecute);
         }
+
+        [Fact]
+        public void IsTransparentBackground_ShouldToggleAndInvalidateCanvas()
+        {
+            // Arrange
+            var invalidationCount = 0;
+            mockBus.Setup(x => x.SendMessage(It.IsAny<CanvasInvalidateMessage>()))
+                   .Callback<CanvasInvalidateMessage>(_ => invalidationCount++);
+            
+            // Initial state check (defaults to true)
+            Assert.True(viewModel.IsTransparentBackground);
+
+            // Act
+            viewModel.IsTransparentBackground = false;
+
+            // Assert
+            Assert.False(viewModel.IsTransparentBackground);
+            Assert.Equal(1, invalidationCount);
+
+            // Act 2
+            viewModel.IsTransparentBackground = true;
+
+            // Assert
+            Assert.True(viewModel.IsTransparentBackground);
+            Assert.Equal(2, invalidationCount);
+        }
     }
 }

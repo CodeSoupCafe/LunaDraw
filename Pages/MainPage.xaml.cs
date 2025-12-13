@@ -153,7 +153,8 @@ public partial class MainPage : ContentPage
     viewModel.NavigationModel.CanvasWidth = width;
     viewModel.NavigationModel.CanvasHeight = height;
 
-    canvas.Clear(SKColors.White);
+    var bgColor = viewModel.LayerPanelVM.IsTransparentBackground ? SKColors.Transparent : SKColors.White;
+    canvas.Clear(bgColor);
 
     if (viewModel == null) return;
 

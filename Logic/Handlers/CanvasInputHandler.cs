@@ -21,7 +21,7 @@
  *  
  */
 
-using LunaDraw.Logic.Managers;
+using LunaDraw.Logic.Utils;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Tools;
@@ -131,8 +131,8 @@ public class CanvasInputHandler(
 
         // Check if manipulating selection
         manipulatingSelection = false;
-        if (toolbarViewModel.ActiveTool.Type == ToolType.Select && 
-            layerFacade.CurrentLayer?.IsLocked == false && 
+        if (toolbarViewModel.ActiveTool.Type == ToolType.Select &&
+            layerFacade.CurrentLayer?.IsLocked == false &&
             selectionObserver.Selected.Any())
         {
           if (navigationModel.ViewMatrix.TryInvert(out var inv))

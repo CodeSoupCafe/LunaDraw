@@ -136,9 +136,25 @@
 
         <!-- Controls -->
         <Grid Grid.Row="1"
+              RowDefinitions="Auto, Auto"
               ColumnDefinitions="*,*"
               ColumnSpacing="10">
+
+          <!-- Transparent Background Toggle -->
+          <Grid Grid.Row="0" 
+                Grid.ColumnSpan="2" 
+                ColumnDefinitions="*, Auto" 
+                Margin="0,0,0,10"
+                IsVisible="{Binding LayerPanelVM.IsTransparentBackgroundVisible}">
+            <Label Text="Transparent Background" 
+                   VerticalOptions="Center" 
+                   TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource White}}"/>
+            <Switch IsToggled="{Binding LayerPanelVM.IsTransparentBackground}" 
+                    Grid.Column="1"/>
+          </Grid>
+
           <Button Text="+"
+                  Grid.Row="1"
                   Command="{Binding LayerPanelVM.AddLayerCommand}"
                   ToolTipProperties.Text="Add Layer"
                   FontSize="30"
@@ -155,6 +171,7 @@
                   CornerRadius="10"
                   BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"
                   TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
+                  Grid.Row="1"
                   Grid.Column="1">
             <Button.Triggers>
               <Trigger TargetType="Button"

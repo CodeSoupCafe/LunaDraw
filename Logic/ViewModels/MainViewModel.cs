@@ -25,7 +25,7 @@ using System.Collections.ObjectModel;
 using System.Windows.Input;
 using System.Reactive.Linq;
 
-using LunaDraw.Logic.Managers;
+using LunaDraw.Logic.Utils;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Services;
@@ -80,19 +80,19 @@ public class MainViewModel : ReactiveObject
     SelectionViewModel selectionVM,
     HistoryViewModel historyVM)
   {
-      ToolbarViewModel = toolbarViewModel;
-      LayerFacade = layerFacade;
-      CanvasInputHandler = canvasInputHandler;
-      NavigationModel = navigationModel;
-      SelectionObserver = selectionObserver;
-      this.messageBus = messageBus;
-      LayerPanelVM = layerPanelVM;
-      SelectionVM = selectionVM;
-      HistoryVM = historyVM;
+    ToolbarViewModel = toolbarViewModel;
+    LayerFacade = layerFacade;
+    CanvasInputHandler = canvasInputHandler;
+    NavigationModel = navigationModel;
+    SelectionObserver = selectionObserver;
+    this.messageBus = messageBus;
+    LayerPanelVM = layerPanelVM;
+    SelectionVM = selectionVM;
+    HistoryVM = historyVM;
 
-      ZoomInCommand = ReactiveCommand.Create(ZoomIn);
-      ZoomOutCommand = ReactiveCommand.Create(ZoomOut);
-      ResetZoomCommand = ReactiveCommand.Create(ResetZoom);
+    ZoomInCommand = ReactiveCommand.Create(ZoomIn);
+    ZoomOutCommand = ReactiveCommand.Create(ZoomOut);
+    ResetZoomCommand = ReactiveCommand.Create(ResetZoom);
   }
 
 
@@ -154,22 +154,22 @@ public class MainViewModel : ReactiveObject
 
   private void ResetZoom()
   {
-      NavigationModel.Reset();
-      messageBus.SendMessage(new CanvasInvalidateMessage());
+    NavigationModel.Reset();
+    messageBus.SendMessage(new CanvasInvalidateMessage());
   }
 
   private void Zoom(float scaleFactor)
   {
-      if (CanvasSize.Width <= 0 || CanvasSize.Height <= 0) return;
+    if (CanvasSize.Width <= 0 || CanvasSize.Height <= 0) return;
 
-      var center = new SKPoint(CanvasSize.Width / 2, CanvasSize.Height / 2);
+    var center = new SKPoint(CanvasSize.Width / 2, CanvasSize.Height / 2);
 
-      // Scale around center
-      var zoomMatrix = SKMatrix.CreateScale(scaleFactor, scaleFactor, center.X, center.Y);
+    // Scale around center
+    var zoomMatrix = SKMatrix.CreateScale(scaleFactor, scaleFactor, center.X, center.Y);
 
-      // Apply to existing view matrix
-      NavigationModel.ViewMatrix = SKMatrix.Concat(zoomMatrix, NavigationModel.ViewMatrix);
+    // Apply to existing view matrix
+    NavigationModel.ViewMatrix = SKMatrix.Concat(zoomMatrix, NavigationModel.ViewMatrix);
 
-      messageBus.SendMessage(new CanvasInvalidateMessage());
+    messageBus.SendMessage(new CanvasInvalidateMessage());
   }
 }

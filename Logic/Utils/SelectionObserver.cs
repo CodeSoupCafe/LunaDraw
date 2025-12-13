@@ -29,7 +29,7 @@ using ReactiveUI;
 
 using SkiaSharp;
 
-namespace LunaDraw.Logic.Managers;
+namespace LunaDraw.Logic.Utils;
 
 public class SelectionObserver : ReactiveObject
 {
