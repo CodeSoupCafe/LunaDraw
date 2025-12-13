@@ -21,7 +21,6 @@
 		<Nullable>enable</Nullable>	
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>	
     <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>	
-    <EnableHybridWebView>false</EnableHybridWebView>
 
 		<!-- Display name -->
 		<ApplicationTitle>LunaDraw</ApplicationTitle>
@@ -75,15 +74,14 @@
     <PackageReference Include="CommunityToolkit.Maui" Version="13.0.0" />
     <PackageReference Include="Microsoft.Maui.Controls" Version="10.0.11" />
     <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="10.0.11" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.8" />		<PackageReference Include="nor0x.Maui.ColorPicker" Version="2.0.4" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.8" />
+    <PackageReference Include="nor0x.Maui.ColorPicker" Version="2.0.4" />
 		<PackageReference Include="ReactiveUI" Version="22.1.1" />
 		<PackageReference Include="ReactiveUI.Fody" Version="19.5.41" />
 		<PackageReference Include="ReactiveUI.Maui" Version="22.1.1" />
 		<PackageReference Include="SkiaSharp" Version="3.119.1" />
 		<PackageReference Include="SkiaSharp.Views" Version="3.119.1" />
 		<PackageReference Include="SkiaSharp.Views.Maui.Controls" Version="3.119.1" />
-		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.251106002" Condition="$(TargetFramework.Contains('windows'))" />
-    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3650.58" Condition="$(TargetFramework.Contains('windows'))" />
 	</ItemGroup>		
 
 	<ItemGroup>

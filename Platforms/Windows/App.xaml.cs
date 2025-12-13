@@ -97,3 +97,17 @@ public class TransparentTintBackdrop : CompositionBrushBackdrop
     return compositor.CreateHostBackdropBrush();
   }
 }
+
+/// <summary>
+/// Transparent or tinted backdrop for .NET 10
+/// </summary>
+public class TransparentBackdrop : CompositionBrushBackdrop
+{
+  protected override WinComp.CompositionBrush CreateBrush(WinComp.Compositor compositor)
+  {
+    // Use HostBackdropBrush to sample the area behind the window.
+    // This allows the user to see through the window (typically with blur).
+    // The TintColor property is unused here; apply tint via XAML.
+    return compositor.CreateColorBrush(Windows.UI.Color.FromArgb(0,0,0,0));
+  }
+}
