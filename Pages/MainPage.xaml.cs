@@ -73,6 +73,20 @@ public partial class MainPage : ContentPage
   {
     canvasContextMenu = [];
 
+    var duplicateItem = new MenuFlyoutItem { Text = "Duplicate" };
+    duplicateItem.SetBinding(MenuItem.CommandProperty, new Binding("SelectionVM.DuplicateCommand", source: viewModel));
+    canvasContextMenu.Add(duplicateItem);
+
+    var copyItem = new MenuFlyoutItem { Text = "Copy" };
+    copyItem.SetBinding(MenuItem.CommandProperty, new Binding("SelectionVM.CopyCommand", source: viewModel));
+    canvasContextMenu.Add(copyItem);
+
+    var pasteItem = new MenuFlyoutItem { Text = "Paste" };
+    pasteItem.SetBinding(MenuItem.CommandProperty, new Binding("SelectionVM.PasteCommand", source: viewModel));
+    canvasContextMenu.Add(pasteItem);
+
+    canvasContextMenu.Add(new MenuFlyoutSeparator());
+
     var arrangeSubMenu = new MenuFlyoutSubItem { Text = "Arrange" };
 
     var sendToBackItem = new MenuFlyoutItem { Text = "Send To Back" };
@@ -139,7 +153,8 @@ public partial class MainPage : ContentPage
     viewModel.NavigationModel.CanvasWidth = width;
     viewModel.NavigationModel.CanvasHeight = height;
 
-    canvas.Clear(SKColors.White);
+    var bgColor = viewModel.LayerPanelVM.IsTransparentBackground ? SKColors.Transparent : SKColors.White;
+    canvas.Clear(bgColor);
 
     if (viewModel == null) return;
 

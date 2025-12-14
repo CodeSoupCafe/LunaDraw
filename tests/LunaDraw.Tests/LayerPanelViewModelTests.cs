@@ -25,7 +25,8 @@ using System;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
-using LunaDraw.Logic.Managers;
+using LunaDraw.Logic.Utils;
+using LunaDraw.Logic.Services;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.ViewModels;
@@ -38,6 +39,7 @@ namespace LunaDraw.Tests
     public class LayerPanelViewModelTests
     {
         private readonly Mock<IMessageBus> mockBus;
+        private readonly Mock<IPreferencesService> mockPreferences;
         private readonly LayerFacade layerFacade;
         private readonly LayerPanelViewModel viewModel;
         private readonly Subject<DrawingStateChangedMessage> drawingStateSubject;
@@ -45,11 +47,20 @@ namespace LunaDraw.Tests
         public LayerPanelViewModelTests()
         {
             mockBus = new Mock<IMessageBus>();
+            mockPreferences = new Mock<IPreferencesService>();
+            
+            // Mock preferences to return true by default for tests or match existing expectations
+            mockPreferences.Setup(p => p.Get(It.IsAny<string>(), It.IsAny<bool>())).Returns((string key, bool def) => 
+            {
+                if (key == "IsTransparentBackgroundEnabled") return true;
+                return def;
+            });
+            
             drawingStateSubject = new Subject<DrawingStateChangedMessage>();
             mockBus.Setup(x => x.Listen<DrawingStateChangedMessage>()).Returns(drawingStateSubject);
 
             layerFacade = new LayerFacade(mockBus.Object);
-            viewModel = new LayerPanelViewModel(layerFacade, mockBus.Object);
+            viewModel = new LayerPanelViewModel(layerFacade, mockBus.Object, mockPreferences.Object);
         }
 
         [Fact]
@@ -104,6 +115,32 @@ namespace LunaDraw.Tests
 
             // Assert
             Assert.True(canExecute);
+        }
+
+        [Fact]
+        public void IsTransparentBackground_ShouldToggleAndInvalidateCanvas()
+        {
+            // Arrange
+            var invalidationCount = 0;
+            mockBus.Setup(x => x.SendMessage(It.IsAny<CanvasInvalidateMessage>(), It.IsAny<string>()))
+                   .Callback<CanvasInvalidateMessage, string>((_, __) => invalidationCount++);
+            
+            // Initial state check (defaults to true)
+            Assert.True(viewModel.IsTransparentBackground);
+
+            // Act
+            viewModel.IsTransparentBackground = false;
+
+            // Assert
+            Assert.False(viewModel.IsTransparentBackground);
+            Assert.Equal(1, invalidationCount);
+
+            // Act 2
+            viewModel.IsTransparentBackground = true;
+
+            // Assert
+            Assert.True(viewModel.IsTransparentBackground);
+            Assert.Equal(2, invalidationCount);
         }
     }
 }

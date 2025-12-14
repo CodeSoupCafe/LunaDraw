@@ -21,12 +21,20 @@
  *  
  */
 
-namespace LunaDraw.Logic.Messages;
+using WinComp = Windows.UI.Composition;
 
-  /// <summary>
-  /// Message sent to request the canvas to invalidate and redraw.
-  /// </summary>
-  public class CanvasInvalidateMessage
+namespace LunaDraw.WinUI;
+
+/// <summary>
+/// Transparent or tinted backdrop for .NET 10
+/// </summary>
+public partial class TransparentBackdrop : CompositionBrushBackdrop
+{
+  protected override WinComp.CompositionBrush CreateBrush(WinComp.Compositor compositor)
   {
-      // No properties needed, just a signal
+    // Use HostBackdropBrush to sample the area behind the window.
+    // This allows the user to see through the window (typically with blur).
+    // The TintColor property is unused here; apply tint via XAML.
+    return compositor.CreateHostBackdropBrush();
   }
+}

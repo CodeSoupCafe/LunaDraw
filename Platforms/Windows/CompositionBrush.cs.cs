@@ -21,12 +21,47 @@
  *  
  */
 
-namespace LunaDraw.Logic.Messages;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Media;
 
-  /// <summary>
-  /// Message sent to request the canvas to invalidate and redraw.
-  /// </summary>
-  public class CanvasInvalidateMessage
+// Alias namespaces to avoid ambiguity and ensure correct types are used
+using WinComp = Windows.UI.Composition;
+using WinUIComp = Microsoft.UI.Composition;
+
+namespace LunaDraw.WinUI;
+
+public abstract class CompositionBrushBackdrop : SystemBackdrop
+{
+  private WinComp.CompositionBrush? brush;
+  private WinComp.Compositor? compositor;
+
+  protected abstract WinComp.CompositionBrush CreateBrush(WinComp.Compositor compositor);
+
+  protected override void OnTargetConnected(WinUIComp.ICompositionSupportsSystemBackdrop connectedTarget, XamlRoot xamlRoot)
   {
-      // No properties needed, just a signal
+    base.OnTargetConnected(connectedTarget, xamlRoot);
+
+    compositor = new WinComp.Compositor();
+
+    brush = CreateBrush(compositor);
+
+    connectedTarget.SystemBackdrop = brush;
   }
+
+  protected override void OnTargetDisconnected(WinUIComp.ICompositionSupportsSystemBackdrop disconnectedTarget)
+  {
+    base.OnTargetDisconnected(disconnectedTarget);
+
+    if (brush != null)
+    {
+      brush.Dispose();
+      brush = null;
+    }
+
+    if (compositor != null)
+    {
+      compositor.Dispose();
+      compositor = null;
+    }
+  }
+}

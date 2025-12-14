@@ -24,19 +24,18 @@
 using System.Collections.ObjectModel;
 using LunaDraw.Logic.Models;
 
-namespace LunaDraw.Logic.Managers
+namespace LunaDraw.Logic.Utils;
+
+public interface ILayerFacade
 {
-    public interface ILayerFacade
-    {
-        ObservableCollection<Layer> Layers { get; }
-        Layer? CurrentLayer { get; set; }
-        HistoryMemento HistoryMemento { get; }
-        void AddLayer();
-        void RemoveLayer(Layer layer);
-        void MoveLayerForward(Layer layer);
-        void MoveLayerBackward(Layer layer);
-        void MoveLayer(int oldIndex, int newIndex);
-        void MoveElementsToLayer(IEnumerable<IDrawableElement> elements, Layer targetLayer);
-        void SaveState();
-    }
+  ObservableCollection<Layer> Layers { get; }
+  Layer? CurrentLayer { get; set; }
+  HistoryMemento HistoryMemento { get; }
+  void AddLayer();
+  void RemoveLayer(Layer layer);
+  void MoveLayerForward(Layer layer);
+  void MoveLayerBackward(Layer layer);
+  void MoveLayer(int oldIndex, int newIndex);
+  void MoveElementsToLayer(IEnumerable<IDrawableElement> elements, Layer targetLayer);
+  void SaveState();
 }

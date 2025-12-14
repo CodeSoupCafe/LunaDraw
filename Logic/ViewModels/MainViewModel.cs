@@ -22,10 +22,10 @@
  */
 
 using System.Collections.ObjectModel;
-using System.Reactive;
+using System.Windows.Input;
 using System.Reactive.Linq;
 
-using LunaDraw.Logic.Managers;
+using LunaDraw.Logic.Utils;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Services;
@@ -36,94 +36,140 @@ using ReactiveUI;
 using SkiaSharp;
 using SkiaSharp.Views.Maui;
 
-namespace LunaDraw.Logic.ViewModels
+namespace LunaDraw.Logic.ViewModels;
+
+public class MainViewModel : ReactiveObject
 {
-  public class MainViewModel(
-      ToolbarViewModel toolbarViewModel,
-      ILayerFacade layerFacade,
-      ICanvasInputHandler canvasInputHandler,
-      NavigationModel navigationModel,
-      SelectionObserver selectionObserver,
-      IMessageBus messageBus,
-      LayerPanelViewModel layerPanelVM,
-      SelectionViewModel selectionVM,
-      HistoryViewModel historyVM) : ReactiveObject
+  // Dependencies
+  public ToolbarViewModel ToolbarViewModel { get; }
+  public ILayerFacade LayerFacade { get; }
+  public ICanvasInputHandler CanvasInputHandler { get; }
+  public NavigationModel NavigationModel { get; }
+  public SelectionObserver SelectionObserver { get; }
+  private readonly IMessageBus messageBus;
+
+  // Sub-ViewModels
+  public LayerPanelViewModel LayerPanelVM { get; }
+  public SelectionViewModel SelectionVM { get; }
+  public HistoryViewModel HistoryVM { get; }
+
+  // Commands
+  public ICommand ZoomInCommand { get; }
+  public ICommand ZoomOutCommand { get; }
+  public ICommand ResetZoomCommand { get; }
+
+  public SKRect CanvasSize { get; set; }
+
+  // Facades for View/CodeBehind access
+  public ObservableCollection<Layer> Layers => LayerFacade.Layers;
+
+  public Layer? CurrentLayer
   {
-    // Dependencies
-    public ToolbarViewModel ToolbarViewModel { get; } = toolbarViewModel;
-    public ILayerFacade LayerFacade { get; } = layerFacade;
-    public ICanvasInputHandler CanvasInputHandler { get; } = canvasInputHandler;
-    public NavigationModel NavigationModel { get; } = navigationModel;
-    public SelectionObserver SelectionObserver { get; } = selectionObserver;
-    private readonly IMessageBus messageBus = messageBus;
+    get => LayerFacade.CurrentLayer;
+    set => LayerFacade.CurrentLayer = value;
+  }
 
-    // Sub-ViewModels
-    public LayerPanelViewModel LayerPanelVM { get; } = layerPanelVM;
-    public SelectionViewModel SelectionVM { get; } = selectionVM;
-    public HistoryViewModel HistoryVM { get; } = historyVM;
+  public MainViewModel(
+    ToolbarViewModel toolbarViewModel,
+    ILayerFacade layerFacade,
+    ICanvasInputHandler canvasInputHandler,
+    NavigationModel navigationModel,
+    SelectionObserver selectionObserver,
+    IMessageBus messageBus,
+    LayerPanelViewModel layerPanelVM,
+    SelectionViewModel selectionVM,
+    HistoryViewModel historyVM)
+  {
+    ToolbarViewModel = toolbarViewModel;
+    LayerFacade = layerFacade;
+    CanvasInputHandler = canvasInputHandler;
+    NavigationModel = navigationModel;
+    SelectionObserver = selectionObserver;
+    this.messageBus = messageBus;
+    LayerPanelVM = layerPanelVM;
+    SelectionVM = selectionVM;
+    HistoryVM = historyVM;
 
-    public SKRect CanvasSize { get; set; }
+    ZoomInCommand = ReactiveCommand.Create(ZoomIn);
+    ZoomOutCommand = ReactiveCommand.Create(ZoomOut);
+    ResetZoomCommand = ReactiveCommand.Create(ResetZoom);
+  }
 
-    // Facades for View/CodeBehind access
-    public ObservableCollection<Layer> Layers => LayerFacade.Layers;
 
-    public Layer? CurrentLayer
+  public IDrawingTool ActiveTool
+  {
+    get => ToolbarViewModel.ActiveTool;
+    set => ToolbarViewModel.ActiveTool = value;
+  }
+
+  public ReadOnlyObservableCollection<IDrawableElement> SelectedElements => SelectionObserver.Selected;
+
+  public void ReorderLayer(Layer source, Layer target)
+  {
+    if (source == null || target == null || source == target) return;
+    int oldIndex = Layers.IndexOf(source);
+    int newIndex = Layers.IndexOf(target);
+    if (oldIndex >= 0 && newIndex >= 0)
     {
-      get => LayerFacade.CurrentLayer;
-      set => LayerFacade.CurrentLayer = value;
+      LayerFacade.MoveLayer(oldIndex, newIndex);
+      CurrentLayer = source;
     }
+  }
 
-    public IDrawingTool ActiveTool
+  public void ProcessTouch(SKTouchEventArgs e)
+  {
+    CanvasInputHandler.ProcessTouch(e, CanvasSize);
+  }
+
+  public ToolContext CreateToolContext()
+  {
+    return new ToolContext
     {
-      get => ToolbarViewModel.ActiveTool;
-      set => ToolbarViewModel.ActiveTool = value;
-    }
+      CurrentLayer = LayerFacade.CurrentLayer!,
+      StrokeColor = ToolbarViewModel.StrokeColor,
+      FillColor = ToolbarViewModel.FillColor,
+      StrokeWidth = ToolbarViewModel.StrokeWidth,
+      Opacity = ToolbarViewModel.Opacity,
+      Flow = ToolbarViewModel.Flow,
+      Spacing = ToolbarViewModel.Spacing,
+      BrushShape = ToolbarViewModel.CurrentBrushShape,
+      AllElements = LayerFacade.Layers.SelectMany(l => l.Elements),
+      Layers = LayerFacade.Layers,
+      SelectionObserver = SelectionObserver,
+      Scale = NavigationModel.ViewMatrix.ScaleX,
+      IsGlowEnabled = ToolbarViewModel.IsGlowEnabled,
+      GlowColor = ToolbarViewModel.GlowColor,
+      GlowRadius = ToolbarViewModel.GlowRadius,
+      IsRainbowEnabled = ToolbarViewModel.IsRainbowEnabled,
+      ScatterRadius = ToolbarViewModel.ScatterRadius,
+      SizeJitter = ToolbarViewModel.SizeJitter,
+      AngleJitter = ToolbarViewModel.AngleJitter,
+      HueJitter = ToolbarViewModel.HueJitter,
+      CanvasMatrix = NavigationModel.ViewMatrix
+    };
+  }
 
-    public ReadOnlyObservableCollection<IDrawableElement> SelectedElements => SelectionObserver.Selected;
+  private void ZoomIn() => Zoom(1.2f);
+  private void ZoomOut() => Zoom(1f / 1.2f);
 
-    public void ReorderLayer(Layer source, Layer target)
-    {
-      if (source == null || target == null || source == target) return;
-      int oldIndex = Layers.IndexOf(source);
-      int newIndex = Layers.IndexOf(target);
-      if (oldIndex >= 0 && newIndex >= 0)
-      {
-        LayerFacade.MoveLayer(oldIndex, newIndex);
-        CurrentLayer = source;
-      }
-    }
+  private void ResetZoom()
+  {
+    NavigationModel.Reset();
+    messageBus.SendMessage(new CanvasInvalidateMessage());
+  }
 
-    public void ProcessTouch(SKTouchEventArgs e)
-    {
-      CanvasInputHandler.ProcessTouch(e, CanvasSize);
-    }
+  private void Zoom(float scaleFactor)
+  {
+    if (CanvasSize.Width <= 0 || CanvasSize.Height <= 0) return;
 
-    public ToolContext CreateToolContext()
-    {
-      return new ToolContext
-      {
-        CurrentLayer = LayerFacade.CurrentLayer!,
-        StrokeColor = ToolbarViewModel.StrokeColor,
-        FillColor = ToolbarViewModel.FillColor,
-        StrokeWidth = ToolbarViewModel.StrokeWidth,
-        Opacity = ToolbarViewModel.Opacity,
-        Flow = ToolbarViewModel.Flow,
-        Spacing = ToolbarViewModel.Spacing,
-        BrushShape = ToolbarViewModel.CurrentBrushShape,
-        AllElements = LayerFacade.Layers.SelectMany(l => l.Elements),
-        Layers = LayerFacade.Layers,
-        SelectionObserver = SelectionObserver,
-        Scale = NavigationModel.ViewMatrix.ScaleX,
-        IsGlowEnabled = ToolbarViewModel.IsGlowEnabled,
-        GlowColor = ToolbarViewModel.GlowColor,
-        GlowRadius = ToolbarViewModel.GlowRadius,
-        IsRainbowEnabled = ToolbarViewModel.IsRainbowEnabled,
-        ScatterRadius = ToolbarViewModel.ScatterRadius,
-        SizeJitter = ToolbarViewModel.SizeJitter,
-        AngleJitter = ToolbarViewModel.AngleJitter,
-        HueJitter = ToolbarViewModel.HueJitter,
-        CanvasMatrix = NavigationModel.ViewMatrix
-      };
-    }
+    var center = new SKPoint(CanvasSize.Width / 2, CanvasSize.Height / 2);
+
+    // Scale around center
+    var zoomMatrix = SKMatrix.CreateScale(scaleFactor, scaleFactor, center.X, center.Y);
+
+    // Apply to existing view matrix
+    NavigationModel.ViewMatrix = SKMatrix.Concat(zoomMatrix, NavigationModel.ViewMatrix);
+
+    messageBus.SendMessage(new CanvasInvalidateMessage());
   }
 }

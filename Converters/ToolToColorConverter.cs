@@ -54,7 +54,7 @@ public class ToolToColorConverter : IValueConverter
         // Inactive Color
         var isDark = Application.Current?.RequestedTheme == AppTheme.Dark;
         var key = isDark ? "Gray700" : "Gray200";
-        
+      
         if (Application.Current?.Resources.TryGetValue(key, out var inactiveColor) == true)
             return inactiveColor;
 

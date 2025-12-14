@@ -28,7 +28,7 @@ using System.Linq;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Services;
 using LunaDraw.Logic.Tools;
-using LunaDraw.Logic.Managers;
+using LunaDraw.Logic.Utils;
 using ReactiveUI;
 using SkiaSharp;
 using Xunit;
