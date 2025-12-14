@@ -33,7 +33,7 @@ using ReactiveUI;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using LunaDraw.Logic.Services;
-using LunaDraw.Logic.Managers;
+using LunaDraw.Logic.Utils;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Tools;

@@ -25,7 +25,7 @@ using System;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
-using LunaDraw.Logic.Managers;
+using LunaDraw.Logic.Utils;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.ViewModels;
@@ -111,8 +111,8 @@ namespace LunaDraw.Tests
         {
             // Arrange
             var invalidationCount = 0;
-            mockBus.Setup(x => x.SendMessage(It.IsAny<CanvasInvalidateMessage>()))
-                   .Callback<CanvasInvalidateMessage>(_ => invalidationCount++);
+            mockBus.Setup(x => x.SendMessage(It.IsAny<CanvasInvalidateMessage>(), It.IsAny<string>()))
+                   .Callback<CanvasInvalidateMessage, string>((_, __) => invalidationCount++);
             
             // Initial state check (defaults to true)
             Assert.True(viewModel.IsTransparentBackground);

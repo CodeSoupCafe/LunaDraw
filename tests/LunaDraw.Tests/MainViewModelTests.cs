@@ -24,7 +24,7 @@
 using System.Collections.ObjectModel;
 using System.Reactive.Linq;
 
-using LunaDraw.Logic.Managers;
+using LunaDraw.Logic.Utils;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Services;

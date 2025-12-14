@@ -27,7 +27,7 @@ using Xunit;
 using SkiaSharp;
 using SkiaSharp.Views.Maui;
 using LunaDraw.Logic.Services;
-using LunaDraw.Logic.Managers;
+using LunaDraw.Logic.Utils;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Tools;
 using LunaDraw.Logic.Messages;
