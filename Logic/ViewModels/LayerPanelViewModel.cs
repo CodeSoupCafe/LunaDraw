@@ -25,6 +25,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Reactive;
 using System.Reactive.Linq;
+using LunaDraw.Logic.Services;
 using LunaDraw.Logic.Utils;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
@@ -36,11 +37,13 @@ public class LayerPanelViewModel : ReactiveObject
 {
   private readonly ILayerFacade layerFacade;
   private readonly IMessageBus messageBus;
+  private readonly IPreferencesService preferencesService;
 
-  public LayerPanelViewModel(ILayerFacade layerFacade, IMessageBus messageBus)
+  public LayerPanelViewModel(ILayerFacade layerFacade, IMessageBus messageBus, IPreferencesService preferencesService)
   {
     this.layerFacade = layerFacade;
     this.messageBus = messageBus;
+    this.preferencesService = preferencesService;
 
     layerFacade.WhenAnyValue(x => x.CurrentLayer)
         .Subscribe(_ => this.RaisePropertyChanged(nameof(CurrentLayer)));
@@ -102,7 +105,7 @@ public class LayerPanelViewModel : ReactiveObject
     }, outputScheduler: RxApp.MainThreadScheduler);
 
     // Initialize state from Preferences
-    IsTransparentBackground = Preferences.Get("IsTransparentBackgroundEnabled", false);
+    IsTransparentBackground = preferencesService.Get("IsTransparentBackgroundEnabled", false);
     if (!IsTransparentBackground)
     {
       windowTransparency = 255;
@@ -124,7 +127,7 @@ public class LayerPanelViewModel : ReactiveObject
     set
     {
       this.RaiseAndSetIfChanged(ref isTransparentBackground, value);
-      Preferences.Set("IsTransparentBackgroundEnabled", value);
+      preferencesService.Set("IsTransparentBackgroundEnabled", value);
 
       if (!isTransparentBackground)
       {

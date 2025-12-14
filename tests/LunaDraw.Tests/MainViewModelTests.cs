@@ -70,9 +70,11 @@ namespace LunaDraw.Tests
       layerFacadeMock.Setup(m => m.Layers).Returns(layers);
       layerFacadeMock.Setup(m => m.HistoryMemento).Returns(historyMemento);
 
+      var preferencesServiceMock = new Mock<IPreferencesService>();
+
       // Create Sub-VMs (we can test them in isolation, but here we test MainVM integration)
       // Using real instances for VM logic
-      layerPanelVM = new LayerPanelViewModel(layerFacadeMock.Object, messageBusMock.Object);
+      layerPanelVM = new LayerPanelViewModel(layerFacadeMock.Object, messageBusMock.Object, preferencesServiceMock.Object);
       selectionVM = new SelectionViewModel(selectionObserver, layerFacadeMock.Object, new ClipboardMemento(), messageBusMock.Object);
       historyVM = new HistoryViewModel(layerFacadeMock.Object, messageBusMock.Object);
 
@@ -119,6 +121,8 @@ namespace LunaDraw.Tests
       layerFacadeMock.SetupGet(x => x.CurrentLayer).Returns(layer);
 
       selectionObserver.Add(element);
+
+      messageBusMock.Invocations.Clear();
 
       // Act
       // Executing command on SelectionVM which is exposed

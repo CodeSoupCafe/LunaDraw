@@ -78,7 +78,7 @@ public static class MauiProgram
         });
 
     // Register Core State Managers
-    builder.Services.AddSingleton<IMessageBus>(new ReactiveUI.MessageBus());
+    builder.Services.AddSingleton<IMessageBus>(new MessageBus());
     builder.Services.AddSingleton<NavigationModel>();
     builder.Services.AddSingleton<SelectionObserver>();
     builder.Services.AddSingleton<ILayerFacade, LayerFacade>();
@@ -86,7 +86,8 @@ public static class MauiProgram
     // Register Logic Services
     builder.Services.AddSingleton<ICanvasInputHandler, CanvasInputHandler>();
     builder.Services.AddSingleton<ClipboardMemento>();
-    builder.Services.AddSingleton<IBitmapCache, Logic.Utils.BitmapCache>();
+    builder.Services.AddSingleton<IBitmapCache, LunaDraw.Logic.Utils.BitmapCache>();
+    builder.Services.AddSingleton<IPreferencesService, PreferencesService>();
     builder.Services.AddSingleton<IFileSaver>(FileSaver.Default);
 
     // Register ViewModels
