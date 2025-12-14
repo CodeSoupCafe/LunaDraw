@@ -136,6 +136,16 @@ public class LayerPanelViewModel : ReactiveObject
     set
     {
       this.RaiseAndSetIfChanged(ref windowTransparency, value);
+      if (value == 255 && isTransparentBackground)
+      {
+        IsTransparentBackground = false;
+        UpdateWindowTransparency();
+      }
+      else if (value < 255 && !isTransparentBackground)
+      {
+        IsTransparentBackground = true;
+      }
+
       if (IsTransparentBackground)
       {
         UpdateWindowTransparency();

@@ -170,14 +170,11 @@
         <VerticalStackLayout Spacing="10"
                              IsVisible="{Binding LayerPanelVM.IsTransparentBackgroundVisible}">
           <!-- Transparent Background Toggle -->
-          <HorizontalStackLayout>
-            <Label Text="Trace Mode"
-                   HorizontalOptions="Start"
-                   VerticalOptions="Center"
-                   TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource White}}"/>
-            <Switch IsToggled="{Binding LayerPanelVM.IsTransparentBackground}"
-                    HorizontalOptions="End"/>
-          </HorizontalStackLayout>
+
+          <Label Text="Trace Mode"
+                 HorizontalOptions="Start"
+                 VerticalOptions="Center"
+                 TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource White}}"/>
           <Slider Value="{Binding LayerPanelVM.WindowTransparency}"
                   Minimum="25"
                   Maximum="255"/>

@@ -67,8 +67,8 @@
                          Spacing="10">
 
       <!-- Zoom Controls -->
-      <VerticalStackLayout Spacing="10"
-                           HorizontalOptions="End">
+      <HorizontalStackLayout Spacing="10"
+                             HorizontalOptions="End">
         <Button Text="⟲"
                 Style="{StaticResource ZoomButtonStyle}"
                 Command="{Binding ResetZoomCommand}"
@@ -81,7 +81,7 @@
                 Style="{StaticResource ZoomButtonStyle}"
                 Command="{Binding ZoomInCommand}"
                 ToolTipProperties.Text="Zoom In"/>
-      </VerticalStackLayout>
+      </HorizontalStackLayout>
 
       <!-- Mini Map -->
       <Border Stroke="Gray"
