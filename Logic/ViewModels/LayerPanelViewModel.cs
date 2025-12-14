@@ -100,6 +100,13 @@ public class LayerPanelViewModel : ReactiveObject
         layer.IsLocked = !layer.IsLocked;
       }
     }, outputScheduler: RxApp.MainThreadScheduler);
+
+    // Initialize state from Preferences
+    IsTransparentBackground = Preferences.Get("IsTransparentBackgroundEnabled", false);
+    if (!IsTransparentBackground)
+    {
+      windowTransparency = 255;
+    }
   }
 
   public ObservableCollection<Layer> Layers => layerFacade.Layers;
@@ -110,13 +117,14 @@ public class LayerPanelViewModel : ReactiveObject
     set => layerFacade.CurrentLayer = value;
   }
 
-  private bool isTransparentBackground = true;
+  private bool isTransparentBackground = false;
   public bool IsTransparentBackground
   {
     get => isTransparentBackground;
     set
     {
       this.RaiseAndSetIfChanged(ref isTransparentBackground, value);
+      Preferences.Set("IsTransparentBackgroundEnabled", value);
 
       if (!isTransparentBackground)
       {
