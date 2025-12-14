@@ -28,6 +28,8 @@ namespace LunaDraw.Components;
 
   public partial class LayerControlView : ContentView
   {
+      public MainViewModel? ViewModel => BindingContext as MainViewModel;
+
       public static readonly BindableProperty IsLayerPanelExpandedProperty =
           BindableProperty.Create(nameof(IsLayerPanelExpanded), typeof(bool), typeof(LayerControlView), false, propertyChanged: OnIsLayerPanelExpandedChanged);
 

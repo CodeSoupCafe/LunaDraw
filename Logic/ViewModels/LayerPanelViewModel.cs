@@ -104,6 +104,18 @@ public class LayerPanelViewModel : ReactiveObject
       }
     }, outputScheduler: RxApp.MainThreadScheduler);
 
+    ToggleTraceModeCommand = ReactiveCommand.Create(() =>
+    {
+      if (IsTransparentBackground)
+      {
+        WindowTransparency = 255;
+      }
+      else
+      {
+        WindowTransparency = 150;
+      }
+    }, outputScheduler: RxApp.MainThreadScheduler);
+
     // Initialize state from Preferences
     IsTransparentBackground = preferencesService.Get("IsTransparentBackgroundEnabled", false);
     if (!IsTransparentBackground)
@@ -175,15 +187,15 @@ public class LayerPanelViewModel : ReactiveObject
     {
       LunaDraw.PlatformHelper.EnableTrueTransparency(255);
     }
-#endif
+    #endif
   }
 
-  public static bool IsTransparentBackgroundVisible => Config.FeatureFlags.EnableTransparentBackground;
+  public bool IsTransparentBackgroundVisible => Config.FeatureFlags.EnableTransparentBackground;
 
-  public ReactiveCommand<Unit, Unit> AddLayerCommand { get; }
-  public ReactiveCommand<Unit, Unit> RemoveLayerCommand { get; }
+  public ReactiveCommand<Unit, Unit> AddLayerCommand { get; }  public ReactiveCommand<Unit, Unit> RemoveLayerCommand { get; }
   public ReactiveCommand<Layer, Unit> MoveLayerForwardCommand { get; }
   public ReactiveCommand<Layer, Unit> MoveLayerBackwardCommand { get; }
   public ReactiveCommand<Layer, Unit> ToggleLayerVisibilityCommand { get; }
   public ReactiveCommand<Layer, Unit> ToggleLayerLockCommand { get; }
+  public ReactiveCommand<Unit, Unit> ToggleTraceModeCommand { get; }
 }

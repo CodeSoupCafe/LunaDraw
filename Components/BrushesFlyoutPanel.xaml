@@ -5,7 +5,8 @@
              xmlns:models="clr-namespace:LunaDraw.Logic.Models"
              xmlns:components="clr-namespace:LunaDraw.Components"
              x:Class="LunaDraw.Components.BrushesFlyoutPanel"
-             x:DataType="viewModels:ToolbarViewModel">
+             x:DataType="viewModels:ToolbarViewModel"
+             x:Name="Root">
   <Border Background="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray800}}"
           Padding="12"
           StrokeShape="RoundRectangle"
@@ -43,15 +44,15 @@
                       Padding="4"
                       Margin="1">
                 <Border.GestureRecognizers>
-                  <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:ToolbarViewModel}}, Path=SelectBrushShapeCommand}"
+                  <TapGestureRecognizer Command="{Binding Source={x:Reference Root}, Path=ViewModel.SelectBrushShapeCommand, x:DataType=components:BrushesFlyoutPanel}"
                                         CommandParameter="{Binding .}" />
                 </Border.GestureRecognizers>
                 <components:BrushPreviewControl BrushShape="{Binding .}"
-                                                StrokeColor="{Binding Source={RelativeSource AncestorType={x:Type viewModels:ToolbarViewModel}}, Path=StrokeColor}"
-                                                FillColor="{Binding Source={RelativeSource AncestorType={x:Type viewModels:ToolbarViewModel}}, Path=FillColor}"
-                                                IsGlowEnabled="{Binding Source={RelativeSource AncestorType={x:Type viewModels:ToolbarViewModel}}, Path=IsGlowEnabled}"
-                                                GlowColor="{Binding Source={RelativeSource AncestorType={x:Type viewModels:ToolbarViewModel}}, Path=GlowColor}"
-                                                GlowRadius="{Binding Source={RelativeSource AncestorType={x:Type viewModels:ToolbarViewModel}}, Path=GlowRadius}"
+                                                StrokeColor="{Binding Source={x:Reference Root}, Path=ViewModel.StrokeColor, x:DataType=components:BrushesFlyoutPanel}"
+                                                FillColor="{Binding Source={x:Reference Root}, Path=ViewModel.FillColor, x:DataType=components:BrushesFlyoutPanel}"
+                                                IsGlowEnabled="{Binding Source={x:Reference Root}, Path=ViewModel.IsGlowEnabled, x:DataType=components:BrushesFlyoutPanel}"
+                                                GlowColor="{Binding Source={x:Reference Root}, Path=ViewModel.GlowColor, x:DataType=components:BrushesFlyoutPanel}"
+                                                GlowRadius="{Binding Source={x:Reference Root}, Path=ViewModel.GlowRadius, x:DataType=components:BrushesFlyoutPanel}"
                                                 Color="{AppThemeBinding Light=Black, Dark=White}"
                                                 HorizontalOptions="Fill"
                                                 VerticalOptions="Fill" />

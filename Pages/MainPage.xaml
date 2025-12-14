@@ -35,29 +35,29 @@
 
     <!-- Settings Flyout Panel as True Overlay -->
     <components:FlyoutPanel x:Name="SettingsFlyoutHost"
-                            IsOpen="{Binding BindingContext.IsSettingsOpen, Source={x:Reference toolbarView}}"
+                            IsOpen="{Binding ToolbarViewModel.IsSettingsOpen}"
                             TargetElement="{x:Reference toolbarView}"
                             AnchorName="SettingsButton">
       <components:SettingsFlyoutPanel x:Name="SettingsFlyoutContent"
-                                      BindingContext="{Binding Source={x:Reference toolbarView}, Path=BindingContext}"/>
+                                      BindingContext="{Binding ToolbarViewModel}"/>
     </components:FlyoutPanel>
 
     <!-- Shapes Flyout Panel as True Overlay -->
     <components:FlyoutPanel x:Name="ShapesFlyoutHost"
-                            IsOpen="{Binding BindingContext.IsShapesFlyoutOpen, Source={x:Reference toolbarView}}"
+                            IsOpen="{Binding ToolbarViewModel.IsShapesFlyoutOpen}"
                             TargetElement="{x:Reference toolbarView}"
                             AnchorName="ShapesButton">
       <components:ShapesFlyoutPanel x:Name="ShapesFlyoutContent"
-                                    BindingContext="{Binding Source={x:Reference toolbarView}, Path=BindingContext}"/>
+                                    BindingContext="{Binding ToolbarViewModel}"/>
     </components:FlyoutPanel>
 
     <!-- Brushes Flyout Panel as True Overlay -->
     <components:FlyoutPanel x:Name="BrushesFlyoutHost"
-                            IsOpen="{Binding BindingContext.IsBrushesFlyoutOpen, Source={x:Reference toolbarView}}"
+                            IsOpen="{Binding ToolbarViewModel.IsBrushesFlyoutOpen}"
                             TargetElement="{x:Reference toolbarView}"
                             AnchorName="BrushButton">
       <components:BrushesFlyoutPanel x:Name="BrushesFlyoutContent"
-                                     BindingContext="{Binding Source={x:Reference toolbarView}, Path=BindingContext}"/>
+                                     BindingContext="{Binding ToolbarViewModel}"/>
     </components:FlyoutPanel>
 
     <!-- Navigation Control (Bottom Right) -->

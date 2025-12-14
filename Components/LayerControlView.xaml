@@ -4,6 +4,7 @@
              xmlns:viewModels="clr-namespace:LunaDraw.Logic.ViewModels"
              xmlns:models="clr-namespace:LunaDraw.Logic.Models"
              xmlns:converters="clr-namespace:LunaDraw.Converters"
+             xmlns:components="clr-namespace:LunaDraw.Components"
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              x:Class="LunaDraw.Components.LayerControlView"
              x:DataType="viewModels:MainViewModel"
@@ -21,7 +22,7 @@
           Padding="10"
           StrokeShape="RoundRectangle 10"
           x:Name="LayerControlBorder"
-          WidthRequest="{Binding Source={x:Reference Root}, Path=IsLayerPanelExpanded, Converter={StaticResource BoolToLayerPanelWidthConverter}}">
+          WidthRequest="{Binding Source={x:Reference Root}, Path=IsLayerPanelExpanded, Converter={StaticResource BoolToLayerPanelWidthConverter}, x:DataType=components:LayerControlView}">
 
     <VerticalStackLayout>
       <!-- Header -->
@@ -105,7 +106,7 @@
 
                   <!-- Visible Toggle (Eye) -->
                   <Button Text="{Binding IsVisible, Converter={StaticResource BoolToEyeIconConverter}}"
-                          Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:MainViewModel}}, Path=LayerPanelVM.ToggleLayerVisibilityCommand}"
+                          Command="{Binding Source={x:Reference Root}, Path=ViewModel.LayerPanelVM.ToggleLayerVisibilityCommand, x:DataType=components:LayerControlView}"
                           CommandParameter="{Binding .}"
                           Padding="0"
                           BackgroundColor="Transparent"
@@ -118,7 +119,7 @@
 
                   <!-- Lock Toggle -->
                   <Button Text="{Binding IsLocked, Converter={StaticResource BoolToLockIconConverter}}"
-                          Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:MainViewModel}}, Path=LayerPanelVM.ToggleLayerLockCommand}"
+                          Command="{Binding Source={x:Reference Root}, Path=ViewModel.LayerPanelVM.ToggleLayerLockCommand, x:DataType=components:LayerControlView}"
                           CommandParameter="{Binding .}"
                           Padding="0"
                           BackgroundColor="Transparent"
@@ -134,7 +135,8 @@
           </CollectionView.ItemTemplate>
         </CollectionView>
 
-        <HorizontalStackLayout Spacing="10">
+        <HorizontalStackLayout Spacing="10"
+                               HorizontalOptions="FillAndExpand">
           <Button Text="+"
                   Command="{Binding LayerPanelVM.AddLayerCommand}"
                   ToolTipProperties.Text="Add Layer"
@@ -154,7 +156,7 @@
                   CornerRadius="10"
                   BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"
                   TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
-                  HorizontalOptions="FillAndExpand">
+                  HorizontalOptions="End">
             <Button.Triggers>
               <Trigger TargetType="Button"
                        Property="IsEnabled"
@@ -164,21 +166,36 @@
               </Trigger>
             </Button.Triggers>
           </Button>
+          <Button HorizontalOptions="End"
+                  Text="⧉"
+                  Command="{Binding LayerPanelVM.ToggleTraceModeCommand}"
+                  ToolTipProperties.Text="Toggle Trace Mode"
+                  FontSize="30"
+                  HeightRequest="72"
+                  WidthRequest="72"
+                  CornerRadius="10"
+                  Padding="0"
+                  BorderWidth="0">
+            <Button.Triggers>
+              <DataTrigger TargetType="Button"
+                           Binding="{Binding LayerPanelVM.IsTransparentBackground}"
+                           Value="True">
+                <Setter Property="BackgroundColor"
+                        Value="{StaticResource Primary}"/>
+                <Setter Property="TextColor"
+                        Value="{StaticResource White}"/>
+              </DataTrigger>
+              <DataTrigger TargetType="Button"
+                           Binding="{Binding LayerPanelVM.IsTransparentBackground}"
+                           Value="False">
+                <Setter Property="BackgroundColor"
+                        Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"/>
+                <Setter Property="TextColor"
+                        Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"/>
+              </DataTrigger>
+            </Button.Triggers>
+          </Button>
         </HorizontalStackLayout>
-
-        <!-- Controls -->
-        <VerticalStackLayout Spacing="10"
-                             IsVisible="{Binding LayerPanelVM.IsTransparentBackgroundVisible}">
-          <!-- Transparent Background Toggle -->
-
-          <Label Text="Trace Mode"
-                 HorizontalOptions="Start"
-                 VerticalOptions="Center"
-                 TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource White}}"/>
-          <Slider Value="{Binding LayerPanelVM.WindowTransparency}"
-                  Minimum="25"
-                  Maximum="255"/>
-        </VerticalStackLayout>
       </VerticalStackLayout>
     </VerticalStackLayout>
   </Border>

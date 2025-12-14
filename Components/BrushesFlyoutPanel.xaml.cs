@@ -27,6 +27,8 @@ namespace LunaDraw.Components;
 
 public partial class BrushesFlyoutPanel : ContentView
 {
+  public ToolbarViewModel? ViewModel => BindingContext as ToolbarViewModel;
+
   public BrushesFlyoutPanel()
   {
     InitializeComponent();
