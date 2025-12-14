@@ -588,7 +588,6 @@
             Value="{AppThemeBinding Light={StaticResource Gray950}, Dark={StaticResource Gray200}}"/>
   </Style>
 
-
   <!-- Style for buttons within fly-outs -->
   <Style x:Key="FlyoutButtonStyle"
          TargetType="Button">

@@ -186,6 +186,7 @@ public class ToolbarViewModel : ReactiveObject
   public ReactiveCommand<BrushShape, Unit> SelectBrushShapeCommand { get; }
   public ReactiveCommand<Unit, Unit> ImportImageCommand { get; }
   public ReactiveCommand<Unit, Unit> SaveImageCommand { get; }
+  public ReactiveCommand<Unit, Unit> ShowAdvancedSettingsCommand { get; }
 
   // UI state properties
   private bool isSettingsOpen = false;
@@ -193,6 +194,13 @@ public class ToolbarViewModel : ReactiveObject
   {
     get => isSettingsOpen;
     set => this.RaiseAndSetIfChanged(ref isSettingsOpen, value);
+  }
+
+  private bool showButtonLabels = true;
+  public bool ShowButtonLabels
+  {
+    get => showButtonLabels;
+    set => this.RaiseAndSetIfChanged(ref showButtonLabels, value);
   }
 
   private bool isShapesFlyoutOpen = false;
@@ -235,6 +243,12 @@ public class ToolbarViewModel : ReactiveObject
     this.bitmapCacheManager = bitmapCacheManager;
     this.navigationModel = navigationModel;
     this.fileSaver = fileSaver;
+
+    // Listen for ViewOptions changes
+    this.messageBus.Listen<ViewOptionsChangedMessage>().Subscribe(msg =>
+    {
+      ShowButtonLabels = msg.ShowButtonLabels;
+    });
 
     // Initialize Tools and Shapes
     AvailableTools =
@@ -381,6 +395,11 @@ public class ToolbarViewModel : ReactiveObject
       IsSettingsOpen = !IsSettingsOpen;
       IsShapesFlyoutOpen = false;
       IsBrushesFlyoutOpen = false;
+    });
+
+    ShowAdvancedSettingsCommand = ReactiveCommand.Create(() =>
+    {
+       messageBus.SendMessage(new ShowAdvancedSettingsMessage());
     });
 
     SelectRectangleCommand = ReactiveCommand.Create(() =>

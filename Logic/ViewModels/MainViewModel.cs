@@ -35,6 +35,7 @@ using ReactiveUI;
 
 using SkiaSharp;
 using SkiaSharp.Views.Maui;
+using CommunityToolkit.Maui.Extensions;
 
 namespace LunaDraw.Logic.ViewModels;
 
@@ -47,6 +48,7 @@ public class MainViewModel : ReactiveObject
   public NavigationModel NavigationModel { get; }
   public SelectionObserver SelectionObserver { get; }
   private readonly IMessageBus messageBus;
+  private readonly IPreferencesService preferencesService;
 
   // Sub-ViewModels
   public LayerPanelViewModel LayerPanelVM { get; }
@@ -59,6 +61,31 @@ public class MainViewModel : ReactiveObject
   public ICommand ResetZoomCommand { get; }
 
   public SKRect CanvasSize { get; set; }
+
+  // UI State
+  private bool showButtonLabels;
+  public bool ShowButtonLabels
+  {
+    get => showButtonLabels;
+    set
+    {
+      this.RaiseAndSetIfChanged(ref showButtonLabels, value);
+      preferencesService.Set("ShowButtonLabels", value);
+      messageBus.SendMessage(new ViewOptionsChangedMessage(value, ShowLayersPanel));
+    }
+  }
+
+  private bool showLayersPanel;
+  public bool ShowLayersPanel
+  {
+    get => showLayersPanel;
+    set
+    {
+      this.RaiseAndSetIfChanged(ref showLayersPanel, value);
+      preferencesService.Set("ShowLayersPanel", value);
+      messageBus.SendMessage(new ViewOptionsChangedMessage(ShowButtonLabels, value));
+    }
+  }
 
   // Facades for View/CodeBehind access
   public ObservableCollection<Layer> Layers => LayerFacade.Layers;
@@ -76,6 +103,7 @@ public class MainViewModel : ReactiveObject
     NavigationModel navigationModel,
     SelectionObserver selectionObserver,
     IMessageBus messageBus,
+    IPreferencesService preferencesService,
     LayerPanelViewModel layerPanelVM,
     SelectionViewModel selectionVM,
     HistoryViewModel historyVM)
@@ -86,13 +114,25 @@ public class MainViewModel : ReactiveObject
     NavigationModel = navigationModel;
     SelectionObserver = selectionObserver;
     this.messageBus = messageBus;
+    this.preferencesService = preferencesService;
     LayerPanelVM = layerPanelVM;
     SelectionVM = selectionVM;
     HistoryVM = historyVM;
 
+    // Use Property setters to trigger ViewOptionsChangedMessage so ToolbarViewModel syncs up
+    ShowButtonLabels = this.preferencesService.Get("ShowButtonLabels", false);
+    ShowLayersPanel = this.preferencesService.Get("ShowLayersPanel", false);
+
     ZoomInCommand = ReactiveCommand.Create(ZoomIn);
     ZoomOutCommand = ReactiveCommand.Create(ZoomOut);
     ResetZoomCommand = ReactiveCommand.Create(ResetZoom);
+
+    // Listen for ShowAdvancedSettingsMessage
+    this.messageBus.Listen<ShowAdvancedSettingsMessage>().Subscribe(async _ =>
+    {
+      var popup = new Components.AdvancedSettingsPopup(this);
+      await Application.Current.Windows[0].Page?.ShowPopupAsync(popup);
+    });
   }
 
 

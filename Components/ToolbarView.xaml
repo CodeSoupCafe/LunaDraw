@@ -7,6 +7,7 @@
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              xmlns:controls="clr-namespace:Maui.ColorPicker;assembly=Maui.ColorPicker"
              xmlns:local="clr-namespace:LunaDraw.Components"
+             xmlns:strings="clr-namespace:LunaDraw.Resources.Strings"
              xmlns:pages="clr-namespace:LunaDraw.Pages;assembly=LunaDraw"
              x:Class="LunaDraw.Views.ToolbarView"
              x:DataType="viewModels:ToolbarViewModel">
@@ -65,20 +66,24 @@
             <Button x:Name="SelectButton"
                     Style="{StaticResource ToolbarButtonStyle}"
                     Text="⬚"
+                    ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_SelectTool}"
                     Command="{Binding SelectToolCommand}"
                     CommandParameter="{Binding AvailableTools[0]}"
                     BackgroundColor="{Binding ActiveTool, Mode=OneWay, Converter={StaticResource ToolToColorConverter}, ConverterParameter='SelectTool'}">
             </Button>
             <Label Text="{Binding AvailableTools[0].Name}"
-                   HorizontalTextAlignment="Center"/>
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding ShowButtonLabels}"/>
           </StackLayout>
           <StackLayout HorizontalOptions="Center">
             <Button x:Name="SettingsButton"
                     Style="{StaticResource ToolbarButtonStyle}"
                     Text="🌈"
+                    ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_Styles}"
                     Command="{Binding ShowSettingsCommand}"/>
-            <Label Text="Styles"
-                   HorizontalTextAlignment="Center"/>
+            <Label Text="{x:Static strings:AppResources.Label_Styles}"
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding ShowButtonLabels}"/>
           </StackLayout>
            <StackLayout HorizontalOptions="Center">
             <Border x:Name="BrushButton"
@@ -87,6 +92,7 @@
                     Padding="8"
                     Margin="0,4"
                     StrokeShape="RoundRectangle 12"
+                    ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_BrushSettings}"
                     BackgroundColor="{Binding ActiveTool, Mode=OneWay, Converter={StaticResource ToolToColorConverter}, ConverterParameter='FreehandTool'}">
                 <Border.GestureRecognizers>
                     <TapGestureRecognizer Command="{Binding ShowBrushesFlyoutCommand}"/>
@@ -97,7 +103,8 @@
                                            VerticalOptions="Fill"/>
             </Border>
             <Label Text="{Binding AvailableTools[1].Name}"
-                   HorizontalTextAlignment="Center"/>
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding ShowButtonLabels}"/>
           </StackLayout>
           <StackLayout HorizontalOptions="Center">
             <Border x:Name="ShapesButton"
@@ -106,6 +113,7 @@
                     Padding="8"
                     Margin="0,4"
                     StrokeShape="RoundRectangle 12"
+                    ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_Shapes}"
                     BackgroundColor="{Binding ActiveTool, Mode=OneWay, Converter={StaticResource ToolToColorConverter}, ConverterParameter='Shapes'}">
                 <Border.GestureRecognizers>
                     <TapGestureRecognizer Command="{Binding ShowShapesFlyoutCommand}"/>
@@ -117,47 +125,56 @@
                                            HorizontalOptions="Fill"
                                            VerticalOptions="Fill"/>
             </Border>
-            <Label Text="Shapes"
-                   HorizontalTextAlignment="Center"/>
+            <Label Text="{x:Static strings:AppResources.Label_Shapes}"
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding ShowButtonLabels}"/>
           </StackLayout>
 
           <StackLayout HorizontalOptions="Center">
             <Button x:Name="ImageButton"
                     Style="{StaticResource ToolbarButtonStyle}"
                     Text="🖼️"
+                    ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_ImportImage}"
                     Command="{Binding ImportImageCommand}"/>
-            <Label Text="Image"
-                   HorizontalTextAlignment="Center"/>
+            <Label Text="{x:Static strings:AppResources.Label_Image}"
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding ShowButtonLabels}"/>
           </StackLayout>
 
           <StackLayout HorizontalOptions="Center">
             <Button x:Name="SaveButton"
                     Style="{StaticResource ToolbarButtonStyle}"
                     Text="💾"
+                    ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_SaveImage}"
                     Command="{Binding SaveImageCommand}"/>
-            <Label Text="Save"
-                   HorizontalTextAlignment="Center"/>
+            <Label Text="{x:Static strings:AppResources.Label_Save}"
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding ShowButtonLabels}"/>
           </StackLayout>
 
          <StackLayout HorizontalOptions="Center">
             <Button x:Name="EraserButton"
                     Style="{StaticResource ToolbarButtonStyle}"
                     Text="🧽"
+                    ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_Eraser}"
                     Command="{Binding SelectToolCommand}"
                     CommandParameter="{Binding AvailableTools[6]}"
                     BackgroundColor="{Binding ActiveTool, Mode=OneWay, Converter={StaticResource ToolToColorConverter}, ConverterParameter='EraserBrushTool'}">
             </Button>
             <Label Text="{Binding AvailableTools[6].Name}"
-                   HorizontalTextAlignment="Center"/>
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding ShowButtonLabels}"/>
           </StackLayout>
 
           <StackLayout HorizontalOptions="Center">
             <Button x:Name="DeleteButton"
                     Style="{StaticResource ToolbarButtonStyle}"
                     Text="🗑️"
+                    ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_DeleteSelected}"
                     Command="{Binding DeleteSelectedCommand}"/>
-            <Label Text="Delete"
-                   HorizontalTextAlignment="Center"/>
+            <Label Text="{x:Static strings:AppResources.Label_Delete}"
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding ShowButtonLabels}"/>
           </StackLayout>
 
           <BoxView HeightRequest="2"
@@ -168,19 +185,39 @@
             <Button x:Name="UndoButton"
                     Style="{StaticResource ToolbarButtonStyle}"
                     Text="↺"
+                    ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_Undo}"
                     Command="{Binding UndoCommand}">
             </Button>
-            <Label Text="Undo"
-                   HorizontalTextAlignment="Center"/>
+            <Label Text="{x:Static strings:AppResources.Label_Undo}"
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding ShowButtonLabels}"/>
           </StackLayout>
           <StackLayout HorizontalOptions="Center">
             <Button x:Name="RedoButton"
                     Style="{StaticResource ToolbarButtonStyle}"
                     Text="↻"
+                    ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_Redo}"
                     Command="{Binding RedoCommand}">
             </Button>
-            <Label Text="Redo"
-                   HorizontalTextAlignment="Center"/>
+            <Label Text="{x:Static strings:AppResources.Label_Redo}"
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding ShowButtonLabels}"/>
+          </StackLayout>
+
+          <BoxView HeightRequest="2"
+                   Color="Gray"
+                   Margin="0,4"/>
+                   
+          <StackLayout HorizontalOptions="Center">
+            <Button x:Name="ViewOptionsButton"
+                    Style="{StaticResource ToolbarButtonStyle}"
+                    Text="⚙️"
+                    ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_ViewOptions}"
+                    Command="{Binding ShowAdvancedSettingsCommand}">
+            </Button>
+            <Label Text="{x:Static strings:AppResources.Label_ViewOptions}"
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding ShowButtonLabels}"/>
           </StackLayout>
         </VerticalStackLayout>
       </ScrollView>

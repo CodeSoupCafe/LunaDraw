@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<toolkit:Popup xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+               xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+               xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+               xmlns:viewModels="clr-namespace:LunaDraw.Logic.ViewModels"
+               xmlns:strings="clr-namespace:LunaDraw.Resources.Strings"
+               x:Class="LunaDraw.Components.AdvancedSettingsPopup"
+               x:DataType="viewModels:MainViewModel"
+               CanBeDismissedByTappingOutsideOfPopup="True">
+  <VerticalStackLayout Spacing="15">
+    <Grid ColumnDefinitions="*, Auto"
+          RowDefinitions="Auto, Auto"
+          RowSpacing="15">
+      <Label Grid.Row="0"
+             TextColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}"
+             Grid.Column="0"
+             Text="{x:Static strings:AppResources.Label_ShowLayersPanel}"
+             VerticalOptions="Center"/>
+      <Switch Grid.Row="0"
+              Grid.Column="1"
+              IsToggled="{Binding ShowLayersPanel}"/>
+
+      <Label Grid.Row="1"
+             TextColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}"
+             Grid.Column="0"
+             Text="{x:Static strings:AppResources.Label_ShowButtonLabels}"
+             VerticalOptions="Center"/>
+      <Switch Grid.Row="1"
+              Grid.Column="1"
+              IsToggled="{Binding ShowButtonLabels}"/>
+    </Grid>
+
+    <Button Text="{x:Static strings:AppResources.Label_Close}"
+            Clicked="OnCloseClicked"
+            Margin="0,10,0,0"/>
+  </VerticalStackLayout>
+</toolkit:Popup>
