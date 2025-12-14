@@ -187,12 +187,13 @@ public class LayerPanelViewModel : ReactiveObject
     {
       LunaDraw.PlatformHelper.EnableTrueTransparency(255);
     }
-    #endif
+#endif
   }
 
   public bool IsTransparentBackgroundVisible => Config.FeatureFlags.EnableTransparentBackground;
 
-  public ReactiveCommand<Unit, Unit> AddLayerCommand { get; }  public ReactiveCommand<Unit, Unit> RemoveLayerCommand { get; }
+  public ReactiveCommand<Unit, Unit> AddLayerCommand { get; }
+  public ReactiveCommand<Unit, Unit> RemoveLayerCommand { get; }
   public ReactiveCommand<Layer, Unit> MoveLayerForwardCommand { get; }
   public ReactiveCommand<Layer, Unit> MoveLayerBackwardCommand { get; }
   public ReactiveCommand<Layer, Unit> ToggleLayerVisibilityCommand { get; }

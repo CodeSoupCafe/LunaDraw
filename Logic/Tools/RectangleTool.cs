@@ -32,7 +32,7 @@ public class RectangleTool(IMessageBus messageBus) : ShapeTool<DrawableRectangle
   public override string Name => "Rectangle";
   public override ToolType Type => ToolType.Rectangle;
 
-      protected override DrawableRectangle CreateShape(ToolContext context)
+  protected override DrawableRectangle CreateShape(ToolContext context)
   {
     return new DrawableRectangle
     {

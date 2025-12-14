@@ -153,12 +153,12 @@
                     BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"
                     TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
                     HorizontalOptions="Center"/>
-             <Label Text="{x:Static strings:AppResources.ToolTip_AddLayer}"
-                    FontSize="12"
-                    HorizontalTextAlignment="Center"
-                    IsVisible="{Binding ShowButtonLabels}"/>
+            <Label Text="{x:Static strings:AppResources.ToolTip_AddLayer}"
+                   FontSize="12"
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding ShowButtonLabels}"/>
           </VerticalStackLayout>
-          
+
           <VerticalStackLayout HorizontalOptions="End">
             <Button Text="🗑️"
                     Command="{Binding LayerPanelVM.RemoveLayerCommand}"
@@ -184,8 +184,9 @@
                    HorizontalTextAlignment="Center"
                    IsVisible="{Binding ShowButtonLabels}"/>
           </VerticalStackLayout>
-          
-          <VerticalStackLayout HorizontalOptions="End" Margin="20,0,0,0">
+
+          <VerticalStackLayout HorizontalOptions="End"
+              Margin="20,0,0,0">
             <Button Text="⧉"
                     Command="{Binding LayerPanelVM.ToggleTraceModeCommand}"
                     ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_ToggleTraceMode}"

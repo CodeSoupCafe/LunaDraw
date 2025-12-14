@@ -39,7 +39,7 @@ public partial class BrushesFlyoutPanel : ContentView
   {
     if (BindingContext is ToolbarViewModel toolbarViewModel)
     {
-        // No settings to load here anymore, just brush shapes which are data bound
+      // No settings to load here anymore, just brush shapes which are data bound
     }
   }
 }

@@ -85,13 +85,13 @@ public partial class SettingsFlyoutPanel : ContentView
   private IMessageBus? messageBus;
   private IMessageBus? MessageBus
   {
-      get
-      {
-          if (messageBus != null) return messageBus;
-          messageBus = Handler?.MauiContext?.Services.GetService<IMessageBus>()
-                       ?? IPlatformApplication.Current?.Services.GetService<IMessageBus>();
-          return messageBus;
-      }
+    get
+    {
+      if (messageBus != null) return messageBus;
+      messageBus = Handler?.MauiContext?.Services.GetService<IMessageBus>()
+                   ?? IPlatformApplication.Current?.Services.GetService<IMessageBus>();
+      return messageBus;
+    }
   }
 
   public SettingsFlyoutPanel()
@@ -163,99 +163,99 @@ public partial class SettingsFlyoutPanel : ContentView
 
   private static void OnStrokeColorPropertyChanged(BindableObject bindable, object oldValue, object newValue)
   {
-      try
+    try
+    {
+      var panel = (SettingsFlyoutPanel)bindable;
+      if (panel.BindingContext is ToolbarViewModel toolbarViewModel && newValue is SKColor color)
       {
-          var panel = (SettingsFlyoutPanel)bindable;
-          if (panel.BindingContext is ToolbarViewModel toolbarViewModel && newValue is SKColor color)
-          {
-              if (panel.MessageBus != null)
-                  panel.MessageBus.SendMessage(new BrushSettingsChangedMessage(strokeColor: color));
-              if (panel.StrokeColorPicker != null)
-                  panel.StrokeColorPicker.PickedColor = SKColorToMauiColor(color);
-          }
+        if (panel.MessageBus != null)
+          panel.MessageBus.SendMessage(new BrushSettingsChangedMessage(strokeColor: color));
+        if (panel.StrokeColorPicker != null)
+          panel.StrokeColorPicker.PickedColor = SKColorToMauiColor(color);
       }
-      catch { }
+    }
+    catch { }
   }
 
   private static void OnFillColorPropertyChanged(BindableObject bindable, object oldValue, object newValue)
   {
-      try
+    try
+    {
+      var panel = (SettingsFlyoutPanel)bindable;
+      if (panel.BindingContext is ToolbarViewModel toolbarViewModel)
       {
-          var panel = (SettingsFlyoutPanel)bindable;
-          if (panel.BindingContext is ToolbarViewModel toolbarViewModel)
-          {
-              var fill = newValue as SKColor?;
-              if (panel.MessageBus != null)
-                  panel.MessageBus.SendMessage(new BrushSettingsChangedMessage(fillColor: fill));
-              if (newValue is SKColor fillColor && panel.FillColorPicker != null)
-                  panel.FillColorPicker.PickedColor = SKColorToMauiColor(fillColor);
-          }
+        var fill = newValue as SKColor?;
+        if (panel.MessageBus != null)
+          panel.MessageBus.SendMessage(new BrushSettingsChangedMessage(fillColor: fill));
+        if (newValue is SKColor fillColor && panel.FillColorPicker != null)
+          panel.FillColorPicker.PickedColor = SKColorToMauiColor(fillColor);
       }
-      catch { }
+    }
+    catch { }
   }
 
   private static void OnTransparencyPropertyChanged(BindableObject bindable, object oldValue, object newValue)
   {
-      try
+    try
+    {
+      var panel = (SettingsFlyoutPanel)bindable;
+      if (panel.BindingContext is ToolbarViewModel toolbarViewModel && newValue is byte transparency)
       {
-          var panel = (SettingsFlyoutPanel)bindable;
-          if (panel.BindingContext is ToolbarViewModel toolbarViewModel && newValue is byte transparency)
-          {
-              if (panel.MessageBus != null)
-                  panel.MessageBus.SendMessage(new BrushSettingsChangedMessage(transparency: transparency));
-              if (panel.TransparencySlider != null)
-                  panel.TransparencySlider.Value = transparency;
-          }
+        if (panel.MessageBus != null)
+          panel.MessageBus.SendMessage(new BrushSettingsChangedMessage(transparency: transparency));
+        if (panel.TransparencySlider != null)
+          panel.TransparencySlider.Value = transparency;
       }
-      catch { }
+    }
+    catch { }
   }
 
   private static void OnSizePropertyChanged(BindableObject bindable, object oldValue, object newValue)
   {
-      try
+    try
+    {
+      var panel = (SettingsFlyoutPanel)bindable;
+      if (panel.BindingContext is ToolbarViewModel && newValue is float size)
       {
-          var panel = (SettingsFlyoutPanel)bindable;
-          if (panel.BindingContext is ToolbarViewModel && newValue is float size)
-          {
-              if (panel.MessageBus != null)
-                  panel.MessageBus.SendMessage(new BrushSettingsChangedMessage(strokeWidth: size));
-              if (panel.SizeSlider != null)
-                  panel.SizeSlider.Value = size;
-          }
+        if (panel.MessageBus != null)
+          panel.MessageBus.SendMessage(new BrushSettingsChangedMessage(strokeWidth: size));
+        if (panel.SizeSlider != null)
+          panel.SizeSlider.Value = size;
       }
-      catch { }
+    }
+    catch { }
   }
 
   private static void OnFlowPropertyChanged(BindableObject bindable, object oldValue, object newValue)
   {
-      try
+    try
+    {
+      var panel = (SettingsFlyoutPanel)bindable;
+      if (panel.BindingContext is ToolbarViewModel && newValue is byte flow)
       {
-          var panel = (SettingsFlyoutPanel)bindable;
-          if (panel.BindingContext is ToolbarViewModel && newValue is byte flow)
-          {
-              if (panel.MessageBus != null)
-                  panel.MessageBus.SendMessage(new BrushSettingsChangedMessage(flow: flow));
-              if (panel.FlowSlider != null)
-                  panel.FlowSlider.Value = flow;
-          }
+        if (panel.MessageBus != null)
+          panel.MessageBus.SendMessage(new BrushSettingsChangedMessage(flow: flow));
+        if (panel.FlowSlider != null)
+          panel.FlowSlider.Value = flow;
       }
-      catch { }
+    }
+    catch { }
   }
 
   private static void OnSpacingPropertyChanged(BindableObject bindable, object oldValue, object newValue)
   {
-      try
+    try
+    {
+      var panel = (SettingsFlyoutPanel)bindable;
+      if (panel.BindingContext is ToolbarViewModel && newValue is float spacing)
       {
-          var panel = (SettingsFlyoutPanel)bindable;
-          if (panel.BindingContext is ToolbarViewModel && newValue is float spacing)
-          {
-              if (panel.MessageBus != null)
-                  panel.MessageBus.SendMessage(new BrushSettingsChangedMessage(spacing: spacing));
-              if (panel.SpacingSlider != null)
-                  panel.SpacingSlider.Value = spacing;
-          }
+        if (panel.MessageBus != null)
+          panel.MessageBus.SendMessage(new BrushSettingsChangedMessage(spacing: spacing));
+        if (panel.SpacingSlider != null)
+          panel.SpacingSlider.Value = spacing;
       }
-      catch { }
+    }
+    catch { }
   }
 
   private void OnStrokeColorChanged(object sender, EventArgs e)
@@ -353,26 +353,26 @@ public partial class SettingsFlyoutPanel : ContentView
 
   private void OnRainbowSwitchToggled(object sender, ToggledEventArgs e)
   {
-      MessageBus?.SendMessage(new BrushSettingsChangedMessage(isRainbowEnabled: e.Value));
+    MessageBus?.SendMessage(new BrushSettingsChangedMessage(isRainbowEnabled: e.Value));
   }
 
   private void OnScatterChanged(object sender, ValueChangedEventArgs e)
   {
-      MessageBus?.SendMessage(new BrushSettingsChangedMessage(scatterRadius: (float)e.NewValue));
+    MessageBus?.SendMessage(new BrushSettingsChangedMessage(scatterRadius: (float)e.NewValue));
   }
 
   private void OnSizeJitterChanged(object sender, ValueChangedEventArgs e)
   {
-      MessageBus?.SendMessage(new BrushSettingsChangedMessage(sizeJitter: (float)e.NewValue));
+    MessageBus?.SendMessage(new BrushSettingsChangedMessage(sizeJitter: (float)e.NewValue));
   }
 
   private void OnAngleJitterChanged(object sender, ValueChangedEventArgs e)
   {
-      MessageBus?.SendMessage(new BrushSettingsChangedMessage(angleJitter: (float)e.NewValue));
+    MessageBus?.SendMessage(new BrushSettingsChangedMessage(angleJitter: (float)e.NewValue));
   }
 
   private void OnHueJitterChanged(object sender, ValueChangedEventArgs e)
   {
-      MessageBus?.SendMessage(new BrushSettingsChangedMessage(hueJitter: (float)e.NewValue));
+    MessageBus?.SendMessage(new BrushSettingsChangedMessage(hueJitter: (float)e.NewValue));
   }
 }

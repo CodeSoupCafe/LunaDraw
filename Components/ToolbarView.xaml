@@ -38,9 +38,12 @@
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"/>
         <Style.Triggers>
-             <Trigger TargetType="Button" Property="IsEnabled" Value="False">
-                 <Setter Property="Opacity" Value="0.3" />
-             </Trigger>
+          <Trigger TargetType="Button"
+              Property="IsEnabled"
+              Value="False">
+            <Setter Property="Opacity"
+                Value="0.3"/>
+          </Trigger>
         </Style.Triggers>
       </Style>
     </ResourceDictionary>
@@ -85,7 +88,7 @@
                    HorizontalTextAlignment="Center"
                    IsVisible="{Binding ShowButtonLabels}"/>
           </StackLayout>
-           <StackLayout HorizontalOptions="Center">
+          <StackLayout HorizontalOptions="Center">
             <Border x:Name="BrushButton"
                     WidthRequest="72"
                     HeightRequest="72"
@@ -94,13 +97,13 @@
                     StrokeShape="RoundRectangle 12"
                     ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_BrushSettings}"
                     BackgroundColor="{Binding ActiveTool, Mode=OneWay, Converter={StaticResource ToolToColorConverter}, ConverterParameter='FreehandTool'}">
-                <Border.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding ShowBrushesFlyoutCommand}"/>
-                </Border.GestureRecognizers>
-                <local:BrushPreviewControl BrushShape="{Binding CurrentBrushShape}"
-                                           StrokeColor="{Binding StrokeColor}"
-                                           HorizontalOptions="Fill"
-                                           VerticalOptions="Fill"/>
+              <Border.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding ShowBrushesFlyoutCommand}"/>
+              </Border.GestureRecognizers>
+              <local:BrushPreviewControl BrushShape="{Binding CurrentBrushShape}"
+                                         StrokeColor="{Binding StrokeColor}"
+                                         HorizontalOptions="Fill"
+                                         VerticalOptions="Fill"/>
             </Border>
             <Label Text="{Binding AvailableTools[1].Name}"
                    HorizontalTextAlignment="Center"
@@ -115,15 +118,15 @@
                     StrokeShape="RoundRectangle 12"
                     ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_Shapes}"
                     BackgroundColor="{Binding ActiveTool, Mode=OneWay, Converter={StaticResource ToolToColorConverter}, ConverterParameter='Shapes'}">
-                <Border.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding ShowShapesFlyoutCommand}"/>
-                </Border.GestureRecognizers>
-                <local:ShapePreviewControl ActiveTool="{Binding LastActiveShapeTool}"
-                                           StrokeColor="{Binding StrokeColor}"
-                                           FillColor="{Binding FillColor}"
-                                           StrokeWidth="{Binding StrokeWidth}"
-                                           HorizontalOptions="Fill"
-                                           VerticalOptions="Fill"/>
+              <Border.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding ShowShapesFlyoutCommand}"/>
+              </Border.GestureRecognizers>
+              <local:ShapePreviewControl ActiveTool="{Binding LastActiveShapeTool}"
+                                         StrokeColor="{Binding StrokeColor}"
+                                         FillColor="{Binding FillColor}"
+                                         StrokeWidth="{Binding StrokeWidth}"
+                                         HorizontalOptions="Fill"
+                                         VerticalOptions="Fill"/>
             </Border>
             <Label Text="{x:Static strings:AppResources.Label_Shapes}"
                    HorizontalTextAlignment="Center"
@@ -152,7 +155,7 @@
                    IsVisible="{Binding ShowButtonLabels}"/>
           </StackLayout>
 
-         <StackLayout HorizontalOptions="Center">
+          <StackLayout HorizontalOptions="Center">
             <Button x:Name="EraserButton"
                     Style="{StaticResource ToolbarButtonStyle}"
                     Text="🧽"
@@ -207,7 +210,7 @@
           <BoxView HeightRequest="2"
                    Color="Gray"
                    Margin="0,4"/>
-                   
+
           <StackLayout HorizontalOptions="Center">
             <Button x:Name="ViewOptionsButton"
                     Style="{StaticResource ToolbarButtonStyle}"

@@ -30,15 +30,15 @@
                   Stroke="Gray"
                   StrokeThickness="1"
                   Padding="8">
-              <Border.GestureRecognizers>
-                  <TapGestureRecognizer Command="{Binding SelectRectangleCommand}"/>
-              </Border.GestureRecognizers>
-              <components:ShapePreviewControl ShapeName="Rectangle"
-                                              StrokeColor="{Binding StrokeColor}"
-                                              FillColor="{Binding FillColor}"
-                                              StrokeWidth="{Binding StrokeWidth}"
-                                              HorizontalOptions="Fill"
-                                              VerticalOptions="Fill"/>
+            <Border.GestureRecognizers>
+              <TapGestureRecognizer Command="{Binding SelectRectangleCommand}"/>
+            </Border.GestureRecognizers>
+            <components:ShapePreviewControl ShapeName="Rectangle"
+                                            StrokeColor="{Binding StrokeColor}"
+                                            FillColor="{Binding FillColor}"
+                                            StrokeWidth="{Binding StrokeWidth}"
+                                            HorizontalOptions="Fill"
+                                            VerticalOptions="Fill"/>
           </Border>
           <Label Text="Rectangle"
                  FontSize="12"
@@ -53,15 +53,15 @@
                   Stroke="Gray"
                   StrokeThickness="1"
                   Padding="8">
-              <Border.GestureRecognizers>
-                  <TapGestureRecognizer Command="{Binding SelectCircleCommand}"/>
-              </Border.GestureRecognizers>
-              <components:ShapePreviewControl ShapeName="Circle"
-                                              StrokeColor="{Binding StrokeColor}"
-                                              FillColor="{Binding FillColor}"
-                                              StrokeWidth="{Binding StrokeWidth}"
-                                              HorizontalOptions="Fill"
-                                              VerticalOptions="Fill"/>
+            <Border.GestureRecognizers>
+              <TapGestureRecognizer Command="{Binding SelectCircleCommand}"/>
+            </Border.GestureRecognizers>
+            <components:ShapePreviewControl ShapeName="Circle"
+                                            StrokeColor="{Binding StrokeColor}"
+                                            FillColor="{Binding FillColor}"
+                                            StrokeWidth="{Binding StrokeWidth}"
+                                            HorizontalOptions="Fill"
+                                            VerticalOptions="Fill"/>
           </Border>
           <Label Text="Circle"
                  FontSize="12"
@@ -76,15 +76,15 @@
                   Stroke="Gray"
                   StrokeThickness="1"
                   Padding="8">
-              <Border.GestureRecognizers>
-                  <TapGestureRecognizer Command="{Binding SelectLineCommand}"/>
-              </Border.GestureRecognizers>
-              <components:ShapePreviewControl ShapeName="Line"
-                                              StrokeColor="{Binding StrokeColor}"
-                                              FillColor="{Binding FillColor}"
-                                              StrokeWidth="{Binding StrokeWidth}"
-                                              HorizontalOptions="Fill"
-                                              VerticalOptions="Fill"/>
+            <Border.GestureRecognizers>
+              <TapGestureRecognizer Command="{Binding SelectLineCommand}"/>
+            </Border.GestureRecognizers>
+            <components:ShapePreviewControl ShapeName="Line"
+                                            StrokeColor="{Binding StrokeColor}"
+                                            FillColor="{Binding FillColor}"
+                                            StrokeWidth="{Binding StrokeWidth}"
+                                            HorizontalOptions="Fill"
+                                            VerticalOptions="Fill"/>
           </Border>
           <Label Text="Line"
                  FontSize="12"

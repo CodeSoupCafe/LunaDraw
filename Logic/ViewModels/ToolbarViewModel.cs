@@ -399,7 +399,7 @@ public class ToolbarViewModel : ReactiveObject
 
     ShowAdvancedSettingsCommand = ReactiveCommand.Create(() =>
     {
-       messageBus.SendMessage(new ShowAdvancedSettingsMessage());
+      messageBus.SendMessage(new ShowAdvancedSettingsMessage());
     });
 
     SelectRectangleCommand = ReactiveCommand.Create(() =>
