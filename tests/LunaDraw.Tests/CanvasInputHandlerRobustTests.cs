@@ -73,6 +73,7 @@ namespace LunaDraw.Tests
       // Ensure MessageBus returns observables for ToolbarViewModel constructor
       mockMessageBus.Setup(x => x.Listen<BrushSettingsChangedMessage>()).Returns(Observable.Empty<BrushSettingsChangedMessage>());
       mockMessageBus.Setup(x => x.Listen<BrushShapeChangedMessage>()).Returns(Observable.Empty<BrushShapeChangedMessage>());
+      mockMessageBus.Setup(x => x.Listen<ViewOptionsChangedMessage>()).Returns(Observable.Empty<ViewOptionsChangedMessage>());
 
       mockToolbarViewModel = new Mock<ToolbarViewModel>(
           mockLayerFacade.Object,

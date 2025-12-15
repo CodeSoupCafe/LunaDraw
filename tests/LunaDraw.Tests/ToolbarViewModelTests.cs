@@ -65,6 +65,8 @@ namespace LunaDraw.Tests
           .Returns(Observable.Empty<BrushSettingsChangedMessage>());
       messageBusMock.Setup(x => x.Listen<BrushShapeChangedMessage>())
           .Returns(Observable.Empty<BrushShapeChangedMessage>());
+      messageBusMock.Setup(x => x.Listen<ViewOptionsChangedMessage>())
+          .Returns(Observable.Empty<ViewOptionsChangedMessage>());
 
       // Setup dependencies for ViewModels
       var selectionObserver = new SelectionObserver();

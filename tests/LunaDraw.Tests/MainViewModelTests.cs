@@ -82,6 +82,8 @@ namespace LunaDraw.Tests
       // We need to verify that messageBus.Listen returns observables because ToolbarViewModel constructor subscribes to them
       messageBusMock.Setup(x => x.Listen<BrushSettingsChangedMessage>()).Returns(Observable.Empty<BrushSettingsChangedMessage>());
       messageBusMock.Setup(x => x.Listen<BrushShapeChangedMessage>()).Returns(Observable.Empty<BrushShapeChangedMessage>());
+      messageBusMock.Setup(x => x.Listen<ViewOptionsChangedMessage>()).Returns(Observable.Empty<ViewOptionsChangedMessage>());
+      messageBusMock.Setup(x => x.Listen<ShowAdvancedSettingsMessage>()).Returns(Observable.Empty<ShowAdvancedSettingsMessage>());
 
       mockToolbarViewModel = new Mock<ToolbarViewModel>(
           layerFacadeMock.Object,
@@ -103,6 +105,7 @@ namespace LunaDraw.Tests
           navigationModel,
           selectionObserver,
           messageBusMock.Object,
+          preferencesServiceMock.Object,
           layerPanelVM,
           selectionVM,
           historyVM
