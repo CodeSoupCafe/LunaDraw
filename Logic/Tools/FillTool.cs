@@ -23,51 +23,49 @@
 
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
-using LunaDraw.Logic.ViewModels;
 
 using ReactiveUI;
 
 using SkiaSharp;
 
-namespace LunaDraw.Logic.Tools
+namespace LunaDraw.Logic.Tools;
+
+public class FillTool(IMessageBus messageBus) : IDrawingTool
 {
-  public class FillTool(IMessageBus messageBus) : IDrawingTool
+  public string Name => "Fill";
+  public ToolType Type => ToolType.Fill;
+  private readonly IMessageBus messageBus = messageBus;
+
+  public void OnTouchPressed(SKPoint point, ToolContext context)
   {
-    public string Name => "Fill";
-    public ToolType Type => ToolType.Fill;
-    private readonly IMessageBus messageBus = messageBus;
+    if (context.CurrentLayer?.IsLocked == true) return;
 
-        public void OnTouchPressed(SKPoint point, ToolContext context)
+    var hitElement = context.AllElements
+                            .Where(e => e.IsVisible)
+                            .OrderByDescending(e => e.ZIndex)
+                            .FirstOrDefault(e => e.HitTest(point));
+
+    if (hitElement != null)
     {
-      if (context.CurrentLayer?.IsLocked == true) return;
-
-      var hitElement = context.AllElements
-                              .Where(e => e.IsVisible)
-                              .OrderByDescending(e => e.ZIndex)
-                              .FirstOrDefault(e => e.HitTest(point));
-
-      if (hitElement != null)
-      {
-        hitElement.FillColor = context.FillColor;
-        messageBus.SendMessage(new CanvasInvalidateMessage());
-        messageBus.SendMessage(new DrawingStateChangedMessage());
-      }
+      hitElement.FillColor = context.FillColor;
+      messageBus.SendMessage(new CanvasInvalidateMessage());
+      messageBus.SendMessage(new DrawingStateChangedMessage());
     }
+  }
 
-    public void OnTouchMoved(SKPoint point, ToolContext context)
-    {
-    }
+  public void OnTouchMoved(SKPoint point, ToolContext context)
+  {
+  }
 
-    public void OnTouchReleased(SKPoint point, ToolContext context)
-    {
-    }
+  public void OnTouchReleased(SKPoint point, ToolContext context)
+  {
+  }
 
-    public void OnTouchCancelled(ToolContext context)
-    {
-    }
+  public void OnTouchCancelled(ToolContext context)
+  {
+  }
 
-    public void DrawPreview(SKCanvas canvas, ToolContext context)
-    {
-    }
+  public void DrawPreview(SKCanvas canvas, ToolContext context)
+  {
   }
 }

@@ -26,12 +26,11 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 
-using LunaDraw.Logic.Managers;
+using LunaDraw.Logic.Utils;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Tools;
 using LunaDraw.Logic.ViewModels;
-using LunaDraw.Logic.Services; // ADDED: Required for ILayerFacade and IToolStateManager
 using Moq;
 using SkiaSharp;
 using Xunit;

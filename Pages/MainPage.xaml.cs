@@ -21,8 +21,11 @@
  *  
  */
 
+using CommunityToolkit.Maui;
 using LunaDraw.Logic.Messages;
+using LunaDraw.Logic.Utils;
 using LunaDraw.Logic.ViewModels;
+using LunaDraw.Logic.Extensions;
 
 using ReactiveUI;
 
@@ -36,16 +39,17 @@ public partial class MainPage : ContentPage
   private readonly MainViewModel viewModel;
   private readonly ToolbarViewModel toolbarViewModel;
   private readonly IMessageBus messageBus;
-
+  private readonly IPreferencesFacade preferencesFacade;
   private MenuFlyout? canvasContextMenu;
   private MenuFlyoutSubItem? moveToLayerSubMenu;
 
-  public MainPage(MainViewModel viewModel, ToolbarViewModel toolbarViewModel, IMessageBus messageBus)
+  public MainPage(MainViewModel viewModel, ToolbarViewModel toolbarViewModel, IMessageBus messageBus, IPreferencesFacade preferencesFacade)
   {
     InitializeComponent();
     this.viewModel = viewModel;
     this.toolbarViewModel = toolbarViewModel;
     this.messageBus = messageBus;
+    this.preferencesFacade = preferencesFacade;
 
     BindingContext = this.viewModel;
     toolbarView.BindingContext = this.toolbarViewModel;
@@ -72,6 +76,20 @@ public partial class MainPage : ContentPage
   private void InitializeContextMenu()
   {
     canvasContextMenu = [];
+
+    var duplicateItem = new MenuFlyoutItem { Text = "Duplicate" };
+    duplicateItem.SetBinding(MenuItem.CommandProperty, new Binding("SelectionVM.DuplicateCommand", source: viewModel));
+    canvasContextMenu.Add(duplicateItem);
+
+    var copyItem = new MenuFlyoutItem { Text = "Copy" };
+    copyItem.SetBinding(MenuItem.CommandProperty, new Binding("SelectionVM.CopyCommand", source: viewModel));
+    canvasContextMenu.Add(copyItem);
+
+    var pasteItem = new MenuFlyoutItem { Text = "Paste" };
+    pasteItem.SetBinding(MenuItem.CommandProperty, new Binding("SelectionVM.PasteCommand", source: viewModel));
+    canvasContextMenu.Add(pasteItem);
+
+    canvasContextMenu.Add(new MenuFlyoutSeparator());
 
     var arrangeSubMenu = new MenuFlyoutSubItem { Text = "Arrange" };
 
@@ -139,7 +157,8 @@ public partial class MainPage : ContentPage
     viewModel.NavigationModel.CanvasWidth = width;
     viewModel.NavigationModel.CanvasHeight = height;
 
-    canvas.Clear(SKColors.White);
+    var bgColor = preferencesFacade.GetCanvasBackgroundColor();
+    canvas.Clear(bgColor);
 
     if (viewModel == null) return;
 
@@ -175,7 +194,7 @@ public partial class MainPage : ContentPage
           canvas.SaveLayer();
           layer.Draw(canvas);
 
-          using (var paint = new SKPaint { BlendMode = SKBlendMode.SrcATop })
+          using (var paint = new SKPaint { BlendMode = SKBlendMode.SrcATop, IsAntialias = true })
           {
             for (int j = i + 1; j < layers.Count; j++)
             {

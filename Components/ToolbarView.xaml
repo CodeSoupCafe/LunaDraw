@@ -7,15 +7,14 @@
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              xmlns:controls="clr-namespace:Maui.ColorPicker;assembly=Maui.ColorPicker"
              xmlns:local="clr-namespace:LunaDraw.Components"
+             xmlns:strings="clr-namespace:LunaDraw.Resources.Strings"
              xmlns:pages="clr-namespace:LunaDraw.Pages;assembly=LunaDraw"
              x:Class="LunaDraw.Views.ToolbarView"
              x:DataType="viewModels:ToolbarViewModel">
   <ContentView.Resources>
     <ResourceDictionary>
-      <conv:ToolNameToIconConverter x:Key="ToolNameToIconConverter"/>
       <conv:IsToolActiveConverter x:Key="IsToolActiveConverter"/>
       <conv:ActiveShapeIconConverter x:Key="ActiveShapeIconConverter"/>
-      <conv:ToolToColorConverter x:Key="ToolToColorConverter"/>
 
       <!-- Kid-friendly button style with large hit areas for vertical toolbar -->
       <Style x:Key="ToolbarButtonStyle"
@@ -37,9 +36,12 @@
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"/>
         <Style.Triggers>
-             <Trigger TargetType="Button" Property="IsEnabled" Value="False">
-                 <Setter Property="Opacity" Value="0.3" />
-             </Trigger>
+          <Trigger TargetType="Button"
+                   Property="IsEnabled"
+                   Value="False">
+            <Setter Property="Opacity"
+                    Value="0.3"/>
+          </Trigger>
         </Style.Triggers>
       </Style>
     </ResourceDictionary>
@@ -65,39 +67,72 @@
             <Button x:Name="SelectButton"
                     Style="{StaticResource ToolbarButtonStyle}"
                     Text="⬚"
+                    ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_SelectTool}"
                     Command="{Binding SelectToolCommand}"
-                    CommandParameter="{Binding AvailableTools[0]}"
-                    BackgroundColor="{Binding ActiveTool, Mode=OneWay, Converter={StaticResource ToolToColorConverter}, ConverterParameter='SelectTool'}">
+                    CommandParameter="{Binding AvailableTools[0]}">
+              <Button.Triggers>
+                <DataTrigger TargetType="Button"
+                             Binding="{Binding ActiveTool, Converter={StaticResource IsToolActiveConverter}, ConverterParameter='SelectTool'}"
+                             Value="True">
+                  <Setter Property="BackgroundColor"
+                          Value="{StaticResource Secondary}"/>
+                </DataTrigger>
+                <DataTrigger TargetType="Button"
+                             Binding="{Binding ActiveTool, Converter={StaticResource IsToolActiveConverter}, ConverterParameter='SelectTool'}"
+                             Value="False">
+                  <Setter Property="BackgroundColor"
+                          Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"/>
+                </DataTrigger>
+              </Button.Triggers>
             </Button>
             <Label Text="{Binding AvailableTools[0].Name}"
-                   HorizontalTextAlignment="Center"/>
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding ShowButtonLabels}"/>
           </StackLayout>
           <StackLayout HorizontalOptions="Center">
             <Button x:Name="SettingsButton"
                     Style="{StaticResource ToolbarButtonStyle}"
                     Text="🌈"
+                    ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_Styles}"
                     Command="{Binding ShowSettingsCommand}"/>
-            <Label Text="Styles"
-                   HorizontalTextAlignment="Center"/>
+            <Label Text="{x:Static strings:AppResources.Label_Styles}"
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding ShowButtonLabels}"/>
           </StackLayout>
-           <StackLayout HorizontalOptions="Center">
+          <StackLayout HorizontalOptions="Center">
             <Border x:Name="BrushButton"
                     WidthRequest="72"
                     HeightRequest="72"
                     Padding="8"
                     Margin="0,4"
                     StrokeShape="RoundRectangle 12"
-                    BackgroundColor="{Binding ActiveTool, Mode=OneWay, Converter={StaticResource ToolToColorConverter}, ConverterParameter='FreehandTool'}">
-                <Border.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding ShowBrushesFlyoutCommand}"/>
-                </Border.GestureRecognizers>
-                <local:BrushPreviewControl BrushShape="{Binding CurrentBrushShape}"
-                                           StrokeColor="{Binding StrokeColor}"
-                                           HorizontalOptions="Fill"
-                                           VerticalOptions="Fill"/>
+                    ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_BrushSettings}"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}">
+              <Border.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding ShowBrushesFlyoutCommand}"/>
+              </Border.GestureRecognizers>
+              <Border.Triggers>
+                <DataTrigger TargetType="Border"
+                             Binding="{Binding ActiveTool, Converter={StaticResource IsToolActiveConverter}, ConverterParameter='FreehandTool'}"
+                             Value="True">
+                  <Setter Property="BackgroundColor"
+                          Value="{StaticResource Secondary}"/>
+                </DataTrigger>
+                <DataTrigger TargetType="Border"
+                             Binding="{Binding ActiveTool, Converter={StaticResource IsToolActiveConverter}, ConverterParameter='FreehandTool'}"
+                             Value="False">
+                  <Setter Property="BackgroundColor"
+                          Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"/>
+                </DataTrigger>
+              </Border.Triggers>
+              <local:BrushPreviewControl BrushShape="{Binding CurrentBrushShape}"
+                                         StrokeColor="{Binding StrokeColor}"
+                                         HorizontalOptions="Fill"
+                                         VerticalOptions="Fill"/>
             </Border>
             <Label Text="{Binding AvailableTools[1].Name}"
-                   HorizontalTextAlignment="Center"/>
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding ShowButtonLabels}"/>
           </StackLayout>
           <StackLayout HorizontalOptions="Center">
             <Border x:Name="ShapesButton"
@@ -106,58 +141,95 @@
                     Padding="8"
                     Margin="0,4"
                     StrokeShape="RoundRectangle 12"
-                    BackgroundColor="{Binding ActiveTool, Mode=OneWay, Converter={StaticResource ToolToColorConverter}, ConverterParameter='Shapes'}">
-                <Border.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding ShowShapesFlyoutCommand}"/>
-                </Border.GestureRecognizers>
-                <local:ShapePreviewControl ActiveTool="{Binding LastActiveShapeTool}"
-                                           StrokeColor="{Binding StrokeColor}"
-                                           FillColor="{Binding FillColor}"
-                                           StrokeWidth="{Binding StrokeWidth}"
-                                           HorizontalOptions="Fill"
-                                           VerticalOptions="Fill"/>
+                    ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_Shapes}"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}">
+              <Border.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding ShowShapesFlyoutCommand}"/>
+              </Border.GestureRecognizers>
+              <Border.Triggers>
+                <DataTrigger TargetType="Border"
+                             Binding="{Binding ActiveTool, Converter={StaticResource IsToolActiveConverter}, ConverterParameter='Shapes'}"
+                             Value="True">
+                  <Setter Property="BackgroundColor"
+                          Value="{StaticResource Secondary}"/>
+                </DataTrigger>
+                <DataTrigger TargetType="Border"
+                             Binding="{Binding ActiveTool, Converter={StaticResource IsToolActiveConverter}, ConverterParameter='Shapes'}"
+                             Value="False">
+                  <Setter Property="BackgroundColor"
+                          Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"/>
+                </DataTrigger>
+              </Border.Triggers>
+              <local:ShapePreviewControl ActiveTool="{Binding LastActiveShapeTool}"
+                                         StrokeColor="{Binding StrokeColor}"
+                                         FillColor="{Binding FillColor}"
+                                         StrokeWidth="{Binding StrokeWidth}"
+                                         HorizontalOptions="Fill"
+                                         VerticalOptions="Fill"/>
             </Border>
-            <Label Text="Shapes"
-                   HorizontalTextAlignment="Center"/>
+            <Label Text="{x:Static strings:AppResources.Label_Shapes}"
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding ShowButtonLabels}"/>
           </StackLayout>
 
           <StackLayout HorizontalOptions="Center">
             <Button x:Name="ImageButton"
                     Style="{StaticResource ToolbarButtonStyle}"
                     Text="🖼️"
+                    ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_ImportImage}"
                     Command="{Binding ImportImageCommand}"/>
-            <Label Text="Image"
-                   HorizontalTextAlignment="Center"/>
+            <Label Text="{x:Static strings:AppResources.Label_Image}"
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding ShowButtonLabels}"/>
           </StackLayout>
 
           <StackLayout HorizontalOptions="Center">
             <Button x:Name="SaveButton"
                     Style="{StaticResource ToolbarButtonStyle}"
                     Text="💾"
+                    ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_SaveImage}"
                     Command="{Binding SaveImageCommand}"/>
-            <Label Text="Save"
-                   HorizontalTextAlignment="Center"/>
+            <Label Text="{x:Static strings:AppResources.Label_Save}"
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding ShowButtonLabels}"/>
           </StackLayout>
 
-         <StackLayout HorizontalOptions="Center">
+          <StackLayout HorizontalOptions="Center">
             <Button x:Name="EraserButton"
                     Style="{StaticResource ToolbarButtonStyle}"
                     Text="🧽"
+                    ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_Eraser}"
                     Command="{Binding SelectToolCommand}"
-                    CommandParameter="{Binding AvailableTools[6]}"
-                    BackgroundColor="{Binding ActiveTool, Mode=OneWay, Converter={StaticResource ToolToColorConverter}, ConverterParameter='EraserBrushTool'}">
+                    CommandParameter="{Binding AvailableTools[6]}">
+              <Button.Triggers>
+                <DataTrigger TargetType="Button"
+                             Binding="{Binding ActiveTool, Converter={StaticResource IsToolActiveConverter}, ConverterParameter='EraserBrushTool'}"
+                             Value="True">
+                  <Setter Property="BackgroundColor"
+                          Value="{StaticResource Secondary}"/>
+                </DataTrigger>
+                <DataTrigger TargetType="Button"
+                             Binding="{Binding ActiveTool, Converter={StaticResource IsToolActiveConverter}, ConverterParameter='EraserBrushTool'}"
+                             Value="False">
+                  <Setter Property="BackgroundColor"
+                          Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"/>
+                </DataTrigger>
+              </Button.Triggers>
             </Button>
             <Label Text="{Binding AvailableTools[6].Name}"
-                   HorizontalTextAlignment="Center"/>
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding ShowButtonLabels}"/>
           </StackLayout>
 
           <StackLayout HorizontalOptions="Center">
             <Button x:Name="DeleteButton"
                     Style="{StaticResource ToolbarButtonStyle}"
                     Text="🗑️"
+                    ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_DeleteSelected}"
                     Command="{Binding DeleteSelectedCommand}"/>
-            <Label Text="Delete"
-                   HorizontalTextAlignment="Center"/>
+            <Label Text="{x:Static strings:AppResources.Label_Delete}"
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding ShowButtonLabels}"/>
           </StackLayout>
 
           <BoxView HeightRequest="2"
@@ -168,19 +240,39 @@
             <Button x:Name="UndoButton"
                     Style="{StaticResource ToolbarButtonStyle}"
                     Text="↺"
+                    ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_Undo}"
                     Command="{Binding UndoCommand}">
             </Button>
-            <Label Text="Undo"
-                   HorizontalTextAlignment="Center"/>
+            <Label Text="{x:Static strings:AppResources.Label_Undo}"
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding ShowButtonLabels}"/>
           </StackLayout>
           <StackLayout HorizontalOptions="Center">
             <Button x:Name="RedoButton"
                     Style="{StaticResource ToolbarButtonStyle}"
                     Text="↻"
+                    ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_Redo}"
                     Command="{Binding RedoCommand}">
             </Button>
-            <Label Text="Redo"
-                   HorizontalTextAlignment="Center"/>
+            <Label Text="{x:Static strings:AppResources.Label_Redo}"
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding ShowButtonLabels}"/>
+          </StackLayout>
+
+          <BoxView HeightRequest="2"
+                   Color="Gray"
+                   Margin="0,4"/>
+
+          <StackLayout HorizontalOptions="Center">
+            <Button x:Name="ViewOptionsButton"
+                    Style="{StaticResource ToolbarButtonStyle}"
+                    Text="⚙️"
+                    ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_ViewOptions}"
+                    Command="{Binding ShowAdvancedSettingsCommand}">
+            </Button>
+            <Label Text="{x:Static strings:AppResources.Label_ViewOptions}"
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding ShowButtonLabels}"/>
           </StackLayout>
         </VerticalStackLayout>
       </ScrollView>

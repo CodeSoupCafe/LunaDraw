@@ -21,17 +21,27 @@
  *  
  */
 
+using LunaDraw.Logic.Utils;
+
 namespace LunaDraw;
 
 public partial class App : Application
 {
-	public App()
-	{
-		InitializeComponent();
-	}
+  public App(IPreferencesFacade preferencesFacade)
+  {
+    InitializeComponent();
 
-	protected override Window CreateWindow(IActivationState? activationState)
-	{
-		return new Window(new AppShell());
-	}
+    var theme = preferencesFacade.Get(AppPreference.AppTheme);
+    UserAppTheme = theme switch
+    {
+      "Light" => AppTheme.Light,
+      "Dark" => AppTheme.Dark,
+      _ => AppTheme.Unspecified
+    };
+  }
+
+  protected override Window CreateWindow(IActivationState? activationState)
+  {
+    return new Window(new AppShell());
+  }
 }

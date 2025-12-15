@@ -25,33 +25,32 @@ using LunaDraw.Logic.Models;
 using ReactiveUI;
 using SkiaSharp;
 
-namespace LunaDraw.Logic.Tools
+namespace LunaDraw.Logic.Tools;
+
+public class EllipseTool(IMessageBus messageBus) : ShapeTool<DrawableEllipse>(messageBus)
 {
-  public class EllipseTool(IMessageBus messageBus) : ShapeTool<DrawableEllipse>(messageBus)
+  public override string Name => "Ellipse";
+  public override ToolType Type => ToolType.Ellipse;
+
+  protected override DrawableEllipse CreateShape(ToolContext context)
   {
-    public override string Name => "Ellipse";
-    public override ToolType Type => ToolType.Ellipse;
-
-        protected override DrawableEllipse CreateShape(ToolContext context)
+    return new DrawableEllipse
     {
-      return new DrawableEllipse
-      {
-        StrokeColor = context.StrokeColor,
-        StrokeWidth = context.StrokeWidth,
-        Opacity = context.Opacity,
-        FillColor = context.FillColor
-      };
-    }
+      StrokeColor = context.StrokeColor,
+      StrokeWidth = context.StrokeWidth,
+      Opacity = context.Opacity,
+      FillColor = context.FillColor
+    };
+  }
 
-    protected override void UpdateShape(DrawableEllipse shape, SKRect bounds, SKMatrix transform)
-    {
-      shape.TransformMatrix = transform;
-      shape.Oval = bounds;
-    }
+  protected override void UpdateShape(DrawableEllipse shape, SKRect bounds, SKMatrix transform)
+  {
+    shape.TransformMatrix = transform;
+    shape.Oval = bounds;
+  }
 
-    protected override bool IsShapeValid(DrawableEllipse shape)
-    {
-      return shape.Oval.Width > 0 || shape.Oval.Height > 0;
-    }
+  protected override bool IsShapeValid(DrawableEllipse shape)
+  {
+    return shape.Oval.Width > 0 || shape.Oval.Height > 0;
   }
 }

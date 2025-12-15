@@ -23,9 +23,9 @@
 
 using CommunityToolkit.Maui;
 using CommunityToolkit.Maui.Storage;
-using LunaDraw.Logic.Managers;
+using Microsoft.Maui.LifecycleEvents;
+using LunaDraw.Logic.Utils;
 using LunaDraw.Logic.Models;
-using LunaDraw.Logic.Services;
 using LunaDraw.Logic.ViewModels;
 using LunaDraw.Pages;
 using Microsoft.Extensions.Logging;
@@ -33,6 +33,10 @@ using Microsoft.Extensions.Logging;
 using ReactiveUI;
 using SkiaSharp.Views.Maui.Controls.Hosting;
 using Splat;
+
+#if WINDOWS
+using Microsoft.UI.Xaml.Media;
+#endif
 
 namespace LunaDraw;
 
@@ -54,10 +58,26 @@ public static class MauiProgram
         {
           fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
           fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+        })
+        .ConfigureLifecycleEvents(events =>
+        {
+#if WINDOWS
+          events.AddWindows(wndLifeCycleBuilder =>
+          {
+            wndLifeCycleBuilder.OnWindowCreated(window =>
+              {
+                window.SystemBackdrop = new DesktopAcrylicBackdrop();
+                if (Preferences.Get(AppPreference.IsTransparentBackgroundEnabled.ToString(), false))
+                {
+                  PlatformHelper.EnableTrueTransparency(180);   // Fully transparent
+                }
+              });
+          });
+#endif
         });
 
     // Register Core State Managers
-    builder.Services.AddSingleton<IMessageBus>(new ReactiveUI.MessageBus());
+    builder.Services.AddSingleton<IMessageBus>(new MessageBus());
     builder.Services.AddSingleton<NavigationModel>();
     builder.Services.AddSingleton<SelectionObserver>();
     builder.Services.AddSingleton<ILayerFacade, LayerFacade>();
@@ -65,7 +85,8 @@ public static class MauiProgram
     // Register Logic Services
     builder.Services.AddSingleton<ICanvasInputHandler, CanvasInputHandler>();
     builder.Services.AddSingleton<ClipboardMemento>();
-    builder.Services.AddSingleton<IBitmapCache, BitmapCache>();
+    builder.Services.AddSingleton<IBitmapCache, LunaDraw.Logic.Utils.BitmapCache>();
+    builder.Services.AddSingleton<IPreferencesFacade, PreferencesFacade>();
     builder.Services.AddSingleton<IFileSaver>(FileSaver.Default);
 
     // Register ViewModels

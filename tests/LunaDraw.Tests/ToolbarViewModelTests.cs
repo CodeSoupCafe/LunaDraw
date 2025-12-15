@@ -22,7 +22,7 @@
  */
 
 using CommunityToolkit.Maui.Storage;
-using LunaDraw.Logic.Managers;
+using LunaDraw.Logic.Utils;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Tools;
@@ -65,6 +65,8 @@ namespace LunaDraw.Tests
           .Returns(Observable.Empty<BrushSettingsChangedMessage>());
       messageBusMock.Setup(x => x.Listen<BrushShapeChangedMessage>())
           .Returns(Observable.Empty<BrushShapeChangedMessage>());
+      messageBusMock.Setup(x => x.Listen<ViewOptionsChangedMessage>())
+          .Returns(Observable.Empty<ViewOptionsChangedMessage>());
 
       // Setup dependencies for ViewModels
       var selectionObserver = new SelectionObserver();
@@ -81,6 +83,8 @@ namespace LunaDraw.Tests
       navigationModel.CanvasWidth = 0;
       navigationModel.CanvasHeight = 0;
 
+      var mockPreferences = new Mock<IPreferencesFacade>();
+
       var viewModel = new ToolbarViewModel(
           layerFacadeMock.Object,
           selectionViewModel,
@@ -88,7 +92,8 @@ namespace LunaDraw.Tests
           messageBusMock.Object,
           bitmapCacheMock.Object,
           navigationModel,
-          fileSaverMock.Object);
+          fileSaverMock.Object,
+          mockPreferences.Object);
 
       // Act
       viewModel.SaveImageCommand.Execute().Subscribe();
@@ -104,6 +109,8 @@ namespace LunaDraw.Tests
       navigationModel.CanvasWidth = 100;
       navigationModel.CanvasHeight = 100;
 
+      var mockPreferences = new Mock<IPreferencesFacade>();
+
       var viewModel = new ToolbarViewModel(
           layerFacadeMock.Object,
           selectionViewModel,
@@ -111,7 +118,8 @@ namespace LunaDraw.Tests
           messageBusMock.Object,
           bitmapCacheMock.Object,
           navigationModel,
-          fileSaverMock.Object);
+          fileSaverMock.Object,
+          mockPreferences.Object);
 
       fileSaverMock.Setup(x => x.SaveAsync(It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
           .ReturnsAsync(new FileSaverResult("path", null));

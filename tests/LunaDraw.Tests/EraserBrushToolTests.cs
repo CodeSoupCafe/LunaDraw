@@ -26,7 +26,7 @@ using System.Collections.Generic;
 using System.Linq;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Tools;
-using LunaDraw.Logic.Managers;
+using LunaDraw.Logic.Utils;
 using LunaDraw.Logic.Messages;
 using ReactiveUI;
 using Xunit;
@@ -38,10 +38,14 @@ namespace LunaDraw.Tests
     public class EraserBrushToolTests
     {
         private readonly Mock<IMessageBus> mockBus;
+        private readonly Mock<IPreferencesFacade> mockPreferences;
 
         public EraserBrushToolTests()
         {
             mockBus = new Mock<IMessageBus>();
+            mockPreferences = new Mock<IPreferencesFacade>();
+            mockPreferences.Setup(p => p.Get<bool>(AppPreference.IsTransparentBackgroundEnabled)).Returns(false);
+            mockPreferences.Setup(p => p.Get(AppPreference.AppTheme)).Returns("Light");
         }
 
         [Fact]
@@ -69,7 +73,7 @@ namespace LunaDraw.Tests
                 BrushShape = BrushShape.Circle()
             };
 
-            var tool = new EraserBrushTool(mockBus.Object);
+            var tool = new EraserBrushTool(mockBus.Object, mockPreferences.Object);
 
             // Act
             // Simulate erasing across the top border
@@ -121,7 +125,7 @@ namespace LunaDraw.Tests
                 BrushShape = BrushShape.Circle()
             };
 
-            var tool = new EraserBrushTool(mockBus.Object);
+            var tool = new EraserBrushTool(mockBus.Object, mockPreferences.Object);
 
             // Act
             // Erase exactly over the stamp
@@ -161,7 +165,7 @@ namespace LunaDraw.Tests
                 BrushShape = BrushShape.Circle()
             };
 
-            var tool = new EraserBrushTool(mockBus.Object);
+            var tool = new EraserBrushTool(mockBus.Object, mockPreferences.Object);
 
             // Act
             tool.OnTouchPressed(new SKPoint(100, 100), context);

@@ -24,10 +24,9 @@
 using System.Collections.ObjectModel;
 using System.Reactive.Linq;
 
-using LunaDraw.Logic.Managers;
+using LunaDraw.Logic.Utils;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
-using LunaDraw.Logic.Services;
 using LunaDraw.Logic.ViewModels;
 using Moq;
 using ReactiveUI;
@@ -70,9 +69,11 @@ namespace LunaDraw.Tests
       layerFacadeMock.Setup(m => m.Layers).Returns(layers);
       layerFacadeMock.Setup(m => m.HistoryMemento).Returns(historyMemento);
 
+      var preferencesFacadeMock = new Mock<IPreferencesFacade>();
+
       // Create Sub-VMs (we can test them in isolation, but here we test MainVM integration)
       // Using real instances for VM logic
-      layerPanelVM = new LayerPanelViewModel(layerFacadeMock.Object, messageBusMock.Object);
+      layerPanelVM = new LayerPanelViewModel(layerFacadeMock.Object, messageBusMock.Object, preferencesFacadeMock.Object);
       selectionVM = new SelectionViewModel(selectionObserver, layerFacadeMock.Object, new ClipboardMemento(), messageBusMock.Object);
       historyVM = new HistoryViewModel(layerFacadeMock.Object, messageBusMock.Object);
 
@@ -80,6 +81,8 @@ namespace LunaDraw.Tests
       // We need to verify that messageBus.Listen returns observables because ToolbarViewModel constructor subscribes to them
       messageBusMock.Setup(x => x.Listen<BrushSettingsChangedMessage>()).Returns(Observable.Empty<BrushSettingsChangedMessage>());
       messageBusMock.Setup(x => x.Listen<BrushShapeChangedMessage>()).Returns(Observable.Empty<BrushShapeChangedMessage>());
+      messageBusMock.Setup(x => x.Listen<ViewOptionsChangedMessage>()).Returns(Observable.Empty<ViewOptionsChangedMessage>());
+      messageBusMock.Setup(x => x.Listen<ShowAdvancedSettingsMessage>()).Returns(Observable.Empty<ShowAdvancedSettingsMessage>());
 
       mockToolbarViewModel = new Mock<ToolbarViewModel>(
           layerFacadeMock.Object,
@@ -88,9 +91,10 @@ namespace LunaDraw.Tests
           messageBusMock.Object,
           new Mock<IBitmapCache>().Object,
           navigationModel,
-          new Mock<IFileSaver>().Object
+          new Mock<IFileSaver>().Object,
+          preferencesFacadeMock.Object
       );
-      
+
       // Setup property change notifications for ToolStateManager
       mockToolbarViewModel.As<System.ComponentModel.INotifyPropertyChanged>();
 
@@ -101,6 +105,7 @@ namespace LunaDraw.Tests
           navigationModel,
           selectionObserver,
           messageBusMock.Object,
+          preferencesFacadeMock.Object,
           layerPanelVM,
           selectionVM,
           historyVM
@@ -119,6 +124,8 @@ namespace LunaDraw.Tests
       layerFacadeMock.SetupGet(x => x.CurrentLayer).Returns(layer);
 
       selectionObserver.Add(element);
+
+      messageBusMock.Invocations.Clear();
 
       // Act
       // Executing command on SelectionVM which is exposed

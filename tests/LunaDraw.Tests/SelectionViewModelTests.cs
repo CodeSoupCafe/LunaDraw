@@ -25,7 +25,7 @@ using System;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
-using LunaDraw.Logic.Managers;
+using LunaDraw.Logic.Utils;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.ViewModels;
@@ -82,6 +82,32 @@ namespace LunaDraw.Tests
       Assert.Contains(element, layer2.Elements);
       // Element should NOT be in Layer 1
       Assert.DoesNotContain(element, layer1.Elements);
+    }
+
+    [Fact]
+    public void DuplicateCommand_ShouldCopyAndPasteElement()
+    {
+      // Arrange
+      var layer = layerFacade.Layers.First();
+      var element = new DrawableRectangle { Rectangle = new SKRect(0, 0, 10, 10) };
+      layer.Elements.Add(element);
+
+      selectionObserver.Add(element);
+
+      // Act
+      viewModel.DuplicateCommand.Execute().Subscribe();
+
+      // Assert
+      Assert.Equal(2, layer.Elements.Count);
+      var clone = layer.Elements[1];
+
+      Assert.NotSame(element, clone);
+      Assert.IsType<DrawableRectangle>(clone);
+      var cloneBounds = clone.Bounds;
+
+      // Paste adds (10,10) offset
+      Assert.Equal(element.Bounds.Left + 10, cloneBounds.Left);
+      Assert.Equal(element.Bounds.Top + 10, cloneBounds.Top);
     }
   }
 }
