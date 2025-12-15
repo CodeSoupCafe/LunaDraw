@@ -23,7 +23,7 @@
 
 using CommunityToolkit.Maui;
 using LunaDraw.Logic.Messages;
-using LunaDraw.Logic.Services;
+using LunaDraw.Logic.Utils;
 using LunaDraw.Logic.ViewModels;
 using LunaDraw.Logic.Extensions;
 
@@ -157,7 +157,7 @@ public partial class MainPage : ContentPage
     viewModel.NavigationModel.CanvasWidth = width;
     viewModel.NavigationModel.CanvasHeight = height;
 
-    var bgColor = preferencesFacade.GetCanvasBackgroundColor(viewModel.LayerPanelVM.IsTransparentBackground);
+    var bgColor = preferencesFacade.GetCanvasBackgroundColor();
     canvas.Clear(bgColor);
 
     if (viewModel == null) return;

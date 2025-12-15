@@ -26,7 +26,7 @@ using SkiaSharp.Views.Maui;
 
 // For SKCanvasView
 
-namespace LunaDraw.Logic.Services;
+namespace LunaDraw.Logic.Utils;
 
 public interface ICanvasInputHandler
 {

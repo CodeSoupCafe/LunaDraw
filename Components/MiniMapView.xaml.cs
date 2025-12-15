@@ -25,7 +25,7 @@ using System.Reactive.Linq;
 
 using LunaDraw.Logic.Extensions;
 using LunaDraw.Logic.Messages;
-using LunaDraw.Logic.Services;
+using LunaDraw.Logic.Utils;
 using LunaDraw.Logic.ViewModels;
 
 using ReactiveUI;
@@ -38,44 +38,27 @@ namespace LunaDraw.Components;
 
 public partial class MiniMapView : ContentView
 {
+  private readonly IMessageBus? messageBus;
+  private readonly IPreferencesFacade? preferencesFacade;
   private MainViewModel? viewModel;
   private SKMatrix fitMatrix;
   private float density = 1.0f;
-
-  private IMessageBus? messageBus;
-  private IMessageBus? MessageBus
-  {
-    get
-    {
-      if (messageBus != null) return messageBus;
-      messageBus = Handler?.MauiContext?.Services.GetService<IMessageBus>()
-                   ?? IPlatformApplication.Current?.Services.GetService<IMessageBus>();
-      return messageBus;
-    }
-  }
-
-  private IPreferencesFacade? preferencesFacade;
-  private IPreferencesFacade? PreferencesFacade
-  {
-    get
-    {
-      if (preferencesFacade != null) return preferencesFacade;
-      preferencesFacade = Handler?.MauiContext?.Services.GetService<IPreferencesFacade>()
-                   ?? IPlatformApplication.Current?.Services.GetService<IPreferencesFacade>();
-      return preferencesFacade;
-    }
-  }
 
   public MiniMapView()
   {
     InitializeComponent();
 
-    this.Loaded += (s, e) =>
+    Loaded += (s, e) =>
     {
-      MessageBus?.Listen<CanvasInvalidateMessage>()
+      messageBus?.Listen<CanvasInvalidateMessage>()
           .Throttle(TimeSpan.FromMilliseconds(30), RxApp.MainThreadScheduler)
           .Subscribe(_ => miniMapCanvas?.InvalidateSurface());
     };
+
+    this.messageBus = Handler?.MauiContext?.Services.GetService<IMessageBus>()
+                 ?? IPlatformApplication.Current?.Services.GetService<IMessageBus>();
+    this.preferencesFacade = Handler?.MauiContext?.Services.GetService<IPreferencesFacade>()
+                 ?? IPlatformApplication.Current?.Services.GetService<IPreferencesFacade>();
   }
 
   protected override void OnBindingContextChanged()
@@ -97,7 +80,7 @@ public partial class MiniMapView : ContentView
       density = (float)(info.Width / view.Width);
     }
 
-    var bgColor = PreferencesFacade?.GetCanvasBackgroundColor(viewModel.LayerPanelVM.IsTransparentBackground) ?? SKColors.White;
+    var bgColor = preferencesFacade?.GetCanvasBackgroundColor() ?? SKColors.White;
     canvas.Clear(bgColor);
 
     // Calculate bounds of all elements
@@ -232,7 +215,7 @@ public partial class MiniMapView : ContentView
           var translation = SKMatrix.CreateTranslation(delta.X, delta.Y);
           viewModel.NavigationModel.ViewMatrix = viewModel.NavigationModel.ViewMatrix.PostConcat(translation);
 
-          MessageBus?.SendMessage(new CanvasInvalidateMessage());
+          messageBus?.SendMessage(new CanvasInvalidateMessage());
         }
         e.Handled = true;
         break;

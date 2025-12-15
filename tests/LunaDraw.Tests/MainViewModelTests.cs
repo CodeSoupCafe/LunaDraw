@@ -27,7 +27,6 @@ using System.Reactive.Linq;
 using LunaDraw.Logic.Utils;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
-using LunaDraw.Logic.Services;
 using LunaDraw.Logic.ViewModels;
 using Moq;
 using ReactiveUI;

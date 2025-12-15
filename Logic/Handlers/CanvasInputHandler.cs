@@ -30,7 +30,7 @@ using ReactiveUI;
 using SkiaSharp;
 using SkiaSharp.Views.Maui;
 
-namespace LunaDraw.Logic.Services;
+namespace LunaDraw.Logic.Utils;
 
 public class CanvasInputHandler(
     ToolbarViewModel toolbarViewModel,
@@ -252,13 +252,13 @@ public class CanvasInputHandler(
       float currentScale = targetMatrix.ScaleX; // Assuming uniform scale
       if (currentScale < 0.1f)
       {
-          float correction = 0.1f / currentScale;
-          targetMatrix = SKMatrix.Concat(SKMatrix.CreateScale(correction, correction, centroid.X, centroid.Y), targetMatrix);
+        float correction = 0.1f / currentScale;
+        targetMatrix = SKMatrix.Concat(SKMatrix.CreateScale(correction, correction, centroid.X, centroid.Y), targetMatrix);
       }
       else if (currentScale > 20.0f)
       {
-          float correction = 20.0f / currentScale;
-          targetMatrix = SKMatrix.Concat(SKMatrix.CreateScale(correction, correction, centroid.X, centroid.Y), targetMatrix);
+        float correction = 20.0f / currentScale;
+        targetMatrix = SKMatrix.Concat(SKMatrix.CreateScale(correction, correction, centroid.X, centroid.Y), targetMatrix);
       }
 
       // Smooth the output using exponential moving average

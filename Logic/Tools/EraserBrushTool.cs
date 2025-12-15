@@ -21,9 +21,10 @@
  *  
  */
 
+using LunaDraw.Logic.Extensions;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
-
+using LunaDraw.Logic.Utils;
 using ReactiveUI;
 
 using SkiaSharp;
@@ -49,7 +50,7 @@ public class EraserBrushTool(IMessageBus messageBus) : IDrawingTool
     currentDrawablePath = new DrawablePath
     {
       Path = currentPath,
-      StrokeColor = SKColors.White, // Visual preview color
+      StrokeColor = Preferences.Default.GetCanvasBackgroundColor(), // Visual preview color
       StrokeWidth = context.StrokeWidth * 2, // Eraser usually wider
       Opacity = 255,
       BlendMode = SKBlendMode.SrcOver,

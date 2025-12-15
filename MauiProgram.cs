@@ -26,7 +26,6 @@ using CommunityToolkit.Maui.Storage;
 using Microsoft.Maui.LifecycleEvents;
 using LunaDraw.Logic.Utils;
 using LunaDraw.Logic.Models;
-using LunaDraw.Logic.Services;
 using LunaDraw.Logic.ViewModels;
 using LunaDraw.Pages;
 using Microsoft.Extensions.Logging;
@@ -68,7 +67,7 @@ public static class MauiProgram
             wndLifeCycleBuilder.OnWindowCreated(window =>
               {
                 window.SystemBackdrop = new DesktopAcrylicBackdrop();
-                if (Preferences.Get("IsTransparentBackgroundEnabled", false))
+                if (Preferences.Get(AppPreference.IsTransparentBackgroundEnabled.ToString(), false))
                 {
                   PlatformHelper.EnableTrueTransparency(180);   // Fully transparent
                 }

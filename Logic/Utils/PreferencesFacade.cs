@@ -21,7 +21,7 @@
  *  
  */
 
-namespace LunaDraw.Logic.Services;
+namespace LunaDraw.Logic.Utils;
 
 public enum AppPreference
 {
