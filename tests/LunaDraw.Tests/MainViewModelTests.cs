@@ -70,11 +70,11 @@ namespace LunaDraw.Tests
       layerFacadeMock.Setup(m => m.Layers).Returns(layers);
       layerFacadeMock.Setup(m => m.HistoryMemento).Returns(historyMemento);
 
-      var preferencesServiceMock = new Mock<IPreferencesService>();
+      var preferencesFacadeMock = new Mock<IPreferencesFacade>();
 
       // Create Sub-VMs (we can test them in isolation, but here we test MainVM integration)
       // Using real instances for VM logic
-      layerPanelVM = new LayerPanelViewModel(layerFacadeMock.Object, messageBusMock.Object, preferencesServiceMock.Object);
+      layerPanelVM = new LayerPanelViewModel(layerFacadeMock.Object, messageBusMock.Object, preferencesFacadeMock.Object);
       selectionVM = new SelectionViewModel(selectionObserver, layerFacadeMock.Object, new ClipboardMemento(), messageBusMock.Object);
       historyVM = new HistoryViewModel(layerFacadeMock.Object, messageBusMock.Object);
 
@@ -94,7 +94,7 @@ namespace LunaDraw.Tests
           navigationModel,
           new Mock<IFileSaver>().Object
       );
-      
+
       // Setup property change notifications for ToolStateManager
       mockToolbarViewModel.As<System.ComponentModel.INotifyPropertyChanged>();
 
@@ -105,7 +105,7 @@ namespace LunaDraw.Tests
           navigationModel,
           selectionObserver,
           messageBusMock.Object,
-          preferencesServiceMock.Object,
+          preferencesFacadeMock.Object,
           layerPanelVM,
           selectionVM,
           historyVM

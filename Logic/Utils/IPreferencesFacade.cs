@@ -23,10 +23,14 @@
 
 namespace LunaDraw.Logic.Services;
 
-public interface IPreferencesService
+public interface IPreferencesFacade
 {
-    bool Get(string key, bool defaultValue);
-    void Set(string key, bool value);
-    string Get(string key, string defaultValue);
-    void Set(string key, string value);
+
+  string Get(AppPreference key);
+
+  T Get<T>(AppPreference key);
+
+  void Set(AppPreference key, bool value);
+
+  void Set<T>(AppPreference key, T? value) => Preferences.Set(key.ToString(), value?.ToString());
 }

@@ -48,7 +48,7 @@ public class MainViewModel : ReactiveObject
   public NavigationModel NavigationModel { get; }
   public SelectionObserver SelectionObserver { get; }
   private readonly IMessageBus messageBus;
-  private readonly IPreferencesService preferencesService;
+  private readonly IPreferencesFacade preferencesFacade;
 
   // Sub-ViewModels
   public LayerPanelViewModel LayerPanelVM { get; }
@@ -65,14 +65,14 @@ public class MainViewModel : ReactiveObject
   // UI State
   public List<string> AvailableThemes { get; } = new List<string> { "Automatic", "Light", "Dark" };
 
-  private string selectedTheme;
+  private string selectedTheme = "Automatic";
   public string SelectedTheme
   {
     get => selectedTheme;
     set
     {
       this.RaiseAndSetIfChanged(ref selectedTheme, value);
-      preferencesService.Set("AppTheme", value);
+      preferencesFacade.Set(AppPreference.AppTheme, value);
       UpdateAppTheme(value);
     }
   }
@@ -85,7 +85,7 @@ public class MainViewModel : ReactiveObject
     set
     {
       this.RaiseAndSetIfChanged(ref showButtonLabels, value);
-      preferencesService.Set("ShowButtonLabels", value);
+      preferencesFacade.Set(AppPreference.ShowButtonLabels, value);
       messageBus.SendMessage(new ViewOptionsChangedMessage(value, ShowLayersPanel));
     }
   }
@@ -97,7 +97,7 @@ public class MainViewModel : ReactiveObject
     set
     {
       this.RaiseAndSetIfChanged(ref showLayersPanel, value);
-      preferencesService.Set("ShowLayersPanel", value);
+      preferencesFacade.Set(AppPreference.ShowLayersPanel, value);
       messageBus.SendMessage(new ViewOptionsChangedMessage(ShowButtonLabels, value));
     }
   }
@@ -118,7 +118,7 @@ public class MainViewModel : ReactiveObject
     NavigationModel navigationModel,
     SelectionObserver selectionObserver,
     IMessageBus messageBus,
-    IPreferencesService preferencesService,
+    IPreferencesFacade preferencesFacade,
     LayerPanelViewModel layerPanelVM,
     SelectionViewModel selectionVM,
     HistoryViewModel historyVM)
@@ -129,15 +129,15 @@ public class MainViewModel : ReactiveObject
     NavigationModel = navigationModel;
     SelectionObserver = selectionObserver;
     this.messageBus = messageBus;
-    this.preferencesService = preferencesService;
+    this.preferencesFacade = preferencesFacade;
     LayerPanelVM = layerPanelVM;
     SelectionVM = selectionVM;
     HistoryVM = historyVM;
 
     // Use Property setters to trigger ViewOptionsChangedMessage so ToolbarViewModel syncs up
-    ShowButtonLabels = this.preferencesService.Get("ShowButtonLabels", false);
-    ShowLayersPanel = this.preferencesService.Get("ShowLayersPanel", false);
-    var savedTheme = this.preferencesService.Get("AppTheme", "Automatic");
+    ShowButtonLabels = this.preferencesFacade.Get<bool>(AppPreference.ShowButtonLabels);
+    ShowLayersPanel = this.preferencesFacade.Get<bool>(AppPreference.ShowLayersPanel);
+    var savedTheme = this.preferencesFacade.Get(AppPreference.AppTheme);
     SelectedTheme = AvailableThemes.FirstOrDefault(t => t == savedTheme) ?? AvailableThemes[0];
 
     ZoomInCommand = ReactiveCommand.Create(ZoomIn);
@@ -148,7 +148,11 @@ public class MainViewModel : ReactiveObject
     this.messageBus.Listen<ShowAdvancedSettingsMessage>().Subscribe(async _ =>
     {
       var popup = new Components.AdvancedSettingsPopup(this);
-      await Application.Current.Windows[0].Page?.ShowPopupAsync(popup);
+      var page = Application.Current?.Windows[0]?.Page;
+      if (page != null)
+      {
+        await page.ShowPopupAsync(popup);
+      }
     });
   }
 
@@ -217,6 +221,8 @@ public class MainViewModel : ReactiveObject
         _ => AppTheme.Unspecified
       };
     }
+
+    messageBus.SendMessage(new CanvasInvalidateMessage());
   }
 
   private void ZoomIn() => Zoom(1.2f);
@@ -231,6 +237,13 @@ public class MainViewModel : ReactiveObject
   private void Zoom(float scaleFactor)
   {
     if (CanvasSize.Width <= 0 || CanvasSize.Height <= 0) return;
+
+    var currentScale = NavigationModel.ViewMatrix.ScaleX;
+    var newScale = currentScale * scaleFactor;
+
+    // Clamp scale
+    if (newScale < 0.1f) scaleFactor = 0.1f / currentScale;
+    if (newScale > 20.0f) scaleFactor = 20.0f / currentScale;
 
     var center = new SKPoint(CanvasSize.Width / 2, CanvasSize.Height / 2);
 

@@ -207,8 +207,8 @@ public class CanvasInputHandler(
     float rotation = angle - startAngle;
 
     // Aggressive deadzones to filter out noise
-    if (Math.Abs(scale - 1.0f) < 0.05f) scale = 1.0f;
-    if (Math.Abs(rotation) < 0.2f) rotation = 0f; // ~11 degrees
+    if (Math.Abs(scale - 1.0f) < 0.01f) scale = 1.0f; // Reduced from 0.05f
+    if (Math.Abs(rotation) < 0.05f) rotation = 0f; // Reduced from 0.2f (~3 degrees)
 
     // Build transform around start centroid
     var transform = SKMatrix.CreateIdentity();
@@ -247,6 +247,19 @@ public class CanvasInputHandler(
     {
       // Calculate target matrix
       var targetMatrix = SKMatrix.Concat(transform, startMatrix);
+
+      // Clamp scale
+      float currentScale = targetMatrix.ScaleX; // Assuming uniform scale
+      if (currentScale < 0.1f)
+      {
+          float correction = 0.1f / currentScale;
+          targetMatrix = SKMatrix.Concat(SKMatrix.CreateScale(correction, correction, centroid.X, centroid.Y), targetMatrix);
+      }
+      else if (currentScale > 20.0f)
+      {
+          float correction = 20.0f / currentScale;
+          targetMatrix = SKMatrix.Concat(SKMatrix.CreateScale(correction, correction, centroid.X, centroid.Y), targetMatrix);
+      }
 
       // Smooth the output using exponential moving average
       var smoothedMatrix = LerpMatrix(previousOutputMatrix, targetMatrix, SmoothingFactor);

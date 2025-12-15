@@ -380,7 +380,7 @@ public class ToolbarViewModel : ReactiveObject
 
     SelectBrushShapeCommand = ReactiveCommand.Create<BrushShape>(shape =>
     {
-      this.messageBus.SendMessage(new LunaDraw.Logic.Messages.BrushShapeChangedMessage(shape));
+      this.messageBus.SendMessage(new BrushShapeChangedMessage(shape));
       IsBrushesFlyoutOpen = false;
 
       var freehandTool = AvailableTools.FirstOrDefault(t => t.Type == ToolType.Freehand);

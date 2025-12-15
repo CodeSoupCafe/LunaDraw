@@ -87,7 +87,7 @@ public static class MauiProgram
     builder.Services.AddSingleton<ICanvasInputHandler, CanvasInputHandler>();
     builder.Services.AddSingleton<ClipboardMemento>();
     builder.Services.AddSingleton<IBitmapCache, LunaDraw.Logic.Utils.BitmapCache>();
-    builder.Services.AddSingleton<IPreferencesService, PreferencesService>();
+    builder.Services.AddSingleton<IPreferencesFacade, PreferencesFacade>();
     builder.Services.AddSingleton<IFileSaver>(FileSaver.Default);
 
     // Register ViewModels

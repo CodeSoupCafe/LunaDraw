@@ -21,25 +21,27 @@
  *  
  */
 
+using LunaDraw.Logic.Services;
+
 namespace LunaDraw;
 
 public partial class App : Application
 {
-	public App()
-	{
-		InitializeComponent();
+  public App(IPreferencesFacade preferencesFacade)
+  {
+    InitializeComponent();
 
-        var theme = Microsoft.Maui.Storage.Preferences.Get("AppTheme", "Automatic");
-        UserAppTheme = theme switch
-        {
-            "Light" => AppTheme.Light,
-            "Dark" => AppTheme.Dark,
-            _ => AppTheme.Unspecified
-        };
-	}
+    var theme = preferencesFacade.Get(AppPreference.AppTheme);
+    UserAppTheme = theme switch
+    {
+      "Light" => AppTheme.Light,
+      "Dark" => AppTheme.Dark,
+      _ => AppTheme.Unspecified
+    };
+  }
 
-	protected override Window CreateWindow(IActivationState? activationState)
-	{
-		return new Window(new AppShell());
-	}
+  protected override Window CreateWindow(IActivationState? activationState)
+  {
+    return new Window(new AppShell());
+  }
 }

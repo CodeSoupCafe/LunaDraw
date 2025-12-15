@@ -21,9 +21,43 @@
  *  
  */
 
-namespace LunaDraw.Logic.Config;
+namespace LunaDraw.Logic.Services;
 
-public static class FeatureFlags
+public enum AppPreference
 {
-  public static bool EnableTransparentBackground { get; set; } = false;
+  AppTheme,
+  ShowButtonLabels,
+  ShowLayersPanel,
+  IsTransparentBackgroundEnabled
+}
+
+public class AppPreferenceDefault
+{
+  public dynamic this[AppPreference appPreference]
+  {
+    get
+    {
+      return appPreference switch
+      {
+        AppPreference.AppTheme => "Automatic",
+        AppPreference.ShowButtonLabels => false,
+        AppPreference.ShowLayersPanel => false,
+        AppPreference.IsTransparentBackgroundEnabled => false,
+        _ => ""
+      };
+    }
+  }
+}
+
+public class PreferencesFacade : IPreferencesFacade
+{
+  public static AppPreferenceDefault Defaults => new();
+
+  public string Get(AppPreference key) => Preferences.Get(key.ToString(), Defaults[key]);
+
+  public T Get<T>(AppPreference key) => Preferences.Get(key.ToString(), Defaults[key]);
+
+  public void Set(AppPreference key, bool value) => Preferences.Set(key.ToString(), value);
+
+  public void Set<T>(AppPreference key, T? value) => Preferences.Set(key.ToString(), value?.ToString());
 }

@@ -37,13 +37,13 @@ public class LayerPanelViewModel : ReactiveObject
 {
   private readonly ILayerFacade layerFacade;
   private readonly IMessageBus messageBus;
-  private readonly IPreferencesService preferencesService;
+  private readonly IPreferencesFacade preferencesFacade;
 
-  public LayerPanelViewModel(ILayerFacade layerFacade, IMessageBus messageBus, IPreferencesService preferencesService)
+  public LayerPanelViewModel(ILayerFacade layerFacade, IMessageBus messageBus, IPreferencesFacade preferencesFacade)
   {
     this.layerFacade = layerFacade;
     this.messageBus = messageBus;
-    this.preferencesService = preferencesService;
+    this.preferencesFacade = preferencesFacade;
 
     layerFacade.WhenAnyValue(x => x.CurrentLayer)
         .Subscribe(_ => this.RaisePropertyChanged(nameof(CurrentLayer)));
@@ -112,12 +112,14 @@ public class LayerPanelViewModel : ReactiveObject
       }
       else
       {
-        WindowTransparency = 150;
+        WindowTransparency = 125;
       }
+
+      messageBus.SendMessage(new CanvasInvalidateMessage());
     }, outputScheduler: RxApp.MainThreadScheduler);
 
     // Initialize state from Preferences
-    IsTransparentBackground = preferencesService.Get("IsTransparentBackgroundEnabled", false);
+    IsTransparentBackground = preferencesFacade.Get<bool>(AppPreference.IsTransparentBackgroundEnabled);
     if (!IsTransparentBackground)
     {
       windowTransparency = 255;
@@ -139,11 +141,10 @@ public class LayerPanelViewModel : ReactiveObject
     set
     {
       this.RaiseAndSetIfChanged(ref isTransparentBackground, value);
-      preferencesService.Set("IsTransparentBackgroundEnabled", value);
+      preferencesFacade.Set(AppPreference.IsTransparentBackgroundEnabled, value);
 
       if (!isTransparentBackground)
       {
-
         WindowTransparency = 255;
         UpdateWindowTransparency();
       }
@@ -189,8 +190,6 @@ public class LayerPanelViewModel : ReactiveObject
     }
 #endif
   }
-
-  public bool IsTransparentBackgroundVisible => Config.FeatureFlags.EnableTransparentBackground;
 
   public ReactiveCommand<Unit, Unit> AddLayerCommand { get; }
   public ReactiveCommand<Unit, Unit> RemoveLayerCommand { get; }

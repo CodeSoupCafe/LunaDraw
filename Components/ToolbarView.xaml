@@ -13,7 +13,6 @@
              x:DataType="viewModels:ToolbarViewModel">
   <ContentView.Resources>
     <ResourceDictionary>
-      <conv:ToolNameToIconConverter x:Key="ToolNameToIconConverter"/>
       <conv:IsToolActiveConverter x:Key="IsToolActiveConverter"/>
       <conv:ActiveShapeIconConverter x:Key="ActiveShapeIconConverter"/>
 
@@ -38,10 +37,10 @@
                 Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"/>
         <Style.Triggers>
           <Trigger TargetType="Button"
-              Property="IsEnabled"
-              Value="False">
+                   Property="IsEnabled"
+                   Value="False">
             <Setter Property="Opacity"
-                Value="0.3"/>
+                    Value="0.3"/>
           </Trigger>
         </Style.Triggers>
       </Style>

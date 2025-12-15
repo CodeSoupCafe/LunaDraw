@@ -23,7 +23,9 @@
 
 using System.Reactive.Linq;
 
+using LunaDraw.Logic.Extensions;
 using LunaDraw.Logic.Messages;
+using LunaDraw.Logic.Services;
 using LunaDraw.Logic.ViewModels;
 
 using ReactiveUI;
@@ -49,6 +51,18 @@ public partial class MiniMapView : ContentView
       messageBus = Handler?.MauiContext?.Services.GetService<IMessageBus>()
                    ?? IPlatformApplication.Current?.Services.GetService<IMessageBus>();
       return messageBus;
+    }
+  }
+
+  private IPreferencesFacade? preferencesFacade;
+  private IPreferencesFacade? PreferencesFacade
+  {
+    get
+    {
+      if (preferencesFacade != null) return preferencesFacade;
+      preferencesFacade = Handler?.MauiContext?.Services.GetService<IPreferencesFacade>()
+                   ?? IPlatformApplication.Current?.Services.GetService<IPreferencesFacade>();
+      return preferencesFacade;
     }
   }
 
@@ -83,7 +97,8 @@ public partial class MiniMapView : ContentView
       density = (float)(info.Width / view.Width);
     }
 
-    canvas.Clear(SKColors.White);
+    var bgColor = PreferencesFacade?.GetCanvasBackgroundColor(viewModel.LayerPanelVM.IsTransparentBackground) ?? SKColors.White;
+    canvas.Clear(bgColor);
 
     // Calculate bounds of all elements
     var contentBounds = SKRect.Empty;

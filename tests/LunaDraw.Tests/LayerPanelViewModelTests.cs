@@ -36,111 +36,111 @@ using Xunit;
 
 namespace LunaDraw.Tests
 {
-    public class LayerPanelViewModelTests
+  public class LayerPanelViewModelTests
+  {
+    private readonly Mock<IMessageBus> mockBus;
+    private readonly Mock<IPreferencesFacade> mockPreferences;
+    private readonly LayerFacade layerFacade;
+    private readonly LayerPanelViewModel viewModel;
+    private readonly Subject<DrawingStateChangedMessage> drawingStateSubject;
+
+    public LayerPanelViewModelTests()
     {
-        private readonly Mock<IMessageBus> mockBus;
-        private readonly Mock<IPreferencesService> mockPreferences;
-        private readonly LayerFacade layerFacade;
-        private readonly LayerPanelViewModel viewModel;
-        private readonly Subject<DrawingStateChangedMessage> drawingStateSubject;
+      mockBus = new Mock<IMessageBus>();
+      mockPreferences = new Mock<IPreferencesFacade>();
 
-        public LayerPanelViewModelTests()
-        {
-            mockBus = new Mock<IMessageBus>();
-            mockPreferences = new Mock<IPreferencesService>();
-            
-            // Mock preferences to return true by default for tests or match existing expectations
-            mockPreferences.Setup(p => p.Get(It.IsAny<string>(), It.IsAny<bool>())).Returns((string key, bool def) => 
-            {
-                if (key == "IsTransparentBackgroundEnabled") return true;
-                return def;
-            });
-            
-            drawingStateSubject = new Subject<DrawingStateChangedMessage>();
-            mockBus.Setup(x => x.Listen<DrawingStateChangedMessage>()).Returns(drawingStateSubject);
+      // Mock preferences to return true by default for tests or match existing expectations
+      mockPreferences.Setup(p => p.Get<bool>(It.IsAny<AppPreference>())).Returns((AppPreference key) =>
+      {
+        if (key == AppPreference.IsTransparentBackgroundEnabled) return true;
+        return false;
+      });
 
-            layerFacade = new LayerFacade(mockBus.Object);
-            viewModel = new LayerPanelViewModel(layerFacade, mockBus.Object, mockPreferences.Object);
-        }
+      drawingStateSubject = new Subject<DrawingStateChangedMessage>();
+      mockBus.Setup(x => x.Listen<DrawingStateChangedMessage>()).Returns(drawingStateSubject);
 
-        [Fact]
-        public void AddLayer_ShouldUpdateCurrentLayerInViewModel()
-        {
-            // Act
-            viewModel.AddLayerCommand.Execute().Subscribe();
-
-            // Assert
-            Assert.Equal(2, layerFacade.Layers.Count);
-            Assert.Equal("Layer 2", viewModel.CurrentLayer?.Name);
-        }
-
-        [Fact]
-        public void RemoveLayer_ShouldUseCorrectCurrentLayer_AfterAdd()
-        {
-            // Arrange
-            viewModel.AddLayerCommand.Execute().Subscribe(); // Adds Layer 2, sets as Current
-
-            Assert.Equal("Layer 2", viewModel.CurrentLayer?.Name);
-
-            // Act
-            // Execute parameterless command
-            viewModel.RemoveLayerCommand.Execute().Subscribe();
-
-            // Assert
-            Assert.Single(layerFacade.Layers);
-            Assert.Equal("Layer 1", viewModel.CurrentLayer?.Name);
-        }
-
-        [Fact]
-        public void RemoveLayer_ShouldBeDisabled_WhenOneLayer()
-        {
-            // Arrange
-            // Only Layer 1 exists initially
-
-            // Act
-            bool canExecute = viewModel.RemoveLayerCommand.CanExecute.FirstAsync().Wait();
-
-            // Assert
-            Assert.False(canExecute);
-        }
-
-        [Fact]
-        public void RemoveLayer_ShouldBeEnabled_WhenTwoLayers()
-        {
-            // Arrange
-            viewModel.AddLayerCommand.Execute().Subscribe();
-
-            // Act
-            bool canExecute = viewModel.RemoveLayerCommand.CanExecute.FirstAsync().Wait();
-
-            // Assert
-            Assert.True(canExecute);
-        }
-
-        [Fact]
-        public void IsTransparentBackground_ShouldToggleAndInvalidateCanvas()
-        {
-            // Arrange
-            var invalidationCount = 0;
-            mockBus.Setup(x => x.SendMessage(It.IsAny<CanvasInvalidateMessage>(), It.IsAny<string>()))
-                   .Callback<CanvasInvalidateMessage, string>((_, __) => invalidationCount++);
-            
-            // Initial state check (defaults to true)
-            Assert.True(viewModel.IsTransparentBackground);
-
-            // Act
-            viewModel.IsTransparentBackground = false;
-
-            // Assert
-            Assert.False(viewModel.IsTransparentBackground);
-            Assert.Equal(1, invalidationCount);
-
-            // Act 2
-            viewModel.IsTransparentBackground = true;
-
-            // Assert
-            Assert.True(viewModel.IsTransparentBackground);
-            Assert.Equal(2, invalidationCount);
-        }
+      layerFacade = new LayerFacade(mockBus.Object);
+      viewModel = new LayerPanelViewModel(layerFacade, mockBus.Object, mockPreferences.Object);
     }
+
+    [Fact]
+    public void AddLayer_ShouldUpdateCurrentLayerInViewModel()
+    {
+      // Act
+      viewModel.AddLayerCommand.Execute().Subscribe();
+
+      // Assert
+      Assert.Equal(2, layerFacade.Layers.Count);
+      Assert.Equal("Layer 2", viewModel.CurrentLayer?.Name);
+    }
+
+    [Fact]
+    public void RemoveLayer_ShouldUseCorrectCurrentLayer_AfterAdd()
+    {
+      // Arrange
+      viewModel.AddLayerCommand.Execute().Subscribe(); // Adds Layer 2, sets as Current
+
+      Assert.Equal("Layer 2", viewModel.CurrentLayer?.Name);
+
+      // Act
+      // Execute parameterless command
+      viewModel.RemoveLayerCommand.Execute().Subscribe();
+
+      // Assert
+      Assert.Single(layerFacade.Layers);
+      Assert.Equal("Layer 1", viewModel.CurrentLayer?.Name);
+    }
+
+    [Fact]
+    public void RemoveLayer_ShouldBeDisabled_WhenOneLayer()
+    {
+      // Arrange
+      // Only Layer 1 exists initially
+
+      // Act
+      bool canExecute = viewModel.RemoveLayerCommand.CanExecute.FirstAsync().Wait();
+
+      // Assert
+      Assert.False(canExecute);
+    }
+
+    [Fact]
+    public void RemoveLayer_ShouldBeEnabled_WhenTwoLayers()
+    {
+      // Arrange
+      viewModel.AddLayerCommand.Execute().Subscribe();
+
+      // Act
+      bool canExecute = viewModel.RemoveLayerCommand.CanExecute.FirstAsync().Wait();
+
+      // Assert
+      Assert.True(canExecute);
+    }
+
+    [Fact]
+    public void IsTransparentBackground_ShouldToggleAndInvalidateCanvas()
+    {
+      // Arrange
+      var invalidationCount = 0;
+      mockBus.Setup(x => x.SendMessage(It.IsAny<CanvasInvalidateMessage>(), It.IsAny<string>()))
+             .Callback<CanvasInvalidateMessage, string>((_, __) => invalidationCount++);
+
+      // Initial state check (defaults to true)
+      Assert.True(viewModel.IsTransparentBackground);
+
+      // Act
+      viewModel.IsTransparentBackground = false;
+
+      // Assert
+      Assert.False(viewModel.IsTransparentBackground);
+      Assert.Equal(1, invalidationCount);
+
+      // Act 2
+      viewModel.IsTransparentBackground = true;
+
+      // Assert
+      Assert.True(viewModel.IsTransparentBackground);
+      Assert.Equal(2, invalidationCount);
+    }
+  }
 }
