@@ -16,7 +16,6 @@
       <conv:ToolNameToIconConverter x:Key="ToolNameToIconConverter"/>
       <conv:IsToolActiveConverter x:Key="IsToolActiveConverter"/>
       <conv:ActiveShapeIconConverter x:Key="ActiveShapeIconConverter"/>
-      <conv:ToolToColorConverter x:Key="ToolToColorConverter"/>
 
       <!-- Kid-friendly button style with large hit areas for vertical toolbar -->
       <Style x:Key="ToolbarButtonStyle"
@@ -71,8 +70,15 @@
                     Text="⬚"
                     ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_SelectTool}"
                     Command="{Binding SelectToolCommand}"
-                    CommandParameter="{Binding AvailableTools[0]}"
-                    BackgroundColor="{Binding ActiveTool, Mode=OneWay, Converter={StaticResource ToolToColorConverter}, ConverterParameter='SelectTool'}">
+                    CommandParameter="{Binding AvailableTools[0]}">
+              <Button.Triggers>
+                <DataTrigger TargetType="Button"
+                             Binding="{Binding ActiveTool, Converter={StaticResource IsToolActiveConverter}, ConverterParameter='SelectTool'}"
+                             Value="True">
+                  <Setter Property="BackgroundColor"
+                          Value="{StaticResource Secondary}"/>
+                </DataTrigger>
+              </Button.Triggers>
             </Button>
             <Label Text="{Binding AvailableTools[0].Name}"
                    HorizontalTextAlignment="Center"
@@ -96,10 +102,18 @@
                     Margin="0,4"
                     StrokeShape="RoundRectangle 12"
                     ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_BrushSettings}"
-                    BackgroundColor="{Binding ActiveTool, Mode=OneWay, Converter={StaticResource ToolToColorConverter}, ConverterParameter='FreehandTool'}">
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}">
               <Border.GestureRecognizers>
                 <TapGestureRecognizer Command="{Binding ShowBrushesFlyoutCommand}"/>
               </Border.GestureRecognizers>
+              <Border.Triggers>
+                <DataTrigger TargetType="Border"
+                             Binding="{Binding ActiveTool, Converter={StaticResource IsToolActiveConverter}, ConverterParameter='FreehandTool'}"
+                             Value="True">
+                  <Setter Property="BackgroundColor"
+                          Value="{StaticResource Secondary}"/>
+                </DataTrigger>
+              </Border.Triggers>
               <local:BrushPreviewControl BrushShape="{Binding CurrentBrushShape}"
                                          StrokeColor="{Binding StrokeColor}"
                                          HorizontalOptions="Fill"
@@ -117,10 +131,18 @@
                     Margin="0,4"
                     StrokeShape="RoundRectangle 12"
                     ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_Shapes}"
-                    BackgroundColor="{Binding ActiveTool, Mode=OneWay, Converter={StaticResource ToolToColorConverter}, ConverterParameter='Shapes'}">
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}">
               <Border.GestureRecognizers>
                 <TapGestureRecognizer Command="{Binding ShowShapesFlyoutCommand}"/>
               </Border.GestureRecognizers>
+              <Border.Triggers>
+                <DataTrigger TargetType="Border"
+                             Binding="{Binding ActiveTool, Converter={StaticResource IsToolActiveConverter}, ConverterParameter='Shapes'}"
+                             Value="True">
+                  <Setter Property="BackgroundColor"
+                          Value="{StaticResource Secondary}"/>
+                </DataTrigger>
+              </Border.Triggers>
               <local:ShapePreviewControl ActiveTool="{Binding LastActiveShapeTool}"
                                          StrokeColor="{Binding StrokeColor}"
                                          FillColor="{Binding FillColor}"
@@ -161,8 +183,15 @@
                     Text="🧽"
                     ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_Eraser}"
                     Command="{Binding SelectToolCommand}"
-                    CommandParameter="{Binding AvailableTools[6]}"
-                    BackgroundColor="{Binding ActiveTool, Mode=OneWay, Converter={StaticResource ToolToColorConverter}, ConverterParameter='EraserBrushTool'}">
+                    CommandParameter="{Binding AvailableTools[6]}">
+              <Button.Triggers>
+                <DataTrigger TargetType="Button"
+                             Binding="{Binding ActiveTool, Converter={StaticResource IsToolActiveConverter}, ConverterParameter='EraserBrushTool'}"
+                             Value="True">
+                  <Setter Property="BackgroundColor"
+                          Value="{StaticResource Secondary}"/>
+                </DataTrigger>
+              </Button.Triggers>
             </Button>
             <Label Text="{Binding AvailableTools[6].Name}"
                    HorizontalTextAlignment="Center"

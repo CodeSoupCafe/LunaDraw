@@ -6,13 +6,14 @@
                xmlns:strings="clr-namespace:LunaDraw.Resources.Strings"
                x:Class="LunaDraw.Components.AdvancedSettingsPopup"
                x:DataType="viewModels:MainViewModel"
-               CanBeDismissedByTappingOutsideOfPopup="True">
+               CanBeDismissedByTappingOutsideOfPopup="True"
+               BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}">
   <VerticalStackLayout Spacing="15">
     <Grid ColumnDefinitions="*, Auto"
-          RowDefinitions="Auto, Auto"
+          RowDefinitions="Auto, Auto, Auto"
           RowSpacing="15">
       <Label Grid.Row="0"
-             TextColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}"
+             TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource White}}"
              Grid.Column="0"
              Text="{x:Static strings:AppResources.Label_ShowLayersPanel}"
              VerticalOptions="Center"/>
@@ -21,13 +22,25 @@
               IsToggled="{Binding ShowLayersPanel}"/>
 
       <Label Grid.Row="1"
-             TextColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}"
+             TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource White}}"
              Grid.Column="0"
              Text="{x:Static strings:AppResources.Label_ShowButtonLabels}"
              VerticalOptions="Center"/>
       <Switch Grid.Row="1"
               Grid.Column="1"
               IsToggled="{Binding ShowButtonLabels}"/>
+
+      <Label Grid.Row="2"
+             TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource White}}"
+             Grid.Column="0"
+             Text="Theme"
+             VerticalOptions="Center"/>
+      <Picker Grid.Row="2"
+              Grid.Column="1"
+              ItemsSource="{Binding AvailableThemes}"
+              SelectedItem="{Binding SelectedTheme}"
+              TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource White}}"
+              Title="Select Theme"/>
     </Grid>
 
     <Button Text="{x:Static strings:AppResources.Label_Close}"

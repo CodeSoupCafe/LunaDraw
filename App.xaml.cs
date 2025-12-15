@@ -28,6 +28,14 @@ public partial class App : Application
 	public App()
 	{
 		InitializeComponent();
+
+        var theme = Microsoft.Maui.Storage.Preferences.Get("AppTheme", "Automatic");
+        UserAppTheme = theme switch
+        {
+            "Light" => AppTheme.Light,
+            "Dark" => AppTheme.Dark,
+            _ => AppTheme.Unspecified
+        };
 	}
 
 	protected override Window CreateWindow(IActivationState? activationState)

@@ -63,7 +63,22 @@ public class MainViewModel : ReactiveObject
   public SKRect CanvasSize { get; set; }
 
   // UI State
+  public List<string> AvailableThemes { get; } = new List<string> { "Automatic", "Light", "Dark" };
+
+  private string selectedTheme;
+  public string SelectedTheme
+  {
+    get => selectedTheme;
+    set
+    {
+      this.RaiseAndSetIfChanged(ref selectedTheme, value);
+      preferencesService.Set("AppTheme", value);
+      UpdateAppTheme(value);
+    }
+  }
+
   private bool showButtonLabels;
+
   public bool ShowButtonLabels
   {
     get => showButtonLabels;
@@ -122,6 +137,8 @@ public class MainViewModel : ReactiveObject
     // Use Property setters to trigger ViewOptionsChangedMessage so ToolbarViewModel syncs up
     ShowButtonLabels = this.preferencesService.Get("ShowButtonLabels", false);
     ShowLayersPanel = this.preferencesService.Get("ShowLayersPanel", false);
+    var savedTheme = this.preferencesService.Get("AppTheme", "Automatic");
+    SelectedTheme = AvailableThemes.FirstOrDefault(t => t == savedTheme) ?? AvailableThemes[0];
 
     ZoomInCommand = ReactiveCommand.Create(ZoomIn);
     ZoomOutCommand = ReactiveCommand.Create(ZoomOut);
@@ -187,6 +204,19 @@ public class MainViewModel : ReactiveObject
       HueJitter = ToolbarViewModel.HueJitter,
       CanvasMatrix = NavigationModel.ViewMatrix
     };
+  }
+
+  private void UpdateAppTheme(string theme)
+  {
+    if (Application.Current != null)
+    {
+      Application.Current.UserAppTheme = theme switch
+      {
+        "Light" => AppTheme.Light,
+        "Dark" => AppTheme.Dark,
+        _ => AppTheme.Unspecified
+      };
+    }
   }
 
   private void ZoomIn() => Zoom(1.2f);
