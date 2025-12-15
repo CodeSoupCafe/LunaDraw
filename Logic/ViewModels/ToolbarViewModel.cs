@@ -532,47 +532,7 @@ public class ToolbarViewModel : ReactiveObject
                     canvas.Restore();
                   }
 
-            ImportImageCommand = ReactiveCommand.CreateFromTask(async () =>
-            {
-                try
-                {
-                    var result = await FilePicker.Default.PickAsync(new PickOptions
-                    {
-                        PickerTitle = "Select an image to import",
-                        FileTypes = FilePickerFileType.Images
-                    });
-
-                    if (result != null)
-                    {
-                        string path = result.FullPath;
-
-                        // On platforms where FullPath is not available, copy to cache
-                        if (string.IsNullOrEmpty(path))
-                        {
-                            path = Path.Combine(FileSystem.CacheDirectory, result.FileName);
-                            using var sourceStream = await result.OpenReadAsync();
-                            using var destStream = File.Create(path);
-                            await sourceStream.CopyToAsync(destStream);
-                        }
-
-                        // Load with downsampling (max 2048x2048)
-                        var bitmap = await this.bitmapCacheManager.GetBitmapAsync(path, 2048, 2048);
-                        if (bitmap != null)
-                        {
-                            var drawableImage = new DrawableImage(bitmap)
-                            {
-                                SourcePath = path
-                            };
-
-                            this.layerFacade.CurrentLayer?.Elements.Add(drawableImage);
-                            this.messageBus.SendMessage(new CanvasInvalidateMessage());
-                            this.layerFacade.SaveState();
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Error importing image: {ex.Message}");
+                  i = j;
                 }
               }
 
@@ -591,13 +551,12 @@ public class ToolbarViewModel : ReactiveObject
         using var data = image.Encode(SKEncodedImageFormat.Png, 100);
         using var stream = data.AsStream();
 
-                    var result = await this.fileSaver.SaveAsync("lunadraw_canvas.png", stream);
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Error saving image: {ex.Message}");
-                }
-            });
-        }
-    }
+        var result = await this.fileSaver.SaveAsync("lunadraw_canvas.png", stream);
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Error saving image: {ex.Message}");
+      }
+    });
+  }
 }
