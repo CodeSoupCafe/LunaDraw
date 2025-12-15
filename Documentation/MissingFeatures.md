@@ -20,14 +20,6 @@ This document tracks features that are specified in the requirements or document
 - No Gallery View or ViewModel.
 - No file storage logic for saving/loading drawings (serialization).
 
-## 3. Import Photos (Doodling on Pictures)
-
-**Status:** ❌ Missing
-**Requirement:** Ability to import photos to the canvas background.
-**Current State:**
-
-- `Canvas` logic supports drawing paths but does not have an "Image Layer" or background image support implemented in `MainViewModel` or `Layer` model.
-
 ## 4. Audio/Haptic Feedback
 
 **Status:** ❌ Missing
@@ -36,15 +28,6 @@ This document tracks features that are specified in the requirements or document
 
 - No `AudioManager` or sound services implemented in the current solution.
 - References to sound exist only in `Legacy` code.
-
-## 5. Magical Brush Presets
-
-**Status:** ⚠️ Partial / Unverified
-**Requirement:** 24+ high-impact brush presets (Glow, Neon, Fireworks, etc.).
-**Current State:**
-
-- **Engine:** `FreehandTool` and `DrawableStamps` support the _capabilities_ (Glow, Rainbow, Jitter, Scatter).
-- **Presets:** The specific list of 24+ configured presets is not visible in `ToolbarViewModel` or `ToolStateManager`. The UI allows manual configuration, but the child-friendly "pick and draw" presets need to be verified or implemented.
 
 ## 6. Production Deployment
 

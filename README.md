@@ -18,35 +18,44 @@ LunaDraw is a child-centric drawing application designed for children aged 3–8
 >
 > The code is quite fragile in a lot of places.
 
+## Screenshots
+
+| Default (Light Theme) | Trace Mode |
+| :---: | :---: |
+| <img src="Documentation/Screenshots/LunaDraw%20Light%20Theme.png" width="400" alt="Light Theme" /> | <img src="Documentation/Screenshots/LunaDraw%20Light%20Theme%20Trace%20Mode.png" width="400" alt="Light Theme Trace Mode" /> |
+| Stamps & Vector Drawing | Trace Mode |
+| <img src="Documentation/Screenshots/Luna%20Draw%20Fish%20Stamps%20Resize%20Vector.png" width="400" alt="Stamps" /> | <img src="Documentation/Screenshots/Luna%20Draw%20Fish%20Stamps%20Resize%20Vector.png" width="400" alt="Light Theme Trace Mode" /> |
+
 ## Features
 
-### 🎨 Core Drawing
-
+### 🎨 Core Drawing & Creativity
 - **Canvas:** Draw on a blank canvas or import photos to doodle on.
-- **Magical Brushes:** A collection of 24+ high-impact brushes including:
-  - Glow / Neon
-  - Star Sparkles / Glitter
-  - Fireworks
-  - Rainbow (Color cycling)
-  - Crayon, Spray, Ribbon, and more.
-- **Tools:** Eraser, Fill Bucket (Pattern Paint), and Shapes (Lines, Rectangles, Ellipses).
+- **Magical Brushes:** A portfolio of 24+ high-impact brush effects designed to engage children:
+  - **Glow / Neon:** Optimized shaders using additive blending and bloom filters.
+  - **Star Sparkles / Glitter:** Dynamic reflection simulation.
+  - **Rainbow:** Automatic color cycling effects.
+  - **Others:** Fireworks, Crayon, Spray, Ribbon, and more.
+- **Coloring Efficiency:** "Magical pattern paint bucket" (Fill tool) for quickly coloring large areas.
+- **Tools:** Eraser, Shapes (Lines, Rectangles, Ellipses), and stamps.
 - **Undo/Redo:** Universally accessible history navigation.
+- **Trace Mode:** [Transparency mode on Windows machines](https://gist.github.com/iknowcodesoup/d51aab15f32f5db424f4996af5ba234a) for see-through for tracing
 
-### 🎬 Movie Mode
-
-- Automatically records the drawing process.
-- Playback your art creation as a short animation.
+### 🎬 Movie Mode (Time-Lapse)
+- Automatically records the drawing process in the background.
+- Playback the art creation as a short animation/film.
 
 ### 🖼️ Art Management
+- **Gallery:** Built-in gallery to securely store and view completed drawings and their animations.
 
-- **Gallery:** Built-in gallery to store and view completed drawings and their animations.
+### 👶 Child-Friendly UX/UI
+- **Ergonomic Design:** Large targets (min 2cm x 2cm) for easy tapping with generous spacing.
+- **Visual Feedback:** Immediate multi-sensory feedback (sounds, animations) for all key actions.
+- **Simplicity:** Icon-driven interface with minimal text and unambiguous design.
+- **Guidance:** Visual and audio demonstrations to reduce the need for explicit instructions.
 
-### 👶 Child-Friendly UX
-
-- **Ergonomic Design:** Large targets (2cm x 2cm min) for easy tapping.
-- **Visual Feedback:** Immediate multi-sensory feedback (sounds, animations) for actions.
-- **Simplicity:** Icon-driven interface with minimal text.
-- **Ad-Free & Offline:** Completely free, no ads, and works without internet.
+### 🛡️ Safety & Reliability
+- **Ad-Free:** Completely free and permanently ad-free (no banners, pop-ups, or in-app purchases).
+- **Offline Capable:** Fully functional without Wi-Fi or Internet connection.
 
 ## Architecture
 
@@ -95,6 +104,7 @@ For more detailed information, please refer to the `Documentation` directory:
 
 - [Architecture Design](Documentation/ArchitectureDesign.md)
 - [Features](Documentation/Features.md)
+- [Missing Features](Documentation/MissingFeatures.md)
 
 ## Deployment
 
