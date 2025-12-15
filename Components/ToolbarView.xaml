@@ -77,6 +77,12 @@
                   <Setter Property="BackgroundColor"
                           Value="{StaticResource Secondary}"/>
                 </DataTrigger>
+                <DataTrigger TargetType="Button"
+                             Binding="{Binding ActiveTool, Converter={StaticResource IsToolActiveConverter}, ConverterParameter='SelectTool'}"
+                             Value="False">
+                  <Setter Property="BackgroundColor"
+                          Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"/>
+                </DataTrigger>
               </Button.Triggers>
             </Button>
             <Label Text="{Binding AvailableTools[0].Name}"
@@ -112,6 +118,12 @@
                   <Setter Property="BackgroundColor"
                           Value="{StaticResource Secondary}"/>
                 </DataTrigger>
+                <DataTrigger TargetType="Border"
+                             Binding="{Binding ActiveTool, Converter={StaticResource IsToolActiveConverter}, ConverterParameter='FreehandTool'}"
+                             Value="False">
+                  <Setter Property="BackgroundColor"
+                          Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"/>
+                </DataTrigger>
               </Border.Triggers>
               <local:BrushPreviewControl BrushShape="{Binding CurrentBrushShape}"
                                          StrokeColor="{Binding StrokeColor}"
@@ -140,6 +152,12 @@
                              Value="True">
                   <Setter Property="BackgroundColor"
                           Value="{StaticResource Secondary}"/>
+                </DataTrigger>
+                <DataTrigger TargetType="Border"
+                             Binding="{Binding ActiveTool, Converter={StaticResource IsToolActiveConverter}, ConverterParameter='Shapes'}"
+                             Value="False">
+                  <Setter Property="BackgroundColor"
+                          Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"/>
                 </DataTrigger>
               </Border.Triggers>
               <local:ShapePreviewControl ActiveTool="{Binding LastActiveShapeTool}"
@@ -189,6 +207,12 @@
                              Value="True">
                   <Setter Property="BackgroundColor"
                           Value="{StaticResource Secondary}"/>
+                </DataTrigger>
+                <DataTrigger TargetType="Button"
+                             Binding="{Binding ActiveTool, Converter={StaticResource IsToolActiveConverter}, ConverterParameter='EraserBrushTool'}"
+                             Value="False">
+                  <Setter Property="BackgroundColor"
+                          Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"/>
                 </DataTrigger>
               </Button.Triggers>
             </Button>
