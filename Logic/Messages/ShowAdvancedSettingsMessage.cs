@@ -21,12 +21,8 @@
  *  
  */
 
-namespace LunaDraw.Components;
+namespace LunaDraw.Logic.Messages;
 
-public partial class ShapesFlyoutPanel : ContentView
+public class ShowAdvancedSettingsMessage
 {
-  public ShapesFlyoutPanel()
-  {
-    InitializeComponent();
-  }
 }

@@ -138,14 +138,14 @@ public class BrushPreviewControl : SKCanvasView
     // Draw Glow if enabled
     if (IsGlowEnabled)
     {
-        using var glowPaint = new SKPaint
-        {
-            Style = SKPaintStyle.StrokeAndFill,
-            Color = GlowColor,
-            IsAntialias = true,
-            MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, GlowRadius)
-        };
-        canvas.DrawPath(BrushShape.Path, glowPaint);
+      using var glowPaint = new SKPaint
+      {
+        Style = SKPaintStyle.StrokeAndFill,
+        Color = GlowColor,
+        IsAntialias = true,
+        MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, GlowRadius)
+      };
+      canvas.DrawPath(BrushShape.Path, glowPaint);
     }
 
     using var paint = new SKPaint

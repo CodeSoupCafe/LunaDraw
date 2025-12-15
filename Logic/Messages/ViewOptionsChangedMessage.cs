@@ -21,20 +21,16 @@
  *  
  */
 
-using WinComp = Windows.UI.Composition;
+namespace LunaDraw.Logic.Messages;
 
-namespace LunaDraw.WinUI;
-
-/// <summary>
-/// Transparent or tinted backdrop for .NET 10
-/// </summary>
-public partial class TransparentBackdrop : CompositionBrushBackdrop
+public class ViewOptionsChangedMessage
 {
-  protected override WinComp.CompositionBrush CreateBrush(WinComp.Compositor compositor)
+  public bool ShowButtonLabels { get; }
+  public bool ShowLayersPanel { get; }
+
+  public ViewOptionsChangedMessage(bool showButtonLabels, bool showLayersPanel)
   {
-    // Use HostBackdropBrush to sample the area behind the window.
-    // This allows the user to see through the window (typically with blur).
-    // The TintColor property is unused here; apply tint via XAML.
-    return compositor.CreateHostBackdropBrush();
+    ShowButtonLabels = showButtonLabels;
+    ShowLayersPanel = showLayersPanel;
   }
 }

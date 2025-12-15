@@ -25,11 +25,11 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Reactive;
 using System.Reactive.Linq;
-using LunaDraw.Logic.Services;
 using LunaDraw.Logic.Utils;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using ReactiveUI;
+using System.Windows.Input;
 
 namespace LunaDraw.Logic.ViewModels;
 
@@ -37,14 +37,13 @@ public class LayerPanelViewModel : ReactiveObject
 {
   private readonly ILayerFacade layerFacade;
   private readonly IMessageBus messageBus;
-  private readonly IPreferencesService preferencesService;
+  private readonly IPreferencesFacade preferencesFacade;
 
-  public LayerPanelViewModel(ILayerFacade layerFacade, IMessageBus messageBus, IPreferencesService preferencesService)
+  public LayerPanelViewModel(ILayerFacade layerFacade, IMessageBus messageBus, IPreferencesFacade preferencesFacade)
   {
     this.layerFacade = layerFacade;
     this.messageBus = messageBus;
-    this.preferencesService = preferencesService;
-
+    this.preferencesFacade = preferencesFacade;
     layerFacade.WhenAnyValue(x => x.CurrentLayer)
         .Subscribe(_ => this.RaisePropertyChanged(nameof(CurrentLayer)));
 
@@ -104,8 +103,22 @@ public class LayerPanelViewModel : ReactiveObject
       }
     }, outputScheduler: RxApp.MainThreadScheduler);
 
+    ToggleTraceModeCommand = ReactiveCommand.Create(() =>
+    {
+      if (IsTransparentBackground)
+      {
+        WindowTransparency = 255;
+      }
+      else
+      {
+        WindowTransparency = 125;
+      }
+
+      messageBus.SendMessage(new CanvasInvalidateMessage());
+    }, outputScheduler: RxApp.MainThreadScheduler);
+
     // Initialize state from Preferences
-    IsTransparentBackground = preferencesService.Get("IsTransparentBackgroundEnabled", false);
+    IsTransparentBackground = preferencesFacade.Get<bool>(AppPreference.IsTransparentBackgroundEnabled);
     if (!IsTransparentBackground)
     {
       windowTransparency = 255;
@@ -120,6 +133,14 @@ public class LayerPanelViewModel : ReactiveObject
     set => layerFacade.CurrentLayer = value;
   }
 
+  public ReactiveCommand<Unit, Unit> AddLayerCommand { get; }
+  public ReactiveCommand<Unit, Unit> RemoveLayerCommand { get; }
+  public ReactiveCommand<Layer, Unit> MoveLayerForwardCommand { get; }
+  public ReactiveCommand<Layer, Unit> MoveLayerBackwardCommand { get; }
+  public ReactiveCommand<Layer, Unit> ToggleLayerVisibilityCommand { get; }
+  public ReactiveCommand<Layer, Unit> ToggleLayerLockCommand { get; }
+  public ReactiveCommand<Unit, Unit> ToggleTraceModeCommand { get; }
+
   private bool isTransparentBackground = false;
   public bool IsTransparentBackground
   {
@@ -127,11 +148,10 @@ public class LayerPanelViewModel : ReactiveObject
     set
     {
       this.RaiseAndSetIfChanged(ref isTransparentBackground, value);
-      preferencesService.Set("IsTransparentBackgroundEnabled", value);
+      preferencesFacade.Set(AppPreference.IsTransparentBackgroundEnabled, value);
 
       if (!isTransparentBackground)
       {
-
         WindowTransparency = 255;
         UpdateWindowTransparency();
       }
@@ -177,13 +197,4 @@ public class LayerPanelViewModel : ReactiveObject
     }
 #endif
   }
-
-  public static bool IsTransparentBackgroundVisible => Config.FeatureFlags.EnableTransparentBackground;
-
-  public ReactiveCommand<Unit, Unit> AddLayerCommand { get; }
-  public ReactiveCommand<Unit, Unit> RemoveLayerCommand { get; }
-  public ReactiveCommand<Layer, Unit> MoveLayerForwardCommand { get; }
-  public ReactiveCommand<Layer, Unit> MoveLayerBackwardCommand { get; }
-  public ReactiveCommand<Layer, Unit> ToggleLayerVisibilityCommand { get; }
-  public ReactiveCommand<Layer, Unit> ToggleLayerLockCommand { get; }
 }

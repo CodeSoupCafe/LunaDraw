@@ -4,6 +4,8 @@
              xmlns:viewModels="clr-namespace:LunaDraw.Logic.ViewModels"
              xmlns:models="clr-namespace:LunaDraw.Logic.Models"
              xmlns:converters="clr-namespace:LunaDraw.Converters"
+             xmlns:components="clr-namespace:LunaDraw.Components"
+             xmlns:strings="clr-namespace:LunaDraw.Resources.Strings"
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              x:Class="LunaDraw.Components.LayerControlView"
              x:DataType="viewModels:MainViewModel"
@@ -21,7 +23,8 @@
           Padding="10"
           StrokeShape="RoundRectangle 10"
           x:Name="LayerControlBorder"
-          WidthRequest="{Binding Source={x:Reference Root}, Path=IsLayerPanelExpanded, Converter={StaticResource BoolToLayerPanelWidthConverter}}">
+          IsVisible="{Binding ShowLayersPanel}"
+          WidthRequest="{Binding Source={x:Reference Root}, Path=IsLayerPanelExpanded, Converter={StaticResource BoolToLayerPanelWidthConverter}, x:DataType=components:LayerControlView}">
 
     <VerticalStackLayout>
       <!-- Header -->
@@ -31,11 +34,12 @@
         <Grid.GestureRecognizers>
           <TapGestureRecognizer Tapped="OnCollapseClicked"/>
         </Grid.GestureRecognizers>
-        <Label Text="Layers"
+        <Label Text="{x:Static strings:AppResources.Layers_Title}"
                FontAttributes="Bold"
                VerticalOptions="Center"/>
         <Button x:Name="CollapseButton"
                 Text="▶"
+                ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_CollapseLayers}"
                 BackgroundColor="Transparent"
                 TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource White}}"
                 Clicked="OnCollapseClicked"
@@ -105,8 +109,9 @@
 
                   <!-- Visible Toggle (Eye) -->
                   <Button Text="{Binding IsVisible, Converter={StaticResource BoolToEyeIconConverter}}"
-                          Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:MainViewModel}}, Path=LayerPanelVM.ToggleLayerVisibilityCommand}"
+                          Command="{Binding Source={x:Reference Root}, Path=ViewModel.LayerPanelVM.ToggleLayerVisibilityCommand, x:DataType=components:LayerControlView}"
                           CommandParameter="{Binding .}"
+                          ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_LayerVisibility}"
                           Padding="0"
                           BackgroundColor="Transparent"
                           TextColor="Black"
@@ -118,8 +123,9 @@
 
                   <!-- Lock Toggle -->
                   <Button Text="{Binding IsLocked, Converter={StaticResource BoolToLockIconConverter}}"
-                          Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:MainViewModel}}, Path=LayerPanelVM.ToggleLayerLockCommand}"
+                          Command="{Binding Source={x:Reference Root}, Path=ViewModel.LayerPanelVM.ToggleLayerLockCommand, x:DataType=components:LayerControlView}"
                           CommandParameter="{Binding .}"
+                          ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_LayerLock}"
                           Padding="0"
                           BackgroundColor="Transparent"
                           TextColor="Black"
@@ -134,51 +140,88 @@
           </CollectionView.ItemTemplate>
         </CollectionView>
 
-        <HorizontalStackLayout Spacing="10">
-          <Button Text="+"
-                  Command="{Binding LayerPanelVM.AddLayerCommand}"
-                  ToolTipProperties.Text="Add Layer"
-                  FontSize="30"
-                  HeightRequest="72"
-                  WidthRequest="72"
-                  CornerRadius="10"
-                  BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"
-                  TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
-                  HorizontalOptions="FillAndExpand"/>
-          <Button Text="🗑️"
-                  Command="{Binding LayerPanelVM.RemoveLayerCommand}"
-                  ToolTipProperties.Text="Remove Layer"
-                  FontSize="24"
-                  HeightRequest="72"
-                  WidthRequest="72"
-                  CornerRadius="10"
-                  BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"
-                  TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
-                  HorizontalOptions="FillAndExpand">
-            <Button.Triggers>
-              <Trigger TargetType="Button"
-                       Property="IsEnabled"
-                       Value="False">
-                <Setter Property="Opacity"
-                        Value="0.5"/>
-              </Trigger>
-            </Button.Triggers>
-          </Button>
+        <HorizontalStackLayout Spacing="10"
+                               HorizontalOptions="FillAndExpand">
+          <VerticalStackLayout HorizontalOptions="FillAndExpand">
+            <Button Text="+"
+                    Command="{Binding LayerPanelVM.AddLayerCommand}"
+                    ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_AddLayer}"
+                    FontSize="30"
+                    HeightRequest="72"
+                    WidthRequest="72"
+                    CornerRadius="10"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"
+                    TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
+                    HorizontalOptions="Center"/>
+            <Label Text="{x:Static strings:AppResources.ToolTip_AddLayer}"
+                   FontSize="12"
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding ShowButtonLabels}"/>
+          </VerticalStackLayout>
+
+          <VerticalStackLayout HorizontalOptions="End">
+            <Button Text="🗑️"
+                    Command="{Binding LayerPanelVM.RemoveLayerCommand}"
+                    ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_RemoveLayer}"
+                    FontSize="24"
+                    HeightRequest="72"
+                    WidthRequest="72"
+                    CornerRadius="10"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"
+                    TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
+                    HorizontalOptions="Center">
+              <Button.Triggers>
+                <Trigger TargetType="Button"
+                         Property="IsEnabled"
+                         Value="False">
+                  <Setter Property="Opacity"
+                          Value="0.5"/>
+                </Trigger>
+              </Button.Triggers>
+            </Button>
+            <Label Text="{x:Static strings:AppResources.Label_Delete}"
+                   FontSize="12"
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding ShowButtonLabels}"/>
+          </VerticalStackLayout>
+
+          <VerticalStackLayout HorizontalOptions="End"
+              Margin="20,0,0,0">
+            <Button Text="⧉"
+                    Command="{Binding LayerPanelVM.ToggleTraceModeCommand}"
+                    ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_ToggleTraceMode}"
+                    FontSize="30"
+                    HeightRequest="72"
+                    WidthRequest="72"
+                    CornerRadius="10"
+                    Padding="0"
+                    BorderWidth="0"
+                    HorizontalOptions="Center">
+              <Button.Triggers>
+                <DataTrigger TargetType="Button"
+                             Binding="{Binding LayerPanelVM.IsTransparentBackground}"
+                             Value="True">
+                  <Setter Property="BackgroundColor"
+                          Value="{StaticResource Primary}"/>
+                  <Setter Property="TextColor"
+                          Value="{StaticResource White}"/>
+                </DataTrigger>
+                <DataTrigger TargetType="Button"
+                             Binding="{Binding LayerPanelVM.IsTransparentBackground}"
+                             Value="False">
+                  <Setter Property="BackgroundColor"
+                          Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"/>
+                  <Setter Property="TextColor"
+                          Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"/>
+                </DataTrigger>
+              </Button.Triggers>
+            </Button>
+            <Label Text="Trace"
+                   FontSize="12"
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding ShowButtonLabels}"/>
+          </VerticalStackLayout>
         </HorizontalStackLayout>
-
-        <!-- Controls -->
-        <VerticalStackLayout Spacing="10"
-                             IsVisible="{Binding LayerPanelVM.IsTransparentBackgroundVisible}">
-          <!-- Transparent Background Toggle -->
-
-          <Label Text="Trace Mode"
-                 HorizontalOptions="Start"
-                 VerticalOptions="Center"
-                 TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource White}}"/>
-          <Slider Value="{Binding LayerPanelVM.WindowTransparency}"
-                  Minimum="25"
-                  Maximum="255"/>
-        </VerticalStackLayout>
       </VerticalStackLayout>
     </VerticalStackLayout>
   </Border>

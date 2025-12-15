@@ -27,6 +27,8 @@ namespace LunaDraw.Components;
 
 public partial class BrushesFlyoutPanel : ContentView
 {
+  public ToolbarViewModel? ViewModel => BindingContext as ToolbarViewModel;
+
   public BrushesFlyoutPanel()
   {
     InitializeComponent();
@@ -37,7 +39,7 @@ public partial class BrushesFlyoutPanel : ContentView
   {
     if (BindingContext is ToolbarViewModel toolbarViewModel)
     {
-        // No settings to load here anymore, just brush shapes which are data bound
+      // No settings to load here anymore, just brush shapes which are data bound
     }
   }
 }

@@ -79,25 +79,16 @@ public partial class SettingsFlyoutPanel : ContentView
           typeof(SettingsFlyoutPanel),
           0.25f,
           propertyChanged: OnSpacingPropertyChanged);
-
-  private bool suppressEvents;
-
   private IMessageBus? messageBus;
-  private IMessageBus? MessageBus
-  {
-      get
-      {
-          if (messageBus != null) return messageBus;
-          messageBus = Handler?.MauiContext?.Services.GetService<IMessageBus>()
-                       ?? IPlatformApplication.Current?.Services.GetService<IMessageBus>();
-          return messageBus;
-      }
-  }
+  private bool suppressEvents;
 
   public SettingsFlyoutPanel()
   {
     InitializeComponent();
-    this.Loaded += OnSettingsFlyoutPanelLoaded;
+    Loaded += OnSettingsFlyoutPanelLoaded;
+
+    messageBus = Handler?.MauiContext?.Services.GetService<IMessageBus>()
+                 ?? IPlatformApplication.Current?.Services.GetService<IMessageBus>();
   }
 
   private void OnSettingsFlyoutPanelLoaded(object? sender, EventArgs e)
@@ -163,99 +154,99 @@ public partial class SettingsFlyoutPanel : ContentView
 
   private static void OnStrokeColorPropertyChanged(BindableObject bindable, object oldValue, object newValue)
   {
-      try
+    try
+    {
+      var panel = (SettingsFlyoutPanel)bindable;
+      if (panel.BindingContext is ToolbarViewModel toolbarViewModel && newValue is SKColor color)
       {
-          var panel = (SettingsFlyoutPanel)bindable;
-          if (panel.BindingContext is ToolbarViewModel toolbarViewModel && newValue is SKColor color)
-          {
-              if (panel.MessageBus != null)
-                  panel.MessageBus.SendMessage(new BrushSettingsChangedMessage(strokeColor: color));
-              if (panel.StrokeColorPicker != null)
-                  panel.StrokeColorPicker.PickedColor = SKColorToMauiColor(color);
-          }
+        if (panel.messageBus != null)
+          panel.messageBus.SendMessage(new BrushSettingsChangedMessage(strokeColor: color));
+        if (panel.StrokeColorPicker != null)
+          panel.StrokeColorPicker.PickedColor = SKColorToMauiColor(color);
       }
-      catch { }
+    }
+    catch { }
   }
 
   private static void OnFillColorPropertyChanged(BindableObject bindable, object oldValue, object newValue)
   {
-      try
+    try
+    {
+      var panel = (SettingsFlyoutPanel)bindable;
+      if (panel.BindingContext is ToolbarViewModel toolbarViewModel)
       {
-          var panel = (SettingsFlyoutPanel)bindable;
-          if (panel.BindingContext is ToolbarViewModel toolbarViewModel)
-          {
-              var fill = newValue as SKColor?;
-              if (panel.MessageBus != null)
-                  panel.MessageBus.SendMessage(new BrushSettingsChangedMessage(fillColor: fill));
-              if (newValue is SKColor fillColor && panel.FillColorPicker != null)
-                  panel.FillColorPicker.PickedColor = SKColorToMauiColor(fillColor);
-          }
+        var fill = newValue as SKColor?;
+        if (panel.messageBus != null)
+          panel.messageBus.SendMessage(new BrushSettingsChangedMessage(fillColor: fill));
+        if (newValue is SKColor fillColor && panel.FillColorPicker != null)
+          panel.FillColorPicker.PickedColor = SKColorToMauiColor(fillColor);
       }
-      catch { }
+    }
+    catch { }
   }
 
   private static void OnTransparencyPropertyChanged(BindableObject bindable, object oldValue, object newValue)
   {
-      try
+    try
+    {
+      var panel = (SettingsFlyoutPanel)bindable;
+      if (panel.BindingContext is ToolbarViewModel toolbarViewModel && newValue is byte transparency)
       {
-          var panel = (SettingsFlyoutPanel)bindable;
-          if (panel.BindingContext is ToolbarViewModel toolbarViewModel && newValue is byte transparency)
-          {
-              if (panel.MessageBus != null)
-                  panel.MessageBus.SendMessage(new BrushSettingsChangedMessage(transparency: transparency));
-              if (panel.TransparencySlider != null)
-                  panel.TransparencySlider.Value = transparency;
-          }
+        if (panel.messageBus != null)
+          panel.messageBus.SendMessage(new BrushSettingsChangedMessage(transparency: transparency));
+        if (panel.TransparencySlider != null)
+          panel.TransparencySlider.Value = transparency;
       }
-      catch { }
+    }
+    catch { }
   }
 
   private static void OnSizePropertyChanged(BindableObject bindable, object oldValue, object newValue)
   {
-      try
+    try
+    {
+      var panel = (SettingsFlyoutPanel)bindable;
+      if (panel.BindingContext is ToolbarViewModel && newValue is float size)
       {
-          var panel = (SettingsFlyoutPanel)bindable;
-          if (panel.BindingContext is ToolbarViewModel && newValue is float size)
-          {
-              if (panel.MessageBus != null)
-                  panel.MessageBus.SendMessage(new BrushSettingsChangedMessage(strokeWidth: size));
-              if (panel.SizeSlider != null)
-                  panel.SizeSlider.Value = size;
-          }
+        if (panel.messageBus != null)
+          panel.messageBus.SendMessage(new BrushSettingsChangedMessage(strokeWidth: size));
+        if (panel.SizeSlider != null)
+          panel.SizeSlider.Value = size;
       }
-      catch { }
+    }
+    catch { }
   }
 
   private static void OnFlowPropertyChanged(BindableObject bindable, object oldValue, object newValue)
   {
-      try
+    try
+    {
+      var panel = (SettingsFlyoutPanel)bindable;
+      if (panel.BindingContext is ToolbarViewModel && newValue is byte flow)
       {
-          var panel = (SettingsFlyoutPanel)bindable;
-          if (panel.BindingContext is ToolbarViewModel && newValue is byte flow)
-          {
-              if (panel.MessageBus != null)
-                  panel.MessageBus.SendMessage(new BrushSettingsChangedMessage(flow: flow));
-              if (panel.FlowSlider != null)
-                  panel.FlowSlider.Value = flow;
-          }
+        if (panel.messageBus != null)
+          panel.messageBus.SendMessage(new BrushSettingsChangedMessage(flow: flow));
+        if (panel.FlowSlider != null)
+          panel.FlowSlider.Value = flow;
       }
-      catch { }
+    }
+    catch { }
   }
 
   private static void OnSpacingPropertyChanged(BindableObject bindable, object oldValue, object newValue)
   {
-      try
+    try
+    {
+      var panel = (SettingsFlyoutPanel)bindable;
+      if (panel.BindingContext is ToolbarViewModel && newValue is float spacing)
       {
-          var panel = (SettingsFlyoutPanel)bindable;
-          if (panel.BindingContext is ToolbarViewModel && newValue is float spacing)
-          {
-              if (panel.MessageBus != null)
-                  panel.MessageBus.SendMessage(new BrushSettingsChangedMessage(spacing: spacing));
-              if (panel.SpacingSlider != null)
-                  panel.SpacingSlider.Value = spacing;
-          }
+        if (panel.messageBus != null)
+          panel.messageBus.SendMessage(new BrushSettingsChangedMessage(spacing: spacing));
+        if (panel.SpacingSlider != null)
+          panel.SpacingSlider.Value = spacing;
       }
-      catch { }
+    }
+    catch { }
   }
 
   private void OnStrokeColorChanged(object sender, EventArgs e)
@@ -263,7 +254,7 @@ public partial class SettingsFlyoutPanel : ContentView
     if (sender is Maui.ColorPicker.ColorPicker colorPicker)
     {
       var strokeColor = MauiColorToSKColor(colorPicker.PickedColor);
-      MessageBus?.SendMessage(new BrushSettingsChangedMessage(strokeColor: strokeColor));
+      messageBus?.SendMessage(new BrushSettingsChangedMessage(strokeColor: strokeColor));
     }
   }
 
@@ -274,32 +265,32 @@ public partial class SettingsFlyoutPanel : ContentView
     if (sender is Maui.ColorPicker.ColorPicker colorPicker)
     {
       var fillColor = MauiColorToSKColor(colorPicker.PickedColor);
-      MessageBus?.SendMessage(new BrushSettingsChangedMessage(fillColor: fillColor));
+      messageBus?.SendMessage(new BrushSettingsChangedMessage(fillColor: fillColor));
     }
   }
 
   private void OnTransparencyChanged(object sender, ValueChangedEventArgs e)
   {
     var transparency = (byte)e.NewValue;
-    MessageBus?.SendMessage(new BrushSettingsChangedMessage(transparency: transparency));
+    messageBus?.SendMessage(new BrushSettingsChangedMessage(transparency: transparency));
   }
 
   private void OnSizeChanged(object sender, ValueChangedEventArgs e)
   {
     var size = (float)e.NewValue;
-    MessageBus?.SendMessage(new BrushSettingsChangedMessage(strokeWidth: size));
+    messageBus?.SendMessage(new BrushSettingsChangedMessage(strokeWidth: size));
   }
 
   private void OnFlowChanged(object sender, ValueChangedEventArgs e)
   {
     var flow = (byte)e.NewValue;
-    MessageBus?.SendMessage(new BrushSettingsChangedMessage(flow: flow));
+    messageBus?.SendMessage(new BrushSettingsChangedMessage(flow: flow));
   }
 
   private void OnSpacingChanged(object sender, ValueChangedEventArgs e)
   {
     var spacing = (float)e.NewValue;
-    MessageBus?.SendMessage(new BrushSettingsChangedMessage(spacing: spacing));
+    messageBus?.SendMessage(new BrushSettingsChangedMessage(spacing: spacing));
   }
 
   private void OnNoFillClicked(object sender, EventArgs e)
@@ -313,7 +304,7 @@ public partial class SettingsFlyoutPanel : ContentView
     {
       suppressEvents = false;
     }
-    MessageBus?.SendMessage(new BrushSettingsChangedMessage(shouldClearFillColor: true));
+    messageBus?.SendMessage(new BrushSettingsChangedMessage(shouldClearFillColor: true));
   }
 
   private static Color SKColorToMauiColor(SKColor skColor)
@@ -332,12 +323,12 @@ public partial class SettingsFlyoutPanel : ContentView
 
   private void OnGlowSwitchToggled(object sender, ToggledEventArgs e)
   {
-    MessageBus?.SendMessage(new BrushSettingsChangedMessage(isGlowEnabled: e.Value));
+    messageBus?.SendMessage(new BrushSettingsChangedMessage(isGlowEnabled: e.Value));
   }
 
   private void OnGlowRadiusChanged(object sender, ValueChangedEventArgs e)
   {
-    MessageBus?.SendMessage(new BrushSettingsChangedMessage(glowRadius: (float)e.NewValue));
+    messageBus?.SendMessage(new BrushSettingsChangedMessage(glowRadius: (float)e.NewValue));
   }
 
   private void OnGlowColorTapped(object sender, TappedEventArgs e)
@@ -346,33 +337,33 @@ public partial class SettingsFlyoutPanel : ContentView
     {
       if (SKColor.TryParse(hexColor, out var color))
       {
-        MessageBus?.SendMessage(new BrushSettingsChangedMessage(glowColor: color));
+        messageBus?.SendMessage(new BrushSettingsChangedMessage(glowColor: color));
       }
     }
   }
 
   private void OnRainbowSwitchToggled(object sender, ToggledEventArgs e)
   {
-      MessageBus?.SendMessage(new BrushSettingsChangedMessage(isRainbowEnabled: e.Value));
+    messageBus?.SendMessage(new BrushSettingsChangedMessage(isRainbowEnabled: e.Value));
   }
 
   private void OnScatterChanged(object sender, ValueChangedEventArgs e)
   {
-      MessageBus?.SendMessage(new BrushSettingsChangedMessage(scatterRadius: (float)e.NewValue));
+    messageBus?.SendMessage(new BrushSettingsChangedMessage(scatterRadius: (float)e.NewValue));
   }
 
   private void OnSizeJitterChanged(object sender, ValueChangedEventArgs e)
   {
-      MessageBus?.SendMessage(new BrushSettingsChangedMessage(sizeJitter: (float)e.NewValue));
+    messageBus?.SendMessage(new BrushSettingsChangedMessage(sizeJitter: (float)e.NewValue));
   }
 
   private void OnAngleJitterChanged(object sender, ValueChangedEventArgs e)
   {
-      MessageBus?.SendMessage(new BrushSettingsChangedMessage(angleJitter: (float)e.NewValue));
+    messageBus?.SendMessage(new BrushSettingsChangedMessage(angleJitter: (float)e.NewValue));
   }
 
   private void OnHueJitterChanged(object sender, ValueChangedEventArgs e)
   {
-      MessageBus?.SendMessage(new BrushSettingsChangedMessage(hueJitter: (float)e.NewValue));
+    messageBus?.SendMessage(new BrushSettingsChangedMessage(hueJitter: (float)e.NewValue));
   }
 }

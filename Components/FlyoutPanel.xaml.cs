@@ -72,7 +72,6 @@ public partial class FlyoutPanel : ContentView
     AbsoluteLayout.SetLayoutBounds(this, new Rect(-1000, -1000, -1, -1));
   }
 
-
   public View FlyoutContent
   {
     get => (View)GetValue(FlyoutContentProperty);
@@ -236,47 +235,47 @@ public partial class FlyoutPanel : ContentView
     // 1. Try positioning to the right of the target (preferred)
     if (flyoutBounds.Right > screenWidth - margin)
     {
-        // It overflows right. Try positioning to the left of the target.
-        double leftX = targetBounds.Left - flyoutBounds.Width - 10;
-        if (leftX >= margin)
+      // It overflows right. Try positioning to the left of the target.
+      double leftX = targetBounds.Left - flyoutBounds.Width - 10;
+      if (leftX >= margin)
+      {
+        finalX = leftX;
+      }
+      else
+      {
+        // Neither side fits perfectly.
+        // Position at the left-most valid position or right-most valid position?
+        // Let's constrain to the screen width.
+        finalX = Math.Max(margin, Math.Min(x, screenWidth - flyoutBounds.Width - margin));
+
+        // If the flyout is wider than the screen (minus margins), constrain width.
+        if (flyoutBounds.Width > screenWidth - 2 * margin)
         {
-            finalX = leftX;
+          finalX = margin;
+          finalWidth = screenWidth - 2 * margin;
         }
-        else
-        {
-            // Neither side fits perfectly.
-            // Position at the left-most valid position or right-most valid position?
-            // Let's constrain to the screen width.
-            finalX = Math.Max(margin, Math.Min(x, screenWidth - flyoutBounds.Width - margin));
-            
-            // If the flyout is wider than the screen (minus margins), constrain width.
-            if (flyoutBounds.Width > screenWidth - 2 * margin)
-            {
-                finalX = margin;
-                finalWidth = screenWidth - 2 * margin;
-            }
-        }
+      }
     }
 
     // --- Vertical Positioning Strategy ---
-    
+
     // If the flyout overflows the bottom edge
     if (flyoutBounds.Bottom > screenHeight - margin)
     {
-        // Try moving it up
-        double diff = flyoutBounds.Bottom - (screenHeight - margin);
-        double newY = y - diff;
+      // Try moving it up
+      double diff = flyoutBounds.Bottom - (screenHeight - margin);
+      double newY = y - diff;
 
-        if (newY >= margin)
-        {
-            finalY = newY;
-        }
-        else
-        {
-            // Moving up hits the top edge. Constrain Height.
-            finalY = margin;
-            finalHeight = screenHeight - 2 * margin;
-        }
+      if (newY >= margin)
+      {
+        finalY = newY;
+      }
+      else
+      {
+        // Moving up hits the top edge. Constrain Height.
+        finalY = margin;
+        finalHeight = screenHeight - 2 * margin;
+      }
     }
 
     // Re-apply the adjusted bounds

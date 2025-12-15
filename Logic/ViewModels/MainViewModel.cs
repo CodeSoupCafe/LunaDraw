@@ -28,13 +28,13 @@ using System.Reactive.Linq;
 using LunaDraw.Logic.Utils;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
-using LunaDraw.Logic.Services;
 using LunaDraw.Logic.Tools;
 
 using ReactiveUI;
 
 using SkiaSharp;
 using SkiaSharp.Views.Maui;
+using CommunityToolkit.Maui.Extensions;
 
 namespace LunaDraw.Logic.ViewModels;
 
@@ -47,6 +47,7 @@ public class MainViewModel : ReactiveObject
   public NavigationModel NavigationModel { get; }
   public SelectionObserver SelectionObserver { get; }
   private readonly IMessageBus messageBus;
+  private readonly IPreferencesFacade preferencesFacade;
 
   // Sub-ViewModels
   public LayerPanelViewModel LayerPanelVM { get; }
@@ -59,6 +60,46 @@ public class MainViewModel : ReactiveObject
   public ICommand ResetZoomCommand { get; }
 
   public SKRect CanvasSize { get; set; }
+
+  // UI State
+  public List<string> AvailableThemes { get; } = new List<string> { "Automatic", "Light", "Dark" };
+
+  private string selectedTheme = "Automatic";
+  public string SelectedTheme
+  {
+    get => selectedTheme;
+    set
+    {
+      this.RaiseAndSetIfChanged(ref selectedTheme, value);
+      preferencesFacade.Set(AppPreference.AppTheme, value);
+      UpdateAppTheme(value);
+    }
+  }
+
+  private bool showButtonLabels;
+
+  public bool ShowButtonLabels
+  {
+    get => showButtonLabels;
+    set
+    {
+      this.RaiseAndSetIfChanged(ref showButtonLabels, value);
+      preferencesFacade.Set(AppPreference.ShowButtonLabels, value);
+      messageBus.SendMessage(new ViewOptionsChangedMessage(value, ShowLayersPanel));
+    }
+  }
+
+  private bool showLayersPanel;
+  public bool ShowLayersPanel
+  {
+    get => showLayersPanel;
+    set
+    {
+      this.RaiseAndSetIfChanged(ref showLayersPanel, value);
+      preferencesFacade.Set(AppPreference.ShowLayersPanel, value);
+      messageBus.SendMessage(new ViewOptionsChangedMessage(ShowButtonLabels, value));
+    }
+  }
 
   // Facades for View/CodeBehind access
   public ObservableCollection<Layer> Layers => LayerFacade.Layers;
@@ -76,6 +117,7 @@ public class MainViewModel : ReactiveObject
     NavigationModel navigationModel,
     SelectionObserver selectionObserver,
     IMessageBus messageBus,
+    IPreferencesFacade preferencesFacade,
     LayerPanelViewModel layerPanelVM,
     SelectionViewModel selectionVM,
     HistoryViewModel historyVM)
@@ -86,15 +128,32 @@ public class MainViewModel : ReactiveObject
     NavigationModel = navigationModel;
     SelectionObserver = selectionObserver;
     this.messageBus = messageBus;
+    this.preferencesFacade = preferencesFacade;
     LayerPanelVM = layerPanelVM;
     SelectionVM = selectionVM;
     HistoryVM = historyVM;
 
+    // Use Property setters to trigger ViewOptionsChangedMessage so ToolbarViewModel syncs up
+    ShowButtonLabels = this.preferencesFacade.Get<bool>(AppPreference.ShowButtonLabels);
+    ShowLayersPanel = this.preferencesFacade.Get<bool>(AppPreference.ShowLayersPanel);
+    var savedTheme = this.preferencesFacade.Get(AppPreference.AppTheme);
+    SelectedTheme = AvailableThemes.FirstOrDefault(t => t == savedTheme) ?? AvailableThemes[0];
+
     ZoomInCommand = ReactiveCommand.Create(ZoomIn);
     ZoomOutCommand = ReactiveCommand.Create(ZoomOut);
     ResetZoomCommand = ReactiveCommand.Create(ResetZoom);
-  }
 
+    // Listen for ShowAdvancedSettingsMessage
+    this.messageBus.Listen<ShowAdvancedSettingsMessage>().Subscribe(async _ =>
+    {
+      var popup = new Components.AdvancedSettingsPopup(this);
+      var page = Application.Current?.Windows[0]?.Page;
+      if (page != null)
+      {
+        await page.ShowPopupAsync(popup);
+      }
+    });
+  }
 
   public IDrawingTool ActiveTool
   {
@@ -149,6 +208,21 @@ public class MainViewModel : ReactiveObject
     };
   }
 
+  private void UpdateAppTheme(string theme)
+  {
+    if (Application.Current != null)
+    {
+      Application.Current.UserAppTheme = theme switch
+      {
+        "Light" => AppTheme.Light,
+        "Dark" => AppTheme.Dark,
+        _ => AppTheme.Unspecified
+      };
+    }
+
+    messageBus.SendMessage(new CanvasInvalidateMessage());
+  }
+
   private void ZoomIn() => Zoom(1.2f);
   private void ZoomOut() => Zoom(1f / 1.2f);
 
@@ -161,6 +235,13 @@ public class MainViewModel : ReactiveObject
   private void Zoom(float scaleFactor)
   {
     if (CanvasSize.Width <= 0 || CanvasSize.Height <= 0) return;
+
+    var currentScale = NavigationModel.ViewMatrix.ScaleX;
+    var newScale = currentScale * scaleFactor;
+
+    // Clamp scale
+    if (newScale < 0.1f) scaleFactor = 0.1f / currentScale;
+    if (newScale > 20.0f) scaleFactor = 20.0f / currentScale;
 
     var center = new SKPoint(CanvasSize.Width / 2, CanvasSize.Height / 2);
 

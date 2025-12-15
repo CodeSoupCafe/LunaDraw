@@ -21,47 +21,16 @@
  *  
  */
 
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Media;
+namespace LunaDraw.Logic.Utils;
 
-// Alias namespaces to avoid ambiguity and ensure correct types are used
-using WinComp = Windows.UI.Composition;
-using WinUIComp = Microsoft.UI.Composition;
-
-namespace LunaDraw.WinUI;
-
-public abstract class CompositionBrushBackdrop : SystemBackdrop
+public interface IPreferencesFacade
 {
-  private WinComp.CompositionBrush? brush;
-  private WinComp.Compositor? compositor;
 
-  protected abstract WinComp.CompositionBrush CreateBrush(WinComp.Compositor compositor);
+  string Get(AppPreference key);
 
-  protected override void OnTargetConnected(WinUIComp.ICompositionSupportsSystemBackdrop connectedTarget, XamlRoot xamlRoot)
-  {
-    base.OnTargetConnected(connectedTarget, xamlRoot);
+  T Get<T>(AppPreference key);
 
-    compositor = new WinComp.Compositor();
+  void Set(AppPreference key, bool value);
 
-    brush = CreateBrush(compositor);
-
-    connectedTarget.SystemBackdrop = brush;
-  }
-
-  protected override void OnTargetDisconnected(WinUIComp.ICompositionSupportsSystemBackdrop disconnectedTarget)
-  {
-    base.OnTargetDisconnected(disconnectedTarget);
-
-    if (brush != null)
-    {
-      brush.Dispose();
-      brush = null;
-    }
-
-    if (compositor != null)
-    {
-      compositor.Dispose();
-      compositor = null;
-    }
-  }
+  void Set<T>(AppPreference key, T? value) => Preferences.Set(key.ToString(), value?.ToString());
 }

@@ -25,19 +25,19 @@ using System.Globalization;
 
 namespace LunaDraw.Converters;
 
-  public class BoolToEyeIconConverter : IValueConverter
+public class BoolToEyeIconConverter : IValueConverter
+{
+  public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
   {
-      public object Convert(object ?value, Type targetType, object? parameter, CultureInfo culture)
-      {
-          if (value is bool isVisible)
-          {
-              return isVisible ? "👁" : "○"; // Eye vs Empty Circle
-          }
-          return "○";
-      }
-
-      public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-      {
-          return value is string str && str == "👁";
-      }
+    if (value is bool isVisible)
+    {
+      return isVisible ? "👁" : "○"; // Eye vs Empty Circle
+    }
+    return "○";
   }
+
+  public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+  {
+    return value is string str && str == "👁";
+  }
+}

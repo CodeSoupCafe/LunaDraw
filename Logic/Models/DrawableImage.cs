@@ -100,7 +100,7 @@ public class DrawableImage(SKBitmap bitmap) : IDrawableElement
     // Draw the Bitmap
     using (var image = SKImage.FromBitmap(Bitmap))
     {
-      canvas.DrawImage(image, bounds, new SKSamplingOptions(SKFilterMode.Linear), paint);
+      canvas.DrawImage(image, bounds, new SKSamplingOptions(SKCubicResampler.Mitchell), paint);
     }
 
     // Draw Border if set

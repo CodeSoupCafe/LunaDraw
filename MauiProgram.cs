@@ -26,7 +26,6 @@ using CommunityToolkit.Maui.Storage;
 using Microsoft.Maui.LifecycleEvents;
 using LunaDraw.Logic.Utils;
 using LunaDraw.Logic.Models;
-using LunaDraw.Logic.Services;
 using LunaDraw.Logic.ViewModels;
 using LunaDraw.Pages;
 using Microsoft.Extensions.Logging;
@@ -67,8 +66,8 @@ public static class MauiProgram
           {
             wndLifeCycleBuilder.OnWindowCreated(window =>
               {
-                  window.SystemBackdrop = new WinUI.TransparentBackdrop();
-                if (Microsoft.Maui.Storage.Preferences.Get("IsTransparentBackgroundEnabled", false))
+                window.SystemBackdrop = new DesktopAcrylicBackdrop();
+                if (Preferences.Get(AppPreference.IsTransparentBackgroundEnabled.ToString(), false))
                 {
                   PlatformHelper.EnableTrueTransparency(180);   // Fully transparent
                 }
@@ -87,7 +86,7 @@ public static class MauiProgram
     builder.Services.AddSingleton<ICanvasInputHandler, CanvasInputHandler>();
     builder.Services.AddSingleton<ClipboardMemento>();
     builder.Services.AddSingleton<IBitmapCache, LunaDraw.Logic.Utils.BitmapCache>();
-    builder.Services.AddSingleton<IPreferencesService, PreferencesService>();
+    builder.Services.AddSingleton<IPreferencesFacade, PreferencesFacade>();
     builder.Services.AddSingleton<IFileSaver>(FileSaver.Default);
 
     // Register ViewModels

@@ -21,12 +21,43 @@
  *  
  */
 
-namespace LunaDraw.Components;
+namespace LunaDraw.Logic.Utils;
 
-public partial class ShapesFlyoutPanel : ContentView
+public enum AppPreference
 {
-  public ShapesFlyoutPanel()
+  AppTheme,
+  ShowButtonLabels,
+  ShowLayersPanel,
+  IsTransparentBackgroundEnabled
+}
+
+public class AppPreferenceDefault
+{
+  public dynamic this[AppPreference appPreference]
   {
-    InitializeComponent();
+    get
+    {
+      return appPreference switch
+      {
+        AppPreference.AppTheme => "Automatic",
+        AppPreference.ShowButtonLabels => false,
+        AppPreference.ShowLayersPanel => false,
+        AppPreference.IsTransparentBackgroundEnabled => false,
+        _ => ""
+      };
+    }
   }
+}
+
+public class PreferencesFacade : IPreferencesFacade
+{
+  public static AppPreferenceDefault Defaults => new();
+
+  public string Get(AppPreference key) => Preferences.Get(key.ToString(), Defaults[key]);
+
+  public T Get<T>(AppPreference key) => Preferences.Get(key.ToString(), Defaults[key]);
+
+  public void Set(AppPreference key, bool value) => Preferences.Set(key.ToString(), value);
+
+  public void Set<T>(AppPreference key, T? value) => Preferences.Set(key.ToString(), value?.ToString());
 }

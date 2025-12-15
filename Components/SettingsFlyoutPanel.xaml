@@ -3,227 +3,227 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:controls="clr-namespace:Maui.ColorPicker;assembly=Maui.ColorPicker"
              x:Class="LunaDraw.Components.SettingsFlyoutPanel">
-       <Border Background="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray800}}"
-               Padding="15"
-               StrokeShape="RoundRectangle"
-               Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
-               StrokeThickness="1"
-               MaximumHeightRequest="600">
-              <ScrollView VerticalScrollBarVisibility="Default">
-                     <StackLayout Spacing="12">
-                            <Label Text="Brush Settings"
-                                   FontAttributes="Bold"
-                                   HorizontalTextAlignment="Center"/>
+  <Border Background="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray800}}"
+          Padding="15"
+          StrokeShape="RoundRectangle"
+          Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
+          StrokeThickness="1"
+          MaximumHeightRequest="600">
+    <ScrollView VerticalScrollBarVisibility="Default">
+      <StackLayout Spacing="12">
+        <Label Text="Brush Settings"
+               FontAttributes="Bold"
+               HorizontalTextAlignment="Center"/>
 
-                            <BoxView HeightRequest="1"
-                                     Color="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
-                                     Margin="0,5"/>
+        <BoxView HeightRequest="1"
+                 Color="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
+                 Margin="0,5"/>
 
-                            <Label Text="Brush Color"
-                                   FontAttributes="Bold"/>
-                            <controls:ColorPicker x:Name="StrokeColorPicker"
-                                                  ColorFlowDirection="Horizontal"
-                                                  ColorSpectrumStyle="ShadeToHueStyle"
-                                                  PointerRingBorderUnits="0.3"
-                                                  PointerRingDiameterUnits="0.7"
-                                                  HeightRequest="80"
-                                                  WidthRequest="250"
-                                                  PickedColorChanged="OnStrokeColorChanged"/>
+        <Label Text="Brush Color"
+               FontAttributes="Bold"/>
+        <controls:ColorPicker x:Name="StrokeColorPicker"
+                              ColorFlowDirection="Horizontal"
+                              ColorSpectrumStyle="ShadeToHueStyle"
+                              PointerRingBorderUnits="0.3"
+                              PointerRingDiameterUnits="0.7"
+                              HeightRequest="80"
+                              WidthRequest="250"
+                              PickedColorChanged="OnStrokeColorChanged"/>
 
-                            <StackLayout Orientation="Horizontal">
-                                   <Label Text="Fill Color"
-                                          FontAttributes="Bold"
-                                          VerticalOptions="Center"/>
-                                   <Button Text="No Fill"
-                                           HorizontalOptions="EndAndExpand"
-                                           Padding="10,0"
-                                           HeightRequest="30"
-                                           Clicked="OnNoFillClicked"/>
-                            </StackLayout>
-                            <controls:ColorPicker x:Name="FillColorPicker"
-                                                  ColorFlowDirection="Horizontal"
-                                                  ColorSpectrumStyle="ShadeToHueStyle"
-                                                  PointerRingBorderUnits="0.3"
-                                                  PointerRingDiameterUnits="0.7"
-                                                  HeightRequest="80"
-                                                  WidthRequest="250"
-                                                  PickedColorChanged="OnFillColorChanged"/>
+        <StackLayout Orientation="Horizontal">
+          <Label Text="Fill Color"
+                 FontAttributes="Bold"
+                 VerticalOptions="Center"/>
+          <Button Text="No Fill"
+                  HorizontalOptions="EndAndExpand"
+                  Padding="10,0"
+                  HeightRequest="30"
+                  Clicked="OnNoFillClicked"/>
+        </StackLayout>
+        <controls:ColorPicker x:Name="FillColorPicker"
+                              ColorFlowDirection="Horizontal"
+                              ColorSpectrumStyle="ShadeToHueStyle"
+                              PointerRingBorderUnits="0.3"
+                              PointerRingDiameterUnits="0.7"
+                              HeightRequest="80"
+                              WidthRequest="250"
+                              PickedColorChanged="OnFillColorChanged"/>
 
-                            <Label Text="Size"
-                                   FontAttributes="Bold"/>
-                            <Slider x:Name="SizeSlider"
-                                    Minimum="1"
-                                    Maximum="100"
-                                    HeightRequest="30"
-                                    ValueChanged="OnSizeChanged"/>
+        <Label Text="Size"
+               FontAttributes="Bold"/>
+        <Slider x:Name="SizeSlider"
+                Minimum="1"
+                Maximum="100"
+                HeightRequest="30"
+                ValueChanged="OnSizeChanged"/>
 
-                            <Label Text="Transparency"
-                                   FontAttributes="Bold"/>
-                            <Slider x:Name="TransparencySlider"
-                                    Minimum="0"
-                                    Maximum="255"
-                                    HeightRequest="30"
-                                    ValueChanged="OnTransparencyChanged"/>
+        <Label Text="Transparency"
+               FontAttributes="Bold"/>
+        <Slider x:Name="TransparencySlider"
+                Minimum="0"
+                Maximum="255"
+                HeightRequest="30"
+                ValueChanged="OnTransparencyChanged"/>
 
-                            <Label Text="Flow"
-                                   FontAttributes="Bold"/>
-                            <Slider x:Name="FlowSlider"
-                                    Minimum="0"
-                                    Maximum="255"
-                                    HeightRequest="30"
-                                    ValueChanged="OnFlowChanged"/>
+        <Label Text="Flow"
+               FontAttributes="Bold"/>
+        <Slider x:Name="FlowSlider"
+                Minimum="0"
+                Maximum="255"
+                HeightRequest="30"
+                ValueChanged="OnFlowChanged"/>
 
-                            <Label Text="Spacing"
-                                   FontAttributes="Bold"/>
-                            <Slider x:Name="SpacingSlider"
-                                    Minimum="0.1"
-                                    Maximum="2.0"
-                                    HeightRequest="30"
-                                    ValueChanged="OnSpacingChanged"/>
+        <Label Text="Spacing"
+               FontAttributes="Bold"/>
+        <Slider x:Name="SpacingSlider"
+                Minimum="0.1"
+                Maximum="2.0"
+                HeightRequest="30"
+                ValueChanged="OnSpacingChanged"/>
 
-                            <BoxView HeightRequest="1"
-                                     Color="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
-                                     Margin="0,5"/>
+        <BoxView HeightRequest="1"
+                 Color="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
+                 Margin="0,5"/>
 
-                            <Label Text="Scatter"
-                                   FontAttributes="Bold"/>
-                            <Slider x:Name="ScatterSlider"
-                                    Minimum="0"
-                                    Maximum="50"
-                                    ValueChanged="OnScatterChanged"/>
+        <Label Text="Scatter"
+               FontAttributes="Bold"/>
+        <Slider x:Name="ScatterSlider"
+                Minimum="0"
+                Maximum="50"
+                ValueChanged="OnScatterChanged"/>
 
-                            <Label Text="Size Jitter"
-                                   FontAttributes="Bold"/>
-                            <Slider x:Name="SizeJitterSlider"
-                                    Minimum="0"
-                                    Maximum="1"
-                                    ValueChanged="OnSizeJitterChanged"/>
+        <Label Text="Size Jitter"
+               FontAttributes="Bold"/>
+        <Slider x:Name="SizeJitterSlider"
+                Minimum="0"
+                Maximum="1"
+                ValueChanged="OnSizeJitterChanged"/>
 
-                            <Label Text="Angle Jitter"
-                                   FontAttributes="Bold"/>
-                            <Slider x:Name="AngleJitterSlider"
-                                    Minimum="0"
-                                    Maximum="0.5"
-                                    ValueChanged="OnAngleJitterChanged"/>
+        <Label Text="Angle Jitter"
+               FontAttributes="Bold"/>
+        <Slider x:Name="AngleJitterSlider"
+                Minimum="0"
+                Maximum="0.5"
+                ValueChanged="OnAngleJitterChanged"/>
 
-                            <Label Text="Hue Jitter"
-                                   FontAttributes="Bold"/>
-                            <Slider x:Name="HueJitterSlider"
-                                    Minimum="0"
-                                    Maximum="1"
-                                    ValueChanged="OnHueJitterChanged"/>
+        <Label Text="Hue Jitter"
+               FontAttributes="Bold"/>
+        <Slider x:Name="HueJitterSlider"
+                Minimum="0"
+                Maximum="1"
+                ValueChanged="OnHueJitterChanged"/>
 
-                            <Label Text="Magical Effects"
-                                   FontAttributes="Bold"
-                                   FontSize="16"
-                                   HorizontalTextAlignment="Center"/>
+        <Label Text="Magical Effects"
+               FontAttributes="Bold"
+               FontSize="16"
+               HorizontalTextAlignment="Center"/>
 
-                            <StackLayout Orientation="Horizontal"
-                                         Spacing="10">
-                                   <Label Text="Rainbow Mode"
-                                          VerticalOptions="Center"
-                                          FontAttributes="Bold"/>
-                                   <Switch x:Name="RainbowSwitch"
-                                           Toggled="OnRainbowSwitchToggled"
-                                           HorizontalOptions="EndAndExpand"/>
-                            </StackLayout>
+        <StackLayout Orientation="Horizontal"
+                     Spacing="10">
+          <Label Text="Rainbow Mode"
+                 VerticalOptions="Center"
+                 FontAttributes="Bold"/>
+          <Switch x:Name="RainbowSwitch"
+                  Toggled="OnRainbowSwitchToggled"
+                  HorizontalOptions="EndAndExpand"/>
+        </StackLayout>
 
-                            <StackLayout Orientation="Horizontal"
-                                         Spacing="10">
-                                   <Label Text="Glow Effect"
-                                          VerticalOptions="Center"
-                                          FontAttributes="Bold"/>
-                                   <Switch x:Name="GlowSwitch"
-                                           Toggled="OnGlowSwitchToggled"
-                                           HorizontalOptions="EndAndExpand"/>
-                            </StackLayout>
+        <StackLayout Orientation="Horizontal"
+                     Spacing="10">
+          <Label Text="Glow Effect"
+                 VerticalOptions="Center"
+                 FontAttributes="Bold"/>
+          <Switch x:Name="GlowSwitch"
+                  Toggled="OnGlowSwitchToggled"
+                  HorizontalOptions="EndAndExpand"/>
+        </StackLayout>
 
-                            <Label Text="Glow Radius"
-                                   FontAttributes="Bold"/>
-                            <Slider x:Name="GlowRadiusSlider"
-                                    Minimum="1"
-                                    Maximum="50"
-                                    ValueChanged="OnGlowRadiusChanged"/>
+        <Label Text="Glow Radius"
+               FontAttributes="Bold"/>
+        <Slider x:Name="GlowRadiusSlider"
+                Minimum="1"
+                Maximum="50"
+                ValueChanged="OnGlowRadiusChanged"/>
 
-                            <Label Text="Glow Color"
-                                   FontAttributes="Bold"/>
-                            <StackLayout x:Name="GlowColorContainer"
-                                         Orientation="Horizontal"
-                                         Spacing="10"
-                                         HorizontalOptions="Center">
-                                   <!-- Preset Colors -->
-                                   <Border Stroke="Gray"
-                                           StrokeShape="RoundRectangle 15"
-                                           StrokeThickness="1"
-                                           HeightRequest="30"
-                                           WidthRequest="30">
-                                          <BoxView Color="#FFFF00"
-                                                   HorizontalOptions="Fill"
-                                                   VerticalOptions="Fill">
-                                                 <BoxView.GestureRecognizers>
-                                                        <TapGestureRecognizer Tapped="OnGlowColorTapped"
-                                                                              CommandParameter="#FFFF00"/>
-                                                 </BoxView.GestureRecognizers>
-                                          </BoxView>
-                                   </Border>
-                                   <Border Stroke="Gray"
-                                           StrokeShape="RoundRectangle 15"
-                                           StrokeThickness="1"
-                                           HeightRequest="30"
-                                           WidthRequest="30">
-                                          <BoxView Color="#00FFFF"
-                                                   HorizontalOptions="Fill"
-                                                   VerticalOptions="Fill">
-                                                 <BoxView.GestureRecognizers>
-                                                        <TapGestureRecognizer Tapped="OnGlowColorTapped"
-                                                                              CommandParameter="#00FFFF"/>
-                                                 </BoxView.GestureRecognizers>
-                                          </BoxView>
-                                   </Border>
-                                   <Border Stroke="Gray"
-                                           StrokeShape="RoundRectangle 15"
-                                           StrokeThickness="1"
-                                           HeightRequest="30"
-                                           WidthRequest="30">
-                                          <BoxView Color="#FF00FF"
-                                                   HorizontalOptions="Fill"
-                                                   VerticalOptions="Fill">
-                                                 <BoxView.GestureRecognizers>
-                                                        <TapGestureRecognizer Tapped="OnGlowColorTapped"
-                                                                              CommandParameter="#FF00FF"/>
-                                                 </BoxView.GestureRecognizers>
-                                          </BoxView>
-                                   </Border>
-                                   <Border Stroke="Gray"
-                                           StrokeShape="RoundRectangle 15"
-                                           StrokeThickness="1"
-                                           HeightRequest="30"
-                                           WidthRequest="30">
-                                          <BoxView Color="#00FF00"
-                                                   HorizontalOptions="Fill"
-                                                   VerticalOptions="Fill">
-                                                 <BoxView.GestureRecognizers>
-                                                        <TapGestureRecognizer Tapped="OnGlowColorTapped"
-                                                                              CommandParameter="#00FF00"/>
-                                                 </BoxView.GestureRecognizers>
-                                          </BoxView>
-                                   </Border>
-                                   <Border Stroke="Gray"
-                                           StrokeShape="RoundRectangle 15"
-                                           StrokeThickness="1"
-                                           HeightRequest="30"
-                                           WidthRequest="30">
-                                          <BoxView Color="#FFFFFF"
-                                                   HorizontalOptions="Fill"
-                                                   VerticalOptions="Fill">
-                                                 <BoxView.GestureRecognizers>
-                                                        <TapGestureRecognizer Tapped="OnGlowColorTapped"
-                                                                              CommandParameter="#FFFFFF"/>
-                                                 </BoxView.GestureRecognizers>
-                                          </BoxView>
-                                   </Border>
-                            </StackLayout>
-                     </StackLayout>
-              </ScrollView>
-       </Border>
+        <Label Text="Glow Color"
+               FontAttributes="Bold"/>
+        <StackLayout x:Name="GlowColorContainer"
+                     Orientation="Horizontal"
+                     Spacing="10"
+                     HorizontalOptions="Center">
+          <!-- Preset Colors -->
+          <Border Stroke="Gray"
+                  StrokeShape="RoundRectangle 15"
+                  StrokeThickness="1"
+                  HeightRequest="30"
+                  WidthRequest="30">
+            <BoxView Color="#FFFF00"
+                     HorizontalOptions="Fill"
+                     VerticalOptions="Fill">
+              <BoxView.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnGlowColorTapped"
+                                      CommandParameter="#FFFF00"/>
+              </BoxView.GestureRecognizers>
+            </BoxView>
+          </Border>
+          <Border Stroke="Gray"
+                  StrokeShape="RoundRectangle 15"
+                  StrokeThickness="1"
+                  HeightRequest="30"
+                  WidthRequest="30">
+            <BoxView Color="#00FFFF"
+                     HorizontalOptions="Fill"
+                     VerticalOptions="Fill">
+              <BoxView.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnGlowColorTapped"
+                                      CommandParameter="#00FFFF"/>
+              </BoxView.GestureRecognizers>
+            </BoxView>
+          </Border>
+          <Border Stroke="Gray"
+                  StrokeShape="RoundRectangle 15"
+                  StrokeThickness="1"
+                  HeightRequest="30"
+                  WidthRequest="30">
+            <BoxView Color="#FF00FF"
+                     HorizontalOptions="Fill"
+                     VerticalOptions="Fill">
+              <BoxView.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnGlowColorTapped"
+                                      CommandParameter="#FF00FF"/>
+              </BoxView.GestureRecognizers>
+            </BoxView>
+          </Border>
+          <Border Stroke="Gray"
+                  StrokeShape="RoundRectangle 15"
+                  StrokeThickness="1"
+                  HeightRequest="30"
+                  WidthRequest="30">
+            <BoxView Color="#00FF00"
+                     HorizontalOptions="Fill"
+                     VerticalOptions="Fill">
+              <BoxView.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnGlowColorTapped"
+                                      CommandParameter="#00FF00"/>
+              </BoxView.GestureRecognizers>
+            </BoxView>
+          </Border>
+          <Border Stroke="Gray"
+                  StrokeShape="RoundRectangle 15"
+                  StrokeThickness="1"
+                  HeightRequest="30"
+                  WidthRequest="30">
+            <BoxView Color="#FFFFFF"
+                     HorizontalOptions="Fill"
+                     VerticalOptions="Fill">
+              <BoxView.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnGlowColorTapped"
+                                      CommandParameter="#FFFFFF"/>
+              </BoxView.GestureRecognizers>
+            </BoxView>
+          </Border>
+        </StackLayout>
+      </StackLayout>
+    </ScrollView>
+  </Border>
 </ContentView>

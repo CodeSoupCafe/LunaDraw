@@ -31,7 +31,6 @@ using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Tools;
 using LunaDraw.Logic.ViewModels;
-using LunaDraw.Logic.Services; // ADDED: Required for ILayerFacade and IToolStateManager
 using Moq;
 using SkiaSharp;
 using Xunit;
