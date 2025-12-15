@@ -29,17 +29,21 @@ using LunaDraw.Logic.Utils;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using ReactiveUI;
+using System.Windows.Input;
 
 namespace LunaDraw.Logic.ViewModels;
 
 public class LayerPanelViewModel : ReactiveObject
 {
   private readonly ILayerFacade layerFacade;
+  private readonly IMessageBus messageBus;
+  private readonly IPreferencesFacade preferencesFacade;
 
-  public LayerPanelViewModel(ILayerFacade layerFacade, IMessageBus messageBus)
+  public LayerPanelViewModel(ILayerFacade layerFacade, IMessageBus messageBus, IPreferencesFacade preferencesFacade)
   {
     this.layerFacade = layerFacade;
-
+    this.messageBus = messageBus;
+    this.preferencesFacade = preferencesFacade;
     layerFacade.WhenAnyValue(x => x.CurrentLayer)
         .Subscribe(_ => this.RaisePropertyChanged(nameof(CurrentLayer)));
 
@@ -99,6 +103,26 @@ public class LayerPanelViewModel : ReactiveObject
       }
     }, outputScheduler: RxApp.MainThreadScheduler);
 
+    ToggleTraceModeCommand = ReactiveCommand.Create(() =>
+    {
+      if (IsTransparentBackground)
+      {
+        WindowTransparency = 255;
+      }
+      else
+      {
+        WindowTransparency = 125;
+      }
+
+      messageBus.SendMessage(new CanvasInvalidateMessage());
+    }, outputScheduler: RxApp.MainThreadScheduler);
+
+    // Initialize state from Preferences
+    IsTransparentBackground = preferencesFacade.Get<bool>(AppPreference.IsTransparentBackgroundEnabled);
+    if (!IsTransparentBackground)
+    {
+      windowTransparency = 255;
+    }
   }
 
   public ObservableCollection<Layer> Layers => layerFacade.Layers;
@@ -115,4 +139,62 @@ public class LayerPanelViewModel : ReactiveObject
   public ReactiveCommand<Layer, Unit> MoveLayerBackwardCommand { get; }
   public ReactiveCommand<Layer, Unit> ToggleLayerVisibilityCommand { get; }
   public ReactiveCommand<Layer, Unit> ToggleLayerLockCommand { get; }
+  public ReactiveCommand<Unit, Unit> ToggleTraceModeCommand { get; }
+
+  private bool isTransparentBackground = false;
+  public bool IsTransparentBackground
+  {
+    get => isTransparentBackground;
+    set
+    {
+      this.RaiseAndSetIfChanged(ref isTransparentBackground, value);
+      preferencesFacade.Set(AppPreference.IsTransparentBackgroundEnabled, value);
+
+      if (!isTransparentBackground)
+      {
+        WindowTransparency = 255;
+        UpdateWindowTransparency();
+      }
+
+      messageBus.SendMessage(new CanvasInvalidateMessage());
+    }
+  }
+
+  private byte windowTransparency = 180;
+  public virtual byte WindowTransparency
+  {
+    get => windowTransparency;
+    set
+    {
+      this.RaiseAndSetIfChanged(ref windowTransparency, value);
+      if (value == 255 && isTransparentBackground)
+      {
+        IsTransparentBackground = false;
+        UpdateWindowTransparency();
+      }
+      else if (value < 255 && !isTransparentBackground)
+      {
+        IsTransparentBackground = true;
+      }
+
+      if (IsTransparentBackground)
+      {
+        UpdateWindowTransparency();
+      }
+    }
+  }
+
+  private void UpdateWindowTransparency()
+  {
+#if WINDOWS
+    if (IsTransparentBackground)
+    {
+      LunaDraw.PlatformHelper.EnableTrueTransparency(WindowTransparency);
+    }
+    else
+    {
+      LunaDraw.PlatformHelper.EnableTrueTransparency(255);
+    }
+#endif
+  }
 }

@@ -234,7 +234,8 @@ public class ToolbarViewModel : ReactiveObject
       IMessageBus messageBus,
       IBitmapCache bitmapCacheManager,
       NavigationModel navigationModel,
-      IFileSaver fileSaver)
+      IFileSaver fileSaver,
+      IPreferencesFacade preferencesFacade)
   {
     this.layerFacade = layerFacade;
     this.selectionVM = selectionVM;
@@ -259,7 +260,7 @@ public class ToolbarViewModel : ReactiveObject
               new EllipseTool(messageBus),
               new LineTool(messageBus),
               new FillTool(messageBus),
-              new EraserBrushTool(messageBus)
+              new EraserBrushTool(messageBus, preferencesFacade)
     ];
 
     AvailableBrushShapes =

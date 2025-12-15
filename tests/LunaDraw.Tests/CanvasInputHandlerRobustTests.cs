@@ -68,6 +68,7 @@ namespace LunaDraw.Tests
       var historyVM = new HistoryViewModel(mockLayerFacade.Object, mockMessageBus.Object);
       var mockBitmapCache = new Mock<IBitmapCache>();
       var mockFileSaver = new Mock<IFileSaver>();
+      var mockPreferences = new Mock<IPreferencesFacade>();
 
       // Ensure MessageBus returns observables for ToolbarViewModel constructor
       mockMessageBus.Setup(x => x.Listen<BrushSettingsChangedMessage>()).Returns(Observable.Empty<BrushSettingsChangedMessage>());
@@ -81,7 +82,8 @@ namespace LunaDraw.Tests
           mockMessageBus.Object,
           mockBitmapCache.Object,
           navigationModel,
-          mockFileSaver.Object
+          mockFileSaver.Object,
+          mockPreferences.Object
       );
 
       // Setup default behavior

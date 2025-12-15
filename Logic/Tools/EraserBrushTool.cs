@@ -31,7 +31,7 @@ using SkiaSharp;
 
 namespace LunaDraw.Logic.Tools;
 
-public class EraserBrushTool(IMessageBus messageBus) : IDrawingTool
+public class EraserBrushTool(IMessageBus messageBus, IPreferencesFacade preferencesFacade) : IDrawingTool
 {
   public string Name => "Eraser";
   public ToolType Type => ToolType.Eraser;
@@ -39,6 +39,7 @@ public class EraserBrushTool(IMessageBus messageBus) : IDrawingTool
   private SKPath? currentPath;
   private DrawablePath? currentDrawablePath;
   private readonly IMessageBus messageBus = messageBus;
+  private readonly IPreferencesFacade preferencesFacade = preferencesFacade;
 
   public void OnTouchPressed(SKPoint point, ToolContext context)
   {
@@ -50,7 +51,7 @@ public class EraserBrushTool(IMessageBus messageBus) : IDrawingTool
     currentDrawablePath = new DrawablePath
     {
       Path = currentPath,
-      StrokeColor = Preferences.Default.GetCanvasBackgroundColor(), // Visual preview color
+      StrokeColor = preferencesFacade.GetCanvasBackgroundColor(), // Visual preview color
       StrokeWidth = context.StrokeWidth * 2, // Eraser usually wider
       Opacity = 255,
       BlendMode = SKBlendMode.SrcOver,

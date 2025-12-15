@@ -82,6 +82,7 @@ namespace LunaDraw.Tests
             var clipboardMemento = new ClipboardMemento();
             var selectionVM = new SelectionViewModel(selectionObserver, mockLayerFacade.Object, clipboardMemento, mockMessageBus.Object);
             var historyVM = new HistoryViewModel(mockLayerFacade.Object, mockMessageBus.Object);
+            var mockPreferences = new Mock<IPreferencesFacade>();
 
             toolbarViewModel = new ToolbarViewModel(
                 mockLayerFacade.Object,
@@ -90,7 +91,8 @@ namespace LunaDraw.Tests
                 mockMessageBus.Object,
                 mockBitmapCache.Object,
                 navigationModel,
-                mockFileSaver.Object
+                mockFileSaver.Object,
+                mockPreferences.Object
             );
 
             // Inject mock tool
@@ -115,6 +117,7 @@ namespace LunaDraw.Tests
             var clipboardMemento = new ClipboardMemento();
             var localSelectionVM = new SelectionViewModel(selectionObserver, mockLayerFacade.Object, clipboardMemento, mockMessageBus.Object);
             var localHistoryVM = new HistoryViewModel(mockLayerFacade.Object, mockMessageBus.Object);
+            var mockPreferences = new Mock<IPreferencesFacade>();
             
             var localToolbarVM = new ToolbarViewModel(
                 mockLayerFacade.Object,
@@ -123,7 +126,8 @@ namespace LunaDraw.Tests
                 mockMessageBus.Object,
                 mockBitmapCache.Object,
                 navigationModel,
-                mockFileSaver.Object
+                mockFileSaver.Object,
+                mockPreferences.Object
             );
             
             // Mock active tool inside the local VM

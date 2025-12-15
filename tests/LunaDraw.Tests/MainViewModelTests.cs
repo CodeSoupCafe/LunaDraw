@@ -91,7 +91,8 @@ namespace LunaDraw.Tests
           messageBusMock.Object,
           new Mock<IBitmapCache>().Object,
           navigationModel,
-          new Mock<IFileSaver>().Object
+          new Mock<IFileSaver>().Object,
+          preferencesFacadeMock.Object
       );
 
       // Setup property change notifications for ToolStateManager

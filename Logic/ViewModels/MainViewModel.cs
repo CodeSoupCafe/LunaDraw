@@ -35,7 +35,6 @@ using ReactiveUI;
 using SkiaSharp;
 using SkiaSharp.Views.Maui;
 using CommunityToolkit.Maui.Extensions;
-using System.Reactive;
 
 namespace LunaDraw.Logic.ViewModels;
 
@@ -59,7 +58,6 @@ public class MainViewModel : ReactiveObject
   public ICommand ZoomInCommand { get; }
   public ICommand ZoomOutCommand { get; }
   public ICommand ResetZoomCommand { get; }
-  public ICommand ToggleTraceModeCommand { get; }
 
   public SKRect CanvasSize { get; set; }
 
@@ -155,27 +153,6 @@ public class MainViewModel : ReactiveObject
         await page.ShowPopupAsync(popup);
       }
     });
-
-    ToggleTraceModeCommand = ReactiveCommand.Create(() =>
-    {
-      if (IsTransparentBackground)
-      {
-        WindowTransparency = 255;
-      }
-      else
-      {
-        WindowTransparency = 125;
-      }
-
-      messageBus.SendMessage(new CanvasInvalidateMessage());
-    }, outputScheduler: RxApp.MainThreadScheduler);
-
-    // Initialize state from Preferences
-    IsTransparentBackground = preferencesFacade.Get<bool>(AppPreference.IsTransparentBackgroundEnabled);
-    if (!IsTransparentBackground)
-    {
-      windowTransparency = 255;
-    }
   }
 
   public IDrawingTool ActiveTool
@@ -275,62 +252,5 @@ public class MainViewModel : ReactiveObject
     NavigationModel.ViewMatrix = SKMatrix.Concat(zoomMatrix, NavigationModel.ViewMatrix);
 
     messageBus.SendMessage(new CanvasInvalidateMessage());
-  }
-
-  private bool isTransparentBackground = false;
-  public bool IsTransparentBackground
-  {
-    get => isTransparentBackground;
-    set
-    {
-      this.RaiseAndSetIfChanged(ref isTransparentBackground, value);
-      preferencesFacade.Set(AppPreference.IsTransparentBackgroundEnabled, value);
-
-      if (!isTransparentBackground)
-      {
-        WindowTransparency = 255;
-        UpdateWindowTransparency();
-      }
-
-      messageBus.SendMessage(new CanvasInvalidateMessage());
-    }
-  }
-
-  private byte windowTransparency = 180;
-  public virtual byte WindowTransparency
-  {
-    get => windowTransparency;
-    set
-    {
-      this.RaiseAndSetIfChanged(ref windowTransparency, value);
-      if (value == 255 && isTransparentBackground)
-      {
-        IsTransparentBackground = false;
-        UpdateWindowTransparency();
-      }
-      else if (value < 255 && !isTransparentBackground)
-      {
-        IsTransparentBackground = true;
-      }
-
-      if (IsTransparentBackground)
-      {
-        UpdateWindowTransparency();
-      }
-    }
-  }
-
-  private void UpdateWindowTransparency()
-  {
-#if WINDOWS
-    if (IsTransparentBackground)
-    {
-      LunaDraw.PlatformHelper.EnableTrueTransparency(WindowTransparency);
-    }
-    else
-    {
-      LunaDraw.PlatformHelper.EnableTrueTransparency(255);
-    }
-#endif
   }
 }

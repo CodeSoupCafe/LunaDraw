@@ -83,6 +83,8 @@ namespace LunaDraw.Tests
       navigationModel.CanvasWidth = 0;
       navigationModel.CanvasHeight = 0;
 
+      var mockPreferences = new Mock<IPreferencesFacade>();
+
       var viewModel = new ToolbarViewModel(
           layerFacadeMock.Object,
           selectionViewModel,
@@ -90,7 +92,8 @@ namespace LunaDraw.Tests
           messageBusMock.Object,
           bitmapCacheMock.Object,
           navigationModel,
-          fileSaverMock.Object);
+          fileSaverMock.Object,
+          mockPreferences.Object);
 
       // Act
       viewModel.SaveImageCommand.Execute().Subscribe();
@@ -106,6 +109,8 @@ namespace LunaDraw.Tests
       navigationModel.CanvasWidth = 100;
       navigationModel.CanvasHeight = 100;
 
+      var mockPreferences = new Mock<IPreferencesFacade>();
+
       var viewModel = new ToolbarViewModel(
           layerFacadeMock.Object,
           selectionViewModel,
@@ -113,7 +118,8 @@ namespace LunaDraw.Tests
           messageBusMock.Object,
           bitmapCacheMock.Object,
           navigationModel,
-          fileSaverMock.Object);
+          fileSaverMock.Object,
+          mockPreferences.Object);
 
       fileSaverMock.Setup(x => x.SaveAsync(It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
           .ReturnsAsync(new FileSaverResult("path", null));

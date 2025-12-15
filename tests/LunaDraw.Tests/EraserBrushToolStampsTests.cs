@@ -36,10 +36,14 @@ namespace LunaDraw.Tests
     public class EraserBrushToolStampsTests
     {
         private readonly Mock<IMessageBus> mockBus;
+        private readonly Mock<IPreferencesFacade> mockPreferences;
 
         public EraserBrushToolStampsTests()
         {
             mockBus = new Mock<IMessageBus>();
+            mockPreferences = new Mock<IPreferencesFacade>();
+            mockPreferences.Setup(p => p.Get<bool>(AppPreference.IsTransparentBackgroundEnabled)).Returns(false);
+            mockPreferences.Setup(p => p.Get(AppPreference.AppTheme)).Returns("Light");
         }
 
         [Fact]
@@ -71,7 +75,7 @@ namespace LunaDraw.Tests
                 BrushShape = BrushShape.Circle()
             };
 
-            var tool = new EraserBrushTool(mockBus.Object);
+            var tool = new EraserBrushTool(mockBus.Object, mockPreferences.Object);
 
             // Act
             // Erase over the first point (100, 100)
@@ -128,7 +132,7 @@ namespace LunaDraw.Tests
                 BrushShape = BrushShape.Square()
             };
 
-            var tool = new EraserBrushTool(mockBus.Object);
+            var tool = new EraserBrushTool(mockBus.Object, mockPreferences.Object);
 
             // Act
             // Erase a corner of the square (100,100 is center. Size 50 -> 75 to 125.
@@ -179,7 +183,7 @@ namespace LunaDraw.Tests
                 BrushShape = BrushShape.Square()
             };
 
-            var tool = new EraserBrushTool(mockBus.Object);
+            var tool = new EraserBrushTool(mockBus.Object, mockPreferences.Object);
 
             // Act
             tool.OnTouchPressed(new SKPoint(75, 75), context);

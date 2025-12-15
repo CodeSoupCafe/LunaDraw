@@ -5,19 +5,14 @@ namespace LunaDraw.Logic.Extensions;
 
 public static class PreferencesExtensions
 {
-  public static SKColor GetCanvasBackgroundColor(this IPreferencesFacade _)
+  public static SKColor GetCanvasBackgroundColor(this IPreferencesFacade preferencesFacade)
   {
-    return GetCanvasBackgroundColor(Preferences.Default);
-  }
-
-  public static SKColor GetCanvasBackgroundColor(this IPreferences preferences)
-  {
-    var isTransparentBackground = preferences.Get(AppPreference.IsTransparentBackgroundEnabled.ToString(), PreferencesFacade.Defaults[AppPreference.IsTransparentBackgroundEnabled]);
+    var isTransparentBackground = preferencesFacade.Get<bool>(AppPreference.IsTransparentBackgroundEnabled);
 
     if (isTransparentBackground) return SKColors.Transparent;
 
     var selectedTheme = Application.Current?.RequestedTheme;
-    var settingTheme = preferences.Get(AppPreference.AppTheme.ToString(), PreferencesFacade.Defaults[AppPreference.AppTheme]);
+    var settingTheme = preferencesFacade.Get(AppPreference.AppTheme);
 
     if (settingTheme != PreferencesFacade.Defaults[AppPreference.AppTheme])
     {
