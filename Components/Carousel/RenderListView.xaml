@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+  xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+  xmlns:models="clr-namespace:LunaDraw.Logic.Models"
+  xmlns:cellviews="clr-namespace:BurnCalc.Views.Components.Charts"
+  xmlns:converters="clr-namespace:LunaDraw.Converters"
+  xmlns:pages="clr-namespace:LunaDraw.Components.Carousel"
+  xmlns:navigation="clr-namespace:CodeSoupCafe.Xamarin.Views.Navigation;assembly=CodeSoupCafe.Xamarin"
+  xmlns:types="clr-namespace:CodeSoupCafe.Xamarin.Views.Types;assembly=CodeSoupCafe.Xamarin"
+  xmlns:views="clr-namespace:CodeSoupCafe.Xamarin.Views;assembly=CodeSoupCafe.Xamarin"
+  xmlns:infrastructure="clr-namespace:CodeSoupCafe.Xamarin;assembly=CodeSoupCafe.Xamarin"
+  x:Class="LunaDraw.Components.Carousel.RenderListView"
+  x:Name="PageRef"
+  x:DataType="pages:RenderListView"
+  Title="Items"
+  Visual="Material">
+  <ContentPage.Resources>
+    <ResourceDictionary>
+      <converters:ReverseBoolValueConverter x:Key="ReverseBoolValueConverter"/>
+      <!--<Style TargetType="ContentPage">
+        <Setter Property="ControlTemplate" Value="{StaticResource MainPageTemplate}" />
+      </Style>
+      <ControlTemplate x:Key="MainPageTemplate">
+        <Grid VerticalOptions="FillAndExpand"
+        HorizontalOptions="FillAndExpand"
+        ColumnSpacing="0">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="50" />
+            <RowDefinition Height="*" />
+          </Grid.RowDefinitions>
+          <components:NavigationIcon x:Name="MenuIcon" IconTitle="{local:Translate Reset}" IconLayout="Horizontal" IconCode="{local:Translate IconSettingsOverscan}">
+            <VisualStateManager.VisualStateGroups>
+              <VisualStateGroup Name="NavigationLinkStates">
+                <VisualState Name="NormalTitle">
+                  <VisualState.Setters>
+                    <Setter Property="IconTitleStyle" Value="NormalTitle" />
+                  </VisualState.Setters>
+                </VisualState>
+                <VisualState Name="DisabledTitle">
+                  <VisualState.Setters>
+                    <Setter Property="IconTitleStyle" Value="DisabledTitle" />
+                  </VisualState.Setters>
+                </VisualState>
+              </VisualStateGroup>
+            </VisualStateManager.VisualStateGroups>
+            <components:NavigationIcon.GestureRecognizers>
+              <TapGestureRecognizer Command="{Binding ZoomToFit, Source={x:Reference ChartNavToolbarRef}}" />
+            </components:NavigationIcon.GestureRecognizers>
+          </components:NavigationIcon>
+          <ContentPresenter VerticalOptions="FillAndExpand"
+                        HorizontalOptions="FillAndExpand"
+                        Grid.Column="0"
+                        Grid.Row="1" />
+        </Grid>
+      </ControlTemplate>-->
+    </ResourceDictionary>
+  </ContentPage.Resources>
+  <ContentPage.ToolbarItems>
+    <navigation:HidableToolbarItem TextLateBind="{local:Translate List}"
+                                   IconImageSourceLateBind="{FontImage FontFamily={StaticResource MaterialFontString}, Glyph={local:Translate IconViewHeadline}}"
+                                   Command="{Binding RenderListViewAdapter.ShowGrid, Source={Reference PageRef}}"
+                                   CommandParameter="{x:Static types:ViewType.List}"
+                                   IsVisible="{Binding ViewModel.IsGridMode, Source={Reference PageRef}}"
+                                   Priority="1"/>
+    <navigation:HidableToolbarItem TextLateBind="{local:Translate Grid}"
+                                   IconImageSourceLateBind="{FontImage FontFamily={StaticResource MaterialFontString}, Glyph={local:Translate IconGrid}}"
+                                   Command="{Binding RenderListViewAdapter.ShowGrid, Source={Reference PageRef}}"
+                                   CommandParameter="{x:Static types:ViewType.Grid}"
+                                   IsVisible="{Binding ViewModel.IsGridMode, Source={Reference PageRef}, Converter={x:StaticResource ReverseBoolValueConverter}}"
+                                   Priority="1"/>
+    <ToolbarItem Text="{local:Translate Sort}"
+                 IconImageSource="{FontImage FontFamily={StaticResource MaterialFontString}, Glyph={local:Translate IconFilterList}}"
+                 Command="{Binding RenderListViewAdapter.ShowHideSortPanelCommand}"
+                 Priority="2"/>
+    <ToolbarItem Text="{local:Translate Search}"
+                 IconImageSource="{FontImage FontFamily={StaticResource MaterialFontString}, Glyph={local:Translate IconSearch}}"
+                 Command="{Binding RenderListViewAdapter.ShowHideSearchPanelCommand}"
+                 Priority="3"/>
+    <!--<ToolbarItem Text="{local:Translate More}" IconImageSource="{FontImage FontFamily={StaticResource MaterialFontString}, Glyph={local:Translate IconMoreVertical}}" Command="{Binding RenderListViewAdapter.ShowMoreMenu}" Priority="3" />-->
+  </ContentPage.ToolbarItems>
+  <Grid x:Name="AdMobContainer"
+        HorizontalOptions="FillAndExpand"
+        SizeChanged="AdMobContainer_SizeChanged">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+    <Grid.Resources>
+      <ResourceDictionary>
+        <infrastructure:DataTemplateTyped x:Key="ChartSideBySideView"
+                                          x:TypeArguments="cellviews:ChartSideBySideView"/>
+        <!--<navigation:SortFilterDataTemplates x:Key="SortFilterDataTemplates" />-->
+        <converters1:DateAsDayValueConverter x:Key="DateAsDayValueConverter"/>
+      </ResourceDictionary>
+    </Grid.Resources>
+
+    <!--<CarouselView
+            ItemsSource="{Binding NavigationPanels}"
+            ItemTemplate="{Binding Source={x:StaticResource SortFilterDataTemplates}}">
+        </CarouselView>-->
+    <ListView Margin="10, 0"
+              x:Name="ChartList"
+              ItemTapped="ListView_ItemTapped"
+              ItemsSource="{Binding ViewModel.Charts}"
+              IsVisible="{Binding ViewModel.IsGridMode, Converter={x:StaticResource ReverseBoolValueConverter}}"
+              RefreshCommand="{Binding ViewModel.ReloadChartData}"
+              IsRefreshing="{Binding ViewModel.IsRefreshing}">
+      <ListView.ItemTemplate>
+        <DataTemplate x:DataType="models:ChartState">
+          <ViewCell>
+            <FlexLayout Direction="Row">
+              <Label Text="{Binding Title}"
+                     FlexLayout.Grow="1"
+                     FontSize="Small"
+                     VerticalTextAlignment="Center"
+                     HorizontalTextAlignment="Start"
+                     LineBreakMode="MiddleTruncation"/>
+              <Label Text="{Binding DateCreated, Converter={x:StaticResource DateAsDayValueConverter}}"
+                     WidthRequest="150"
+                     FontSize="Small"
+                     VerticalTextAlignment="Center"
+                     HorizontalTextAlignment="Start"/>
+            </FlexLayout>
+          </ViewCell>
+        </DataTemplate>
+      </ListView.ItemTemplate>
+    </ListView>
+    <RefreshView IsRefreshing="{Binding ViewModel.IsRefreshing}"
+                 Command="{Binding ViewModel.ReloadChartData}"
+                 IsVisible="{Binding ViewModel.IsGridMode}">
+      <CollectionView x:Name="ChartCollectionView"
+                      Margin="10, 0, 10, 0"
+                      HorizontalOptions="FillAndExpand"
+                      VerticalOptions="FillAndExpand"
+                      SelectionMode="None"
+                      Scrolled="ChartGrid_Scrolled"
+                      ItemsSource="{Binding ViewModel.Charts}"
+                      ItemTemplate="{Binding Source={x:StaticResource ChartSideBySideView}}">
+        <CollectionView.ItemsLayout>
+          <GridItemsLayout Orientation="Vertical"
+                           x:Name="MediaItemGridLayout"
+                           Span="2"/>
+        </CollectionView.ItemsLayout>
+        <CollectionView.EmptyView>
+          <StackLayout Orientation="Vertical"
+                       Padding="20">
+            <ActivityIndicator x:Name="ActivityIndicator"
+                               HorizontalOptions="FillAndExpand"
+                               IsRunning="True"
+                               IsVisible="true"/>
+            <ProgressBar x:Name="ProgressIndicator"
+                         HorizontalOptions="FillAndExpand"
+                         ProgressColor="Black"
+                         IsVisible="false"/>
+            <StackLayout Orientation="Vertical"
+                         HorizontalOptions="FillAndExpand"
+                         IsVisible="{Binding ViewModel.IsEmptyCharts}">
+              <Label Text="{local:Translate Welcome}"
+                     IsVisible="{Binding ViewModel.HasUser, Converter={StaticResource ReverseBoolValueConverter}}"
+                     FontSize="Title"
+                     HorizontalTextAlignment="Center"/>
+              <Label Text="{Binding ViewModel.Firstname}"
+                     IsVisible="{Binding ViewModel.HasUser}"
+                     FontSize="Title"
+                     HorizontalTextAlignment="Center"/>
+              <Label Text="{local:Translate NoChartsFound}"
+                     FontSize="Body"
+                     HorizontalTextAlignment="Center"
+                     Margin="0, 0, 0, 40"/>
+              <Button Text="{local:Translate AddNewBurnChart}"
+                      Command="{Binding RenderListViewAdapter.ChartCommands.AddNewChartCommand}"
+                      Visual="Material"/>
+            </StackLayout>
+          </StackLayout>
+        </CollectionView.EmptyView>
+      </CollectionView>
+    </RefreshView>
+    <Frame
+      CornerRadius="25"
+      Padding="1,1,1,1"
+      Margin="0,0,30,40"
+      WidthRequest="50"
+      HeightRequest="50"
+      BorderColor="White"
+      HorizontalOptions="End"
+      VerticalOptions="End"
+      BackgroundColor="White">
+      <Label Text="{local:Translate IconAddCircle}"
+             Style="{StaticResource MaterialFont}"
+             FontSize="50"
+             VerticalTextAlignment="Center"
+             HorizontalTextAlignment="Center"
+             TextColor="Maroon">
+        <Label.GestureRecognizers>
+          <TapGestureRecognizer Command="{Binding RenderListViewAdapter.ChartCommands.AddNewChartCommand}"/>
+        </Label.GestureRecognizers>
+      </Label>
+    </Frame>
+    <StackLayout x:Name="SearchPanel"
+                 Orientation="Horizontal"
+                 IsVisible="false"
+                 VerticalOptions="Start"
+                 Style="{StaticResource NormalLayout}"
+                 Padding="9, 3">
+      <Label Text="{local:Translate Search}"
+             HorizontalOptions="Start"
+             VerticalOptions="FillAndExpand"
+             VerticalTextAlignment="Center"
+             Style="{StaticResource NormalTitle}"
+             FontSize="Large"/>
+      <Entry x:Name="SearchEntry"
+             Text="{Binding ViewModel.SearchText}"
+             HorizontalOptions="FillAndExpand"
+             VerticalOptions="FillAndExpand"
+             BackgroundColor="White"
+             TextChanged="SearchEntry_TextChanged"/>
+      <navigation:NavigationIcon IconTitle="{local:Translate Clear}"
+                                 IconLayout="Vertical"
+                                 IconCode="{local:Translate IconBlock}"
+                                 IconStyle="NormalIcon"
+                                 IconTitleStyle="NormalTitle"
+                                 HorizontalOptions="End"
+                                 VerticalOptions="CenterAndExpand">
+        <navigation:NavigationIcon.GestureRecognizers>
+          <TapGestureRecognizer Command="{Binding RenderListViewAdapter.ClearSearchPanelCommand}"
+                                CommandParameter="{StaticResource False}"/>
+        </navigation:NavigationIcon.GestureRecognizers>
+      </navigation:NavigationIcon>
+      <navigation:NavigationIcon IconTitle="{local:Translate Close}"
+                                 IconLayout="Vertical"
+                                 IconCode="{local:Translate IconClose}"
+                                 IconStyle="NormalIcon"
+                                 IconTitleStyle="NormalTitle"
+                                 HorizontalOptions="End"
+                                 VerticalOptions="CenterAndExpand">
+        <navigation:NavigationIcon.GestureRecognizers>
+          <TapGestureRecognizer Command="{Binding RenderListViewAdapter.ClearSearchPanelCommand}"
+                                CommandParameter="{StaticResource True}"/>
+        </navigation:NavigationIcon.GestureRecognizers>
+      </navigation:NavigationIcon>
+    </StackLayout>
+    <StackLayout x:Name="SortPanel"
+                 Orientation="Horizontal"
+                 IsVisible="false"
+                 VerticalOptions="Start"
+                 Style="{StaticResource NormalLayout}">
+      <Picker Title="Sort by"
+              ItemsSource="{Binding ViewModel.SortProperties}"
+              SelectedItem="{Binding ViewModel.ChartListSortProperty}"
+              MinimumWidthRequest="200"
+              HorizontalOptions="FillAndExpand"
+              BackgroundColor="White"/>
+      <Picker Title="Direction"
+              ItemsSource="{Binding ViewModel.SortOrders}"
+              SelectedItem="{Binding ViewModel.ChartListSortOrder}"
+              MinimumWidthRequest="200"
+              HorizontalOptions="FillAndExpand"
+              BackgroundColor="White"/>
+      <Button Text="{local:Translate Done}"
+              Command="{Binding RenderListViewAdapter.ShowHideSortPanelCommand}"
+              HorizontalOptions="End"
+              Visual="Material"
+              Margin="10"
+              BackgroundColor="#2c6bc6"
+              TextColor="White"/>
+    </StackLayout>
+    <navigation:MoreMenuNavigation x:Name="MoreMenuNavRef"/>
+    <views:AdMobView x:Name="AdMobElement"
+                     AdUnitId="{Binding AdUnitId}"
+                     SetAdState="{Binding ViewModel.IsAdsEnabled}"
+                     Grid.Row="1"
+                     BackgroundColor="White"/>
+  </Grid>
+</ContentPage>

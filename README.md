@@ -23,7 +23,7 @@ LunaDraw is a child-centric drawing application designed for children aged 3–8
 | Default (Light Theme) | Trace Mode |
 | :---: | :---: |
 | <img src="Documentation/Screenshots/LunaDraw%20Light%20Theme.png" width="400" alt="Light Theme" /> | <img src="Documentation/Screenshots/LunaDraw%20Light%20Theme%20Trace%20Mode.png" width="400" alt="Light Theme Trace Mode" /> |
-| Stamps & Vector Drawing | Trace Mode |
+| Art Management | Stamps & Vector Drawing |
 | <img src="Documentation/Screenshots/Luna%20Draw%20Fish%20Stamps%20Resize%20Vector.png" width="400" alt="Stamps" /> | <img src="Documentation/Screenshots/Luna%20Draw%20Fish%20Stamps%20Resize%20Vector.png" width="400" alt="Light Theme Trace Mode" /> |
 
 ## Features

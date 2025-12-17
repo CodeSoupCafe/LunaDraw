@@ -24,11 +24,13 @@
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using System.Reactive.Linq;
+using System.Reactive;
 
 using LunaDraw.Logic.Utils;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Tools;
+using LunaDraw.Logic.Constants;
 
 using ReactiveUI;
 
@@ -48,23 +50,50 @@ public class MainViewModel : ReactiveObject
   public SelectionObserver SelectionObserver { get; }
   private readonly IMessageBus messageBus;
   private readonly IPreferencesFacade preferencesFacade;
+  private readonly IDrawingStorageMomento drawingStorageMomento;
+
+  // Properties for current drawing state
+  private Guid currentDrawingId = Guid.Empty;
+  public Guid CurrentDrawingId
+  {
+    get => currentDrawingId;
+    private set => this.RaiseAndSetIfChanged(ref currentDrawingId, value);
+  }
+
+  private string _currentDrawingName = AppConstants.Defaults.UntitledDrawingName;
+  public string CurrentDrawingName
+  {
+    get => _currentDrawingName;
+    set => this.RaiseAndSetIfChanged(ref _currentDrawingName, value);
+  }
 
   // Sub-ViewModels
   public LayerPanelViewModel LayerPanelVM { get; }
   public SelectionViewModel SelectionVM { get; }
   public HistoryViewModel HistoryVM { get; }
+  private readonly GalleryViewModel galleryViewModel;
 
   // Commands
   public ICommand ZoomInCommand { get; }
   public ICommand ZoomOutCommand { get; }
   public ICommand ResetZoomCommand { get; }
 
+  public ReactiveCommand<Unit, Unit> ShowGalleryCommand { get; }
+  public ReactiveCommand<External.Drawing, Unit> LoadDrawingCommand { get; }
+  public ReactiveCommand<string?, Unit> ExternaDrawingCommand { get; }
+  public ReactiveCommand<Unit, Unit> NewDrawingCommand { get; }
+
   public SKRect CanvasSize { get; set; }
 
   // UI State
-  public List<string> AvailableThemes { get; } = new List<string> { "Automatic", "Light", "Dark" };
+  public List<string> AvailableThemes { get; } = new List<string>
+  {
+      AppConstants.Themes.Automatic,
+      AppConstants.Themes.Light,
+      AppConstants.Themes.Dark
+  };
 
-  private string selectedTheme = "Automatic";
+  private string selectedTheme = AppConstants.Themes.Automatic;
   public string SelectedTheme
   {
     get => selectedTheme;
@@ -118,9 +147,11 @@ public class MainViewModel : ReactiveObject
     SelectionObserver selectionObserver,
     IMessageBus messageBus,
     IPreferencesFacade preferencesFacade,
+    IDrawingStorageMomento drawingStorageMomento,
     LayerPanelViewModel layerPanelVM,
     SelectionViewModel selectionVM,
-    HistoryViewModel historyVM)
+    HistoryViewModel historyVM,
+    GalleryViewModel galleryViewModel)
   {
     ToolbarViewModel = toolbarViewModel;
     LayerFacade = layerFacade;
@@ -129,15 +160,44 @@ public class MainViewModel : ReactiveObject
     SelectionObserver = selectionObserver;
     this.messageBus = messageBus;
     this.preferencesFacade = preferencesFacade;
+    this.drawingStorageMomento = drawingStorageMomento;
     LayerPanelVM = layerPanelVM;
     SelectionVM = selectionVM;
     HistoryVM = historyVM;
+    this.galleryViewModel = galleryViewModel;
+
+    // Initialize Drawing Commands
+    LoadDrawingCommand = ReactiveCommand.CreateFromTask<External.Drawing>(LoadDrawingAsync);
+    ExternaDrawingCommand = ReactiveCommand.CreateFromTask<string?>(ExternalDrawingAsync);
+    NewDrawingCommand = ReactiveCommand.CreateFromTask(NewDrawingAsync);
+    ShowGalleryCommand = ReactiveCommand.CreateFromTask(async () =>
+    {
+      galleryViewModel.SelectedDrawing = null;
+      galleryViewModel.IsNewDrawingRequested = false;
+      galleryViewModel.LoadDrawingsCommand.Execute().Subscribe();
+
+      var galleryPopup = new Components.GalleryPopup(galleryViewModel);
+      await Application.Current?.Windows[0].Page.ShowPopupAsync(galleryPopup);
+
+      if (galleryViewModel.SelectedDrawing is External.Drawing selectedDrawing)
+      {
+        await LoadDrawingCommand.Execute(selectedDrawing);
+      }
+      else if (galleryViewModel.IsNewDrawingRequested)
+      {
+        // New drawing
+        NewDrawingCommand.Execute().Subscribe();
+      }
+    });
+
+    // Initial drawing state
+    NewDrawingCommand.Execute().Subscribe();
 
     // Use Property setters to trigger ViewOptionsChangedMessage so ToolbarViewModel syncs up
     ShowButtonLabels = this.preferencesFacade.Get<bool>(AppPreference.ShowButtonLabels);
     ShowLayersPanel = this.preferencesFacade.Get<bool>(AppPreference.ShowLayersPanel);
-    var savedTheme = this.preferencesFacade.Get(AppPreference.AppTheme);
-    SelectedTheme = AvailableThemes.FirstOrDefault(t => t == savedTheme) ?? AvailableThemes[0];
+    var externalTheme = this.preferencesFacade.Get(AppPreference.AppTheme);
+    SelectedTheme = AvailableThemes.FirstOrDefault(t => t == externalTheme) ?? AvailableThemes[0];
 
     ZoomInCommand = ReactiveCommand.Create(ZoomIn);
     ZoomOutCommand = ReactiveCommand.Create(ZoomOut);
@@ -153,6 +213,15 @@ public class MainViewModel : ReactiveObject
         await page.ShowPopupAsync(popup);
       }
     });
+
+    // Auto-save on changes
+    this.messageBus.Listen<CanvasInvalidateMessage>()
+        .Throttle(TimeSpan.FromSeconds(2))
+        .ObserveOn(RxApp.MainThreadScheduler)
+        .Subscribe(_ =>
+        {
+          ExternaDrawingCommand.Execute(null).Subscribe();
+        });
   }
 
   public IDrawingTool ActiveTool
@@ -214,8 +283,8 @@ public class MainViewModel : ReactiveObject
     {
       Application.Current.UserAppTheme = theme switch
       {
-        "Light" => AppTheme.Light,
-        "Dark" => AppTheme.Dark,
+        AppConstants.Themes.Light => AppTheme.Light,
+        AppConstants.Themes.Dark => AppTheme.Dark,
         _ => AppTheme.Unspecified
       };
     }
@@ -251,6 +320,68 @@ public class MainViewModel : ReactiveObject
     // Apply to existing view matrix
     NavigationModel.ViewMatrix = SKMatrix.Concat(zoomMatrix, NavigationModel.ViewMatrix);
 
+    messageBus.SendMessage(new CanvasInvalidateMessage());
+  }
+
+  private async Task LoadDrawingAsync(External.Drawing externalDrawing)
+  {
+    if (externalDrawing == null) return;
+
+    // Load full details
+    var fullDrawing = await drawingStorageMomento.LoadDrawingAsync(externalDrawing.Id);
+    if (fullDrawing == null) return;
+
+    CurrentDrawingId = fullDrawing.Id;
+    CurrentDrawingName = fullDrawing.Name;
+
+    // Restore layers
+    var restoredLayers = drawingStorageMomento.RestoreLayers(fullDrawing);
+    LayerFacade.Layers.Clear();
+    foreach (var layer in restoredLayers)
+    {
+      LayerFacade.Layers.Add(layer);
+    }
+    LayerFacade.CurrentLayer = LayerFacade.Layers.FirstOrDefault();
+
+    // Reset view
+    NavigationModel.Reset();
+    NavigationModel.CanvasWidth = fullDrawing.CanvasWidth;
+    NavigationModel.CanvasHeight = fullDrawing.CanvasHeight;
+
+    messageBus.SendMessage(new CanvasInvalidateMessage());
+  }
+
+  private async Task ExternalDrawingAsync(string? nameOverride = null)
+  {
+    if (CurrentDrawingId == Guid.Empty)
+    {
+      CurrentDrawingId = Guid.NewGuid();
+    }
+
+    if (!string.IsNullOrEmpty(nameOverride))
+    {
+      CurrentDrawingName = nameOverride;
+    }
+
+    var externalDrawing = drawingStorageMomento.CreateExternalDrawingFromCurrent(
+        Layers,
+        NavigationModel.CanvasWidth,
+        NavigationModel.CanvasHeight,
+        CurrentDrawingName,
+        CurrentDrawingId);
+
+    await drawingStorageMomento.ExternalDrawingAsync(externalDrawing);
+  }
+
+  private async Task NewDrawingAsync()
+  {
+    CurrentDrawingId = Guid.NewGuid();
+    CurrentDrawingName = await drawingStorageMomento.GetNextDefaultNameAsync();
+
+    LayerFacade.Layers.Clear();
+    LayerFacade.AddLayer(); // Adds default layer
+
+    NavigationModel.Reset();
     messageBus.SendMessage(new CanvasInvalidateMessage());
   }
 }

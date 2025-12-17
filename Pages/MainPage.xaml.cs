@@ -21,16 +21,18 @@
  *  
  */
 
-using CommunityToolkit.Maui;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Utils;
 using LunaDraw.Logic.ViewModels;
 using LunaDraw.Logic.Extensions;
+using LunaDraw.Logic.Constants;
+using LunaDraw.Logic.Models.Serialization;
 
 using ReactiveUI;
 
 using SkiaSharp;
 using SkiaSharp.Views.Maui;
+using CommunityToolkit.Maui.Extensions;
 
 namespace LunaDraw.Pages;
 
@@ -40,16 +42,28 @@ public partial class MainPage : ContentPage
   private readonly ToolbarViewModel toolbarViewModel;
   private readonly IMessageBus messageBus;
   private readonly IPreferencesFacade preferencesFacade;
+  private readonly GalleryViewModel galleryViewModel;
+  private readonly IDrawingStorageMomento drawingStorageMomento;
+
   private MenuFlyout? canvasContextMenu;
   private MenuFlyoutSubItem? moveToLayerSubMenu;
+  private bool hasShownGallery = false;
 
-  public MainPage(MainViewModel viewModel, ToolbarViewModel toolbarViewModel, IMessageBus messageBus, IPreferencesFacade preferencesFacade)
+  public MainPage(
+      MainViewModel viewModel,
+      ToolbarViewModel toolbarViewModel,
+      IMessageBus messageBus,
+      IPreferencesFacade preferencesFacade,
+      GalleryViewModel galleryViewModel,
+      IDrawingStorageMomento drawingStorageMomento)
   {
     InitializeComponent();
     this.viewModel = viewModel;
     this.toolbarViewModel = toolbarViewModel;
     this.messageBus = messageBus;
     this.preferencesFacade = preferencesFacade;
+    this.galleryViewModel = galleryViewModel;
+    this.drawingStorageMomento = drawingStorageMomento;
 
     BindingContext = this.viewModel;
     toolbarView.BindingContext = this.toolbarViewModel;
@@ -73,46 +87,75 @@ public partial class MainPage : ContentPage
     UpdateContextMenu();
   }
 
+  protected override async void OnAppearing()
+  {
+    base.OnAppearing();
+
+    if (!hasShownGallery)
+    {
+      hasShownGallery = true;
+      // Yield to allow UI to render
+      await Task.Delay(100);
+      await ShowGalleryAsync();
+    }
+  }
+
+  private async Task ShowGalleryAsync()
+  {
+    var galleryPopup = new Components.GalleryPopup(galleryViewModel);
+    var result = await this.ShowPopupAsync(galleryPopup);
+
+    if (result is External.Drawing selectedDrawing)
+    {
+      viewModel.LoadDrawingCommand.Execute(selectedDrawing).Subscribe();
+    }
+    else
+    {
+      // New drawing
+      viewModel.NewDrawingCommand.Execute().Subscribe();
+    }
+  }
+
   private void InitializeContextMenu()
   {
     canvasContextMenu = [];
 
-    var duplicateItem = new MenuFlyoutItem { Text = "Duplicate" };
+    var duplicateItem = new MenuFlyoutItem { Text = AppConstants.UI.Duplicate };
     duplicateItem.SetBinding(MenuItem.CommandProperty, new Binding("SelectionVM.DuplicateCommand", source: viewModel));
     canvasContextMenu.Add(duplicateItem);
 
-    var copyItem = new MenuFlyoutItem { Text = "Copy" };
+    var copyItem = new MenuFlyoutItem { Text = AppConstants.UI.Copy };
     copyItem.SetBinding(MenuItem.CommandProperty, new Binding("SelectionVM.CopyCommand", source: viewModel));
     canvasContextMenu.Add(copyItem);
 
-    var pasteItem = new MenuFlyoutItem { Text = "Paste" };
+    var pasteItem = new MenuFlyoutItem { Text = AppConstants.UI.Paste };
     pasteItem.SetBinding(MenuItem.CommandProperty, new Binding("SelectionVM.PasteCommand", source: viewModel));
     canvasContextMenu.Add(pasteItem);
 
     canvasContextMenu.Add(new MenuFlyoutSeparator());
 
-    var arrangeSubMenu = new MenuFlyoutSubItem { Text = "Arrange" };
+    var arrangeSubMenu = new MenuFlyoutSubItem { Text = AppConstants.UI.Arrange };
 
-    var sendToBackItem = new MenuFlyoutItem { Text = "Send To Back" };
+    var sendToBackItem = new MenuFlyoutItem { Text = AppConstants.UI.SendToBack };
     sendToBackItem.SetBinding(MenuItem.CommandProperty, new Binding("SelectionVM.SendElementToBackCommand", source: viewModel));
     arrangeSubMenu.Add(sendToBackItem);
 
-    var sendBackwardItem = new MenuFlyoutItem { Text = "Send Backward" };
+    var sendBackwardItem = new MenuFlyoutItem { Text = AppConstants.UI.SendBackward };
     sendBackwardItem.SetBinding(MenuItem.CommandProperty, new Binding("SelectionVM.SendBackwardCommand", source: viewModel));
     arrangeSubMenu.Add(sendBackwardItem);
 
-    var bringForwardItem = new MenuFlyoutItem { Text = "Bring Forward" };
+    var bringForwardItem = new MenuFlyoutItem { Text = AppConstants.UI.BringForward };
     bringForwardItem.SetBinding(MenuItem.CommandProperty, new Binding("SelectionVM.BringForwardCommand", source: viewModel));
     arrangeSubMenu.Add(bringForwardItem);
 
-    var sendToFrontItem = new MenuFlyoutItem { Text = "Send To Front" };
+    var sendToFrontItem = new MenuFlyoutItem { Text = AppConstants.UI.SendToFront };
     sendToFrontItem.SetBinding(MenuItem.CommandProperty, new Binding("SelectionVM.BringElementToFrontCommand", source: viewModel));
     arrangeSubMenu.Add(sendToFrontItem);
 
     canvasContextMenu.Add(arrangeSubMenu);
     canvasContextMenu.Add(new MenuFlyoutSeparator());
 
-    moveToLayerSubMenu = new MenuFlyoutSubItem { Text = "Move to" };
+    moveToLayerSubMenu = new MenuFlyoutSubItem { Text = AppConstants.UI.MoveTo };
 
     canvasContextMenu.Add(moveToLayerSubMenu);
 
@@ -125,7 +168,7 @@ public partial class MainPage : ContentPage
 
     moveToLayerSubMenu.Clear();
 
-    var addLayerItem = new MenuFlyoutItem { Text = "New Layer" };
+    var addLayerItem = new MenuFlyoutItem { Text = AppConstants.UI.NewLayer };
     addLayerItem.SetBinding(MenuItem.CommandProperty, new Binding("SelectionVM.MoveSelectionToNewLayerCommand", source: viewModel));
     moveToLayerSubMenu.Add(addLayerItem);
 

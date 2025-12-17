@@ -27,7 +27,7 @@ namespace LunaDraw.Logic.Models;
 
 public class DrawableImage(SKBitmap bitmap) : IDrawableElement
 {
-  public Guid Id { get; } = Guid.NewGuid();
+  public Guid Id { get; init; } = Guid.NewGuid();
   public string? SourcePath { get; set; }
   public SKBitmap Bitmap { get; set; } = bitmap;
   public SKMatrix TransformMatrix { get; set; } = SKMatrix.CreateIdentity();
