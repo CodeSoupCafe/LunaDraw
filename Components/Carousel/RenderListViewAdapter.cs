@@ -1,19 +1,6 @@
 ﻿namespace LunaDraw.Components.Carousel;
 
-using AsyncAwaitBestPractices.MVVM;
-using BurnCalc.State.Models;
-using BurnCalc.State.Thunks;
-using BurnCalc.Views.Adapters;
-using BurnCalc.Views.Pages.ViewModels;
-using BurnCalc.Views.Types;
-using CodeSoupCafe.Xamarin.Extensions;
-using CodeSoupCafe.Xamarin.Messaging;
-using CodeSoupCafe.Xamarin.Views.Navigation;
-using CodeSoupCafe.Xamarin.Views.Selectors;
-using CodeSoupCafe.Xamarin.Views.Types;
-using Microsoft.AppCenter.Crashes;
-using Redux;
-using Splat;
+using LunaDraw.Logic.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,25 +9,20 @@ using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using Xamarin.Forms;
-using static BurnCalc.Resources.Constants;
 
 public interface IChartListView
 {
   CollectionView ChartCollectionView { get; }
   ListView ChartList { get; }
   GridItemsLayout MediaItemGridLayout { get; }
-  MoreMenuNavigation MoreMenuNavRef { get; }
   StackLayout SortPanel { get; }
   StackLayout SearchPanel { get; }
   Entry SearchEntry { get; }
-  ChartRenderListViewModel ViewModel { get; }
+  RenderListViewModel ViewModel { get; }
 }
 
-public class RenderListViewAdapter : ChartRenderListViewModel
+public class RenderListViewAdapter : RenderListViewModel
 {
-  private readonly ActionThunks actionThunks;
-  private readonly IKeyboardHider keyboardHider;
   private readonly double scrollAllowImageUpdateRange = 5;
   private readonly int scrollAllowUpdateRange = 120;
   private readonly int dropdownOutOfBoundsY = -120;
@@ -53,16 +35,20 @@ public class RenderListViewAdapter : ChartRenderListViewModel
   private bool isSubscribed;
   public bool IsPaused { get; set; }
 
-  public RenderListViewAdapter()
+  public RenderListViewAdapter(IPreferencesFacade preferncesFacade) : base(preferncesFacade)
   {
-    ChartCommands = Locator.Current.GetService<ChartViewCommandAdapter>().IsNullReferenceCheck<ChartViewCommandAdapter>();
-    actionThunks = Locator.Current.GetService<ActionThunks>().IsNullReferenceCheck<ActionThunks>();
-    keyboardHider = DependencyService.Get<IKeyboardHider>();
 
-    IsPaused = false;
   }
+  // public RenderListViewAdapter()
+  // {
+  //   ChartCommands = Locator.Current.GetService<ChartViewCommandAdapter>().IsNullReferenceCheck<ChartViewCommandAdapter>();
+  //   actionThunks = Locator.Current.GetService<ActionThunks>().IsNullReferenceCheck<ActionThunks>();
+  //   keyboardHider = DependencyService.Get<IKeyboardHider>();
 
-  public ChartViewCommandAdapter ChartCommands { get; set; }
+  //   IsPaused = false;
+  // }
+
+  // public ChartViewCommandAdapter ChartCommands { get; set; }
 
   //public List<DynamicTemplateData> MoreMenuItems => new List<DynamicTemplateData> {
   //  new DynamicTemplateData(nameof(NavigationIconViewCell), new NavigationLink
@@ -88,25 +74,25 @@ public class RenderListViewAdapter : ChartRenderListViewModel
   //  })
   //};
 
-  public List<DynamicTemplateData> NavigationPanels => new List<DynamicTemplateData> {
-      new DynamicTemplateData(nameof(SortFilterViewCell), null)
-    };
+  // public List<DynamicTemplateData> NavigationPanels => new List<DynamicTemplateData> {
+  //     new DynamicTemplateData(nameof(SortFilterViewCell), null)
+  //   };
 
-  public IAsyncCommand<ViewType> ShowGrid =>
-    new AsyncCommand<ViewType>(async (viewType) =>
+  public ICommand ShowGrid =>
+    new Command(async (viewType) =>
     {
-      await ChartListView.MoreMenuNavRef.ToggleVisibility.ExecuteAsync(false);
-      ChartListView.ViewModel.IsGridMode = viewType == ViewType.Grid;
+      // await ChartListView.MoreMenuNavRef.ToggleVisibility.ExecuteAsync(false);
+      ChartListView.ViewModel.IsGridMode = true;
 
-      App.Preferences.ChartViewType = viewType;
+      // App.Preferences.ChartViewType = viewType;
     }, (x) => true);
 
-  public IAsyncCommand ShowHideSortPanelCommand =>
-    new AsyncCommand(async () =>
+  public ICommand ShowHideSortPanelCommand =>
+    new Command(async () =>
     {
-      await Device.InvokeOnMainThreadAsync(async () =>
+      await MainThread.InvokeOnMainThreadAsync(async () =>
       {
-        await ChartListView.MoreMenuNavRef.ToggleVisibility.ExecuteAsync(false);
+        // await ChartListView.MoreMenuNavRef.ToggleVisibility.ExecuteAsync(false);
 
         if (ChartListView.SortPanel.IsVisible)
         {
@@ -118,7 +104,7 @@ public class RenderListViewAdapter : ChartRenderListViewModel
           {
             ChartListView.SearchPanel.IsVisible = false;
 
-            keyboardHider?.HideKeyboard();
+            // keyboardHider?.HideKeyboard();
           }
 
           await ShowSortPanel();
@@ -157,7 +143,7 @@ public class RenderListViewAdapter : ChartRenderListViewModel
     {
       isClearCommand = true;
 
-      Device.BeginInvokeOnMainThread(async () =>
+      MainThread.BeginInvokeOnMainThread(async () =>
       {
         ChartListView.SearchEntry.Text = "";
         _ = ChartListView.SearchEntry.Focus();
@@ -170,12 +156,12 @@ public class RenderListViewAdapter : ChartRenderListViewModel
       });
     });
 
-  public IAsyncCommand ShowHideSearchPanelCommand =>
-    new AsyncCommand(async () =>
+  public ICommand ShowHideSearchPanelCommand =>
+    new Command(() =>
     {
-      await Device.InvokeOnMainThreadAsync(async () =>
+      MainThread.InvokeOnMainThreadAsync(async () =>
       {
-        await ChartListView.MoreMenuNavRef.ToggleVisibility.ExecuteAsync(false);
+        // await ChartListView.MoreMenuNavRef.ToggleVisibility.ExecuteAsync(false);
 
         if (ChartListView.SearchPanel.IsVisible)
         {
@@ -214,19 +200,19 @@ public class RenderListViewAdapter : ChartRenderListViewModel
           });
       });
 
-    keyboardHider?.HideKeyboard();
+    // keyboardHider?.HideKeyboard();
   }
 
   public StackLayout SearchPanel { get; private set; }
 
   public void ChartCollectionView_SelectionChanged(object sender, SelectionChangedEventArgs e)
   {
-    ChartListView.MoreMenuNavRef.ToggleVisibility.Execute(false);
+    // ChartListView.MoreMenuNavRef.ToggleVisibility.Execute(false);
 
-    if (ChartListView.ChartCollectionView.SelectedItem is ChartState chartState)
+    if (ChartListView.ChartCollectionView.SelectedItem is ItemState chartState)
     {
       ChartListView.ChartCollectionView.SelectedItem = null;
-      ChartCommands.LoadChartTabbedViewCommand.Execute(chartState);
+      // ChartCommands.LoadChartTabbedViewCommand.Execute(chartState);
     }
   }
 
@@ -238,8 +224,8 @@ public class RenderListViewAdapter : ChartRenderListViewModel
     refreshImagesFromScroll = new Action<Unit>((x) =>
     {
       if (lastScrollValue == e.VerticalDelta)
-        _ = GlobalBroadcaster.Broadcast(AppMessageStateType.ImageLoadingState, new ImageLoadingState(ImageLoadingType.ForceRedraw));
-    }).Debounce(ReactiveTiming.RenderCanvasLoadResetLongerDelay * 2);
+        _ = GlobalBroadcaster.Broadcast(new ImageLoadingState(ImageLoadingType.ForceRedraw), AppMessageStateType.ImageLoadingState);
+    }).Debounce(TimeSpan.FromMilliseconds(440));
 
     lastScrollValue = e.VerticalDelta;
 
@@ -254,22 +240,22 @@ public class RenderListViewAdapter : ChartRenderListViewModel
         if (refreshFromScroll == null)
           return;
 
-        if (ChartListView?.MoreMenuNavRef?.IsVisible ?? false)
-          ChartListView?.MoreMenuNavRef?.ToggleVisibility.Execute(false);
+        // if (ChartListView?.MoreMenuNavRef?.IsVisible ?? false)
+        //   ChartListView?.MoreMenuNavRef?.ToggleVisibility.Execute(false);
 
-        Device.BeginInvokeOnMainThread(async () =>
+        MainThread.BeginInvokeOnMainThread(async () =>
         {
           await HideSortPanel();
           await HideSearchPanel();
         });
-      }).Debounce(ReactiveTiming.RenderCanvasLoadResetLongerDelay);
+      }).Debounce(TimeSpan.FromMilliseconds(220));
     }
   }
 
   public void ListView_ItemTapped(object sender, ItemTappedEventArgs e)
   {
     ChartListView.ChartList.SelectedItem = null;
-    ChartCommands.LoadChartTabbedViewCommand.Execute(e.Item);
+    // ChartCommands.LoadChartTabbedViewCommand.Execute(e.Item);
   }
 
   public void OnAppearing(IChartListView chartListView)
@@ -278,9 +264,9 @@ public class RenderListViewAdapter : ChartRenderListViewModel
 
     ChartListView = chartListView;
 
-    Device.BeginInvokeOnMainThread(async () =>
+    MainThread.BeginInvokeOnMainThread(async () =>
     {
-      ChartListView.MoreMenuNavRef.OnAppearing();
+      // ChartListView.MoreMenuNavRef.OnAppearing();
 
       if (!isSubscribed)
       {
@@ -298,7 +284,7 @@ public class RenderListViewAdapter : ChartRenderListViewModel
 
   public void OnDisappearing()
   {
-    ChartListView.MoreMenuNavRef.OnDisappearing();
+    // ChartListView.MoreMenuNavRef.OnDisappearing();
     //ClearSubscriptions();
     IsPaused = true;
   }
@@ -316,7 +302,7 @@ public class RenderListViewAdapter : ChartRenderListViewModel
     subscriptions.Add(App.AppStore.ObserveState()
       .Select(state => state.Charts)
       .DistinctUntilChanged()
-      .Throttle(ReactiveTiming.ChartListUpdateDelay)
+      .Throttle(TimeSpan.FromMilliseconds(55))
       .Subscribe(charts =>
       {
         try
@@ -334,12 +320,12 @@ public class RenderListViewAdapter : ChartRenderListViewModel
         }
         catch (Exception ex)
         {
-          Crashes.TrackError(ex);
+          // Crashes.TrackError(ex);
         }
       }));
 
     subscriptions.Add(ChartListView.ViewModel.WhenPropertyChanged
-      .Throttle(ReactiveTiming.ChartListUpdateSortDelay)
+      .Throttle(TimeSpan.FromMilliseconds(250))
       .Where(x => x.StartsWith("ChartListSort"))
       .Subscribe(x =>
       {
@@ -351,7 +337,7 @@ public class RenderListViewAdapter : ChartRenderListViewModel
 
   private void SearchEntry_Focused(object sender, FocusEventArgs e)
   {
-    Device.BeginInvokeOnMainThread(async () =>
+    MainThread.BeginInvokeOnMainThread(async () =>
     {
       await ShowSearchPanel();
     });
@@ -360,7 +346,7 @@ public class RenderListViewAdapter : ChartRenderListViewModel
   public void SearchEntry_Unfocused(object sender, FocusEventArgs e)
   {
     if (!isClearCommand)
-      Device.BeginInvokeOnMainThread(async () =>
+      MainThread.BeginInvokeOnMainThread(async () =>
       {
         await HideSearchPanel();
       });
@@ -371,7 +357,7 @@ public class RenderListViewAdapter : ChartRenderListViewModel
   public void CalculateItemWidth()
   {
     if (ChartListView != null)
-      Device.BeginInvokeOnMainThread(() =>
+      MainThread.BeginInvokeOnMainThread(() =>
       {
         var currentWidth = App.Instance?.MainPage?.Width ?? 200;
 
