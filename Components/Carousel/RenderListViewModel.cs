@@ -1,4 +1,6 @@
-﻿namespace LunaDraw.Components.Carousel
+﻿namespace LunaDraw.Components.Carousel;
+
+using LunaDraw.Logic.Utils;
 using Splat;
 using System;
 using System.Collections.Generic;
@@ -8,7 +10,6 @@ using System.Windows.Input;
 
 public class RenderListViewModel : NotifyPropertyChanged, IEnableLogger
 {
-  private bool hasUser;
   private bool isEmptyCharts;
   private bool isLoading = true;
   private bool isRefreshing;
@@ -18,21 +19,23 @@ public class RenderListViewModel : NotifyPropertyChanged, IEnableLogger
   private string? chartListSortProperty;
   private string? userName;
   private string searchText;
+  private readonly IPreferencesFacade prefernecesFacade;
 
-  public ChartRenderListViewModel()
+  public RenderListViewModel(IPreferencesFacade prefernecesFacade)
   {
+    this.prefernecesFacade = prefernecesFacade;
   }
 
   public string ChartListSortOrder
   {
-    get => App.Preferences.ChartListSortOrder.ToString();
+    get => prefernecesFacade.Get(AppPreference.ListSortOrder);
     set
     {
-      if (string.IsNullOrWhiteSpace(value) || value == App.Preferences.ChartListSortOrder.ToString())
+      if (string.IsNullOrWhiteSpace(value) || value == prefernecesFacade.Get(AppPreference.ListSortOrder))
         return;
 
       if (Enum.TryParse<SortOrder>(value, out var selectedItem))
-        App.Preferences.ChartListSortOrder = selectedItem;
+        prefernecesFacade.Set(AppPreference.ListSortOrder, selectedItem);
 
       SetProperty(ref chartListSortOrder, value);
     }
@@ -40,38 +43,18 @@ public class RenderListViewModel : NotifyPropertyChanged, IEnableLogger
 
   public string ChartListSortProperty
   {
-    get => App.Preferences.ChartListSortProperty.ToString();
+    get => prefernecesFacade.Get(AppPreference.ListSortProperty);
     set
     {
       if (string.IsNullOrWhiteSpace(value) ||
-        value == App.Preferences.ChartListSortProperty.ToString())
+        value == prefernecesFacade.Get(AppPreference.ListSortProperty))
         return;
 
       if (Enum.TryParse<SortProperty>(value, out var selectedItem))
-        App.Preferences.ChartListSortProperty = selectedItem;
+        prefernecesFacade.Set(AppPreference.ListSortProperty, selectedItem);
 
       SetProperty(ref chartListSortProperty, value);
     }
-  }
-
-  public RangedObservableCollection<ChartState> Charts { get; } = new RangedObservableCollection<ChartState>();
-
-  public bool IsAdsEnabled
-  {
-    get => isAdsEnabled;
-    set => SetProperty(ref isAdsEnabled, value);
-  }
-
-  public string Firstname
-  {
-    get => userName;
-    set => SetProperty(ref userName, value);
-  }
-
-  public bool HasUser
-  {
-    get => hasUser;
-    set => SetProperty(ref hasUser, value);
   }
 
   public bool IsEmptyCharts
@@ -82,7 +65,7 @@ public class RenderListViewModel : NotifyPropertyChanged, IEnableLogger
 
   public bool IsGridMode
   {
-    get => isGridMode ?? App.Preferences.ChartViewType == ViewType.Grid;
+    get => isGridMode ?? prefernecesFacade.Get<bool>(AppPreference.IsListGridView);
     set => SetProperty(ref isGridMode, value);
   }
 
@@ -107,14 +90,14 @@ public class RenderListViewModel : NotifyPropertyChanged, IEnableLogger
   public ICommand ReloadChartData =>
     new Command(() =>
     {
-      App.AppStore.Dispatch(new ChartActions.SyncCharts());
+      // App.AppStore.Dispatch(new ChartActions.SyncCharts());
     });
 
   public List<string> SortOrders { get; } = ((SortOrder[])Enum.GetValues(typeof(SortOrder))).Skip(1).Select(x => x.ToString()).ToList();
 
   public List<string> SortProperties { get; } = ((SortProperty[])Enum.GetValues(typeof(SortProperty))).Skip(1).Select(x => x.ToString()).ToList();
 
-  public void SetCharts(IEnumerable<ChartState> charts)
+  public void SetCharts(IEnumerable<ItemState> charts)
   {
     try
     {
@@ -124,7 +107,7 @@ public class RenderListViewModel : NotifyPropertyChanged, IEnableLogger
       if (charts == null ||
         !charts.Any())
       {
-        Charts.Clear();
+        // Charts.Clear();
 
         IsEmptyCharts = true;
 
@@ -133,11 +116,11 @@ public class RenderListViewModel : NotifyPropertyChanged, IEnableLogger
         return;
       }
 
-      UpdateCharts(Charts, charts.Where(FilterCharts)?.ToList(), () => SortCharts());
+      // UpdateCharts(Charts, charts.Where(FilterCharts)?.ToList(), () => SortCharts());
     }
     catch (Exception ex)
     {
-      this.Log().Error(nameof(ChartRenderListViewModel), ex);
+      // this.Log().Error(nameof(ChartRenderListViewModel), ex);
     }
     finally
     {
@@ -146,7 +129,7 @@ public class RenderListViewModel : NotifyPropertyChanged, IEnableLogger
     }
   }
 
-  public bool FilterCharts(ChartState? chartState)
+  public bool FilterCharts(ItemState? chartState)
   {
     if (string.IsNullOrWhiteSpace(SearchText))
     {
@@ -162,19 +145,19 @@ public class RenderListViewModel : NotifyPropertyChanged, IEnableLogger
   }
 
   public static void UpdateCharts(
-    RangedObservableCollection<ChartState> charts,
-    List<ChartState>? newCharts = null,
+    RangedObservableCollection<ItemState> charts,
+    List<ItemState>? newCharts = null,
     Action? afterAction = null)
   {
     try
     {
-      var itemsToRemove = new Stack<ChartState>();
-      var chartCount = charts.Count();
-      var filteredCharts = newCharts ??= new List<ChartState>();
+      var itemsToRemove = new Stack<ItemState>();
+      var chartCount = charts.Count;
+      var filteredCharts = newCharts ??= [];
 
       for (int chartIndex = 0; chartIndex < chartCount; chartIndex++)
       {
-        ChartState currentChart = charts[chartIndex];
+        ItemState currentChart = charts[chartIndex];
 
         int newChartIndex = filteredCharts.FindIndex(x => x.Id == currentChart.Id);
 
@@ -189,10 +172,10 @@ public class RenderListViewModel : NotifyPropertyChanged, IEnableLogger
       }
 
       if (itemsToRemove.Any())
-        foreach (ChartState itemToRemove in itemsToRemove)
+        foreach (ItemState itemToRemove in itemsToRemove)
           charts.Remove(itemToRemove);
 
-      foreach (ChartState itemToAdd in filteredCharts)
+      foreach (ItemState itemToAdd in filteredCharts)
         if (!charts.Any(x => x.Id == itemToAdd.Id))
           charts.Add(itemToAdd);
 
@@ -200,33 +183,33 @@ public class RenderListViewModel : NotifyPropertyChanged, IEnableLogger
     }
     catch (Exception ex)
     {
-      Crashes.TrackError(ex);
+      // Crashes.TrackError(ex);
     }
   }
 
   public void SortCharts()
   {
-    try
-    {
-      Charts.Sort(Comparer<ChartState>.Create((x, y) =>
-      {
-        var firstItem = (DateTimeOffset)x.GetType().GetProperty(ChartListSortProperty).GetValue(x);
-        var secondItem = (DateTimeOffset)y.GetType().GetProperty(ChartListSortProperty).GetValue(y);
+    // try
+    // {
+    //   Charts.Sort(Comparer<ChartState>.Create((x, y) =>
+    //   {
+    //     var firstItem = (DateTimeOffset)x.GetType().GetProperty(ChartListSortProperty).GetValue(x);
+    //     var secondItem = (DateTimeOffset)y.GetType().GetProperty(ChartListSortProperty).GetValue(y);
 
-        return ChartListSortOrder == SortOrder.Ascending.ToString() ?
-          firstItem.CompareTo(secondItem) :
-          secondItem.CompareTo(firstItem);
-      }));
-    }
-    catch { }
+    //     return ChartListSortOrder == SortOrder.Ascending.ToString() ?
+    //       firstItem.CompareTo(secondItem) :
+    //       secondItem.CompareTo(firstItem);
+    //   }));
+    // }
+    // catch { }
   }
 
   private void ShowWelcomeView()
   {
-    Firstname = AppStrings.WelcomeUser.Replace(new Dictionary<string, object> {
-        { nameof(Firstname), App.AppStore.CurrentState.AppUserModel?.Firstname ?? AppStrings.User }
-      });
+    // Firstname = AppStrings.WelcomeUser.Replace(new Dictionary<string, object> {
+    //     { nameof(Firstname), App.AppStore.CurrentState.AppUserModel?.Firstname ?? AppStrings.User }
+    //   });
 
-    HasUser = !string.IsNullOrWhiteSpace(Firstname);
+    // HasUser = !string.IsNullOrWhiteSpace(Firstname);
   }
 }

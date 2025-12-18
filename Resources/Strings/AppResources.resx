@@ -68,7 +68,7 @@
     <value>Remove Layer</value>
   </data>
   <data name="ToolTip_ToggleTraceMode" xml:space="preserve">
-    <value>Toggle Trace Mode</value>
+    <value>Toggle Transparency Mode</value>
   </data>
   <data name="ToolTip_CollapseLayers" xml:space="preserve">
     <value>Collapse Layers Panel</value>

@@ -9,9 +9,12 @@
   using System.Linq;
   using System.Reactive.Linq;
   using System.Reactive.Subjects;
+  using Kotlin.Uuid;
 
   public abstract class ItemState : IEquatable<object>, ISortable
   {
+    public abstract Guid Id { get; }
+    public abstract string Title { get; }
     public abstract DateTimeOffset DateCreated { get; }
     public abstract DateTimeOffset DateUpdated { get; }
 
