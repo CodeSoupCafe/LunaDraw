@@ -9,7 +9,6 @@
   using System.Linq;
   using System.Reactive.Linq;
   using System.Reactive.Subjects;
-  using Kotlin.Uuid;
 
   public abstract class ItemState : IEquatable<object>, ISortable
   {

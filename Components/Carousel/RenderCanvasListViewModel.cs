@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.Input;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Utils;
+using LunaDraw.Logic.Messages;
 using ReactiveUI;
 using System.Collections.ObjectModel;
 using System.Reactive;
@@ -42,6 +43,7 @@ public class RenderCanvasListViewModel : NotifyPropertyChanged
 {
   private readonly IDrawingStorageMomento drawingStorage;
   private readonly IPreferencesFacade preferences;
+  private readonly IMessageBus messageBus;
 
   private bool isGridMode;
   private bool isSortVisible;
@@ -60,10 +62,11 @@ public class RenderCanvasListViewModel : NotifyPropertyChanged
   public List<string> SortOrders { get; } = new() { "Ascending", "Descending" };
   public List<string> SortProperties { get; } = new() { "DateCreated", "DateUpdated", "Title" };
 
-  public RenderCanvasListViewModel(IDrawingStorageMomento drawingStorage, IPreferencesFacade preferences)
+  public RenderCanvasListViewModel(IDrawingStorageMomento drawingStorage, IPreferencesFacade preferences, IMessageBus messageBus)
   {
     this.drawingStorage = drawingStorage;
     this.preferences = preferences;
+    this.messageBus = messageBus;
 
     IsGridMode = this.preferences.Get<bool>(AppPreference.IsListGridView);
 
@@ -73,12 +76,23 @@ public class RenderCanvasListViewModel : NotifyPropertyChanged
     ClearSearchPanelCommand = new RelayCommand(ClearSearchPanel);
     ReloadChartDataCommand = new AsyncRelayCommand(ReloadChartData);
     AddNewChartCommand = new AsyncRelayCommand(AddNewChart);
+    OpenDrawingCommand = new Command<DrawingItemState>(OpenDrawing);
   }
 
   // Default constructor for XAML previewer or manual init if needed
-  public RenderCanvasListViewModel() : this(new DrawingStorageMomento(), new PreferencesFacade())
+  public RenderCanvasListViewModel() : this(new DrawingStorageMomento(), new PreferencesFacade(), new MessageBus())
   {
   }
+
+  private IDisposable? refreshFromScroll;
+  private IDisposable? refreshImagesFromScroll;
+  private double lastScrollValue;
+  private bool isSubscribed;
+  public bool IsPaused { get; set; }
+
+  private readonly double scrollAllowImageUpdateRange = 5;
+  private readonly int scrollAllowUpdateRange = 120;
+  private readonly int dropdownOutOfBoundsY = -120;
 
   public bool IsGridMode
   {
@@ -176,6 +190,7 @@ public class RenderCanvasListViewModel : NotifyPropertyChanged
   public ICommand ClearSearchPanelCommand { get; }
   public ICommand ReloadChartDataCommand { get; }
   public ICommand AddNewChartCommand { get; }
+  public ICommand OpenDrawingCommand { get; }
 
   private void ToggleView()
   {
@@ -196,6 +211,23 @@ public class RenderCanvasListViewModel : NotifyPropertyChanged
   {
     SearchText = string.Empty;
     IsSearchVisible = false;
+  }
+
+  private void OpenDrawing(DrawingItemState drawingItem)
+  {
+    if (drawingItem == null) return;
+    
+    messageBus.SendMessage(new OpenDrawingMessage(drawingItem.Drawing));
+    
+    // Close the popup logic is handled by the View usually, but since we are in VM
+    // we can try to find the active popup or send a message.
+    // However, since we are using Toolkit Popup, we can close it from the view code-behind
+    // or rely on a "RequestClose" event.
+    // For simplicity, let's just trigger a Close action if we had access, but since we don't,
+    // we'll let the View subscribe to the command execution or handle it in the View's event handler.
+    // Actually, the View calls this command. 
+    // Let's modify the View to close itself after executing this command, OR 
+    // better: OpenDrawingCommand should just set the message. The View handles the closing.
   }
 
   private async Task ReloadChartData()
@@ -226,6 +258,13 @@ public class RenderCanvasListViewModel : NotifyPropertyChanged
 
     await drawingStorage.ExternalDrawingAsync(newDrawing);
     await ReloadChartData();
+    
+    // Auto-open the new drawing
+    var newItem = allCharts.FirstOrDefault(c => c.Id == id);
+    if (newItem != null)
+    {
+        OpenDrawing(newItem);
+    }
   }
 
   private void FilterCharts()
@@ -258,5 +297,39 @@ public class RenderCanvasListViewModel : NotifyPropertyChanged
     Charts.AddRange(sorted);
 
     IsEmptyCharts = Charts.Count == 0;
+  }
+
+
+  public void ChartGrid_Scrolled(object sender, ItemsViewScrolledEventArgs e)
+  {
+    refreshImagesFromScroll?.Dispose();
+    refreshImagesFromScroll = null;
+
+    refreshImagesFromScroll = new Action<Unit>((x) =>
+    {
+      if (lastScrollValue == e.VerticalDelta)
+        _ = GlobalBroadcaster.Broadcast(new ImageLoadingState(ImageLoadingType.ForceRedraw), AppMessageStateType.ImageLoadingState);
+    }).Debounce(TimeSpan.FromMilliseconds(440));
+
+    lastScrollValue = e.VerticalDelta;
+
+    if (e.VerticalDelta < -scrollAllowUpdateRange ||
+      e.VerticalDelta > scrollAllowUpdateRange)
+    {
+      refreshFromScroll?.Dispose();
+      refreshFromScroll = null;
+
+      refreshFromScroll = new Action<Unit>((x) =>
+      {
+        if (refreshFromScroll == null)
+          return;
+
+        // MainThread.BeginInvokeOnMainThread(async () =>
+        // {
+        //   await HideSortPanel();
+        //   await HideSearchPanel();
+        // });
+      }).Debounce(TimeSpan.FromMilliseconds(220));
+    }
   }
 }

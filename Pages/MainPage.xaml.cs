@@ -26,13 +26,15 @@ using LunaDraw.Logic.Utils;
 using LunaDraw.Logic.ViewModels;
 using LunaDraw.Logic.Extensions;
 using LunaDraw.Logic.Constants;
-using LunaDraw.Logic.Models.Serialization;
 
 using ReactiveUI;
 
 using SkiaSharp;
 using SkiaSharp.Views.Maui;
 using CommunityToolkit.Maui.Extensions;
+using LunaDraw.Logic.Models;
+using LunaDraw.Components.Carousel;
+using CommunityToolkit.Maui.Views;
 
 namespace LunaDraw.Pages;
 
@@ -102,18 +104,8 @@ public partial class MainPage : ContentPage
 
   private async Task ShowGalleryAsync()
   {
-    var galleryPopup = new Components.GalleryPopup(galleryViewModel);
-    var result = await this.ShowPopupAsync(galleryPopup);
-
-    if (result is External.Drawing selectedDrawing)
-    {
-      viewModel.LoadDrawingCommand.Execute(selectedDrawing).Subscribe();
-    }
-    else
-    {
-      // New drawing
-      viewModel.NewDrawingCommand.Execute().Subscribe();
-    }
+    var galleryPopup = new RenderCanvasList(drawingStorageMomento, preferencesFacade, messageBus);
+    this.ShowPopup(galleryPopup);
   }
 
   private void InitializeContextMenu()

@@ -1,139 +1,167 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:models="clr-namespace:LunaDraw.Logic.Models"
-    xmlns:pages="clr-namespace:LunaDraw.Components.Carousel"
-    xmlns:converters="clr-namespace:LunaDraw.Converters"
-    x:Class="LunaDraw.Components.Carousel.RenderCanvasList"
-    x:Name="PageRef"
-    x:DataType="pages:RenderCanvasList"
-    Title="Gallery"
-    Visual="Material">
+<toolkit:Popup
+  xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+  xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+  xmlns:models="clr-namespace:LunaDraw.Logic.Models"
+  xmlns:pages="clr-namespace:LunaDraw.Components.Carousel"
+  xmlns:converters="clr-namespace:LunaDraw.Converters"
+  x:Class="LunaDraw.Components.Carousel.RenderCanvasList"
+  x:Name="PageRef"
+  x:DataType="pages:RenderCanvasList"
+  CanBeDismissedByTappingOutsideOfPopup="True">
 
-    <ContentPage.Resources>
-        <ResourceDictionary>
-            <converters:InverseBoolConverter x:Key="InverseBoolConverter"/>
-        </ResourceDictionary>
-    </ContentPage.Resources>
+  <toolkit:Popup.Resources>
+    <ResourceDictionary>
+      <converters:InverseBoolConverter x:Key="InverseBoolConverter"/>
+    </ResourceDictionary>
+  </toolkit:Popup.Resources>
 
-    <ContentPage.ToolbarItems>
-        <ToolbarItem Text="Switch View"
-                     Command="{Binding ViewModel.ToggleViewCommand}"
-                     Order="Primary"
-                     Priority="1"/>
-
-        <ToolbarItem Text="Sort"
-                     Command="{Binding ViewModel.ShowHideSortPanelCommand}"
-                     Order="Secondary"
-                     Priority="2"/>
-        
-        <ToolbarItem Text="Search"
-                     Command="{Binding ViewModel.ShowHideSearchPanelCommand}"
-                     Order="Secondary"
-                     Priority="3"/>
-    </ContentPage.ToolbarItems>
-
-    <Grid x:Name="RootContainer"
-          HorizontalOptions="FillAndExpand">
+  <Border StrokeThickness="0"
+          BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}"
+          StrokeShape="RoundRectangle 12"
+          WidthRequest="600"
+          HeightRequest="500"
+          Padding="0">
+      
+      <Grid x:Name="RootContainer"
+            HorizontalOptions="FillAndExpand"
+            VerticalOptions="FillAndExpand">
         <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- List View Mode -->
-        <ListView Margin="10, 0"
-                  x:Name="ChartList"
-                  ItemTapped="ListView_ItemTapped"
-                  ItemsSource="{Binding ViewModel.Charts}"
-                  IsVisible="{Binding ViewModel.IsGridMode, Converter={x:StaticResource InverseBoolConverter}}"
-                  RefreshCommand="{Binding ViewModel.ReloadChartDataCommand}"
-                  IsRefreshing="{Binding ViewModel.IsRefreshing}">
-            <ListView.ItemTemplate>
-                <DataTemplate x:DataType="pages:DrawingItemState">
-                    <ViewCell>
-                        <FlexLayout Direction="Row" AlignItems="Center" Padding="10">
-                            <Label Text="{Binding Title}"
-                                   FlexLayout.Grow="1"
-                                   FontSize="16"
-                                   VerticalTextAlignment="Center"
-                                   HorizontalTextAlignment="Start"
-                                   LineBreakMode="MiddleTruncation"/>
-                            <Label Text="{Binding DateCreated, StringFormat='{0:MM/dd/yyyy}'}"
-                                   WidthRequest="100"
-                                   FontSize="12"
-                                   TextColor="Gray"
-                                   VerticalTextAlignment="Center"
-                                   HorizontalTextAlignment="End"/>
-                        </FlexLayout>
-                    </ViewCell>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
+        <!-- Header -->
+        <Grid Grid.Row="0" ColumnDefinitions="*, Auto, Auto, Auto" Padding="10" BackgroundColor="{AppThemeBinding Light=#F5F5F5, Dark=#2D2D2D}">
+            <Label Text="Gallery" FontAttributes="Bold" FontSize="18" VerticalOptions="Center"/>
+            
+            <Button Grid.Column="1" Text="View" Command="{Binding ViewModel.ToggleViewCommand}" Margin="5,0" HeightRequest="30" Padding="10,0"/>
+            <Button Grid.Column="2" Text="Sort" Command="{Binding ViewModel.ShowHideSortPanelCommand}" Margin="5,0" HeightRequest="30" Padding="10,0"/>
+            <Button Grid.Column="3" Text="Search" Command="{Binding ViewModel.ShowHideSearchPanelCommand}" Margin="5,0" HeightRequest="30" Padding="10,0"/>
+        </Grid>
+        
+        <!-- Search/Sort Panels -->
+        <StackLayout Grid.Row="1">
+            <!-- Search Panel -->
+            <StackLayout x:Name="SearchPanel"
+                         Orientation="Horizontal"
+                         IsVisible="{Binding ViewModel.IsSearchVisible}"
+                         BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}"
+                         Padding="10">
+              <Label Text="Search" VerticalOptions="Center"/>
+              <Entry Text="{Binding ViewModel.SearchText}"
+                     HorizontalOptions="FillAndExpand"
+                     Placeholder="Search drawings..."/>
+              <Button Text="X"
+                      Command="{Binding ViewModel.ClearSearchPanelCommand}"
+                      WidthRequest="40"
+                      HeightRequest="40"/>
+            </StackLayout>
 
-        <!-- Grid View Mode -->
-        <RefreshView IsRefreshing="{Binding ViewModel.IsRefreshing}"
-                     Command="{Binding ViewModel.ReloadChartDataCommand}"
-                     IsVisible="{Binding ViewModel.IsGridMode}">
+            <!-- Sort Panel -->
+            <StackLayout x:Name="SortPanel"
+                         Orientation="Horizontal"
+                         IsVisible="{Binding ViewModel.IsSortVisible}"
+                         BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}"
+                         Padding="10">
+              <Picker Title="Sort by"
+                      ItemsSource="{Binding ViewModel.SortProperties}"
+                      SelectedItem="{Binding ViewModel.ChartListSortProperty}"
+                      HorizontalOptions="FillAndExpand"/>
+              <Picker Title="Direction"
+                      ItemsSource="{Binding ViewModel.SortOrders}"
+                      SelectedItem="{Binding ViewModel.ChartListSortOrder}"
+                      HorizontalOptions="FillAndExpand"/>
+            </StackLayout>
+        </StackLayout>
+
+        <!-- List/Grid Content -->
+        <Grid Grid.Row="2">
+            <!-- List View Mode -->
+            <CollectionView x:Name="ChartList"
+                      SelectionMode="Single"
+                      SelectionChanged="CollectionView_SelectionChanged"
+                      ItemsSource="{Binding ViewModel.Charts}"
+                      IsVisible="{Binding ViewModel.IsGridMode, Converter={x:StaticResource InverseBoolConverter}}">
+              <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="pages:DrawingItemState">
+                    <Grid Padding="10" ColumnDefinitions="*, Auto">
+                      <Label Text="{Binding Title}"
+                             FontSize="16"
+                             VerticalTextAlignment="Center"
+                             LineBreakMode="MiddleTruncation"/>
+                      <Label Grid.Column="1" 
+                             Text="{Binding DateCreated, StringFormat='{0:MM/dd/yyyy}'}"
+                             FontSize="12"
+                             TextColor="Gray"
+                             VerticalTextAlignment="Center"/>
+                    </Grid>
+                </DataTemplate>
+              </CollectionView.ItemTemplate>
+              <CollectionView.EmptyView>
+                  <Label Text="No drawings found" HorizontalOptions="Center" VerticalOptions="Center"/>
+              </CollectionView.EmptyView>
+            </CollectionView>
+
+            <!-- Grid View Mode -->
             <CollectionView x:Name="ChartCollectionView"
-                            Margin="10, 0, 10, 0"
-                            HorizontalOptions="FillAndExpand"
-                            VerticalOptions="FillAndExpand"
-                            SelectionMode="None"
+                            Margin="10"
+                            SelectionMode="Single"
+                            SelectionChanged="CollectionView_SelectionChanged"
                             Scrolled="ChartGrid_Scrolled"
-                            ItemsSource="{Binding ViewModel.Charts}">
+                            ItemsSource="{Binding ViewModel.Charts}"
+                            IsVisible="{Binding ViewModel.IsGridMode}">
                 <CollectionView.ItemsLayout>
-                    <GridItemsLayout Orientation="Vertical"
-                                     Span="2"
-                                     HorizontalItemSpacing="10"
-                                     VerticalItemSpacing="10"/>
+                  <GridItemsLayout Orientation="Vertical"
+                                   Span="2"
+                                   HorizontalItemSpacing="10"
+                                   VerticalItemSpacing="10"/>
                 </CollectionView.ItemsLayout>
                 <CollectionView.ItemTemplate>
-                    <DataTemplate x:DataType="pages:DrawingItemState">
-                        <Frame CornerRadius="8" Padding="0" HasShadow="True" BorderColor="LightGray" HeightRequest="150">
-                            <Grid RowDefinitions="*,Auto">
-                                <!-- Placeholder for Image -->
-                                <BoxView Color="#E0E0E0" Grid.Row="0"/>
-                                <Label Text="Image" 
-                                       VerticalOptions="Center" 
-                                       HorizontalOptions="Center" 
-                                       TextColor="Gray"
-                                       Grid.Row="0"/>
-                                
-                                <StackLayout Grid.Row="1" Padding="10" BackgroundColor="White">
-                                    <Label Text="{Binding Title}" 
-                                           FontAttributes="Bold" 
-                                           LineBreakMode="TailTruncation"/>
-                                    <Label Text="{Binding DateCreated, StringFormat='{0:MM/dd/yyyy}'}" 
-                                           FontSize="Caption" 
-                                           TextColor="Gray"/>
-                                </StackLayout>
-                            </Grid>
-                        </Frame>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-                <CollectionView.EmptyView>
-                    <StackLayout Orientation="Vertical"
-                                 Padding="20"
-                                 VerticalOptions="Center">
-                        <ActivityIndicator IsRunning="{Binding ViewModel.IsLoading}"
-                                           IsVisible="{Binding ViewModel.IsLoading}"
-                                           Color="Blue"/>
-                        <Label Text="No drawings found."
-                               IsVisible="{Binding ViewModel.IsEmptyCharts}"
+                  <DataTemplate x:DataType="pages:DrawingItemState">
+                    <Border StrokeShape="RoundRectangle 8"
+                           Stroke="#E0E0E0"
+                           StrokeThickness="1"
+                           HeightRequest="150"
+                           Padding="0">
+                      <Grid RowDefinitions="*,Auto">
+                        <!-- Placeholder for Image -->
+                        <BoxView Color="#E0E0E0" Grid.Row="0"/>
+                        <Label Text="Image"
+                               VerticalOptions="Center"
                                HorizontalOptions="Center"
-                               TextColor="Gray"/>
-                        <Button Text="Create New Drawing"
-                                IsVisible="{Binding ViewModel.IsEmptyCharts}"
-                                Command="{Binding ViewModel.AddNewChartCommand}"
-                                Margin="0,20,0,0"/>
-                    </StackLayout>
-                </CollectionView.EmptyView>
-            </CollectionView>
-        </RefreshView>
+                               TextColor="Gray"
+                               Grid.Row="0"/>
 
-        <!-- Add Button (Floating) -->
-        <Button Text="+"
+                        <StackLayout Grid.Row="1"
+                                     Padding="10"
+                                     BackgroundColor="{AppThemeBinding Light=White, Dark=#2D2D2D}">
+                          <Label Text="{Binding Title}"
+                                 FontAttributes="Bold"
+                                 LineBreakMode="TailTruncation"/>
+                          <Label Text="{Binding DateCreated, StringFormat='{0:MM/dd/yyyy}'}"
+                                 FontSize="10"
+                                 TextColor="Gray"/>
+                        </StackLayout>
+                      </Grid>
+                    </Border>
+                  </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+            
+            <!-- Loading Indicator -->
+            <ActivityIndicator IsRunning="{Binding ViewModel.IsLoading}"
+                               IsVisible="{Binding ViewModel.IsLoading}"
+                               Color="{StaticResource Primary}"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"/>
+        </Grid>
+
+        <!-- Floating Action Button -->
+        <Button Grid.Row="2"
+                Text="+"
                 CornerRadius="28"
                 WidthRequest="56"
                 HeightRequest="56"
@@ -145,40 +173,6 @@
                 Command="{Binding ViewModel.AddNewChartCommand}"
                 BackgroundColor="#512BD4"
                 TextColor="White"/>
-
-        <!-- Search Panel -->
-        <StackLayout x:Name="SearchPanel"
-                     Orientation="Horizontal"
-                     IsVisible="{Binding ViewModel.IsSearchVisible}"
-                     VerticalOptions="Start"
-                     BackgroundColor="White"
-                     Padding="10">
-            <Label Text="Search" VerticalOptions="Center"/>
-            <Entry Text="{Binding ViewModel.SearchText}"
-                   HorizontalOptions="FillAndExpand"
-                   Placeholder="Search drawings..."/>
-            <Button Text="X" 
-                    Command="{Binding ViewModel.ClearSearchPanelCommand}"
-                    WidthRequest="40"
-                    HeightRequest="40"/>
-        </StackLayout>
-
-        <!-- Sort Panel -->
-        <StackLayout x:Name="SortPanel"
-                     Orientation="Horizontal"
-                     IsVisible="{Binding ViewModel.IsSortVisible}"
-                     VerticalOptions="Start"
-                     BackgroundColor="White"
-                     Padding="10">
-            <Picker Title="Sort by"
-                    ItemsSource="{Binding ViewModel.SortProperties}"
-                    SelectedItem="{Binding ViewModel.ChartListSortProperty}"
-                    HorizontalOptions="FillAndExpand"/>
-            <Picker Title="Direction"
-                    ItemsSource="{Binding ViewModel.SortOrders}"
-                    SelectedItem="{Binding ViewModel.ChartListSortOrder}"
-                    HorizontalOptions="FillAndExpand"/>
-        </StackLayout>
-
-    </Grid>
-</ContentPage>
+      </Grid>
+  </Border>
+</toolkit:Popup>

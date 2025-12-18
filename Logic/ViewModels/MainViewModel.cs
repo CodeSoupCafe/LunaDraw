@@ -31,9 +31,10 @@ using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Tools;
 using LunaDraw.Logic.Constants;
+using LunaDraw.Components.Carousel;
+using CommunityToolkit.Maui.Views;
 
 using ReactiveUI;
-
 using SkiaSharp;
 using SkiaSharp.Views.Maui;
 using CommunityToolkit.Maui.Extensions;
@@ -172,27 +173,25 @@ public class MainViewModel : ReactiveObject
     NewDrawingCommand = ReactiveCommand.CreateFromTask(NewDrawingAsync);
     ShowGalleryCommand = ReactiveCommand.CreateFromTask(async () =>
     {
-      galleryViewModel.SelectedDrawing = null;
-      galleryViewModel.IsNewDrawingRequested = false;
-      galleryViewModel.LoadDrawingsCommand.Execute().Subscribe();
-
-      var galleryPopup = new Components.GalleryPopup(galleryViewModel);
-      await Application.Current?.Windows[0].Page.ShowPopupAsync(galleryPopup);
-
-      if (galleryViewModel.SelectedDrawing is External.Drawing selectedDrawing)
+      var galleryPopup = new Components.Carousel.RenderCanvasList(drawingStorageMomento, preferencesFacade, messageBus);
+      var page = Application.Current?.Windows[0]?.Page;
+      if (page != null)
       {
-        await LoadDrawingCommand.Execute(selectedDrawing);
-      }
-      else if (galleryViewModel.IsNewDrawingRequested)
-      {
-        // New drawing
-        NewDrawingCommand.Execute().Subscribe();
+         page.ShowPopup(galleryPopup);
       }
     });
 
+    // Listen for OpenDrawingMessage
+    this.messageBus.Listen<OpenDrawingMessage>()
+        .ObserveOn(RxApp.MainThreadScheduler)
+        .Subscribe(msg =>
+        {
+            LoadDrawingCommand.Execute(msg.Drawing).Subscribe();
+        });
+
     // Initial drawing state
     NewDrawingCommand.Execute().Subscribe();
-
+    
     // Use Property setters to trigger ViewOptionsChangedMessage so ToolbarViewModel syncs up
     ShowButtonLabels = this.preferencesFacade.Get<bool>(AppPreference.ShowButtonLabels);
     ShowLayersPanel = this.preferencesFacade.Get<bool>(AppPreference.ShowLayersPanel);
