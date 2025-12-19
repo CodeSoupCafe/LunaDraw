@@ -46,11 +46,13 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">
-      <EnableDefaultCopyToOutputDirectoryItems>false</EnableDefaultCopyToOutputDirectoryItems>
+    <EnableDefaultCopyToOutputDirectoryItems>false</EnableDefaultCopyToOutputDirectoryItems>
+    <DefaultItemExcludes>$(DefaultItemExcludes);Legacy\**</DefaultItemExcludes>
   </PropertyGroup>
 
-	<ItemGroup>
-		<Compile Remove="Legacy\**\*" />
+	<ItemGroup> 
+    <Compile Remove="Legacy\**\*.cs" />
+    <None Include="Legacy\**\*" /> 
 	</ItemGroup>
 
 	<ItemGroup>

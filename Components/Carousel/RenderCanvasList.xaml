@@ -127,13 +127,8 @@
                            HeightRequest="150"
                            Padding="0">
                       <Grid RowDefinitions="*,Auto">
-                        <!-- Placeholder for Image -->
-                        <BoxView Color="#E0E0E0" Grid.Row="0"/>
-                        <Label Text="Image"
-                               VerticalOptions="Center"
-                               HorizontalOptions="Center"
-                               TextColor="Gray"
-                               Grid.Row="0"/>
+                        <!-- Render Canvas -->
+                        <pages:RenderCanvas Drawing="{Binding Drawing}" Grid.Row="0"/>
 
                         <StackLayout Grid.Row="1"
                                      Padding="10"

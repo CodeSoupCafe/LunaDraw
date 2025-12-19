@@ -16,7 +16,6 @@ public class DrawingItemState : ItemState
   public DrawingItemState(External.Drawing drawing)
   {
     this.drawing = drawing;
-    Properties = new Dictionary<string, object?>();
   }
 
   public override Guid Id => drawing.Id;
@@ -28,9 +27,7 @@ public class DrawingItemState : ItemState
 
   public override bool Equals(object? other)
   {
-    if (other is DrawingItemState otherItem)
-      return Id == otherItem.Id;
-    return false;
+    return other is DrawingItemState otherItem && Id == otherItem.Id;
   }
 
   public override int GetHashCode()
@@ -44,6 +41,7 @@ public class RenderCanvasListViewModel : NotifyPropertyChanged
   private readonly IDrawingStorageMomento drawingStorage;
   private readonly IPreferencesFacade preferences;
   private readonly IMessageBus messageBus;
+  private IDisposable? drawingListChangedSubscription;
 
   private bool isGridMode;
   private bool isSortVisible;
@@ -76,7 +74,16 @@ public class RenderCanvasListViewModel : NotifyPropertyChanged
     ClearSearchPanelCommand = new RelayCommand(ClearSearchPanel);
     ReloadChartDataCommand = new AsyncRelayCommand(ReloadChartData);
     AddNewChartCommand = new AsyncRelayCommand(AddNewChart);
-    OpenDrawingCommand = new Command<DrawingItemState>(OpenDrawing);
+    OpenDrawingCommand = new AsyncRelayCommand<DrawingItemState>(OpenDrawingAsync);
+
+    // Subscribe to drawing list changes to refresh gallery
+    drawingListChangedSubscription = this.messageBus.Listen<LunaDraw.Logic.Messages.DrawingListChangedMessage>()
+      .Subscribe(_ => MainThread.BeginInvokeOnMainThread(async () => await ReloadChartData()));
+  }
+
+  public void Dispose()
+  {
+    drawingListChangedSubscription?.Dispose();
   }
 
   // Default constructor for XAML previewer or manual init if needed
@@ -87,12 +94,7 @@ public class RenderCanvasListViewModel : NotifyPropertyChanged
   private IDisposable? refreshFromScroll;
   private IDisposable? refreshImagesFromScroll;
   private double lastScrollValue;
-  private bool isSubscribed;
-  public bool IsPaused { get; set; }
-
-  private readonly double scrollAllowImageUpdateRange = 5;
   private readonly int scrollAllowUpdateRange = 120;
-  private readonly int dropdownOutOfBoundsY = -120;
 
   public bool IsGridMode
   {
@@ -190,7 +192,9 @@ public class RenderCanvasListViewModel : NotifyPropertyChanged
   public ICommand ClearSearchPanelCommand { get; }
   public ICommand ReloadChartDataCommand { get; }
   public ICommand AddNewChartCommand { get; }
-  public ICommand OpenDrawingCommand { get; }
+  public IAsyncRelayCommand<DrawingItemState> OpenDrawingCommand { get; }
+  
+  public event EventHandler? RequestClose;
 
   private void ToggleView()
   {
@@ -213,21 +217,37 @@ public class RenderCanvasListViewModel : NotifyPropertyChanged
     IsSearchVisible = false;
   }
 
-  private void OpenDrawing(DrawingItemState drawingItem)
+  private async Task OpenDrawingAsync(DrawingItemState? drawingItem)
   {
-    if (drawingItem == null) return;
-    
-    messageBus.SendMessage(new OpenDrawingMessage(drawingItem.Drawing));
-    
-    // Close the popup logic is handled by the View usually, but since we are in VM
-    // we can try to find the active popup or send a message.
-    // However, since we are using Toolkit Popup, we can close it from the view code-behind
-    // or rely on a "RequestClose" event.
-    // For simplicity, let's just trigger a Close action if we had access, but since we don't,
-    // we'll let the View subscribe to the command execution or handle it in the View's event handler.
-    // Actually, the View calls this command. 
-    // Let's modify the View to close itself after executing this command, OR 
-    // better: OpenDrawingCommand should just set the message. The View handles the closing.
+    if (drawingItem == null)
+    {
+      System.Diagnostics.Debug.WriteLine("[RenderCanvasListViewModel] OpenDrawing called with null item");
+      return;
+    }
+
+    try
+    {
+      System.Diagnostics.Debug.WriteLine($"[RenderCanvasListViewModel] Opening drawing: {drawingItem.Title} ({drawingItem.Id})");
+
+      // Store the drawing reference
+      var drawing = drawingItem.Drawing;
+
+      // Send the message to load the drawing FIRST
+      System.Diagnostics.Debug.WriteLine($"[RenderCanvasListViewModel] Sending OpenDrawingMessage");
+      messageBus.SendMessage(new OpenDrawingMessage(drawing));
+
+      // Small delay to let the message get processed
+      await Task.Delay(50);
+
+      // Then close the popup
+      System.Diagnostics.Debug.WriteLine($"[RenderCanvasListViewModel] Closing popup");
+      RequestClose?.Invoke(this, EventArgs.Empty);
+    }
+    catch (Exception ex)
+    {
+      System.Diagnostics.Debug.WriteLine($"[RenderCanvasListViewModel] Error opening drawing: {ex}");
+      System.Diagnostics.Debug.WriteLine($"[RenderCanvasListViewModel] Stack trace: {ex.StackTrace}");
+    }
   }
 
   private async Task ReloadChartData()
@@ -254,16 +274,21 @@ public class RenderCanvasListViewModel : NotifyPropertyChanged
     var name = await drawingStorage.GetNextDefaultNameAsync();
     var id = Guid.NewGuid();
     var newDrawing = drawingStorage.CreateExternalDrawingFromCurrent(new List<Layer>(), 800, 600, name, id);
-    newDrawing.Layers.Add(new External.Layer { Id = Guid.NewGuid(), Name = "Layer 1", IsVisible = true }); //, Opacity = 255
+    newDrawing.Layers.Add(new External.Layer { Id = Guid.NewGuid(), Name = "Layer 1", IsVisible = true });
 
     await drawingStorage.ExternalDrawingAsync(newDrawing);
-    await ReloadChartData();
-    
+
+    // Notify that the drawing list changed (will trigger ReloadChartData via subscription)
+    messageBus.SendMessage(new LunaDraw.Logic.Messages.DrawingListChangedMessage());
+
+    // Wait a moment for the reload to complete
+    await Task.Delay(100);
+
     // Auto-open the new drawing
     var newItem = allCharts.FirstOrDefault(c => c.Id == id);
     if (newItem != null)
     {
-        OpenDrawing(newItem);
+        await OpenDrawingAsync(newItem);
     }
   }
 
@@ -294,6 +319,7 @@ public class RenderCanvasListViewModel : NotifyPropertyChanged
         ? list.OrderByDescending(sortKey).ToList()
         : list.OrderBy(sortKey).ToList();
 
+    Charts.Clear();
     Charts.AddRange(sorted);
 
     IsEmptyCharts = Charts.Count == 0;

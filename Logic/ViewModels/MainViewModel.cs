@@ -177,21 +177,40 @@ public class MainViewModel : ReactiveObject
       var page = Application.Current?.Windows[0]?.Page;
       if (page != null)
       {
-         page.ShowPopup(galleryPopup);
+        page.ShowPopup(galleryPopup);
       }
     });
 
     // Listen for OpenDrawingMessage
     this.messageBus.Listen<OpenDrawingMessage>()
         .ObserveOn(RxApp.MainThreadScheduler)
+        .Delay(TimeSpan.FromMilliseconds(100))
         .Subscribe(msg =>
         {
-            LoadDrawingCommand.Execute(msg.Drawing).Subscribe();
+          try
+          {
+            System.Diagnostics.Debug.WriteLine($"[MainViewModel] Received OpenDrawingMessage for drawing: {msg.Drawing?.Name ?? "null"}");
+
+            LoadDrawingCommand.Execute(msg.Drawing).Subscribe(
+              onNext: _ => { },
+              onError: ex =>
+              {
+                System.Diagnostics.Debug.WriteLine($"[MainViewModel] Error executing LoadDrawingCommand: {ex}");
+                System.Diagnostics.Debug.WriteLine($"[MainViewModel] Stack trace: {ex.StackTrace}");
+              });
+          }
+          catch (Exception ex)
+          {
+            System.Diagnostics.Debug.WriteLine($"[MainViewModel] Error in message handler: {ex}");
+            System.Diagnostics.Debug.WriteLine($"[MainViewModel] Stack trace: {ex.StackTrace}");
+          }
         });
 
     // Initial drawing state
-    NewDrawingCommand.Execute().Subscribe();
-    
+    // Do not auto-create a new drawing file on startup. 
+    // LayerFacade is initialized with a default layer, which is sufficient for a transient "Untitled" state.
+    // NewDrawingCommand.Execute().Subscribe();
+
     // Use Property setters to trigger ViewOptionsChangedMessage so ToolbarViewModel syncs up
     ShowButtonLabels = this.preferencesFacade.Get<bool>(AppPreference.ShowButtonLabels);
     ShowLayersPanel = this.preferencesFacade.Get<bool>(AppPreference.ShowLayersPanel);
@@ -324,30 +343,83 @@ public class MainViewModel : ReactiveObject
 
   private async Task LoadDrawingAsync(External.Drawing externalDrawing)
   {
-    if (externalDrawing == null) return;
+    System.Diagnostics.Debug.WriteLine($"[MainViewModel] LoadDrawingAsync called for: {externalDrawing?.Name ?? "null"}");
 
-    // Load full details
-    var fullDrawing = await drawingStorageMomento.LoadDrawingAsync(externalDrawing.Id);
-    if (fullDrawing == null) return;
-
-    CurrentDrawingId = fullDrawing.Id;
-    CurrentDrawingName = fullDrawing.Name;
-
-    // Restore layers
-    var restoredLayers = drawingStorageMomento.RestoreLayers(fullDrawing);
-    LayerFacade.Layers.Clear();
-    foreach (var layer in restoredLayers)
+    if (externalDrawing == null)
     {
-      LayerFacade.Layers.Add(layer);
+      System.Diagnostics.Debug.WriteLine("[MainViewModel] LoadDrawingAsync: externalDrawing is null");
+      return;
     }
-    LayerFacade.CurrentLayer = LayerFacade.Layers.FirstOrDefault();
 
-    // Reset view
-    NavigationModel.Reset();
-    NavigationModel.CanvasWidth = fullDrawing.CanvasWidth;
-    NavigationModel.CanvasHeight = fullDrawing.CanvasHeight;
+    try
+    {
+      System.Diagnostics.Debug.WriteLine($"[MainViewModel] Loading drawing from storage: {externalDrawing.Id}");
 
-    messageBus.SendMessage(new CanvasInvalidateMessage());
+      // Load full details
+      var fullDrawing = await drawingStorageMomento.LoadDrawingAsync(externalDrawing.Id);
+      if (fullDrawing == null)
+      {
+        System.Diagnostics.Debug.WriteLine($"[MainViewModel] Failed to load drawing from storage: {externalDrawing.Id}");
+        return;
+      }
+
+      System.Diagnostics.Debug.WriteLine($"[MainViewModel] Setting current drawing: {fullDrawing.Name}");
+      CurrentDrawingId = fullDrawing.Id;
+      CurrentDrawingName = fullDrawing.Name;
+
+      System.Diagnostics.Debug.WriteLine($"[MainViewModel] Restoring layers...");
+
+      // Restore layers
+      var restoredLayers = drawingStorageMomento.RestoreLayers(fullDrawing);
+
+      System.Diagnostics.Debug.WriteLine($"[MainViewModel] Restored {restoredLayers.Count} layers");
+
+      // Ensure layer operations happen on main thread to avoid COM exceptions
+      await MainThread.InvokeOnMainThreadAsync(() =>
+      {
+        LayerFacade.Layers.Clear();
+        foreach (var layer in restoredLayers)
+        {
+          LayerFacade.Layers.Add(layer);
+        }
+        if (!LayerFacade.Layers.Any())
+        {
+          System.Diagnostics.Debug.WriteLine($"[MainViewModel] No layers restored, adding default layer");
+          LayerFacade.AddLayer();
+        }
+        LayerFacade.CurrentLayer = LayerFacade.Layers.FirstOrDefault();
+      });
+
+      System.Diagnostics.Debug.WriteLine($"[MainViewModel] Resetting navigation...");
+
+      // Reset view
+      NavigationModel.Reset();
+      NavigationModel.CanvasWidth = fullDrawing.CanvasWidth;
+      NavigationModel.CanvasHeight = fullDrawing.CanvasHeight;
+
+      System.Diagnostics.Debug.WriteLine($"[MainViewModel] Invalidating canvas...");
+      messageBus.SendMessage(new CanvasInvalidateMessage());
+
+      System.Diagnostics.Debug.WriteLine($"[MainViewModel] Drawing loaded successfully: {fullDrawing.Name}");
+    }
+    catch (Exception ex)
+    {
+      System.Diagnostics.Debug.WriteLine($"[MainViewModel] ERROR loading drawing: {ex}");
+      System.Diagnostics.Debug.WriteLine($"[MainViewModel] Stack trace: {ex.StackTrace}");
+
+      try
+      {
+        var page = Application.Current?.Windows[0]?.Page;
+        if (page != null)
+        {
+          await page.DisplayAlert("Error", $"Failed to load drawing: {ex.Message}", "OK");
+        }
+      }
+      catch (Exception alertEx)
+      {
+        System.Diagnostics.Debug.WriteLine($"[MainViewModel] Failed to show alert: {alertEx}");
+      }
+    }
   }
 
   private async Task ExternalDrawingAsync(string? nameOverride = null)
@@ -370,6 +442,8 @@ public class MainViewModel : ReactiveObject
         CurrentDrawingId);
 
     await drawingStorageMomento.ExternalDrawingAsync(externalDrawing);
+
+    messageBus.SendMessage(new DrawingListChangedMessage());
   }
 
   private async Task NewDrawingAsync()

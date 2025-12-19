@@ -50,6 +50,8 @@ public partial class MainPage : ContentPage
   private MenuFlyout? canvasContextMenu;
   private MenuFlyoutSubItem? moveToLayerSubMenu;
   private bool hasShownGallery = false;
+  private bool isCanvasReady = false;
+  private bool isInvalidationPending = false;
 
   public MainPage(
       MainViewModel viewModel,
@@ -81,11 +83,17 @@ public partial class MainPage : ContentPage
 
     this.messageBus.Listen<CanvasInvalidateMessage>().Subscribe(_ =>
     {
-      canvasView?.InvalidateSurface();
+      SafeInvalidateSurface();
     });
 
-    viewModel.SelectionObserver.SelectionChanged += (s, e) => UpdateContextMenu();
-    viewModel.Layers.CollectionChanged += (s, e) => UpdateContextMenu();
+    viewModel.SelectionObserver.SelectionChanged += (s, e) =>
+    {
+      MainThread.BeginInvokeOnMainThread(UpdateContextMenu);
+    };
+    viewModel.Layers.CollectionChanged += (s, e) =>
+    {
+      MainThread.BeginInvokeOnMainThread(UpdateContextMenu);
+    };
     UpdateContextMenu();
   }
 
@@ -158,7 +166,9 @@ public partial class MainPage : ContentPage
   {
     if (moveToLayerSubMenu == null) return;
 
-    moveToLayerSubMenu.Clear();
+    try
+    {
+      moveToLayerSubMenu.Clear();
 
     var addLayerItem = new MenuFlyoutItem { Text = AppConstants.UI.NewLayer };
     addLayerItem.SetBinding(MenuItem.CommandProperty, new Binding("SelectionVM.MoveSelectionToNewLayerCommand", source: viewModel));
@@ -179,86 +189,167 @@ public partial class MainPage : ContentPage
       };
       moveToLayerSubMenu.Add(item);
     }
+    }
+    catch (Exception ex)
+    {
+      System.Diagnostics.Debug.WriteLine($"[MainPage] Error updating context menu: {ex.Message}");
+    }
+  }
+
+  private void SafeInvalidateSurface()
+  {
+    if (canvasView == null)
+    {
+      System.Diagnostics.Debug.WriteLine("[MainPage] Cannot invalidate: canvasView is null");
+      return;
+    }
+
+    // If the canvas isn't ready yet, mark as pending
+    if (!isCanvasReady)
+    {
+      System.Diagnostics.Debug.WriteLine("[MainPage] Canvas not ready, marking invalidation as pending");
+      isInvalidationPending = true;
+      return;
+    }
+
+    // Ensure we're on the main thread and add error handling
+    MainThread.BeginInvokeOnMainThread(() =>
+    {
+      try
+      {
+        if (canvasView != null)
+        {
+          canvasView.InvalidateSurface();
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"[MainPage] Error invalidating surface: {ex.Message}");
+        // If we get an EGL error, the canvas may not be ready yet
+        // Mark it as not ready and try again later
+        if (ex.Message.Contains("EGL"))
+        {
+          isCanvasReady = false;
+          isInvalidationPending = true;
+
+          // Retry after a delay
+          Task.Delay(100).ContinueWith(_ =>
+          {
+            SafeInvalidateSurface();
+          });
+        }
+      }
+    });
   }
 
   private void OnCanvasViewPaintSurface(object? sender, SKPaintGLSurfaceEventArgs e)
   {
-    SKSurface surface = e.Surface;
-    SKCanvas canvas = surface.Canvas;
-
-    int width = e.BackendRenderTarget.Width;
-    int height = e.BackendRenderTarget.Height;
-    viewModel.CanvasSize = new SKRect(0, 0, width, height);
-    viewModel.NavigationModel.CanvasWidth = width;
-    viewModel.NavigationModel.CanvasHeight = height;
-
-    var bgColor = preferencesFacade.GetCanvasBackgroundColor();
-    canvas.Clear(bgColor);
-
-    if (viewModel == null) return;
-
-    canvas.Save();
-
-    // Apply the view transformation matrix
-    canvas.SetMatrix(viewModel.NavigationModel.ViewMatrix);
-
-    // Draw layers with masking support
-    var layers = viewModel.Layers;
-    for (int i = 0; i < layers.Count; i++)
+    try
     {
-      var layer = layers[i];
-      if (!layer.IsVisible) continue;
+      // Mark canvas as ready after first successful paint setup
+      if (!isCanvasReady)
+      {
+        System.Diagnostics.Debug.WriteLine("[MainPage] Canvas is now ready");
+        isCanvasReady = true;
 
-      if (layer.MaskingMode == Logic.Models.MaskingMode.Clip)
-      {
-        layer.Draw(canvas);
-      }
-      else
-      {
-        // Check if next layers are clipping layers
-        bool hasClippingLayers = false;
-        int nextIndex = i + 1;
-        while (nextIndex < layers.Count && layers[nextIndex].MaskingMode == Logic.Models.MaskingMode.Clip)
+        // If there was a pending invalidation, trigger it now
+        if (isInvalidationPending)
         {
-          if (layers[nextIndex].IsVisible) hasClippingLayers = true;
-          nextIndex++;
+          isInvalidationPending = false;
+          System.Diagnostics.Debug.WriteLine("[MainPage] Processing pending invalidation");
+          // Don't invalidate during paint, schedule it for after
+          Task.Delay(50).ContinueWith(_ => SafeInvalidateSurface());
         }
+      }
 
-        if (hasClippingLayers)
+      SKSurface surface = e.Surface;
+      SKCanvas canvas = surface.Canvas;
+
+      int width = e.BackendRenderTarget.Width;
+      int height = e.BackendRenderTarget.Height;
+
+      // Debug logging for rendering
+      if (viewModel?.Layers != null)
+      {
+        System.Diagnostics.Debug.WriteLine($"[MainPage] Painting surface. Layers: {viewModel.Layers.Count}");
+      }
+
+      if (viewModel is null) return;
+
+      viewModel.CanvasSize = new SKRect(0, 0, width, height);
+      viewModel.NavigationModel.CanvasWidth = width;
+      viewModel.NavigationModel.CanvasHeight = height;
+
+      var bgColor = preferencesFacade.GetCanvasBackgroundColor();
+      canvas.Clear(bgColor);
+
+      canvas.Save();
+
+      // Apply the view transformation matrix
+      canvas.SetMatrix(viewModel.NavigationModel.ViewMatrix);
+
+      // Draw layers with masking support
+      var layers = viewModel.Layers;
+      for (int i = 0; i < layers.Count; i++)
+      {
+        var layer = layers[i];
+        if (!layer.IsVisible) continue;
+
+        if (layer.MaskingMode == Logic.Models.MaskingMode.Clip)
         {
-          canvas.SaveLayer();
           layer.Draw(canvas);
-
-          using (var paint = new SKPaint { BlendMode = SKBlendMode.SrcATop, IsAntialias = true })
-          {
-            for (int j = i + 1; j < layers.Count; j++)
-            {
-              var clipLayer = layers[j];
-              if (clipLayer.MaskingMode != Logic.Models.MaskingMode.Clip) break;
-
-              if (clipLayer.IsVisible)
-              {
-                canvas.SaveLayer(paint);
-                clipLayer.Draw(canvas);
-                canvas.Restore();
-              }
-
-              i = j;
-            }
-          }
-
-          canvas.Restore();
         }
         else
         {
-          layer.Draw(canvas);
+          // Check if next layers are clipping layers
+          bool hasClippingLayers = false;
+          int nextIndex = i + 1;
+          while (nextIndex < layers.Count && layers[nextIndex].MaskingMode == Logic.Models.MaskingMode.Clip)
+          {
+            if (layers[nextIndex].IsVisible) hasClippingLayers = true;
+            nextIndex++;
+          }
+
+          if (hasClippingLayers)
+          {
+            canvas.SaveLayer();
+            layer.Draw(canvas);
+
+            using (var paint = new SKPaint { BlendMode = SKBlendMode.SrcATop, IsAntialias = true })
+            {
+              for (int j = i + 1; j < layers.Count; j++)
+              {
+                var clipLayer = layers[j];
+                if (clipLayer.MaskingMode != Logic.Models.MaskingMode.Clip) break;
+
+                if (clipLayer.IsVisible)
+                {
+                  canvas.SaveLayer(paint);
+                  clipLayer.Draw(canvas);
+                  canvas.Restore();
+                }
+
+                i = j;
+              }
+            }
+
+            canvas.Restore();
+          }
+          else
+          {
+            layer.Draw(canvas);
+          }
         }
       }
+
+      viewModel.ActiveTool.DrawPreview(canvas, viewModel.CreateToolContext());
+
+      canvas.Restore();
     }
-
-    viewModel.ActiveTool.DrawPreview(canvas, viewModel.CreateToolContext());
-
-    canvas.Restore();
+    catch (Exception ex)
+    {
+      System.Diagnostics.Debug.WriteLine($"Error in OnCanvasViewPaintSurface: {ex}");
+    }
   }
 
   private void OnTouch(object? sender, SKTouchEventArgs e)

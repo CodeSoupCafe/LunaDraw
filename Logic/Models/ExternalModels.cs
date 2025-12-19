@@ -37,6 +37,7 @@ public class External
   }
 
   [JsonDerivedType(typeof(Path), typeDiscriminator: "P")]
+  [JsonDerivedType(typeof(Stamps), typeDiscriminator: "S")]
   public class Element
   {
     [JsonPropertyName("i")]
@@ -71,5 +72,31 @@ public class External
     public bool IsFilled { get; set; }
     [JsonPropertyName("b")]
     public int BlendMode { get; set; }
+  }
+
+  public class Stamps : Element
+  {
+    [JsonPropertyName("pts")]
+    public List<float[]> Points { get; set; } = [];
+    [JsonPropertyName("st")]
+    public int ShapeType { get; set; }
+    [JsonPropertyName("s")]
+    public float Size { get; set; }
+    [JsonPropertyName("fl")]
+    public byte Flow { get; set; }
+    [JsonPropertyName("if")]
+    public bool IsFilled { get; set; }
+    [JsonPropertyName("bm")]
+    public int BlendMode { get; set; }
+    [JsonPropertyName("ire")]
+    public bool IsRainbowEnabled { get; set; }
+    [JsonPropertyName("r")]
+    public List<float> Rotations { get; set; } = [];
+    [JsonPropertyName("sj")]
+    public float SizeJitter { get; set; }
+    [JsonPropertyName("aj")]
+    public float AngleJitter { get; set; }
+    [JsonPropertyName("hj")]
+    public float HueJitter { get; set; }
   }
 }

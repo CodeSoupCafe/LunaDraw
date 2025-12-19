@@ -156,7 +156,47 @@ public class DrawingStorageMomento : IDrawingStorageMomento
 
   #region Conversion Helpers
 
+  private static BrushShape GetBrushShapeStatic(BrushShapeType type)
+  {
+      return type switch
+      {
+          BrushShapeType.Circle => BrushShape.Circle(),
+          BrushShapeType.Square => BrushShape.Square(),
+          BrushShapeType.Star => BrushShape.Star(),
+          BrushShapeType.Heart => BrushShape.Heart(),
+          BrushShapeType.Sparkle => BrushShape.Sparkle(),
+          BrushShapeType.Cloud => BrushShape.Cloud(),
+          BrushShapeType.Moon => BrushShape.Moon(),
+          BrushShapeType.Lightning => BrushShape.Lightning(),
+          BrushShapeType.Diamond => BrushShape.Diamond(),
+          BrushShapeType.Triangle => BrushShape.Triangle(),
+          BrushShapeType.Hexagon => BrushShape.Hexagon(),
+          BrushShapeType.Unicorn => BrushShape.Unicorn(),
+          BrushShapeType.Giraffe => BrushShape.Giraffe(),
+          BrushShapeType.Bear => BrushShape.Bear(),
+          BrushShapeType.Elephant => BrushShape.Elephant(),
+          BrushShapeType.Tiger => BrushShape.Tiger(),
+          BrushShapeType.Monkey => BrushShape.Monkey(),
+          BrushShapeType.Fireworks => BrushShape.Fireworks(),
+          BrushShapeType.Flower => BrushShape.Flower(),
+          BrushShapeType.Sun => BrushShape.Sun(),
+          BrushShapeType.Snowflake => BrushShape.Snowflake(),
+          BrushShapeType.Butterfly => BrushShape.Butterfly(),
+          BrushShapeType.Fish => BrushShape.Fish(),
+          BrushShapeType.Paw => BrushShape.Paw(),
+          BrushShapeType.Leaf => BrushShape.Leaf(),
+          BrushShapeType.MusicNote => BrushShape.MusicNote(),
+          BrushShapeType.Smile => BrushShape.Smile(),
+          _ => BrushShape.Circle()
+      };
+  }
+
   public External.Drawing CreateExternalDrawingFromCurrent(IEnumerable<Layer> layers, int width, int height, string name, Guid id)
+  {
+      return CreateExternalDrawingFromCurrentStatic(layers, width, height, name, id);
+  }
+
+  public static External.Drawing CreateExternalDrawingFromCurrentStatic(IEnumerable<Layer> layers, int width, int height, string name, Guid id)
   {
     var externalDrawing = new External.Drawing
     {
@@ -180,6 +220,7 @@ public class DrawingStorageMomento : IDrawingStorageMomento
 
       foreach (var element in layer.Elements)
       {
+        System.Diagnostics.Debug.WriteLine($"[Storage] Saving element {element.GetType().Name} with ID {element.Id}");
         External.Element? externelElement = null;
 
         if (element is DrawablePath drawablePath)
@@ -225,7 +266,24 @@ public class DrawingStorageMomento : IDrawingStorageMomento
             BlendMode = (int)SKBlendMode.SrcOver
           };
         }
-        // Add other types here when implemented
+        else if (element is DrawableStamps drawableStamps)
+        {
+            var points = drawableStamps.Points.Select(p => new float[] { p.X, p.Y }).ToList();
+            externelElement = new External.Stamps
+            {
+                Points = points,
+                ShapeType = (int)drawableStamps.Shape.Type,
+                Size = drawableStamps.Size,
+                Flow = drawableStamps.Flow,
+                IsFilled = drawableStamps.IsFilled,
+                BlendMode = (int)drawableStamps.BlendMode,
+                IsRainbowEnabled = drawableStamps.IsRainbowEnabled,
+                Rotations = drawableStamps.Rotations,
+                SizeJitter = drawableStamps.SizeJitter,
+                AngleJitter = drawableStamps.AngleJitter,
+                HueJitter = drawableStamps.HueJitter
+            };
+        }
 
         if (externelElement != null)
         {
@@ -235,10 +293,10 @@ public class DrawingStorageMomento : IDrawingStorageMomento
           externelElement.ZIndex = element.ZIndex;
           externelElement.Opacity = element.Opacity;
           externelElement.FillColor = element.FillColor?.ToString(); // Use ToHex() extension
-          externelElement.StrokeColor = element.StrokeColor.ToString(); // Use ToHex() extension
+          externelElement.StrokeColor = element.StrokeColor.ToString() ?? SKColors.Black.ToString(); 
           externelElement.StrokeWidth = element.StrokeWidth;
           externelElement.IsGlowEnabled = element.IsGlowEnabled;
-          externelElement.GlowColor = element.GlowColor.ToString(); // Use ToHex() extension
+          externelElement.GlowColor = element.GlowColor.ToString() ?? SKColors.Transparent.ToString();
           externelElement.GlowRadius = element.GlowRadius;
 
           externelElement.TransformMatrix = new float[9];
@@ -255,6 +313,11 @@ public class DrawingStorageMomento : IDrawingStorageMomento
   }
 
   public List<Layer> RestoreLayers(External.Drawing savedDrawing)
+  {
+      return RestoreLayersStatic(savedDrawing);
+  }
+
+  public static List<Layer> RestoreLayersStatic(External.Drawing savedDrawing)
   {
     var layers = new List<Layer>();
 
@@ -274,60 +337,111 @@ public class DrawingStorageMomento : IDrawingStorageMomento
 
       foreach (var savedElement in sortedElements)
       {
-        IDrawableElement? element = null;
-
-        if (savedElement is External.Path savedPath)
+        try
         {
-          element = new DrawablePath
-          {
-            Id = savedElement.Id, // Set the Id from the saved element
-            Path = SKPath.ParseSvgPathData(savedPath.PathData),
-            IsFilled = savedPath.IsFilled,
-            BlendMode = (SKBlendMode)savedPath.BlendMode
-          };
+            System.Diagnostics.Debug.WriteLine($"[Storage] Restoring element {savedElement.GetType().Name} with ID {savedElement.Id}");
+            IDrawableElement? element = null;
+
+            if (savedElement is External.Path savedPath)
+            {
+              element = new DrawablePath
+              {
+                Id = savedElement.Id, // Set the Id from the saved element
+                Path = SKPath.ParseSvgPathData(savedPath.PathData),
+                IsFilled = savedPath.IsFilled,
+                BlendMode = (SKBlendMode)savedPath.BlendMode
+              };
+            }
+            else if (savedElement is External.Stamps savedStamps)
+            {
+                var points = savedStamps.Points?.Select(p => new SKPoint(p[0], p[1])).ToList() ?? new List<SKPoint>();
+                var brushShape = GetBrushShapeStatic((BrushShapeType)savedStamps.ShapeType);
+                
+                element = new DrawableStamps
+                {
+                    Id = savedElement.Id,
+                    Points = points,
+                    Shape = brushShape,
+                    Size = savedStamps.Size,
+                    Flow = savedStamps.Flow,
+                    IsFilled = savedStamps.IsFilled,
+                    BlendMode = (SKBlendMode)savedStamps.BlendMode,
+                    IsRainbowEnabled = savedStamps.IsRainbowEnabled,
+                    Rotations = savedStamps.Rotations,
+                    SizeJitter = savedStamps.SizeJitter,
+                    AngleJitter = savedStamps.AngleJitter,
+                    HueJitter = savedStamps.HueJitter
+                };
+            }
+
+            if (element != null)
+            {
+              // Common properties
+              element.IsVisible = savedElement.IsVisible;
+              element.ZIndex = savedElement.ZIndex;
+              element.Opacity = savedElement.Opacity;
+              
+              if (!string.IsNullOrEmpty(savedElement.FillColor))
+              {
+                SKColor.TryParse(savedElement.FillColor, out var fillColor);
+                element.FillColor = fillColor;
+              }
+              else
+              {
+                element.FillColor = null;
+              }
+
+              if (!string.IsNullOrEmpty(savedElement.StrokeColor))
+              {
+                SKColor.TryParse(savedElement.StrokeColor, out var strokeColor);
+                element.StrokeColor = strokeColor;
+              }
+              else
+              {
+                 // Default fallback if missing
+                 element.StrokeColor = SKColors.Black;
+              }
+              
+              element.StrokeWidth = savedElement.StrokeWidth;
+
+              element.IsGlowEnabled = savedElement.IsGlowEnabled;
+              
+              if (!string.IsNullOrEmpty(savedElement.GlowColor))
+              {
+                SKColor.TryParse(savedElement.GlowColor, out var glowColor);
+                element.GlowColor = glowColor;
+              }
+              else
+              {
+                 element.GlowColor = SKColors.Transparent;
+              }
+              
+              element.GlowRadius = savedElement.GlowRadius;
+
+              if (savedElement.TransformMatrix != null && savedElement.TransformMatrix.Length == 9)
+              {
+                  var matValues = savedElement.TransformMatrix;
+                  var matrix = new SKMatrix
+                  {
+                    ScaleX = matValues[0],
+                    SkewX = matValues[1],
+                    TransX = matValues[2],
+                    SkewY = matValues[3],
+                    ScaleY = matValues[4],
+                    TransY = matValues[5],
+                    Persp0 = matValues[6],
+                    Persp1 = matValues[7],
+                    Persp2 = matValues[8]
+                  };
+                  element.TransformMatrix = matrix;
+              }
+
+              layer.Elements.Add(element);
+            }
         }
-
-        if (element != null)
+        catch (Exception ex)
         {
-          // Common properties
-          element.IsVisible = savedElement.IsVisible;
-          element.ZIndex = savedElement.ZIndex;
-          element.Opacity = savedElement.Opacity;
-          if (!string.IsNullOrEmpty(savedElement.FillColor))
-          {
-            SKColor.TryParse(savedElement.FillColor, out var fillColor);
-            element.FillColor = fillColor;
-          }
-          else
-          {
-            element.FillColor = null;
-          }
-
-          SKColor.TryParse(savedElement.StrokeColor, out var strokeColor);
-          element.StrokeColor = strokeColor;
-          element.StrokeWidth = savedElement.StrokeWidth;
-
-          element.IsGlowEnabled = savedElement.IsGlowEnabled;
-          SKColor.TryParse(savedElement.GlowColor, out var glowColor);
-          element.GlowColor = glowColor;
-          element.GlowRadius = savedElement.GlowRadius;
-
-          var matValues = savedElement.TransformMatrix;
-          var matrix = new SKMatrix
-          {
-            ScaleX = matValues[0],
-            SkewX = matValues[1],
-            TransX = matValues[2],
-            SkewY = matValues[3],
-            ScaleY = matValues[4],
-            TransY = matValues[5],
-            Persp0 = matValues[6],
-            Persp1 = matValues[7],
-            Persp2 = matValues[8]
-          };
-          element.TransformMatrix = matrix;
-
-          layer.Elements.Add(element);
+             System.Diagnostics.Debug.WriteLine($"[Storage] Error restoring element {savedElement.Id}: {ex.Message}");
         }
       }
       // Re-attach event handler after population IF `Elements` was not passed in constructor
