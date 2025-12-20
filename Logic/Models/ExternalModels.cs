@@ -4,7 +4,7 @@ namespace LunaDraw.Logic.Models;
 
 public class External
 {
-  public class Drawing
+  public class Drawing : CodeSoupCafe.Maui.Models.ISortable
   {
     [JsonPropertyName("i")]
     public Guid Id { get; set; }
@@ -18,6 +18,16 @@ public class External
     public int CanvasHeight { get; set; }
     [JsonPropertyName("l")]
     public List<Layer> Layers { get; set; } = [];
+
+    // ISortable implementation (not serialized)
+    [JsonIgnore]
+    public string Title => Name;
+
+    [JsonIgnore]
+    public DateTimeOffset DateCreated => new DateTimeOffset(LastModified);
+
+    [JsonIgnore]
+    public DateTimeOffset DateUpdated => new DateTimeOffset(LastModified);
   }
 
   public class Layer

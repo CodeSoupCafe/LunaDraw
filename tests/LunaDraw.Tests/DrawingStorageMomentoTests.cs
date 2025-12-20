@@ -87,10 +87,10 @@ public class DrawingStorageMomentoTests : IDisposable
 
     var layers = new List<Layer> { layer };
 
-    var External.Drawing = _sut.CreateExternal.DrawingFromCurrent(layers, canvasWidth, canvasHeight, drawingName, drawingId);
+    var savedDrawing = _sut.CreateExternalDrawingFromCurrent(layers, canvasWidth, canvasHeight, drawingName, drawingId);
 
     // Act
-    await _sut.External.rawingAsync(savedDrawing);
+    await _sut.ExternalDrawingAsync(savedDrawing);
     var loadedDrawing = await _sut.LoadDrawingAsync(drawingId);
 
     // Assert

@@ -31,7 +31,7 @@ using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Tools;
 using LunaDraw.Logic.Constants;
-using LunaDraw.Components.Carousel;
+using LunaDraw.Components;
 using CommunityToolkit.Maui.Views;
 
 using ReactiveUI;
@@ -52,6 +52,7 @@ public class MainViewModel : ReactiveObject
   private readonly IMessageBus messageBus;
   private readonly IPreferencesFacade preferencesFacade;
   private readonly IDrawingStorageMomento drawingStorageMomento;
+  private readonly IServiceProvider serviceProvider;
 
   // Properties for current drawing state
   private Guid currentDrawingId = Guid.Empty;
@@ -152,7 +153,8 @@ public class MainViewModel : ReactiveObject
     LayerPanelViewModel layerPanelVM,
     SelectionViewModel selectionVM,
     HistoryViewModel historyVM,
-    GalleryViewModel galleryViewModel)
+    GalleryViewModel galleryViewModel,
+    IServiceProvider serviceProvider)
   {
     ToolbarViewModel = toolbarViewModel;
     LayerFacade = layerFacade;
@@ -166,19 +168,15 @@ public class MainViewModel : ReactiveObject
     SelectionVM = selectionVM;
     HistoryVM = historyVM;
     this.galleryViewModel = galleryViewModel;
+    this.serviceProvider = serviceProvider;
 
     // Initialize Drawing Commands
     LoadDrawingCommand = ReactiveCommand.CreateFromTask<External.Drawing>(LoadDrawingAsync);
     ExternaDrawingCommand = ReactiveCommand.CreateFromTask<string?>(ExternalDrawingAsync);
     NewDrawingCommand = ReactiveCommand.CreateFromTask(NewDrawingAsync);
-    ShowGalleryCommand = ReactiveCommand.CreateFromTask(async () =>
+    ShowGalleryCommand = ReactiveCommand.Create(() =>
     {
-      var galleryPopup = new Components.Carousel.RenderCanvasList(drawingStorageMomento, preferencesFacade, messageBus);
-      var page = Application.Current?.Windows[0]?.Page;
-      if (page != null)
-      {
-        page.ShowPopup(galleryPopup);
-      }
+      messageBus.SendMessage(new ShowGalleryMessage());
     });
 
     // Listen for OpenDrawingMessage
@@ -229,6 +227,30 @@ public class MainViewModel : ReactiveObject
       if (page != null)
       {
         await page.ShowPopupAsync(popup);
+      }
+    });
+
+    // Listen for ShowGalleryMessage
+    this.messageBus.Listen<ShowGalleryMessage>().Subscribe(async _ =>
+    {
+      System.Diagnostics.Debug.WriteLine("[MainViewModel] ShowGalleryMessage received - creating popup");
+
+      var popupViewModel = serviceProvider.GetRequiredService<DrawingGalleryPopupViewModel>();
+      System.Diagnostics.Debug.WriteLine("[MainViewModel] DrawingGalleryPopupViewModel created");
+
+      var popup = new DrawingGalleryPopup(popupViewModel);
+      System.Diagnostics.Debug.WriteLine("[MainViewModel] DrawingGalleryPopup created");
+
+      var page = Application.Current?.Windows[0]?.Page;
+      if (page != null)
+      {
+        System.Diagnostics.Debug.WriteLine("[MainViewModel] Showing popup");
+        await page.ShowPopupAsync(popup);
+        System.Diagnostics.Debug.WriteLine("[MainViewModel] Popup shown");
+      }
+      else
+      {
+        System.Diagnostics.Debug.WriteLine("[MainViewModel] ERROR: Page is null, cannot show popup");
       }
     });
 
@@ -424,7 +446,9 @@ public class MainViewModel : ReactiveObject
 
   private async Task ExternalDrawingAsync(string? nameOverride = null)
   {
-    if (CurrentDrawingId == Guid.Empty)
+    var isNewDrawing = CurrentDrawingId == Guid.Empty;
+
+    if (isNewDrawing)
     {
       CurrentDrawingId = Guid.NewGuid();
     }
@@ -432,6 +456,11 @@ public class MainViewModel : ReactiveObject
     if (!string.IsNullOrEmpty(nameOverride))
     {
       CurrentDrawingName = nameOverride;
+    }
+    else if (isNewDrawing && CurrentDrawingName == AppConstants.Defaults.UntitledDrawingName)
+    {
+      // First save of a new drawing - use default naming convention
+      CurrentDrawingName = await drawingStorageMomento.GetNextDefaultNameAsync();
     }
 
     var externalDrawing = drawingStorageMomento.CreateExternalDrawingFromCurrent(

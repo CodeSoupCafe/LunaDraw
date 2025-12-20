@@ -33,7 +33,7 @@ using SkiaSharp;
 using SkiaSharp.Views.Maui;
 using CommunityToolkit.Maui.Extensions;
 using LunaDraw.Logic.Models;
-using LunaDraw.Components.Carousel;
+using LunaDraw.Components;
 using CommunityToolkit.Maui.Views;
 
 namespace LunaDraw.Pages;
@@ -112,8 +112,8 @@ public partial class MainPage : ContentPage
 
   private async Task ShowGalleryAsync()
   {
-    var galleryPopup = new RenderCanvasList(drawingStorageMomento, preferencesFacade, messageBus);
-    this.ShowPopup(galleryPopup);
+    messageBus.SendMessage(new ShowGalleryMessage());
+    await Task.CompletedTask;
   }
 
   private void InitializeContextMenu()

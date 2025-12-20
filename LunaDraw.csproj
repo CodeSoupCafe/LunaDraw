@@ -90,7 +90,14 @@
 	</ItemGroup>		
 
 	<ItemGroup>
+	  <Reference Include="CodeSoupCafe.Maui">
+	    <HintPath>Dependencies\CodeSoupCafe.Maui.dll</HintPath>
+	  </Reference>
+	</ItemGroup>
+
+	<ItemGroup>
 	  <Folder Include="Logic\Extensions\" />
+	  <Folder Include="Logic\Services\" />
 	</ItemGroup>		
 
 	<ItemGroup>

@@ -67,12 +67,20 @@ public class GalleryViewModel : ReactiveObject
   private async Task LoadDrawingsAsync()
   {
     IsLoading = true;
+    System.Diagnostics.Debug.WriteLine("[DEBUG] GalleryViewModel.LoadDrawingsAsync started");
+
+    // Rename any untitled drawings first
+    await drawingStorageMomento.RenameUntitledDrawingsAsync();
+
     Drawings.Clear();
     var loadedDrawings = await drawingStorageMomento.LoadAllDrawingsAsync();
+    System.Diagnostics.Debug.WriteLine($"[DEBUG] Loaded {loadedDrawings.Count} drawings from storage");
     foreach (var drawing in loadedDrawings)
     {
+      System.Diagnostics.Debug.WriteLine($"[DEBUG] Adding drawing: {drawing.Title} (ID: {drawing.Id})");
       Drawings.Add(drawing);
     }
+    System.Diagnostics.Debug.WriteLine($"[DEBUG] GalleryViewModel.Drawings.Count: {Drawings.Count}");
     IsLoading = false;
   }
 

@@ -21,7 +21,7 @@
  *  
  */
 
-using LunaDraw.Components.Carousel;
+using CodeSoupCafe.Maui.Models;
 
 namespace LunaDraw.Logic.Utils;
 
@@ -33,7 +33,7 @@ public enum AppPreference
   IsTransparentBackgroundEnabled,
   ListSortProperty,
   ListSortOrder,
-  IsListGridView,
+  IsListGridView, 
 }
 
 public class AppPreferenceDefault

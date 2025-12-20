@@ -14,6 +14,7 @@ public interface IDrawingStorageMomento
   Task DeleteDrawingAsync(Guid id);
   Task DuplicateDrawingAsync(Guid id);
   Task RenameDrawingAsync(Guid id, string newName);
+  Task RenameUntitledDrawingsAsync();
 
   // Conversion helpers
   External.Drawing CreateExternalDrawingFromCurrent(IEnumerable<Layer> layers, int width, int height, string name, Guid id);
@@ -32,7 +33,7 @@ public class DrawingStorageMomento : IDrawingStorageMomento
     this.storagePath = storagePath ?? Path.Combine(FileSystem.AppDataDirectory, AppConstants.Directories.Gallery);
     if (!Directory.Exists(this.storagePath))
     {
-      Directory.CreateDirectory(storagePath);
+      Directory.CreateDirectory(this.storagePath);
     }
 
     jsonOptions = new JsonSerializerOptions
@@ -152,6 +153,41 @@ public class DrawingStorageMomento : IDrawingStorageMomento
 
     drawing.Name = newName;
     await ExternalDrawingAsync(drawing);
+  }
+
+  public async Task RenameUntitledDrawingsAsync()
+  {
+    var drawings = await LoadAllDrawingsAsync();
+    var untitledDrawings = drawings.Where(d => d.Name == "Untitled").OrderBy(d => d.LastModified).ToList();
+
+    if (!untitledDrawings.Any())
+    {
+      return;
+    }
+
+    // Get the next available number
+    var existingNumbers = drawings
+        .Where(d => d.Name.StartsWith(DefaultNamePrefix))
+        .Select(d =>
+        {
+          if (int.TryParse(d.Name.Substring(DefaultNamePrefix.Length), out int result))
+            return result;
+          return 0;
+        })
+        .DefaultIfEmpty(0)
+        .ToList();
+
+    int nextNumber = existingNumbers.Max() + 1;
+
+    // Rename each untitled drawing
+    foreach (var drawing in untitledDrawings)
+    {
+      drawing.Name = $"{DefaultNamePrefix}{nextNumber}";
+      await ExternalDrawingAsync(drawing);
+      nextNumber++;
+    }
+
+    System.Diagnostics.Debug.WriteLine($"[DrawingStorageMomento] Renamed {untitledDrawings.Count} untitled drawings");
   }
 
   #region Conversion Helpers
