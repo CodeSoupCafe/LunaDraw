@@ -12,17 +12,19 @@
                VerticalOptions="Center">
 
   <Border BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}"
-          Padding="20"
+          Padding="0"
           StrokeThickness="2"
           Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#404040}"
           StrokeShape="RoundRectangle 10"
           WidthRequest="900"
           HeightRequest="700">
 
-    <Grid RowDefinitions="Auto, *, Auto" RowSpacing="20">
+    <Grid RowDefinitions="Auto, *, Auto"
+          RowSpacing="20">
 
       <!-- Header -->
-      <Grid Grid.Row="0" ColumnDefinitions="*, Auto">
+      <Grid Grid.Row="0"
+            ColumnDefinitions="*, Auto">
         <Label Grid.Column="0"
                Text="Your Drawings"
                FontSize="28"
@@ -32,11 +34,11 @@
 
         <!-- Loading Indicator -->
         <ActivityIndicator Grid.Column="1"
-                          IsRunning="{Binding IsLoading}"
-                          IsVisible="{Binding IsLoading}"
-                          Color="{AppThemeBinding Light=#512BD4, Dark=#9D7FEA}"
-                          WidthRequest="32"
-                          HeightRequest="32"/>
+                           IsRunning="{Binding IsLoading}"
+                           IsVisible="{Binding IsLoading}"
+                           Color="{AppThemeBinding Light=#512BD4, Dark=#9D7FEA}"
+                           WidthRequest="32"
+                           HeightRequest="32"/>
       </Grid>
 
       <!-- ItemGalleryView with custom template -->

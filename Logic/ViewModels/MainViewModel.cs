@@ -382,7 +382,7 @@ public class MainViewModel : ReactiveObject
       var page = Application.Current?.Windows[0]?.Page;
       if (page != null)
       {
-        await page.DisplayAlert("Error", $"Failed to load drawing: {ex.Message}", "OK");
+        await page.DisplayAlertAsync("Error", $"Failed to load drawing: {ex.Message}", "OK");
       }
     }
   }

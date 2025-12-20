@@ -1,3 +1,26 @@
+/* 
+ *  Copyright (c) 2025 CodeSoupCafe LLC
+ *  
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *  
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *  
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
+ *  
+ */
+
 using ReactiveUI;
 using System.Reactive;
 using System.Reactive.Linq;
@@ -74,9 +97,40 @@ public class DrawingGalleryPopupViewModel : ReactiveObject
           var existingItem = DrawingItems.FirstOrDefault(x => x.Drawing.Id == msg.DrawingId.Value);
           if (existingItem != null)
           {
+            // Reload the drawing metadata from storage to get the updated LastModified/DateUpdated
+            var updatedDrawing = await galleryViewModel.ReloadDrawingMetadataAsync(msg.DrawingId.Value);
+            if (updatedDrawing != null)
+            {
+              // Update the metadata which triggers re-sorting via ISortable property change notifications
+              existingItem.UpdateDrawingMetadata(updatedDrawing);
+            }
+
+            // Update the thumbnail
             thumbnailService.InvalidateThumbnail(msg.DrawingId.Value);
             var newThumbnail = await thumbnailService.GetThumbnailAsync(msg.DrawingId.Value, 300, 300);
             existingItem.ThumbnailSource = newThumbnail;
+
+            // Trigger re-sort by removing and re-adding the item
+            // This ensures the gallery control picks up the new DateUpdated and re-sorts
+            var index = DrawingItems.IndexOf(existingItem);
+            if (index >= 0)
+            {
+              DrawingItems.RemoveAt(index);
+
+              // Find the correct position based on DateUpdated (descending order)
+              var insertIndex = 0;
+              for (int i = 0; i < DrawingItems.Count; i++)
+              {
+                if (existingItem.DateUpdated > DrawingItems[i].DateUpdated)
+                {
+                  insertIndex = i;
+                  break;
+                }
+                insertIndex = i + 1;
+              }
+
+              DrawingItems.Insert(insertIndex, existingItem);
+            }
           }
         }
       });
@@ -144,6 +198,30 @@ public class DrawingItemViewModel : ReactiveObject, CodeSoupCafe.Maui.Models.ISo
   public string Title => drawing.Title;
   public DateTimeOffset DateCreated => drawing.DateCreated;
   public DateTimeOffset DateUpdated => drawing.DateUpdated;
+
+  /// <summary>
+  /// Updates the underlying drawing metadata and raises property change notifications
+  /// to trigger re-sorting in the gallery control.
+  /// </summary>
+  public void UpdateDrawingMetadata(External.Drawing updatedDrawing)
+  {
+    if (updatedDrawing.Id != drawing.Id)
+    {
+      return; // Safety check - don't update with wrong drawing
+    }
+
+    // Update properties of the existing drawing object
+    drawing.Name = updatedDrawing.Name;
+    drawing.LastModified = updatedDrawing.LastModified;
+    drawing.CanvasWidth = updatedDrawing.CanvasWidth;
+    drawing.CanvasHeight = updatedDrawing.CanvasHeight;
+
+    // Raise property change notifications for ISortable properties
+    // This triggers the CodeSoupCafe.Maui control to re-sort
+    this.RaisePropertyChanged(nameof(Title));
+    this.RaisePropertyChanged(nameof(DateUpdated));
+    this.RaisePropertyChanged(nameof(DateCreated));
+  }
 
   public override bool Equals(object? obj) =>
     obj is DrawingItemViewModel other && Id == other.Id;
