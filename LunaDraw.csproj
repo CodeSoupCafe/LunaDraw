@@ -75,6 +75,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+    <PackageReference Include="CodeSoupCafe.Maui" Version="1.0.0" />
     <PackageReference Include="CommunityToolkit.Maui" Version="13.0.0" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="Microsoft.Maui.Controls" Version="10.0.11" />
@@ -87,12 +88,6 @@
 		<PackageReference Include="SkiaSharp" Version="3.119.1" />
 		<PackageReference Include="SkiaSharp.Views" Version="3.119.1" />
 		<PackageReference Include="SkiaSharp.Views.Maui.Controls" Version="3.119.1" />
-	</ItemGroup>		
-
-	<ItemGroup>
-	  <Reference Include="CodeSoupCafe.Maui">
-	    <HintPath>Dependencies\CodeSoupCafe.Maui.dll</HintPath>
-	  </Reference>
 	</ItemGroup>
 
 	<ItemGroup>

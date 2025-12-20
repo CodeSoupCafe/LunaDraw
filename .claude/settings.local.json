@@ -6,7 +6,9 @@
       "Bash(dotnet clean:*)",
       "Bash(Remove-Item -Recurse -Force CodeSoupCafe.Mauiobj,CodeSoupCafe.Mauibin -ErrorAction SilentlyContinue)",
       "Bash(Remove-Item -Recurse -Force obj,bin -ErrorAction SilentlyContinue)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(dotnet pack:*)",
+      "Bash(dotnet restore:*)"
     ]
   }
 }
