@@ -87,9 +87,8 @@ public class DrawingStorageMomento : IDrawingStorageMomento
           drawings.Add(drawing);
         }
       }
-      catch (Exception ex)
+      catch (Exception)
       {
-        System.Diagnostics.Debug.WriteLine($"Error loading drawing {file}: {ex.Message}");
       }
     }
 
@@ -106,9 +105,8 @@ public class DrawingStorageMomento : IDrawingStorageMomento
       var json = await File.ReadAllTextAsync(path);
       return JsonSerializer.Deserialize<External.Drawing>(json, jsonOptions);
     }
-    catch (Exception ex)
+    catch (Exception)
     {
-      System.Diagnostics.Debug.WriteLine($"Error loading drawing {id}: {ex.Message}");
       return null;
     }
   }
@@ -179,15 +177,12 @@ public class DrawingStorageMomento : IDrawingStorageMomento
 
     int nextNumber = existingNumbers.Max() + 1;
 
-    // Rename each untitled drawing
     foreach (var drawing in untitledDrawings)
     {
       drawing.Name = $"{DefaultNamePrefix}{nextNumber}";
       await ExternalDrawingAsync(drawing);
       nextNumber++;
     }
-
-    System.Diagnostics.Debug.WriteLine($"[DrawingStorageMomento] Renamed {untitledDrawings.Count} untitled drawings");
   }
 
   #region Conversion Helpers
@@ -256,7 +251,6 @@ public class DrawingStorageMomento : IDrawingStorageMomento
 
       foreach (var element in layer.Elements)
       {
-        System.Diagnostics.Debug.WriteLine($"[Storage] Saving element {element.GetType().Name} with ID {element.Id}");
         External.Element? externelElement = null;
 
         if (element is DrawablePath drawablePath)
@@ -375,7 +369,6 @@ public class DrawingStorageMomento : IDrawingStorageMomento
       {
         try
         {
-            System.Diagnostics.Debug.WriteLine($"[Storage] Restoring element {savedElement.GetType().Name} with ID {savedElement.Id}");
             IDrawableElement? element = null;
 
             if (savedElement is External.Path savedPath)
@@ -475,9 +468,8 @@ public class DrawingStorageMomento : IDrawingStorageMomento
               layer.Elements.Add(element);
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-             System.Diagnostics.Debug.WriteLine($"[Storage] Error restoring element {savedElement.Id}: {ex.Message}");
         }
       }
       // Re-attach event handler after population IF `Elements` was not passed in constructor

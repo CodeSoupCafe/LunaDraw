@@ -190,9 +190,8 @@ public partial class MainPage : ContentPage
       moveToLayerSubMenu.Add(item);
     }
     }
-    catch (Exception ex)
+    catch (Exception)
     {
-      System.Diagnostics.Debug.WriteLine($"[MainPage] Error updating context menu: {ex.Message}");
     }
   }
 
@@ -200,14 +199,11 @@ public partial class MainPage : ContentPage
   {
     if (canvasView == null)
     {
-      System.Diagnostics.Debug.WriteLine("[MainPage] Cannot invalidate: canvasView is null");
       return;
     }
 
-    // If the canvas isn't ready yet, mark as pending
     if (!isCanvasReady)
     {
-      System.Diagnostics.Debug.WriteLine("[MainPage] Canvas not ready, marking invalidation as pending");
       isInvalidationPending = true;
       return;
     }
@@ -224,9 +220,6 @@ public partial class MainPage : ContentPage
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"[MainPage] Error invalidating surface: {ex.Message}");
-        // If we get an EGL error, the canvas may not be ready yet
-        // Mark it as not ready and try again later
         if (ex.Message.Contains("EGL"))
         {
           isCanvasReady = false;
@@ -246,18 +239,13 @@ public partial class MainPage : ContentPage
   {
     try
     {
-      // Mark canvas as ready after first successful paint setup
       if (!isCanvasReady)
       {
-        System.Diagnostics.Debug.WriteLine("[MainPage] Canvas is now ready");
         isCanvasReady = true;
 
-        // If there was a pending invalidation, trigger it now
         if (isInvalidationPending)
         {
           isInvalidationPending = false;
-          System.Diagnostics.Debug.WriteLine("[MainPage] Processing pending invalidation");
-          // Don't invalidate during paint, schedule it for after
           Task.Delay(50).ContinueWith(_ => SafeInvalidateSurface());
         }
       }
@@ -267,12 +255,6 @@ public partial class MainPage : ContentPage
 
       int width = e.BackendRenderTarget.Width;
       int height = e.BackendRenderTarget.Height;
-
-      // Debug logging for rendering
-      if (viewModel?.Layers != null)
-      {
-        System.Diagnostics.Debug.WriteLine($"[MainPage] Painting surface. Layers: {viewModel.Layers.Count}");
-      }
 
       if (viewModel is null) return;
 
@@ -346,9 +328,8 @@ public partial class MainPage : ContentPage
 
       canvas.Restore();
     }
-    catch (Exception ex)
+    catch (Exception)
     {
-      System.Diagnostics.Debug.WriteLine($"Error in OnCanvasViewPaintSurface: {ex}");
     }
   }
 

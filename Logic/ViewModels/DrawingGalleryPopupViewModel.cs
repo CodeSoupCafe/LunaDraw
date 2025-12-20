@@ -14,7 +14,7 @@ public class DrawingGalleryPopupViewModel : ReactiveObject
   private readonly IDrawingThumbnailFacade thumbnailService;
   private readonly IMessageBus messageBus;
 
-  private RangedObservableCollection<DrawingItemViewModel> drawingItems = new();
+  private RangedObservableCollection<DrawingItemViewModel> drawingItems = [];
   private bool isLoading;
 
   public RangedObservableCollection<DrawingItemViewModel> DrawingItems
@@ -64,9 +64,22 @@ public class DrawingGalleryPopupViewModel : ReactiveObject
     });
 
     LoadDrawingsCommand = ReactiveCommand.CreateFromTask(LoadDrawingsAsync);
-
-    // Auto-load drawings when ViewModel is created
     LoadDrawingsCommand.Execute().Subscribe();
+
+    messageBus.Listen<DrawingListChangedMessage>()
+      .Subscribe(async msg =>
+      {
+        if (msg.DrawingId.HasValue)
+        {
+          var existingItem = DrawingItems.FirstOrDefault(x => x.Drawing.Id == msg.DrawingId.Value);
+          if (existingItem != null)
+          {
+            thumbnailService.InvalidateThumbnail(msg.DrawingId.Value);
+            var newThumbnail = await thumbnailService.GetThumbnailAsync(msg.DrawingId.Value, 300, 300);
+            existingItem.ThumbnailSource = newThumbnail;
+          }
+        }
+      });
   }
 
   public event EventHandler? RequestClose;
@@ -74,54 +87,31 @@ public class DrawingGalleryPopupViewModel : ReactiveObject
   private async Task LoadDrawingsAsync()
   {
     IsLoading = true;
-    System.Diagnostics.Debug.WriteLine("[DrawingGalleryPopupViewModel] LoadDrawingsAsync started");
 
     try
     {
-      // Load drawings from GalleryViewModel
       await galleryViewModel.LoadDrawingsCommand.Execute().GetAwaiter();
-      System.Diagnostics.Debug.WriteLine($"[DrawingGalleryPopupViewModel] GalleryViewModel has {galleryViewModel.Drawings.Count} drawings");
 
-      // Clear existing items using RangedObservableCollection for performance
       DrawingItems.ClearAndStaySilent();
 
-      // Create wrapped items with thumbnails
       var items = new List<DrawingItemViewModel>();
 
       foreach (var drawing in galleryViewModel.Drawings)
       {
-        System.Diagnostics.Debug.WriteLine($"[DrawingGalleryPopupViewModel] Processing drawing: {drawing.Title} (ID: {drawing.Id})");
-
-        // Generate thumbnail asynchronously
         var thumbnailSource = await thumbnailService.GetThumbnailAsync(
           drawing.Id,
           width: 300,
           height: 300);
 
-        if (thumbnailSource == null)
-        {
-          System.Diagnostics.Debug.WriteLine($"[DrawingGalleryPopupViewModel] WARNING: Thumbnail is NULL for {drawing.Title}");
-        }
-        else
-        {
-          System.Diagnostics.Debug.WriteLine($"[DrawingGalleryPopupViewModel] Thumbnail loaded for {drawing.Title}");
-        }
-
         var item = new DrawingItemViewModel(drawing, thumbnailSource);
         items.Add(item);
       }
 
-      System.Diagnostics.Debug.WriteLine($"[DrawingGalleryPopupViewModel] Created {items.Count} DrawingItemViewModels with thumbnails");
-
-      // Add all items at once using RangedObservableCollection for performance
       DrawingItems.AddRange(items);
-
-      System.Diagnostics.Debug.WriteLine($"[DrawingGalleryPopupViewModel] DrawingItems.Count after AddRange: {DrawingItems.Count}");
     }
     finally
     {
       IsLoading = false;
-      System.Diagnostics.Debug.WriteLine("[DrawingGalleryPopupViewModel] LoadDrawingsAsync finished");
     }
   }
 }

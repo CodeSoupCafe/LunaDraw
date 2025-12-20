@@ -54,33 +54,26 @@ public class GalleryViewModel : ReactiveObject
     this.drawingStorageMomento = drawingStorageMomento;
 
     LoadDrawingsCommand = ReactiveCommand.CreateFromTask(LoadDrawingsAsync);
-    NewDrawingCommand = ReactiveCommand.Create(() => { }); // Handled by popup closing
-    OpenDrawingCommand = ReactiveCommand.Create(() => SelectedDrawing); // Handled by popup closing
+    NewDrawingCommand = ReactiveCommand.Create(() => { });
+    OpenDrawingCommand = ReactiveCommand.Create(() => SelectedDrawing);
     DeleteDrawingCommand = ReactiveCommand.CreateFromTask<External.Drawing>(DeleteDrawingAsync);
     DuplicateDrawingCommand = ReactiveCommand.CreateFromTask<External.Drawing>(DuplicateDrawingAsync);
     RenameDrawingCommand = ReactiveCommand.CreateFromTask<External.Drawing>(RenameDrawingAsync);
-
-    // Initial load
-    LoadDrawingsCommand.Execute().Subscribe();
   }
 
   private async Task LoadDrawingsAsync()
   {
     IsLoading = true;
-    System.Diagnostics.Debug.WriteLine("[DEBUG] GalleryViewModel.LoadDrawingsAsync started");
 
-    // Rename any untitled drawings first
     await drawingStorageMomento.RenameUntitledDrawingsAsync();
 
     Drawings.Clear();
     var loadedDrawings = await drawingStorageMomento.LoadAllDrawingsAsync();
-    System.Diagnostics.Debug.WriteLine($"[DEBUG] Loaded {loadedDrawings.Count} drawings from storage");
     foreach (var drawing in loadedDrawings)
     {
-      System.Diagnostics.Debug.WriteLine($"[DEBUG] Adding drawing: {drawing.Title} (ID: {drawing.Id})");
       Drawings.Add(drawing);
     }
-    System.Diagnostics.Debug.WriteLine($"[DEBUG] GalleryViewModel.Drawings.Count: {Drawings.Count}");
+
     IsLoading = false;
   }
 
@@ -114,7 +107,6 @@ public class GalleryViewModel : ReactiveObject
   public async Task RenameDrawing(External.Drawing drawing, string newName)
   {
     await drawingStorageMomento.RenameDrawingAsync(drawing.Id, newName);
-    drawing.Name = newName; // Update local observable
-                            // Force refresh if needed, but binding should update.
+    drawing.Name = newName;
   }
 }

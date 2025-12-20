@@ -33,8 +33,6 @@ public static class SkiaSharpExtensions
     {
       if (!File.Exists(path))
       {
-        System.Diagnostics.Debug.WriteLine($"[BitmapCache] File not found: {path}");
-
         return new SKBitmap();
       }
 
@@ -43,8 +41,6 @@ public static class SkiaSharpExtensions
 
       if (codec == null)
       {
-        System.Diagnostics.Debug.WriteLine($"[BitmapCache] Failed to create codec for: {path}");
-
         return new SKBitmap();
       }
 
@@ -79,17 +75,12 @@ public static class SkiaSharpExtensions
       }
       else
       {
-        System.Diagnostics.Debug.WriteLine($"[BitmapCache] GetPixels failed: {result}");
         bitmap.Dispose();
-        // Fallback: try full decode if downsample fails? 
-        // Or maybe the scale was just invalid. 
         return new SKBitmap();
       }
     }
-    catch (Exception ex)
+    catch (Exception)
     {
-      System.Diagnostics.Debug.WriteLine($"[BitmapCache] Exception loading bitmap: {ex}");
-
       return new SKBitmap();
     }
   }

@@ -52,6 +52,7 @@ public class MainViewModel : ReactiveObject
   private readonly IMessageBus messageBus;
   private readonly IPreferencesFacade preferencesFacade;
   private readonly IDrawingStorageMomento drawingStorageMomento;
+  private readonly IDrawingThumbnailFacade drawingThumbnailFacade;
   private readonly IServiceProvider serviceProvider;
 
   // Properties for current drawing state
@@ -150,6 +151,7 @@ public class MainViewModel : ReactiveObject
     IMessageBus messageBus,
     IPreferencesFacade preferencesFacade,
     IDrawingStorageMomento drawingStorageMomento,
+    IDrawingThumbnailFacade drawingThumbnailFacade,
     LayerPanelViewModel layerPanelVM,
     SelectionViewModel selectionVM,
     HistoryViewModel historyVM,
@@ -164,6 +166,7 @@ public class MainViewModel : ReactiveObject
     this.messageBus = messageBus;
     this.preferencesFacade = preferencesFacade;
     this.drawingStorageMomento = drawingStorageMomento;
+    this.drawingThumbnailFacade = drawingThumbnailFacade;
     LayerPanelVM = layerPanelVM;
     SelectionVM = selectionVM;
     HistoryVM = historyVM;
@@ -179,29 +182,12 @@ public class MainViewModel : ReactiveObject
       messageBus.SendMessage(new ShowGalleryMessage());
     });
 
-    // Listen for OpenDrawingMessage
     this.messageBus.Listen<OpenDrawingMessage>()
         .ObserveOn(RxApp.MainThreadScheduler)
         .Delay(TimeSpan.FromMilliseconds(100))
         .Subscribe(msg =>
         {
-          try
-          {
-            System.Diagnostics.Debug.WriteLine($"[MainViewModel] Received OpenDrawingMessage for drawing: {msg.Drawing?.Name ?? "null"}");
-
-            LoadDrawingCommand.Execute(msg.Drawing).Subscribe(
-              onNext: _ => { },
-              onError: ex =>
-              {
-                System.Diagnostics.Debug.WriteLine($"[MainViewModel] Error executing LoadDrawingCommand: {ex}");
-                System.Diagnostics.Debug.WriteLine($"[MainViewModel] Stack trace: {ex.StackTrace}");
-              });
-          }
-          catch (Exception ex)
-          {
-            System.Diagnostics.Debug.WriteLine($"[MainViewModel] Error in message handler: {ex}");
-            System.Diagnostics.Debug.WriteLine($"[MainViewModel] Stack trace: {ex.StackTrace}");
-          }
+          LoadDrawingCommand.Execute(msg.Drawing).Subscribe();
         });
 
     // Initial drawing state
@@ -230,27 +216,15 @@ public class MainViewModel : ReactiveObject
       }
     });
 
-    // Listen for ShowGalleryMessage
     this.messageBus.Listen<ShowGalleryMessage>().Subscribe(async _ =>
     {
-      System.Diagnostics.Debug.WriteLine("[MainViewModel] ShowGalleryMessage received - creating popup");
-
       var popupViewModel = serviceProvider.GetRequiredService<DrawingGalleryPopupViewModel>();
-      System.Diagnostics.Debug.WriteLine("[MainViewModel] DrawingGalleryPopupViewModel created");
-
       var popup = new DrawingGalleryPopup(popupViewModel);
-      System.Diagnostics.Debug.WriteLine("[MainViewModel] DrawingGalleryPopup created");
 
       var page = Application.Current?.Windows[0]?.Page;
       if (page != null)
       {
-        System.Diagnostics.Debug.WriteLine("[MainViewModel] Showing popup");
         await page.ShowPopupAsync(popup);
-        System.Diagnostics.Debug.WriteLine("[MainViewModel] Popup shown");
-      }
-      else
-      {
-        System.Diagnostics.Debug.WriteLine("[MainViewModel] ERROR: Page is null, cannot show popup");
       }
     });
 
@@ -365,38 +339,24 @@ public class MainViewModel : ReactiveObject
 
   private async Task LoadDrawingAsync(External.Drawing externalDrawing)
   {
-    System.Diagnostics.Debug.WriteLine($"[MainViewModel] LoadDrawingAsync called for: {externalDrawing?.Name ?? "null"}");
-
     if (externalDrawing == null)
     {
-      System.Diagnostics.Debug.WriteLine("[MainViewModel] LoadDrawingAsync: externalDrawing is null");
       return;
     }
 
     try
     {
-      System.Diagnostics.Debug.WriteLine($"[MainViewModel] Loading drawing from storage: {externalDrawing.Id}");
-
-      // Load full details
       var fullDrawing = await drawingStorageMomento.LoadDrawingAsync(externalDrawing.Id);
       if (fullDrawing == null)
       {
-        System.Diagnostics.Debug.WriteLine($"[MainViewModel] Failed to load drawing from storage: {externalDrawing.Id}");
         return;
       }
 
-      System.Diagnostics.Debug.WriteLine($"[MainViewModel] Setting current drawing: {fullDrawing.Name}");
       CurrentDrawingId = fullDrawing.Id;
       CurrentDrawingName = fullDrawing.Name;
 
-      System.Diagnostics.Debug.WriteLine($"[MainViewModel] Restoring layers...");
-
-      // Restore layers
       var restoredLayers = drawingStorageMomento.RestoreLayers(fullDrawing);
 
-      System.Diagnostics.Debug.WriteLine($"[MainViewModel] Restored {restoredLayers.Count} layers");
-
-      // Ensure layer operations happen on main thread to avoid COM exceptions
       await MainThread.InvokeOnMainThreadAsync(() =>
       {
         LayerFacade.Layers.Clear();
@@ -406,40 +366,23 @@ public class MainViewModel : ReactiveObject
         }
         if (!LayerFacade.Layers.Any())
         {
-          System.Diagnostics.Debug.WriteLine($"[MainViewModel] No layers restored, adding default layer");
           LayerFacade.AddLayer();
         }
         LayerFacade.CurrentLayer = LayerFacade.Layers.FirstOrDefault();
       });
 
-      System.Diagnostics.Debug.WriteLine($"[MainViewModel] Resetting navigation...");
-
-      // Reset view
       NavigationModel.Reset();
       NavigationModel.CanvasWidth = fullDrawing.CanvasWidth;
       NavigationModel.CanvasHeight = fullDrawing.CanvasHeight;
 
-      System.Diagnostics.Debug.WriteLine($"[MainViewModel] Invalidating canvas...");
       messageBus.SendMessage(new CanvasInvalidateMessage());
-
-      System.Diagnostics.Debug.WriteLine($"[MainViewModel] Drawing loaded successfully: {fullDrawing.Name}");
     }
     catch (Exception ex)
     {
-      System.Diagnostics.Debug.WriteLine($"[MainViewModel] ERROR loading drawing: {ex}");
-      System.Diagnostics.Debug.WriteLine($"[MainViewModel] Stack trace: {ex.StackTrace}");
-
-      try
+      var page = Application.Current?.Windows[0]?.Page;
+      if (page != null)
       {
-        var page = Application.Current?.Windows[0]?.Page;
-        if (page != null)
-        {
-          await page.DisplayAlert("Error", $"Failed to load drawing: {ex.Message}", "OK");
-        }
-      }
-      catch (Exception alertEx)
-      {
-        System.Diagnostics.Debug.WriteLine($"[MainViewModel] Failed to show alert: {alertEx}");
+        await page.DisplayAlert("Error", $"Failed to load drawing: {ex.Message}", "OK");
       }
     }
   }
@@ -472,7 +415,9 @@ public class MainViewModel : ReactiveObject
 
     await drawingStorageMomento.ExternalDrawingAsync(externalDrawing);
 
-    messageBus.SendMessage(new DrawingListChangedMessage());
+    drawingThumbnailFacade.InvalidateThumbnail(CurrentDrawingId);
+
+    messageBus.SendMessage(new DrawingListChangedMessage(CurrentDrawingId));
   }
 
   private async Task NewDrawingAsync()

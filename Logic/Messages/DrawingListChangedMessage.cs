@@ -2,7 +2,10 @@ namespace LunaDraw.Logic.Messages;
 
 public class DrawingListChangedMessage
 {
-  public DrawingListChangedMessage()
+  public Guid? DrawingId { get; }
+
+  public DrawingListChangedMessage(Guid? drawingId = null)
   {
+    DrawingId = drawingId;
   }
 }
