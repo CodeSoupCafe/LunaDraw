@@ -34,7 +34,7 @@ public interface IDrawableElement
   /// <summary>
   /// Unique identifier for this element.
   /// </summary>
-  Guid Id { get; }
+  Guid Id { get; init; }
 
   /// <summary>
   /// Bounding rectangle of the element in world coordinates.

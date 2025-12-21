@@ -30,7 +30,7 @@ namespace LunaDraw.Logic.Models;
 /// </summary>
 public class DrawablePath : IDrawableElement
 {
-  public Guid Id { get; } = Guid.NewGuid();
+  public Guid Id { get; init; } = Guid.NewGuid();
   public required SKPath Path { get; set; }
   public SKMatrix TransformMatrix { get; set; } = SKMatrix.CreateIdentity();
 

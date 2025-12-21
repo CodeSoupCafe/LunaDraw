@@ -46,11 +46,13 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">
-      <EnableDefaultCopyToOutputDirectoryItems>false</EnableDefaultCopyToOutputDirectoryItems>
+    <EnableDefaultCopyToOutputDirectoryItems>false</EnableDefaultCopyToOutputDirectoryItems>
+    <DefaultItemExcludes>$(DefaultItemExcludes);Legacy\**</DefaultItemExcludes>
   </PropertyGroup>
 
-	<ItemGroup>
-		<Compile Remove="Legacy\**\*" />
+	<ItemGroup> 
+    <Compile Remove="Legacy\**\*.cs" />
+    <None Include="Legacy\**\*" /> 
 	</ItemGroup>
 
 	<ItemGroup>
@@ -63,6 +65,7 @@
 		<!-- Images -->
 		<MauiImage Include="Resources\Images\*" />
 		<MauiImage Update="Resources\Images\dotnet_bot.png" Resize="True" BaseSize="300,185" />
+    <MauiImage Update="Resources\Images\icon_more_vert.svg" Resize="True" BaseSize="24,24" TintColor="#000000" />
 		
 		<!-- Custom Fonts -->
 		<MauiFont Include="Resources\Fonts\*" />
@@ -72,7 +75,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
+    <PackageReference Include="CodeSoupCafe.Maui" Version="1.0.4" />
     <PackageReference Include="CommunityToolkit.Maui" Version="13.0.0" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="Microsoft.Maui.Controls" Version="10.0.11" />
     <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="10.0.11" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.8" />
@@ -83,9 +88,5 @@
 		<PackageReference Include="SkiaSharp" Version="3.119.1" />
 		<PackageReference Include="SkiaSharp.Views" Version="3.119.1" />
 		<PackageReference Include="SkiaSharp.Views.Maui.Controls" Version="3.119.1" />
-	</ItemGroup>		
-
-	<ItemGroup>
-	  <Folder Include="Logic\Extensions\" />
-	</ItemGroup>		
+	</ItemGroup>
 </Project>

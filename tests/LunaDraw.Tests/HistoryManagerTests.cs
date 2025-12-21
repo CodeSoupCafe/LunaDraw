@@ -133,7 +133,7 @@ namespace LunaDraw.Tests
 
         private class TestDrawableElement : IDrawableElement
         {
-            public Guid Id { get; } = Guid.NewGuid();
+            public Guid Id { get; init; } = Guid.NewGuid();
             public SKRect Bounds => SKRect.Empty;
             public SKMatrix TransformMatrix { get; set; }
             public bool IsVisible { get; set; }

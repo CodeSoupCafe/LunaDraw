@@ -76,59 +76,61 @@ namespace LunaDraw.Tests
       historyViewModel = new HistoryViewModel(layerFacadeMock.Object, messageBusMock.Object);
     }
 
-    [Fact]
-    public void SaveImageCommand_ShouldNotExecute_WhenCanvasSizeIsZero()
-    {
-      // Arrange
-      navigationModel.CanvasWidth = 0;
-      navigationModel.CanvasHeight = 0;
+    // NOTE: SaveImageCommand has been removed from ToolbarViewModel
+    // These tests are commented out as the functionality no longer exists
+    // [Fact]
+    // public void SaveImageCommand_ShouldNotExecute_WhenCanvasSizeIsZero()
+    // {
+    //   // Arrange
+    //   navigationModel.CanvasWidth = 0;
+    //   navigationModel.CanvasHeight = 0;
 
-      var mockPreferences = new Mock<IPreferencesFacade>();
+    //   var mockPreferences = new Mock<IPreferencesFacade>();
 
-      var viewModel = new ToolbarViewModel(
-          layerFacadeMock.Object,
-          selectionViewModel,
-          historyViewModel,
-          messageBusMock.Object,
-          bitmapCacheMock.Object,
-          navigationModel,
-          fileSaverMock.Object,
-          mockPreferences.Object);
+    //   var viewModel = new ToolbarViewModel(
+    //       layerFacadeMock.Object,
+    //       selectionViewModel,
+    //       historyViewModel,
+    //       messageBusMock.Object,
+    //       bitmapCacheMock.Object,
+    //       navigationModel,
+    //       fileSaverMock.Object,
+    //       mockPreferences.Object);
 
-      // Act
-      viewModel.SaveImageCommand.Execute().Subscribe();
+    //   // Act
+    //   viewModel.SaveImageCommand.Execute().Subscribe();
 
-      // Assert
-      fileSaverMock.Verify(x => x.SaveAsync(It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<CancellationToken>()), Times.Never);
-    }
+    //   // Assert
+    //   fileSaverMock.Verify(x => x.SaveAsync(It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<CancellationToken>()), Times.Never);
+    // }
 
-    [Fact]
-    public async Task SaveImageCommand_ShouldExecute_WhenCanvasSizeIsValid()
-    {
-      // Arrange
-      navigationModel.CanvasWidth = 100;
-      navigationModel.CanvasHeight = 100;
+    // [Fact]
+    // public async Task SaveImageCommand_ShouldExecute_WhenCanvasSizeIsValid()
+    // {
+    //   // Arrange
+    //   navigationModel.CanvasWidth = 100;
+    //   navigationModel.CanvasHeight = 100;
 
-      var mockPreferences = new Mock<IPreferencesFacade>();
+    //   var mockPreferences = new Mock<IPreferencesFacade>();
 
-      var viewModel = new ToolbarViewModel(
-          layerFacadeMock.Object,
-          selectionViewModel,
-          historyViewModel,
-          messageBusMock.Object,
-          bitmapCacheMock.Object,
-          navigationModel,
-          fileSaverMock.Object,
-          mockPreferences.Object);
+    //   var viewModel = new ToolbarViewModel(
+    //       layerFacadeMock.Object,
+    //       selectionViewModel,
+    //       historyViewModel,
+    //       messageBusMock.Object,
+    //       bitmapCacheMock.Object,
+    //       navigationModel,
+    //       fileSaverMock.Object,
+    //       mockPreferences.Object);
 
-      fileSaverMock.Setup(x => x.SaveAsync(It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
-          .ReturnsAsync(new FileSaverResult("path", null));
+    //   fileSaverMock.Setup(x => x.SaveAsync(It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
+    //       .ReturnsAsync(new FileSaverResult("path", null));
 
-      // Act
-      await viewModel.SaveImageCommand.Execute().ToTask();
+    //   // Act
+    //   await viewModel.SaveImageCommand.Execute().ToTask();
 
-      // Assert
-      fileSaverMock.Verify(x => x.SaveAsync(It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<CancellationToken>()), Times.Once);
-    }
+    //   // Assert
+    //   fileSaverMock.Verify(x => x.SaveAsync(It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<CancellationToken>()), Times.Once);
+    // }
   }
 }

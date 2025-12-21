@@ -30,7 +30,7 @@ namespace LunaDraw.Logic.Models;
 /// </summary>
 public class DrawableEllipse : IDrawableElement
 {
-  public Guid Id { get; } = Guid.NewGuid();
+  public Guid Id { get; init; } = Guid.NewGuid();
   public SKRect Oval { get; set; }
   public SKMatrix TransformMatrix { get; set; } = SKMatrix.CreateIdentity();
 

@@ -21,6 +21,8 @@
  *  
  */
 
+using CodeSoupCafe.Maui.Models;
+
 namespace LunaDraw.Logic.Utils;
 
 public enum AppPreference
@@ -28,7 +30,10 @@ public enum AppPreference
   AppTheme,
   ShowButtonLabels,
   ShowLayersPanel,
-  IsTransparentBackgroundEnabled
+  IsTransparentBackgroundEnabled,
+  ListSortProperty,
+  ListSortOrder,
+  IsListGridView,
 }
 
 public class AppPreferenceDefault
@@ -42,6 +47,9 @@ public class AppPreferenceDefault
         AppPreference.AppTheme => "Automatic",
         AppPreference.ShowButtonLabels => false,
         AppPreference.ShowLayersPanel => false,
+        AppPreference.ListSortOrder => SortOrder.Descending,
+        AppPreference.ListSortProperty => SortProperty.DateUpdated,
+        AppPreference.IsListGridView => true,
         AppPreference.IsTransparentBackgroundEnabled => false,
         _ => ""
       };

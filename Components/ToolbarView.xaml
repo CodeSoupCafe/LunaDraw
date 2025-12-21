@@ -184,17 +184,6 @@
           </StackLayout>
 
           <StackLayout HorizontalOptions="Center">
-            <Button x:Name="SaveButton"
-                    Style="{StaticResource ToolbarButtonStyle}"
-                    Text="💾"
-                    ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_SaveImage}"
-                    Command="{Binding SaveImageCommand}"/>
-            <Label Text="{x:Static strings:AppResources.Label_Save}"
-                   HorizontalTextAlignment="Center"
-                   IsVisible="{Binding ShowButtonLabels}"/>
-          </StackLayout>
-
-          <StackLayout HorizontalOptions="Center">
             <Button x:Name="EraserButton"
                     Style="{StaticResource ToolbarButtonStyle}"
                     Text="🧽"

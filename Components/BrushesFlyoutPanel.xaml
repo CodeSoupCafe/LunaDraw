@@ -7,10 +7,10 @@
              x:Class="LunaDraw.Components.BrushesFlyoutPanel"
              x:DataType="viewModels:ToolbarViewModel"
              x:Name="Root">
-  <Border Background="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray800}}"
+  <Border Background="{AppThemeBinding Light={StaticResource PopupBackgroundLight}, Dark={StaticResource PopupBackgroundDark}}"
           Padding="12"
           StrokeShape="RoundRectangle"
-          Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
+          Stroke="{AppThemeBinding Light={StaticResource PopupBorderLight}, Dark={StaticResource PopupBorderDark}}"
           StrokeThickness="1"
           MaximumWidthRequest="400">
     <StackLayout Spacing="10">
@@ -20,7 +20,7 @@
              HorizontalTextAlignment="Center"/>
 
       <BoxView HeightRequest="1"
-               Color="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
+               Color="{AppThemeBinding Light={StaticResource PopupBorderLight}, Dark={StaticResource PopupBorderDark}}"
                Margin="0,5"/>
 
       <CollectionView ItemsSource="{Binding AvailableBrushShapes}"
@@ -38,7 +38,7 @@
             <StackLayout HorizontalOptions="Center">
               <Border StrokeShape="RoundRectangle 10"
                       StrokeThickness="1"
-                      Stroke="Gray"
+                      Stroke="{StaticResource Gray500Brush}"
                       WidthRequest="60"
                       HeightRequest="60"
                       Padding="4"
