@@ -33,7 +33,7 @@ public enum AppPreference
   IsTransparentBackgroundEnabled,
   ListSortProperty,
   ListSortOrder,
-  IsListGridView, 
+  IsListGridView,
 }
 
 public class AppPreferenceDefault

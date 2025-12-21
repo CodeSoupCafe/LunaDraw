@@ -3,6 +3,7 @@
                xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
                xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
                xmlns:controls="clr-namespace:CodeSoupCafe.Maui.Controls;assembly=CodeSoupCafe.Maui"
+               xmlns:behaviors="clr-namespace:CodeSoupCafe.Maui.Behaviors;assembly=CodeSoupCafe.Maui"
                xmlns:viewModels="clr-namespace:LunaDraw.Logic.ViewModels"
                x:Class="LunaDraw.Components.DrawingGalleryPopup"
                x:Name="Popup"
@@ -47,6 +48,9 @@
       <controls:ItemGalleryView Grid.Row="1"
                                 x:Name="GalleryView"
                                 ItemsSource="{Binding DrawingItems}"
+                                ItemAppearingAction="{Binding OnItemAppearing}"
+                                ItemDisappearingAction="{Binding OnItemDisappearing}"
+                                RemainingItemsThreshold="10"
                                 Title="Gallery"
                                 SearchPlaceholder="Search drawings..."
                                 EmptyMessage="No drawings yet. Start creating!"
@@ -85,16 +89,21 @@
                 <Grid>
                   <!-- Actual thumbnail -->
                   <Image x:Name="ThumbnailImage"
-                         Source="{Binding ThumbnailSource}"
+                         Source="{Binding ThumbnailBase64, Converter={StaticResource Base64ToImageConverter}}"
                          Aspect="AspectFit"
                          WidthRequest="170"
                          HeightRequest="170"
                          HorizontalOptions="FillAndExpand"
                          VerticalOptions="FillAndExpand"
                          BackgroundColor="Transparent"
-                         IsVisible="{Binding ThumbnailSource, Converter={StaticResource IsNotNullConverter}}"
-                         Loaded="OnThumbnailImageLoaded"
-                         PropertyChanged="OnThumbnailImagePropertyChanged"/>
+                         IsVisible="{Binding ThumbnailBase64, Converter={StaticResource IsNotNullConverter}}"/>
+
+                  <!-- Loading indicator -->
+                  <ActivityIndicator IsRunning="{Binding IsLoadingThumbnail}"
+                                     IsVisible="{Binding IsLoadingThumbnail}"
+                                     Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                                     HorizontalOptions="Center"
+                                     VerticalOptions="Center"/>
 
                   <!-- Placeholder when no thumbnail -->
                   <Label Text="🎨"
@@ -102,7 +111,7 @@
                          HorizontalOptions="Center"
                          VerticalOptions="Center"
                          TextColor="{AppThemeBinding Light={StaticResource PlaceholderTextLight}, Dark={StaticResource PlaceholderTextDark}}"
-                         IsVisible="{Binding ThumbnailSource, Converter={StaticResource IsNullConverter}}"/>
+                         IsVisible="{Binding ThumbnailBase64, Converter={StaticResource IsNullConverter}}"/>
                 </Grid>
               </Border>
 

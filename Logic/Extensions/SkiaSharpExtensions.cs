@@ -263,39 +263,39 @@ public static class SkiaSharpExtensions
 
   public static string ToHex(this SKColor color, bool includeAlpha = true)
   {
-      if (includeAlpha)
-      {
-          return $"#{color.Alpha:X2}{color.Red:X2}{color.Green:X2}{color.Blue:X2}";
-      }
-      else
-      {
-          return $"#{color.Red:X2}{color.Green:X2}{color.Blue:X2}";
-      }
+    if (includeAlpha)
+    {
+      return $"#{color.Alpha:X2}{color.Red:X2}{color.Green:X2}{color.Blue:X2}";
+    }
+    else
+    {
+      return $"#{color.Red:X2}{color.Green:X2}{color.Blue:X2}";
+    }
   }
 
   public static SKColor ToSKColor(this string hex)
   {
-      if (string.IsNullOrEmpty(hex))
-      {
-          return SKColors.Transparent;
-      }
-
-      // Remove # if present
-      if (hex.StartsWith("#"))
-      {
-          hex = hex.Substring(1);
-      }
-
-      if (hex.Length == 6) // RGB
-      {
-          return SKColor.Parse(hex);
-      }
-      else if (hex.Length == 8) // ARGB
-      {
-          return SKColor.Parse(hex);
-      }
-      
-      // Default to transparent if parsing fails
+    if (string.IsNullOrEmpty(hex))
+    {
       return SKColors.Transparent;
+    }
+
+    // Remove # if present
+    if (hex.StartsWith("#"))
+    {
+      hex = hex.Substring(1);
+    }
+
+    if (hex.Length == 6) // RGB
+    {
+      return SKColor.Parse(hex);
+    }
+    else if (hex.Length == 8) // ARGB
+    {
+      return SKColor.Parse(hex);
+    }
+
+    // Default to transparent if parsing fails
+    return SKColors.Transparent;
   }
 }

@@ -21,6 +21,7 @@
  *  
  */
 
+using CommunityToolkit.Maui;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Utils;
 using LunaDraw.Logic.ViewModels;
@@ -170,25 +171,25 @@ public partial class MainPage : ContentPage
     {
       moveToLayerSubMenu.Clear();
 
-    var addLayerItem = new MenuFlyoutItem { Text = AppConstants.UI.NewLayer };
-    addLayerItem.SetBinding(MenuItem.CommandProperty, new Binding("SelectionVM.MoveSelectionToNewLayerCommand", source: viewModel));
-    moveToLayerSubMenu.Add(addLayerItem);
+      var addLayerItem = new MenuFlyoutItem { Text = AppConstants.UI.NewLayer };
+      addLayerItem.SetBinding(MenuItem.CommandProperty, new Binding("SelectionVM.MoveSelectionToNewLayerCommand", source: viewModel));
+      moveToLayerSubMenu.Add(addLayerItem);
 
-    bool hasSelection = viewModel.SelectedElements.Any();
-    moveToLayerSubMenu.IsEnabled = hasSelection;
+      bool hasSelection = viewModel.SelectedElements.Any();
+      moveToLayerSubMenu.IsEnabled = hasSelection;
 
-    if (!hasSelection) return;
+      if (!hasSelection) return;
 
-    foreach (var layer in viewModel.Layers)
-    {
-      var item = new MenuFlyoutItem
+      foreach (var layer in viewModel.Layers)
       {
-        Text = layer.Name,
-        Command = viewModel.SelectionVM.MoveSelectionToLayerCommand,
-        CommandParameter = layer
-      };
-      moveToLayerSubMenu.Add(item);
-    }
+        var item = new MenuFlyoutItem
+        {
+          Text = layer.Name,
+          Command = viewModel.SelectionVM.MoveSelectionToLayerCommand,
+          CommandParameter = layer
+        };
+        moveToLayerSubMenu.Add(item);
+      }
     }
     catch (Exception)
     {

@@ -89,6 +89,7 @@ public static class MauiProgram
     builder.Services.AddSingleton<IPreferencesFacade, PreferencesFacade>();
     builder.Services.AddSingleton<IFileSaver>(FileSaver.Default);
     builder.Services.AddSingleton<IDrawingStorageMomento, DrawingStorageMomento>();
+    builder.Services.AddSingleton<LunaDraw.Logic.Services.IThumbnailCacheFacade, LunaDraw.Logic.Services.ThumbnailCacheFacade>();
     builder.Services.AddSingleton<IDrawingThumbnailFacade, DrawingThumbnailFacade>();
 
     // Register ViewModels

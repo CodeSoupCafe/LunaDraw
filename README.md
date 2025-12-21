@@ -37,6 +37,7 @@ LunaDraw is a child-centric drawing application designed for children aged 3–8
 - **Coloring Efficiency:** "Magical pattern paint bucket" (Fill tool) for quickly coloring large areas.
 - **Tools:** Eraser, Shapes (Lines, Rectangles, Ellipses), and stamps.
 - **Undo/Redo:** Universally accessible history navigation.
+- **Trace Mode:** [Transparency mode on Windows machines](https://gist.github.com/iknowcodesoup/d51aab15f32f5db424f4996af5ba234a) for see-through for tracing
 
 ### 🎬 Movie Mode (Time-Lapse)
 
@@ -44,6 +45,8 @@ LunaDraw is a child-centric drawing application designed for children aged 3–8
 - Playback the art creation as a short animation/film.
 
 ### 🖼️ Art Management
+
+- **Gallery:** Built-in gallery to securely store and view completed drawings and their animations.
 
 - **Gallery:** Built-in gallery to securely store and view completed drawings and their animations.
 

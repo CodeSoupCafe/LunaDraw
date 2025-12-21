@@ -177,8 +177,10 @@ public class MainViewModel : ReactiveObject
     LoadDrawingCommand = ReactiveCommand.CreateFromTask<External.Drawing>(LoadDrawingAsync);
     ExternaDrawingCommand = ReactiveCommand.CreateFromTask<string?>(ExternalDrawingAsync);
     NewDrawingCommand = ReactiveCommand.CreateFromTask(NewDrawingAsync);
-    ShowGalleryCommand = ReactiveCommand.Create(() =>
+    ShowGalleryCommand = ReactiveCommand.CreateFromTask(async () =>
     {
+      // Ensure the latest changes are saved before opening the gallery
+      await ExternalDrawingAsync(null);
       messageBus.SendMessage(new ShowGalleryMessage());
     });
 
@@ -415,9 +417,9 @@ public class MainViewModel : ReactiveObject
 
     await drawingStorageMomento.ExternalDrawingAsync(externalDrawing);
 
-    drawingThumbnailFacade.InvalidateThumbnail(CurrentDrawingId);
+    await drawingThumbnailFacade.InvalidateThumbnailAsync(CurrentDrawingId);
 
-    messageBus.SendMessage(new DrawingListChangedMessage(CurrentDrawingId));
+    // messageBus.SendMessage(new DrawingListChangedMessage(CurrentDrawingId));
   }
 
   private async Task NewDrawingAsync()

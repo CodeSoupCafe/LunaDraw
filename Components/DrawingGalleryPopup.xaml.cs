@@ -36,12 +36,6 @@ public partial class DrawingGalleryPopup : Popup
     InitializeComponent();
     BindingContext = viewModel;
 
-    viewModel.DrawingItems.CollectionChanged += (s, e) =>
-    {
-      GalleryView.ItemsSource = null;
-      GalleryView.ItemsSource = viewModel.DrawingItems;
-    };
-
     viewModel.RequestClose += OnRequestClose;
   }
 
@@ -51,14 +45,6 @@ public partial class DrawingGalleryPopup : Popup
     {
       viewModel.OpenDrawingCommand.Execute(item).Subscribe();
     }
-  }
-
-  private void OnThumbnailImageLoaded(object? sender, EventArgs e)
-  {
-  }
-
-  private void OnThumbnailImagePropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-  {
   }
 
   private async void OnRequestClose(object? sender, EventArgs e)
@@ -74,10 +60,10 @@ public partial class DrawingGalleryPopup : Popup
     if (Handler == null && BindingContext is DrawingGalleryPopupViewModel vm)
     {
       vm.RequestClose -= OnRequestClose;
-      
+
       if (vm is IDisposable disposable)
       {
-          disposable.Dispose();
+        disposable.Dispose();
       }
     }
   }
