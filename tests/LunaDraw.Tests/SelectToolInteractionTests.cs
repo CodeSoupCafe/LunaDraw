@@ -38,7 +38,7 @@ namespace LunaDraw.Tests
 
     private class MockDrawableElement : IDrawableElement
     {
-      public Guid Id { get; } = Guid.NewGuid();
+      public Guid Id { get; init; } = Guid.NewGuid();
       public SKRect Bounds { get; set; } = new SKRect(0, 0, 100, 100);
       public SKMatrix TransformMatrix { get; set; } = SKMatrix.CreateIdentity();
       public bool IsVisible { get; set; } = true;

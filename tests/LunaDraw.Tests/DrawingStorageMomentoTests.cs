@@ -30,7 +30,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using LunaDraw.Logic.Models;
-using LunaDraw.Logic.Models.Serialization;
 using SkiaSharp;
 using LunaDraw.Logic.Utils;
 using Microsoft.Maui.ApplicationModel;
@@ -90,7 +89,7 @@ public class DrawingStorageMomentoTests : IDisposable
       Id = Guid.NewGuid(),
       Path = path,
       IsVisible = true,
-      Opacity = 1.0f,
+      Opacity = 255,
       FillColor = SKColors.Red,
       StrokeColor = SKColors.Blue,
       StrokeWidth = 5,

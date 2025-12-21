@@ -89,15 +89,4 @@
 		<PackageReference Include="SkiaSharp.Views" Version="3.119.1" />
 		<PackageReference Include="SkiaSharp.Views.Maui.Controls" Version="3.119.1" />
 	</ItemGroup>
-
-	<ItemGroup>
-	  <Folder Include="Logic\Extensions\" />
-	  <Folder Include="Logic\Services\" />
-	</ItemGroup>		
-
-	<ItemGroup>
-	  <Compile Update="Components\Carousel\RenderListView.xaml.cs">
-	    <DependentUpon>RenderListView.xaml</DependentUpon>
-	  </Compile>
-	</ItemGroup>		
 </Project>
