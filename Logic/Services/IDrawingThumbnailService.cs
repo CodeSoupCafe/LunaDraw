@@ -25,8 +25,9 @@ namespace LunaDraw.Logic.Utils;
 
 public interface IDrawingThumbnailFacade
 {
+  Task<string?> GetThumbnailBase64Async(Guid drawingId, int width, int height, Logic.Models.External.Drawing? drawing = null);
   Task<ImageSource?> GetThumbnailAsync(Guid drawingId, int width, int height);
   Task<ImageSource?> GenerateThumbnailAsync(Logic.Models.External.Drawing drawing, int width, int height);
-  void InvalidateThumbnail(Guid drawingId);
-  void ClearCache();
+  Task InvalidateThumbnailAsync(Guid drawingId);
+  Task ClearCacheAsync();
 }

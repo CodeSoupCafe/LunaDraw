@@ -15,6 +15,7 @@
             <converters:IsNotNullConverter x:Key="IsNotNullConverter"/>
             <converters:IsNullConverter x:Key="IsNullConverter"/>
             <converters:InverseBoolConverter x:Key="InverseBoolConverter"/>
+            <converters:Base64ToImageConverter x:Key="Base64ToImageConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

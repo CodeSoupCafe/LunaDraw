@@ -22,6 +22,7 @@
  */
 
 using LunaDraw.Logic.Models;
+using LunaDraw.Logic.Services;
 using SkiaSharp;
 using System.Collections.Concurrent;
 
@@ -30,17 +31,48 @@ namespace LunaDraw.Logic.Utils;
 public class DrawingThumbnailFacade : IDrawingThumbnailFacade
 {
   private readonly IDrawingStorageMomento drawingStorageMomento;
-  private readonly ConcurrentDictionary<Guid, ImageSource> thumbnailCache = new();
+  private readonly IThumbnailCacheFacade thumbnailCacheFacade;
+  private readonly ConcurrentDictionary<Guid, ImageSource> inMemoryImageSourceCache = new();
 
-  public DrawingThumbnailFacade(IDrawingStorageMomento drawingStorageMomento)
+  public DrawingThumbnailFacade(
+    IDrawingStorageMomento drawingStorageMomento,
+    IThumbnailCacheFacade thumbnailCacheFacade)
   {
     this.drawingStorageMomento = drawingStorageMomento;
+    this.thumbnailCacheFacade = thumbnailCacheFacade;
+  }
+
+  public async Task<string?> GetThumbnailBase64Async(Guid drawingId, int width, int height, Logic.Models.External.Drawing? drawing = null)
+  {
+    // Check persistent cache first
+    var cachedBase64 = await thumbnailCacheFacade.GetThumbnailBase64Async(drawingId);
+    if (cachedBase64 != null)
+    {
+      return cachedBase64;
+    }
+
+    // Use provided drawing or load from storage
+    var drawingToUse = drawing ?? await drawingStorageMomento.LoadDrawingAsync(drawingId);
+    if (drawingToUse == null)
+    {
+      return null;
+    }
+
+    var base64 = await GenerateThumbnailBase64Async(drawingToUse, width, height);
+
+    // Save to persistent cache
+    if (base64 != null)
+    {
+      await thumbnailCacheFacade.SaveThumbnailAsync(drawingId, base64);
+    }
+
+    return base64;
   }
 
   public async Task<ImageSource?> GetThumbnailAsync(Guid drawingId, int width, int height)
   {
-    // Check cache first
-    if (thumbnailCache.TryGetValue(drawingId, out var cachedThumbnail))
+    // Check in-memory cache first
+    if (inMemoryImageSourceCache.TryGetValue(drawingId, out var cachedThumbnail))
     {
       return cachedThumbnail;
     }
@@ -54,15 +86,14 @@ public class DrawingThumbnailFacade : IDrawingThumbnailFacade
 
     var thumbnail = await GenerateThumbnailAsync(drawing, width, height);
 
-    // Cache it
+    // Cache it in memory
     if (thumbnail != null)
     {
-      thumbnailCache[drawingId] = thumbnail;
+      inMemoryImageSourceCache[drawingId] = thumbnail;
     }
 
     return thumbnail;
   }
-// ...
  
   public Task<ImageSource?> GenerateThumbnailAsync(Logic.Models.External.Drawing drawing, int width, int height)
   {
@@ -118,6 +149,63 @@ public class DrawingThumbnailFacade : IDrawingThumbnailFacade
     catch (Exception)
     {
       return Task.FromResult<ImageSource?>(null);
+    }
+  }
+
+  private Task<string?> GenerateThumbnailBase64Async(Logic.Models.External.Drawing drawing, int width, int height)
+  {
+    try
+    {
+      // Create a bitmap to render to
+      using var surface = SKSurface.Create(new SKImageInfo(width, height));
+      var canvas = surface.Canvas;
+
+      // Clear with transparent background
+      canvas.Clear(SKColors.Transparent);
+
+      // Calculate scale to fit drawing into thumbnail bounds
+      var scaleX = (float)width / drawing.CanvasWidth;
+      var scaleY = (float)height / drawing.CanvasHeight;
+      var scale = Math.Min(scaleX, scaleY);
+
+      // Center the drawing in the thumbnail
+      var offsetX = (width - (drawing.CanvasWidth * scale)) / 2;
+      var offsetY = (height - (drawing.CanvasHeight * scale)) / 2;
+
+      canvas.Translate(offsetX, offsetY);
+      canvas.Scale(scale);
+
+      foreach (var layer in drawing.Layers.Where(l => l.IsVisible))
+      {
+        foreach (var element in layer.Elements.Where(e => e.IsVisible).OrderBy(e => e.ZIndex))
+        {
+          RenderElement(canvas, element);
+        }
+      }
+
+      // Create image from surface
+      using var image = surface.Snapshot();
+      using var data = image.Encode(SKEncodedImageFormat.Png, 80);
+
+      if (data == null)
+      {
+        return Task.FromResult<string?>(null);
+      }
+
+      var imageBytes = data.ToArray();
+
+      if (imageBytes == null || imageBytes.Length == 0)
+      {
+        return Task.FromResult<string?>(null);
+      }
+
+      var base64String = Convert.ToBase64String(imageBytes);
+
+      return Task.FromResult<string?>(base64String);
+    }
+    catch (Exception)
+    {
+      return Task.FromResult<string?>(null);
     }
   }
 
@@ -252,13 +340,15 @@ public class DrawingThumbnailFacade : IDrawingThumbnailFacade
     return path;
   } 
 
-  public void InvalidateThumbnail(Guid drawingId)
+  public async Task InvalidateThumbnailAsync(Guid drawingId)
   {
-    thumbnailCache.TryRemove(drawingId, out _);
+    inMemoryImageSourceCache.TryRemove(drawingId, out _);
+    await thumbnailCacheFacade.InvalidateThumbnailAsync(drawingId);
   }
 
-  public void ClearCache()
+  public async Task ClearCacheAsync()
   {
-    thumbnailCache.Clear();
+    inMemoryImageSourceCache.Clear();
+    await thumbnailCacheFacade.ClearAllCacheAsync();
   }
 }

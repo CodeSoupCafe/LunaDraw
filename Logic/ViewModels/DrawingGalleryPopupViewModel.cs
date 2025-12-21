@@ -24,6 +24,8 @@
 using ReactiveUI;
 using System.Reactive;
 using System.Reactive.Linq;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Utils;
 using LunaDraw.Logic.Messages;
@@ -31,11 +33,12 @@ using CodeSoupCafe.Maui.Infrastructure;
 
 namespace LunaDraw.Logic.ViewModels;
 
-public class DrawingGalleryPopupViewModel : ReactiveObject
+public class DrawingGalleryPopupViewModel : ReactiveObject, IDisposable
 {
   private readonly GalleryViewModel galleryViewModel;
   private readonly IDrawingThumbnailFacade thumbnailService;
   private readonly IMessageBus messageBus;
+  private IDisposable? drawingListChangedSubscription;
 
   private RangedObservableCollection<DrawingItemViewModel> drawingItems = [];
   private bool isLoading;
@@ -89,35 +92,49 @@ public class DrawingGalleryPopupViewModel : ReactiveObject
     LoadDrawingsCommand = ReactiveCommand.CreateFromTask(LoadDrawingsAsync);
     LoadDrawingsCommand.Execute().Subscribe();
 
-    messageBus.Listen<DrawingListChangedMessage>()
+    drawingListChangedSubscription = messageBus.Listen<DrawingListChangedMessage>()
+      .ObserveOn(RxApp.MainThreadScheduler)
       .Subscribe(async msg =>
       {
+        System.Diagnostics.Debug.WriteLine($"[DrawingGalleryPopup] DrawingListChangedMessage received. DrawingId: {msg.DrawingId}");
+
         if (msg.DrawingId.HasValue)
         {
-          var existingItem = DrawingItems.FirstOrDefault(x => x.Drawing.Id == msg.DrawingId.Value);
+          var drawingId = msg.DrawingId.Value;
+          var existingItem = DrawingItems.FirstOrDefault(x => x.Drawing.Id == drawingId);
+
+          // Reload metadata to get latest info
+          var updatedDrawing = await galleryViewModel.ReloadDrawingMetadataAsync(drawingId);
+
+          if (updatedDrawing == null)
+          {
+            // Drawing might have been deleted?
+            if (existingItem != null)
+            {
+              DrawingItems.Remove(existingItem);
+            }
+            return;
+          }
+
+          // Invalidate thumbnail cache immediately
+          // Invalidate the thumbnail - it will reload lazily when item appears
+          await thumbnailService.InvalidateThumbnailAsync(msg.DrawingId.Value);
+          // existingItem?.ThumbnailBase64 = null;
+
           if (existingItem != null)
           {
-            // Reload the drawing metadata from storage to get the updated LastModified/DateUpdated
-            var updatedDrawing = await galleryViewModel.ReloadDrawingMetadataAsync(msg.DrawingId.Value);
-            if (updatedDrawing != null)
-            {
-              // Update the metadata which triggers re-sorting via ISortable property change notifications
-              existingItem.UpdateDrawingMetadata(updatedDrawing);
-            }
+            System.Diagnostics.Debug.WriteLine($"[DrawingGalleryPopup] Updating existing item: {drawingId}");
 
-            // Update the thumbnail
-            thumbnailService.InvalidateThumbnail(msg.DrawingId.Value);
-            var newThumbnail = await thumbnailService.GetThumbnailAsync(msg.DrawingId.Value, 300, 300);
-            existingItem.ThumbnailSource = newThumbnail;
+            // Update metadata
+            existingItem.UpdateDrawingMetadata(updatedDrawing);
+            existingItem.ThumbnailBase64 = null; // Force reload on next appear
 
-            // Trigger re-sort by removing and re-adding the item
-            // This ensures the gallery control picks up the new DateUpdated and re-sorts
+            // Re-sort logic
             var index = DrawingItems.IndexOf(existingItem);
             if (index >= 0)
             {
               DrawingItems.RemoveAt(index);
 
-              // Find the correct position based on DateUpdated (descending order)
               var insertIndex = 0;
               for (int i = 0; i < DrawingItems.Count; i++)
               {
@@ -128,15 +145,55 @@ public class DrawingGalleryPopupViewModel : ReactiveObject
                 }
                 insertIndex = i + 1;
               }
-
               DrawingItems.Insert(insertIndex, existingItem);
+
+              // If the item is currently visible, we might want to trigger a thumbnail reload
+              // However, since we set ThumbnailBase64 to null, the bindings should update.
+              // If the item remains in view, the control might not fire OnAppearing again.
+              // We can manually trigger a reload here if needed.
+              _ = existingItem.LoadThumbnailAsync(thumbnailService);
             }
           }
+          else
+          {
+            System.Diagnostics.Debug.WriteLine($"[DrawingGalleryPopup] Adding new item: {drawingId}");
+
+            // New drawing created externally
+            var newItem = new DrawingItemViewModel(updatedDrawing);
+            DrawingItems.Insert(0, newItem); // Assume newest
+
+            // Trigger load
+            _ = newItem.LoadThumbnailAsync(thumbnailService);
+          }
+        }
+        else
+        {
+          // Full reload requested
+          System.Diagnostics.Debug.WriteLine($"[DrawingGalleryPopup] Full reload requested via message");
+          await LoadDrawingsAsync();
         }
       });
   }
 
   public event EventHandler? RequestClose;
+
+  public Action<CodeSoupCafe.Maui.Models.ISortable> OnItemAppearing => HandleItemAppearing;
+  public Action<CodeSoupCafe.Maui.Models.ISortable> OnItemDisappearing => HandleItemDisappearing;
+
+  private void HandleItemAppearing(CodeSoupCafe.Maui.Models.ISortable item)
+  {
+    if (item is DrawingItemViewModel viewModel)
+    {
+      // Fire and forget - load thumbnail async
+      _ = viewModel.LoadThumbnailAsync(thumbnailService);
+    }
+  }
+
+  private void HandleItemDisappearing(CodeSoupCafe.Maui.Models.ISortable item)
+  {
+    // Optional: unload thumbnail to save memory for very large galleries
+    // For now, keep thumbnails loaded once fetched (they're cached)
+  }
 
   private async Task LoadDrawingsAsync()
   {
@@ -144,60 +201,126 @@ public class DrawingGalleryPopupViewModel : ReactiveObject
 
     try
     {
+      System.Diagnostics.Debug.WriteLine("[DrawingGalleryPopup] Loading drawings...");
       await galleryViewModel.LoadDrawingsCommand.Execute().GetAwaiter();
+
+      System.Diagnostics.Debug.WriteLine($"[DrawingGalleryPopup] GalleryViewModel.Drawings count: {galleryViewModel.Drawings.Count}");
 
       DrawingItems.ClearAndStaySilent();
 
-      var items = new List<DrawingItemViewModel>();
+      // Load metadata only - NO thumbnail generation
+      var items = galleryViewModel.Drawings
+        .Select(drawing => new DrawingItemViewModel(drawing))
+        .ToList();
 
-      foreach (var drawing in galleryViewModel.Drawings)
-      {
-        var thumbnailSource = await thumbnailService.GetThumbnailAsync(
-          drawing.Id,
-          width: 300,
-          height: 300);
-
-        var item = new DrawingItemViewModel(drawing, thumbnailSource);
-        items.Add(item);
-      }
+      System.Diagnostics.Debug.WriteLine($"[DrawingGalleryPopup] Created {items.Count} DrawingItemViewModels");
 
       DrawingItems.AddRange(items);
+
+      System.Diagnostics.Debug.WriteLine($"[DrawingGalleryPopup] DrawingItems.Count after AddRange: {DrawingItems.Count}");
+
+      // Force property change notification to trigger ItemGalleryView binding
+      this.RaisePropertyChanged(nameof(DrawingItems));
+      System.Diagnostics.Debug.WriteLine($"[DrawingGalleryPopup] Raised property changed for DrawingItems");
+    }
+    catch (Exception ex)
+    {
+      System.Diagnostics.Debug.WriteLine($"[DrawingGalleryPopup] ERROR: {ex.Message}");
+      System.Diagnostics.Debug.WriteLine($"[DrawingGalleryPopup] Stack: {ex.StackTrace}");
     }
     finally
     {
       IsLoading = false;
     }
   }
+  public void Dispose()
+  {
+    drawingListChangedSubscription?.Dispose();
+    drawingListChangedSubscription = null;
+  }
 }
 
 /// <summary>
-/// Wrapper class that adds ThumbnailSource to External.Drawing without modifying the domain model.
-/// Implements ISortable for compatibility with CodeSoupCafe.Maui.Carousel library.
+/// Wrapper class that provides lazy thumbnail loading for External.Drawing.
+/// Inherits from ItemState for compatibility with CodeSoupCafe.Maui.Carousel library.
 /// </summary>
-public class DrawingItemViewModel : ReactiveObject, CodeSoupCafe.Maui.Models.ISortable
+public class DrawingItemViewModel : CodeSoupCafe.Maui.Models.ItemState, INotifyPropertyChanged
 {
   private readonly External.Drawing drawing;
-  private ImageSource? thumbnailSource;
+  private string? thumbnailBase64;
+  private bool isLoadingThumbnail;
 
-  public DrawingItemViewModel(External.Drawing drawing, ImageSource? thumbnail)
+  public event PropertyChangedEventHandler? PropertyChanged;
+
+  public DrawingItemViewModel(External.Drawing drawing)
   {
     this.drawing = drawing;
-    this.thumbnailSource = thumbnail;
   }
 
   public External.Drawing Drawing => drawing;
 
-  public ImageSource? ThumbnailSource
+  public override string? ThumbnailBase64
   {
-    get => thumbnailSource;
-    set => this.RaiseAndSetIfChanged(ref thumbnailSource, value);
+    get => thumbnailBase64;
+    set
+    {
+      if (thumbnailBase64 != value)
+      {
+        thumbnailBase64 = value;
+        OnPropertyChanged();
+      }
+    }
   }
 
-  // ISortable implementation (delegate to Drawing)
-  public Guid Id => drawing.Id;
-  public string Title => drawing.Title;
-  public DateTimeOffset DateCreated => drawing.DateCreated;
-  public DateTimeOffset DateUpdated => drawing.DateUpdated;
+  public bool IsLoadingThumbnail
+  {
+    get => isLoadingThumbnail;
+    set
+    {
+      if (isLoadingThumbnail != value)
+      {
+        isLoadingThumbnail = value;
+        OnPropertyChanged();
+      }
+    }
+  }
+
+  protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+  {
+    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+  }
+
+  // ItemState abstract property implementations
+  public override Guid Id => drawing.Id;
+  public override string Title => drawing.Title;
+  public override DateTimeOffset DateCreated => drawing.DateCreated;
+  public override DateTimeOffset DateUpdated => drawing.DateUpdated;
+
+  /// <summary>
+  /// Loads the thumbnail asynchronously when the item appears in view.
+  /// Called by the lifecycle callback from the gallery control.
+  /// </summary>
+  public async Task LoadThumbnailAsync(IDrawingThumbnailFacade thumbnailService)
+  {
+    if (ThumbnailBase64 != null || IsLoadingThumbnail)
+    {
+      return; // Already loaded or loading
+    }
+
+    IsLoadingThumbnail = true;
+    try
+    {
+      ThumbnailBase64 = await thumbnailService.GetThumbnailBase64Async(
+        Drawing.Id,
+        width: 300,
+        height: 300,
+        drawing: Drawing);
+    }
+    finally
+    {
+      IsLoadingThumbnail = false;
+    }
+  }
 
   /// <summary>
   /// Updates the underlying drawing metadata and raises property change notifications
@@ -216,11 +339,11 @@ public class DrawingItemViewModel : ReactiveObject, CodeSoupCafe.Maui.Models.ISo
     drawing.CanvasWidth = updatedDrawing.CanvasWidth;
     drawing.CanvasHeight = updatedDrawing.CanvasHeight;
 
-    // Raise property change notifications for ISortable properties
+    // Raise property change notifications for ItemState properties
     // This triggers the CodeSoupCafe.Maui control to re-sort
-    this.RaisePropertyChanged(nameof(Title));
-    this.RaisePropertyChanged(nameof(DateUpdated));
-    this.RaisePropertyChanged(nameof(DateCreated));
+    OnPropertyChanged(nameof(Title));
+    OnPropertyChanged(nameof(DateUpdated));
+    OnPropertyChanged(nameof(DateCreated));
   }
 
   public override bool Equals(object? obj) =>

@@ -22,6 +22,7 @@
  */
 
 using System.Text.Json;
+using System.Threading;
 using LunaDraw.Logic.Models;
 using SkiaSharp;
 using System.Text.Json.Serialization;
@@ -50,6 +51,7 @@ public class DrawingStorageMomento : IDrawingStorageMomento
   private readonly string storagePath;
   private readonly JsonSerializerOptions jsonOptions;
   private const string DefaultNamePrefix = "Drawing ";
+  private readonly SemaphoreSlim fileLock = new(1, 1);
 
   public DrawingStorageMomento(string? storagePath = null)
   {
@@ -136,10 +138,18 @@ public class DrawingStorageMomento : IDrawingStorageMomento
 
   public async Task ExternalDrawingAsync(External.Drawing drawing)
   {
-    drawing.LastModified = DateTime.Now;
-    var path = Path.Combine(storagePath, $"{drawing.Id}{AppConstants.Files.JsonExtension}");
-    var json = JsonSerializer.Serialize(drawing, jsonOptions);
-    await File.WriteAllTextAsync(path, json);
+    await fileLock.WaitAsync();
+    try
+    {
+      drawing.LastModified = DateTime.Now;
+      var path = Path.Combine(storagePath, $"{drawing.Id}{AppConstants.Files.JsonExtension}");
+      var json = JsonSerializer.Serialize(drawing, jsonOptions);
+      await File.WriteAllTextAsync(path, json);
+    }
+    finally
+    {
+      fileLock.Release();
+    }
   }
 
   public Task DeleteDrawingAsync(Guid id)
