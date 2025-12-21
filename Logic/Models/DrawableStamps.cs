@@ -34,7 +34,7 @@ public class DrawableStamps : IDrawableElement
   private SKPoint cacheOffset;
   private bool isCacheDirty = true;
 
-  public Guid Id { get; } = Guid.NewGuid();
+  public Guid Id { get; init; } = Guid.NewGuid();
 
   private List<SKPoint> points = [];
   public List<SKPoint> Points

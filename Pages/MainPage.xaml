@@ -81,6 +81,11 @@
                 Style="{StaticResource ZoomButtonStyle}"
                 Command="{Binding ZoomInCommand}"
                 ToolTipProperties.Text="Zoom In"/>
+        <Button Text="G"
+                Style="{StaticResource ZoomButtonStyle}"
+                Command="{Binding ShowGalleryCommand}"
+                ToolTipProperties.Text="Gallery"
+                IsVisible="true"/>
       </HorizontalStackLayout>
 
       <!-- Mini Map -->

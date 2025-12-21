@@ -84,6 +84,11 @@ namespace LunaDraw.Tests
       messageBusMock.Setup(x => x.Listen<ViewOptionsChangedMessage>()).Returns(Observable.Empty<ViewOptionsChangedMessage>());
       messageBusMock.Setup(x => x.Listen<ShowAdvancedSettingsMessage>()).Returns(Observable.Empty<ShowAdvancedSettingsMessage>());
 
+      // Additional message types needed by MainViewModel
+      messageBusMock.Setup(x => x.Listen<OpenDrawingMessage>()).Returns(Observable.Empty<OpenDrawingMessage>());
+      messageBusMock.Setup(x => x.Listen<ShowGalleryMessage>()).Returns(Observable.Empty<ShowGalleryMessage>());
+      messageBusMock.Setup(x => x.Listen<CanvasInvalidateMessage>()).Returns(Observable.Empty<CanvasInvalidateMessage>());
+
       mockToolbarViewModel = new Mock<ToolbarViewModel>(
           layerFacadeMock.Object,
           selectionVM,
@@ -98,6 +103,11 @@ namespace LunaDraw.Tests
       // Setup property change notifications for ToolStateManager
       mockToolbarViewModel.As<System.ComponentModel.INotifyPropertyChanged>();
 
+      var drawingStorageMomentoMock = new Mock<IDrawingStorageMomento>();
+      var drawingThumbnailFacadeMock = new Mock<IDrawingThumbnailFacade>();
+      var galleryViewModelMock = new Mock<GalleryViewModel>(drawingStorageMomentoMock.Object);
+      var serviceProviderMock = new Mock<IServiceProvider>();
+
       viewModel = new MainViewModel(
           mockToolbarViewModel.Object,
           layerFacadeMock.Object,
@@ -106,9 +116,13 @@ namespace LunaDraw.Tests
           selectionObserver,
           messageBusMock.Object,
           preferencesFacadeMock.Object,
+          drawingStorageMomentoMock.Object,
+          drawingThumbnailFacadeMock.Object,
           layerPanelVM,
           selectionVM,
-          historyVM
+          historyVM,
+          galleryViewModelMock.Object,
+          serviceProviderMock.Object
       );
     }
 

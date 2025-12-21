@@ -637,9 +637,9 @@
     <Setter Property="StrokeThickness"
             Value="1"/>
     <Setter Property="Stroke"
-            Value="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"/>
+            Value="{AppThemeBinding Light={StaticResource PopupBorderLight}, Dark={StaticResource PopupBorderDark}}"/>
     <Setter Property="Background"
-            Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray800}}"/>
+            Value="{AppThemeBinding Light={StaticResource PopupBackgroundLight}, Dark={StaticResource PopupBackgroundDark}}"/>
   </Style>
 
 </ResourceDictionary>

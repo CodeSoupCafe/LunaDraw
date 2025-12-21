@@ -33,8 +33,6 @@ public static class SkiaSharpExtensions
     {
       if (!File.Exists(path))
       {
-        System.Diagnostics.Debug.WriteLine($"[BitmapCache] File not found: {path}");
-
         return new SKBitmap();
       }
 
@@ -43,8 +41,6 @@ public static class SkiaSharpExtensions
 
       if (codec == null)
       {
-        System.Diagnostics.Debug.WriteLine($"[BitmapCache] Failed to create codec for: {path}");
-
         return new SKBitmap();
       }
 
@@ -79,17 +75,12 @@ public static class SkiaSharpExtensions
       }
       else
       {
-        System.Diagnostics.Debug.WriteLine($"[BitmapCache] GetPixels failed: {result}");
         bitmap.Dispose();
-        // Fallback: try full decode if downsample fails? 
-        // Or maybe the scale was just invalid. 
         return new SKBitmap();
       }
     }
-    catch (Exception ex)
+    catch (Exception)
     {
-      System.Diagnostics.Debug.WriteLine($"[BitmapCache] Exception loading bitmap: {ex}");
-
       return new SKBitmap();
     }
   }
@@ -268,5 +259,43 @@ public static class SkiaSharpExtensions
       canvas.Scale(imageScale);
 
     return canvas.TotalMatrix;
+  }
+
+  public static string ToHex(this SKColor color, bool includeAlpha = true)
+  {
+    if (includeAlpha)
+    {
+      return $"#{color.Alpha:X2}{color.Red:X2}{color.Green:X2}{color.Blue:X2}";
+    }
+    else
+    {
+      return $"#{color.Red:X2}{color.Green:X2}{color.Blue:X2}";
+    }
+  }
+
+  public static SKColor ToSKColor(this string hex)
+  {
+    if (string.IsNullOrEmpty(hex))
+    {
+      return SKColors.Transparent;
+    }
+
+    // Remove # if present
+    if (hex.StartsWith("#"))
+    {
+      hex = hex.Substring(1);
+    }
+
+    if (hex.Length == 6) // RGB
+    {
+      return SKColor.Parse(hex);
+    }
+    else if (hex.Length == 8) // ARGB
+    {
+      return SKColor.Parse(hex);
+    }
+
+    // Default to transparent if parsing fails
+    return SKColors.Transparent;
   }
 }
