@@ -8,7 +8,11 @@
       "Bash(Remove-Item -Recurse -Force obj,bin -ErrorAction SilentlyContinue)",
       "Bash(dir:*)",
       "Bash(dotnet pack:*)",
-      "Bash(dotnet restore:*)"
+      "Bash(dotnet restore:*)",
+      "Bash(dotnet sln:*)",
+      "Bash(findstr:*)",
+      "Bash(Get-ChildItem -Recurse -Filter \"*carousel*\")",
+      "Bash(Select-Object FullName)"
     ]
   }
 }

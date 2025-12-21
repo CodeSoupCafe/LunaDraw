@@ -25,8 +25,16 @@ jobs:
     - name: Install MAUI Workloads
       run: dotnet workload install maui
 
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json', '**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
     - name: Restore NuGet packages
-      run: dotnet restore LunaDraw.csproj
+      run: dotnet restore LunaDraw.csproj --configfile nuget.config
 
     - name: Build MAUI App (Windows)
       run: dotnet build LunaDraw.csproj -c Release -f net10.0-windows10.0.19041.0 
