@@ -7,7 +7,7 @@
                x:Class="LunaDraw.Components.AdvancedSettingsPopup"
                x:DataType="viewModels:MainViewModel"
                CanBeDismissedByTappingOutsideOfPopup="True"
-               BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}">
+               BackgroundColor="{AppThemeBinding Light={StaticResource PopupBackgroundLight}, Dark={StaticResource PopupBackgroundDark}}">
   <VerticalStackLayout Spacing="15">
     <Grid ColumnDefinitions="*, Auto"
           RowDefinitions="Auto, Auto, Auto"

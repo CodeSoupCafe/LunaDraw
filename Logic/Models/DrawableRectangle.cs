@@ -30,7 +30,7 @@ namespace LunaDraw.Logic.Models;
 /// </summary>
 public class DrawableRectangle : IDrawableElement
 {
-  public Guid Id { get; } = Guid.NewGuid();
+  public Guid Id { get; init; } = Guid.NewGuid();
   public SKRect Rectangle { get; set; }
   public SKMatrix TransformMatrix { get; set; } = SKMatrix.CreateIdentity();
 
