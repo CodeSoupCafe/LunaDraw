@@ -33,6 +33,9 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-nuget-
 
+    - name: Remove Local Source for CI
+      run: dotnet nuget remove source LocalNuGetPackages --configfile nuget.config
+
     - name: Restore NuGet packages
       run: dotnet restore LunaDraw.csproj --configfile nuget.config
 
