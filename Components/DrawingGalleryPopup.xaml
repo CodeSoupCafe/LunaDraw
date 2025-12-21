@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<toolkit:Popup xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+               xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+               xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+               xmlns:controls="clr-namespace:CodeSoupCafe.Maui.Controls;assembly=CodeSoupCafe.Maui"
+               xmlns:viewModels="clr-namespace:LunaDraw.Logic.ViewModels"
+               x:Class="LunaDraw.Components.DrawingGalleryPopup"
+               x:Name="Popup"
+               x:DataType="viewModels:DrawingGalleryPopupViewModel"
+               CanBeDismissedByTappingOutsideOfPopup="True"
+               HorizontalOptions="Center"
+               VerticalOptions="Center"
+               Padding="0"
+               BackgroundColor="Transparent">
+
+  <Border BackgroundColor="{AppThemeBinding Light={StaticResource PopupBackgroundLight}, Dark={StaticResource PopupBackgroundDark}}"
+          Padding="20"
+          StrokeThickness="0"
+          Stroke="{AppThemeBinding Light={StaticResource PopupBorderLight}, Dark={StaticResource PopupBorderDark}}"
+          StrokeShape="RoundRectangle 10"
+          WidthRequest="900"
+          HeightRequest="700">
+
+    <Grid RowDefinitions="Auto, *, Auto"
+          RowSpacing="20">
+
+      <!-- Header -->
+      <Grid Grid.Row="0"
+            ColumnDefinitions="*, Auto">
+        <Label Grid.Column="0"
+               Text="Your Drawings"
+               FontSize="28"
+               FontAttributes="Bold"
+               TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
+               VerticalOptions="Center"/>
+
+        <!-- Loading Indicator -->
+        <ActivityIndicator Grid.Column="1"
+                           IsRunning="{Binding IsLoading}"
+                           IsVisible="{Binding IsLoading}"
+                           Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                           WidthRequest="32"
+                           HeightRequest="32"/>
+      </Grid>
+
+      <!-- ItemGalleryView with custom template -->
+      <controls:ItemGalleryView Grid.Row="1"
+                                x:Name="GalleryView"
+                                ItemsSource="{Binding DrawingItems}"
+                                Title="Gallery"
+                                SearchPlaceholder="Search drawings..."
+                                EmptyMessage="No drawings yet. Start creating!"
+                                GridSpanCount="3"
+                                IsGridMode="True">
+        <controls:ItemGalleryView.ItemTemplate>
+          <DataTemplate x:DataType="viewModels:DrawingItemViewModel">
+            <!-- Custom drawing thumbnail template -->
+            <Grid RowDefinitions="*, Auto"
+                  Padding="8"
+                  BackgroundColor="Transparent">
+
+              <Grid.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnDrawingItemTapped"/>
+              </Grid.GestureRecognizers>
+
+              <!-- Thumbnail container with shadow/border -->
+              <Border Grid.Row="0"
+                      BackgroundColor="{AppThemeBinding Light={StaticResource ThumbnailBackgroundLight}, Dark={StaticResource ThumbnailBackgroundDark}}"
+                      StrokeThickness="2"
+                      Stroke="{AppThemeBinding Light={StaticResource ThumbnailBorderLight}, Dark={StaticResource ThumbnailBorderDark}}"
+                      StrokeShape="RoundRectangle 8"
+                      HeightRequest="180"
+                      WidthRequest="180"
+                      Padding="4">
+
+                <!-- Shadow effect -->
+                <Border.Shadow>
+                  <Shadow Brush="{AppThemeBinding Light={StaticResource ShadowLight}, Dark={StaticResource ShadowDark}}"
+                          Offset="0,2"
+                          Radius="8"
+                          Opacity="0.3"/>
+                </Border.Shadow>
+
+                <!-- Thumbnail image or placeholder -->
+                <Grid>
+                  <!-- Actual thumbnail -->
+                  <Image x:Name="ThumbnailImage"
+                         Source="{Binding ThumbnailSource}"
+                         Aspect="AspectFit"
+                         WidthRequest="170"
+                         HeightRequest="170"
+                         HorizontalOptions="FillAndExpand"
+                         VerticalOptions="FillAndExpand"
+                         BackgroundColor="Transparent"
+                         IsVisible="{Binding ThumbnailSource, Converter={StaticResource IsNotNullConverter}}"
+                         Loaded="OnThumbnailImageLoaded"
+                         PropertyChanged="OnThumbnailImagePropertyChanged"/>
+
+                  <!-- Placeholder when no thumbnail -->
+                  <Label Text="🎨"
+                         FontSize="48"
+                         HorizontalOptions="Center"
+                         VerticalOptions="Center"
+                         TextColor="{AppThemeBinding Light={StaticResource PlaceholderTextLight}, Dark={StaticResource PlaceholderTextDark}}"
+                         IsVisible="{Binding ThumbnailSource, Converter={StaticResource IsNullConverter}}"/>
+                </Grid>
+              </Border>
+
+              <!-- Drawing name -->
+              <Label Grid.Row="1"
+                     Text="{Binding Title}"
+                     FontSize="16"
+                     LineBreakMode="TailTruncation"
+                     HorizontalTextAlignment="Center"
+                     TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
+                     Margin="0,8,0,0"
+                     MaxLines="2"/>
+            </Grid>
+          </DataTemplate>
+        </controls:ItemGalleryView.ItemTemplate>
+      </controls:ItemGalleryView>
+
+      <!-- Footer buttons -->
+      <Grid Grid.Row="2"
+            ColumnDefinitions="*, *"
+            ColumnSpacing="15">
+
+        <Button Grid.Column="0"
+                Text="New Drawing"
+                Command="{Binding NewDrawingCommand}"
+                HeightRequest="60"
+                FontSize="18"
+                FontAttributes="Bold"
+                BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource ButtonPrimaryDark}}"
+                TextColor="White"
+                CornerRadius="8"/>
+
+        <Button Grid.Column="1"
+                Text="Cancel"
+                Command="{Binding CancelCommand}"
+                HeightRequest="60"
+                FontSize="18"
+                BackgroundColor="{AppThemeBinding Light={StaticResource ButtonSecondaryLight}, Dark={StaticResource ButtonSecondaryDark}}"
+                TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
+                CornerRadius="8"/>
+      </Grid>
+
+    </Grid>
+  </Border>
+</toolkit:Popup>

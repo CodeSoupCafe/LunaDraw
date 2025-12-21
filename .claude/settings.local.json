@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet build:*)",
+      "Bash(dotnet test:*)",
+      "Bash(dotnet clean:*)",
+      "Bash(Remove-Item -Recurse -Force CodeSoupCafe.Mauiobj,CodeSoupCafe.Mauibin -ErrorAction SilentlyContinue)",
+      "Bash(Remove-Item -Recurse -Force obj,bin -ErrorAction SilentlyContinue)",
+      "Bash(dir:*)",
+      "Bash(dotnet pack:*)",
+      "Bash(dotnet restore:*)",
+      "Bash(dotnet sln:*)",
+      "Bash(findstr:*)",
+      "Bash(Get-ChildItem -Recurse -Filter \"*carousel*\")",
+      "Bash(Select-Object FullName)"
+    ]
+  }
+}

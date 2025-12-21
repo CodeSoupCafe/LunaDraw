@@ -12,6 +12,9 @@
             </ResourceDictionary.MergedDictionaries>
 
             <converters:ColorToHexConverter x:Key="ColorToHexConverter"/>
+            <converters:IsNotNullConverter x:Key="IsNotNullConverter"/>
+            <converters:IsNullConverter x:Key="IsNullConverter"/>
+            <converters:InverseBoolConverter x:Key="InverseBoolConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

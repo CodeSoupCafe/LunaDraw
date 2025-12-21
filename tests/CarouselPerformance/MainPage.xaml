@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:CarouselPerformance"
+             x:Class="CarouselPerformance.MainPage">
+
+    <ContentPage.BindingContext>
+        <local:MainViewModel />
+    </ContentPage.BindingContext>
+
+    <Grid RowDefinitions="Auto, Auto, *">
+        <VerticalStackLayout Grid.Row="0" Padding="10" Spacing="10">
+            <Label Text="Carousel Performance Test" 
+                   FontSize="Header" 
+                   HorizontalOptions="Center" />
+            
+            <Label Text="{Binding Status}" 
+                   FontSize="16" 
+                   TextColor="Blue"
+                   HorizontalOptions="Center" />
+            
+            <ActivityIndicator IsRunning="{Binding IsBusy}" 
+                               IsVisible="{Binding IsBusy}"
+                               Color="Blue" />
+        </VerticalStackLayout>
+
+        <Grid Grid.Row="1" ColumnDefinitions="*, *" Padding="10" ColumnSpacing="10">
+            <Button Grid.Column="0" 
+                    Text="Test Bulk Load (1000)" 
+                    Command="{Binding LoadAllCommand}" />
+            
+            <Button Grid.Column="1" 
+                    Text="Test Infinite Scroll" 
+                    Command="{Binding LoadIncrementalCommand}" />
+        </Grid>
+
+        <!-- Carousel / CollectionView -->
+        <CollectionView Grid.Row="2"
+                        ItemsSource="{Binding Items}"
+                        RemainingItemsThreshold="5"
+                        RemainingItemsThresholdReachedCommand="{Binding LoadMoreCommand}">
+            <CollectionView.ItemsLayout>
+                <GridItemsLayout Orientation="Vertical" Span="2" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border Padding="10" Margin="5" StrokeShape="RoundRectangle 10">
+                        <Grid RowDefinitions="*, Auto" HeightRequest="150">
+                            <Label Text="🖼️" 
+                                   FontSize="50" 
+                                   HorizontalOptions="Center" 
+                                   VerticalOptions="Center" />
+                            <Label Grid.Row="1" 
+                                   Text="{Binding .}" 
+                                   HorizontalOptions="Center" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+
+</ContentPage>
