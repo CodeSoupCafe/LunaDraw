@@ -75,6 +75,8 @@ public class External
   {
     [JsonPropertyName("i")]
     public Guid Id { get; set; }
+    [JsonPropertyName("ca")]
+    public DateTimeOffset CreatedAt { get; set; }
     [JsonPropertyName("v")]
     public bool IsVisible { get; set; }
     [JsonPropertyName("z")]
@@ -84,13 +86,13 @@ public class External
     [JsonPropertyName("fc")]
     public string? FillColor { get; set; }
     [JsonPropertyName("sc")]
-    public string StrokeColor { get; set; }
+    public string StrokeColor { get; set; } = "Black";
     [JsonPropertyName("sw")]
     public float StrokeWidth { get; set; }
     [JsonPropertyName("ge")]
     public bool IsGlowEnabled { get; set; }
     [JsonPropertyName("gc")]
-    public string GlowColor { get; set; }
+    public string GlowColor { get; set; } = "Transparent";
     [JsonPropertyName("gr")]
     public float GlowRadius { get; set; }
     [JsonPropertyName("tm")]

@@ -29,7 +29,6 @@ using LunaDraw.Logic.Utils;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using ReactiveUI;
-using System.Windows.Input;
 
 namespace LunaDraw.Logic.ViewModels;
 

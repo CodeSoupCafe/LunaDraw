@@ -131,10 +131,12 @@ namespace LunaDraw.Tests
             Assert.Null(layers);
         }
 
-        private class TestDrawableElement : IDrawableElement
-        {
-            public Guid Id { get; init; } = Guid.NewGuid();
-            public SKRect Bounds => SKRect.Empty;
+    public class TestDrawableElement : IDrawableElement
+    {
+      public Guid Id { get; init; } = Guid.NewGuid();
+      public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.Now;
+      public SKRect Bounds { get; set; }
+
             public SKMatrix TransformMatrix { get; set; }
             public bool IsVisible { get; set; }
             public bool IsSelected { get; set; }
@@ -146,6 +148,7 @@ namespace LunaDraw.Tests
             public bool IsGlowEnabled { get; set; }
             public SKColor GlowColor { get; set; }
             public float GlowRadius { get; set; }
+            public float AnimationProgress { get; set; } = 1.0f;
 
             public void Draw(SKCanvas canvas) { }
             public bool HitTest(SKPoint point) => false;

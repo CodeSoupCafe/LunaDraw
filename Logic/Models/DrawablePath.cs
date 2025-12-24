@@ -31,6 +31,7 @@ namespace LunaDraw.Logic.Models;
 public class DrawablePath : IDrawableElement
 {
   public Guid Id { get; init; } = Guid.NewGuid();
+  public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.Now;
   public required SKPath Path { get; set; }
   public SKMatrix TransformMatrix { get; set; } = SKMatrix.CreateIdentity();
 
@@ -48,96 +49,118 @@ public class DrawablePath : IDrawableElement
   public bool IsGlowEnabled { get; set; } = false;
   public SKColor GlowColor { get; set; } = SKColors.Transparent;
   public float GlowRadius { get; set; } = 0f;
+  public float AnimationProgress { get; set; } = 1.0f;
 
   public SKRect Bounds => TransformMatrix.MapRect(Path?.TightBounds ?? SKRect.Empty);
 
   public void Draw(SKCanvas canvas)
   {
     if (!IsVisible || Path == null) return;
+    if (AnimationProgress <= 0f) return;
 
-    canvas.Save();
-    var matrix = TransformMatrix;
-    canvas.Concat(in matrix);
+    SKPath? path = Path;
+    bool isPartial = AnimationProgress < 1.0f;
 
-    if (IsGlowEnabled && GlowRadius > 0)
+    if (isPartial)
     {
-      using var glowPaint = new SKPaint
-      {
-        Style = IsFilled ? SKPaintStyle.Fill : SKPaintStyle.Stroke,
-        Color = GlowColor.WithAlpha(Opacity),
-        StrokeWidth = StrokeWidth,
-        IsAntialias = true,
-        MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, GlowRadius)
-      };
-      canvas.DrawPath(Path, glowPaint);
+      path = new SKPath();
+      using var measure = new SKPathMeasure(Path, false, 1.0f);
+      float length = measure.Length * AnimationProgress;
+      measure.GetSegment(0, length, path, true);
     }
 
-    // Draw selection highlight
-    if (IsSelected)
+    try 
     {
-      using var highlightPaint = new SKPaint
-      {
-        Style = SKPaintStyle.Stroke,
-        Color = SKColors.DodgerBlue.WithAlpha(128),
-        StrokeWidth = StrokeWidth + 4,
-        IsAntialias = true
-      };
-      canvas.DrawPath(Path, highlightPaint);
-    }
+        canvas.Save();
+        var matrix = TransformMatrix;
+        canvas.Concat(in matrix);
 
-    // Draw Fill
-    if (IsFilled)
-    {
-      using var fillPaint = new SKPaint
-      {
-        Style = SKPaintStyle.Fill,
-        IsAntialias = true,
-        BlendMode = BlendMode
-      };
-
-      if (FillShader != null)
-      {
-        fillPaint.Shader = FillShader;
-        // Modulate with opacity/color if needed, but usually white for image shaders
-        fillPaint.Color = SKColors.White.WithAlpha(Opacity);
-      }
-      else if (FillColor.HasValue)
-      {
-        fillPaint.Color = FillColor.Value.WithAlpha(Opacity);
-      }
-      else
-      {
-        // Fallback: use StrokeColor as fill if no FillColor (matching legacy behavior)
-        fillPaint.Color = StrokeColor.WithAlpha(Opacity);
-      }
-      canvas.DrawPath(Path, fillPaint);
-    }
-
-    // Draw Stroke
-    if (StrokeWidth > 0)
-    {
-      // Only draw stroke if it's an outline (not filled) OR if it has an explicit fill color (so we preserve border)
-      // If it is filled but has NO fill color, it is a "solid blob" using StrokeColor, so we skip stroking to avoid double-draw/expansion
-      // BUT if we have a FillShader, we definitely want the stroke if it exists.
-      bool shouldStroke = !IsFilled || (IsFilled && (FillColor.HasValue || FillShader != null));
-
-      if (shouldStroke)
-      {
-        using var strokePaint = new SKPaint
+        if (IsGlowEnabled && GlowRadius > 0)
         {
-          Style = SKPaintStyle.Stroke,
-          Color = StrokeColor.WithAlpha(Opacity),
-          StrokeWidth = StrokeWidth,
-          IsAntialias = true,
-          BlendMode = BlendMode,
-          StrokeCap = SKStrokeCap.Round,
-          StrokeJoin = SKStrokeJoin.Round
-        };
-        canvas.DrawPath(Path, strokePaint);
-      }
-    }
+          using var glowPaint = new SKPaint
+          {
+            Style = IsFilled ? SKPaintStyle.Fill : SKPaintStyle.Stroke,
+            Color = GlowColor.WithAlpha(Opacity),
+            StrokeWidth = StrokeWidth,
+            IsAntialias = true,
+            MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, GlowRadius)
+          };
+          canvas.DrawPath(path, glowPaint);
+        }
 
-    canvas.Restore();
+        // Draw selection highlight
+        if (IsSelected)
+        {
+          using var highlightPaint = new SKPaint
+          {
+            Style = SKPaintStyle.Stroke,
+            Color = SKColors.DodgerBlue.WithAlpha(128),
+            StrokeWidth = StrokeWidth + 4,
+            IsAntialias = true
+          };
+          canvas.DrawPath(path, highlightPaint);
+        }
+
+        // Draw Fill
+        if (IsFilled)
+        {
+          using var fillPaint = new SKPaint
+          {
+            Style = SKPaintStyle.Fill,
+            IsAntialias = true,
+            BlendMode = BlendMode
+          };
+
+          if (FillShader != null)
+          {
+            fillPaint.Shader = FillShader;
+            // Modulate with opacity/color if needed, but usually white for image shaders
+            fillPaint.Color = SKColors.White.WithAlpha(Opacity);
+          }
+          else if (FillColor.HasValue)
+          {
+            fillPaint.Color = FillColor.Value.WithAlpha(Opacity);
+          }
+          else
+          {
+            // Fallback: use StrokeColor as fill if no FillColor (matching legacy behavior)
+            fillPaint.Color = StrokeColor.WithAlpha(Opacity);
+          }
+          canvas.DrawPath(path, fillPaint);
+        }
+
+        // Draw Stroke
+        if (StrokeWidth > 0)
+        {
+          // Only draw stroke if it's an outline (not filled) OR if it has an explicit fill color (so we preserve border)
+          // If it is filled but has NO fill color, it is a "solid blob" using StrokeColor, so we skip stroking to avoid double-draw/expansion
+          // BUT if we have a FillShader, we definitely want the stroke if it exists.
+          bool shouldStroke = !IsFilled || (IsFilled && (FillColor.HasValue || FillShader != null));
+
+          if (shouldStroke)
+          {
+            using var strokePaint = new SKPaint
+            {
+              Style = SKPaintStyle.Stroke,
+              Color = StrokeColor.WithAlpha(Opacity),
+              StrokeWidth = StrokeWidth,
+              IsAntialias = true,
+              BlendMode = BlendMode,
+              StrokeCap = SKStrokeCap.Round,
+              StrokeJoin = SKStrokeJoin.Round
+            };
+            canvas.DrawPath(path, strokePaint);
+          }
+        }
+    }
+    finally
+    {
+        canvas.Restore();
+        if (isPartial)
+        {
+            path?.Dispose();
+        }
+    }
   }
 
   public bool HitTest(SKPoint point)

@@ -27,26 +27,26 @@ namespace LunaDraw.Converters;
 
 public class Base64ToImageConverter : IValueConverter
 {
-    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+  public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+  {
+    if (value is not string base64String || string.IsNullOrEmpty(base64String))
     {
-        if (value is not string base64String || string.IsNullOrEmpty(base64String))
-        {
-            return null;
-        }
-
-        try
-        {
-            var bytes = System.Convert.FromBase64String(base64String);
-            return ImageSource.FromStream(() => new MemoryStream(bytes));
-        }
-        catch
-        {
-            return null;
-        }
+      return null;
     }
 
-    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    try
     {
-        throw new NotImplementedException();
+      var bytes = System.Convert.FromBase64String(base64String);
+      return ImageSource.FromStream(() => new MemoryStream(bytes));
     }
+    catch
+    {
+      return null;
+    }
+  }
+
+  public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+  {
+    throw new NotImplementedException();
+  }
 }

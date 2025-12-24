@@ -48,7 +48,8 @@ namespace LunaDraw.Tests
             mockBus.Setup(x => x.Listen<DrawingStateChangedMessage>())
                 .Returns(drawingStateSubject);
 
-            layerFacade = new LayerFacade(mockBus.Object);
+            var mockRecordingHandler = new Moq.Mock<LunaDraw.Logic.Handlers.IRecordingHandler>();
+            layerFacade = new LayerFacade(mockBus.Object, mockRecordingHandler.Object);
         }
 
         [Fact]

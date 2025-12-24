@@ -26,7 +26,6 @@ using LunaDraw.Logic.Utils;
 using ReactiveUI;
 using System.Collections.ObjectModel;
 using System.Reactive;
-using System.Threading.Tasks;
 
 namespace LunaDraw.Logic.ViewModels;
 

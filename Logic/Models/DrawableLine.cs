@@ -31,6 +31,7 @@ namespace LunaDraw.Logic.Models;
 public class DrawableLine : IDrawableElement
 {
   public Guid Id { get; init; } = Guid.NewGuid();
+  public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.Now;
   public SKPoint StartPoint { get; set; }
   public SKPoint EndPoint { get; set; }
   public SKMatrix TransformMatrix { get; set; } = SKMatrix.CreateIdentity();
@@ -45,6 +46,7 @@ public class DrawableLine : IDrawableElement
   public bool IsGlowEnabled { get; set; } = false;
   public SKColor GlowColor { get; set; } = SKColors.Transparent;
   public float GlowRadius { get; set; } = 0f;
+  public float AnimationProgress { get; set; } = 1.0f;
 
   public SKRect Bounds
   {
@@ -63,12 +65,25 @@ public class DrawableLine : IDrawableElement
   public void Draw(SKCanvas canvas)
   {
     if (!IsVisible) return;
+    if (AnimationProgress <= 0f) return;
 
     canvas.Save();
     var matrix = TransformMatrix;
     canvas.Concat(in matrix);
 
-    // Draw selection highlight
+    // Calculate effective end point based on progress
+    SKPoint effectiveEndPoint = EndPoint;
+    if (AnimationProgress < 1.0f)
+    {
+        float dx = EndPoint.X - StartPoint.X;
+        float dy = EndPoint.Y - StartPoint.Y;
+        effectiveEndPoint = new SKPoint(
+            StartPoint.X + dx * AnimationProgress,
+            StartPoint.Y + dy * AnimationProgress
+        );
+    }
+
+    // Draw selection highlight (using full path to show bounds, or partial? Let's show partial)
     if (IsSelected)
     {
       using var highlightPaint = new SKPaint
@@ -78,7 +93,7 @@ public class DrawableLine : IDrawableElement
         StrokeWidth = StrokeWidth + 4,
         IsAntialias = true
       };
-      canvas.DrawLine(StartPoint, EndPoint, highlightPaint);
+      canvas.DrawLine(StartPoint, effectiveEndPoint, highlightPaint);
     }
 
     // Draw glow if enabled
@@ -92,7 +107,7 @@ public class DrawableLine : IDrawableElement
         IsAntialias = true,
         MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, GlowRadius)
       };
-      canvas.DrawLine(StartPoint, EndPoint, glowPaint);
+      canvas.DrawLine(StartPoint, effectiveEndPoint, glowPaint);
     }
 
     using var paint = new SKPaint
@@ -102,7 +117,7 @@ public class DrawableLine : IDrawableElement
       StrokeWidth = StrokeWidth,
       IsAntialias = true
     };
-    canvas.DrawLine(StartPoint, EndPoint, paint);
+    canvas.DrawLine(StartPoint, effectiveEndPoint, paint);
 
     canvas.Restore();
   }

@@ -105,5 +105,10 @@
                                  AbsoluteLayout.LayoutFlags="PositionProportional"
                                  Margin="20"/>
 
+    <!-- Playback Controls (Bottom Center) -->
+    <components:PlaybackControls AbsoluteLayout.LayoutBounds="0.5, 1, -1, -1"
+                                 AbsoluteLayout.LayoutFlags="PositionProportional"
+                                 IsVisible="{Binding IsPlaybackControlsVisible}" />
+
   </AbsoluteLayout>
 </ContentPage>

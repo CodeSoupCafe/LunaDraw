@@ -39,6 +39,7 @@ namespace LunaDraw.Tests
     private class MockDrawableElement : IDrawableElement
     {
       public Guid Id { get; init; } = Guid.NewGuid();
+      public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.Now;
       public SKRect Bounds { get; set; } = new SKRect(0, 0, 100, 100);
       public SKMatrix TransformMatrix { get; set; } = SKMatrix.CreateIdentity();
       public bool IsVisible { get; set; } = true;
@@ -51,6 +52,7 @@ namespace LunaDraw.Tests
       public bool IsGlowEnabled { get; set; }
       public SKColor GlowColor { get; set; }
       public float GlowRadius { get; set; }
+      public float AnimationProgress { get; set; } = 1.0f;
 
       public void Draw(SKCanvas canvas) { }
       public bool HitTest(SKPoint point) => Bounds.Contains(point);

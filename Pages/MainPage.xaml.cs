@@ -21,7 +21,6 @@
  *  
  */
 
-using CommunityToolkit.Maui;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Utils;
 using LunaDraw.Logic.ViewModels;
@@ -32,10 +31,6 @@ using ReactiveUI;
 
 using SkiaSharp;
 using SkiaSharp.Views.Maui;
-using CommunityToolkit.Maui.Extensions;
-using LunaDraw.Logic.Models;
-using LunaDraw.Components;
-using CommunityToolkit.Maui.Views;
 
 namespace LunaDraw.Pages;
 

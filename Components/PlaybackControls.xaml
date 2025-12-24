@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:LunaDraw.Logic.ViewModels"
+             xmlns:models="clr-namespace:LunaDraw.Logic.Models"
+             x:Class="LunaDraw.Components.PlaybackControls"
+             x:DataType="vm:PlaybackViewModel">
+    
+    <Border BackgroundColor="{AppThemeBinding Light=#F0F0F0, Dark=#333333}"
+            Padding="10"
+            Margin="10"
+            StrokeShape="RoundRectangle 20"
+            HorizontalOptions="Center"
+            VerticalOptions="End">
+        
+        <HorizontalStackLayout Spacing="15">
+            
+            <!-- Speed Selector -->
+            <Picker Title="Speed" 
+                    WidthRequest="100"
+                    SelectedItem="{Binding SelectedSpeed}">
+                <Picker.ItemsSource>
+                    <x:Array Type="{x:Type models:PlaybackSpeed}">
+                        <x:Static Member="models:PlaybackSpeed.Slow" />
+                        <x:Static Member="models:PlaybackSpeed.Quick" />
+                        <x:Static Member="models:PlaybackSpeed.Fast" />
+                    </x:Array>
+                </Picker.ItemsSource>
+            </Picker>
+
+            <!-- Play/Pause Button -->
+            <Button Text="Play" 
+                    Command="{Binding PlayCommand}"
+                    IsVisible="{Binding CurrentState, Converter={StaticResource PlaybackStateToPlayVisibleConverter}}" />
+            
+            <Button Text="Pause" 
+                    Command="{Binding PauseCommand}"
+                    IsVisible="{Binding CurrentState, Converter={StaticResource PlaybackStateToPauseVisibleConverter}}" />
+
+            <!-- Stop Button -->
+            <Button Text="Stop" 
+                    Command="{Binding StopCommand}" />
+            
+        </HorizontalStackLayout>
+    </Border>
+</ContentView>

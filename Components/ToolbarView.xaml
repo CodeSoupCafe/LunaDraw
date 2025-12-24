@@ -211,6 +211,17 @@
           </StackLayout>
 
           <StackLayout HorizontalOptions="Center">
+            <Button x:Name="MovieModeButton"
+                    Style="{StaticResource ToolbarButtonStyle}"
+                    Text="🎬"
+                    ToolTipProperties.Text="Movie Mode"
+                    Command="{Binding ShowMovieModeCommand}"/>
+            <Label Text="Movie"
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding ShowButtonLabels}"/>
+          </StackLayout>
+
+          <StackLayout HorizontalOptions="Center">
             <Button x:Name="DeleteButton"
                     Style="{StaticResource ToolbarButtonStyle}"
                     Text="🗑️"

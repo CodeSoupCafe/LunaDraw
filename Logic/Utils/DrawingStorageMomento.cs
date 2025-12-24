@@ -22,7 +22,6 @@
  */
 
 using System.Text.Json;
-using System.Threading;
 using LunaDraw.Logic.Models;
 using SkiaSharp;
 using System.Text.Json.Serialization;
@@ -352,6 +351,7 @@ public class DrawingStorageMomento : IDrawingStorageMomento
         {
           // Common properties
           externelElement.Id = element.Id;
+          externelElement.CreatedAt = element.CreatedAt;
           externelElement.IsVisible = element.IsVisible;
           externelElement.ZIndex = element.ZIndex;
           externelElement.Opacity = element.Opacity;
@@ -439,6 +439,7 @@ public class DrawingStorageMomento : IDrawingStorageMomento
           if (element != null)
           {
             // Common properties
+            element.CreatedAt = savedElement.CreatedAt;
             element.IsVisible = savedElement.IsVisible;
             element.ZIndex = savedElement.ZIndex;
             element.Opacity = savedElement.Opacity;

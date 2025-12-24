@@ -85,6 +85,18 @@ public interface IDrawableElement
   float GlowRadius { get; set; }
 
   /// <summary>
+  /// Timestamp when the element was created.
+  /// Used for "Movie Mode" playback to reconstruct creation order.
+  /// </summary>
+  DateTimeOffset CreatedAt { get; set; }
+
+  /// <summary>
+  /// Progress of the element's animation (0.0 to 1.0).
+  /// Used for progressive playback rendering.
+  /// </summary>
+  float AnimationProgress { get; set; }
+
+  /// <summary>
   /// Draws the element on the provided canvas.
   /// </summary>
   /// <param name="canvas">The SKCanvas to draw on.</param>

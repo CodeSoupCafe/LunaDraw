@@ -21,11 +21,11 @@
  *  
  */
 
-using LunaDraw.Logic.Utils;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Tools;
 using LunaDraw.Logic.ViewModels;
+using LunaDraw.Logic.Handlers;
 using ReactiveUI;
 using SkiaSharp;
 using SkiaSharp.Views.Maui;
@@ -37,12 +37,14 @@ public class CanvasInputHandler(
     ILayerFacade layerFacade,
     SelectionObserver selectionObserver,
     NavigationModel navigationModel,
+    IPlaybackHandler playbackHandler,
     IMessageBus messageBus) : ICanvasInputHandler
 {
   private readonly ToolbarViewModel toolbarViewModel = toolbarViewModel;
   private readonly ILayerFacade layerFacade = layerFacade;
   private readonly SelectionObserver selectionObserver = selectionObserver;
   private readonly NavigationModel navigationModel = navigationModel;
+  private readonly IPlaybackHandler playbackHandler = playbackHandler;
   private readonly IMessageBus messageBus = messageBus;
 
   private readonly Dictionary<long, SKPoint> activeTouches = [];
@@ -64,6 +66,7 @@ public class CanvasInputHandler(
 
   public void ProcessTouch(SKTouchEventArgs e, SKRect canvasViewPort)
   {
+    if (playbackHandler.IsPlaying) return;
     if (layerFacade.CurrentLayer == null) return;
 
     var location = e.Location;

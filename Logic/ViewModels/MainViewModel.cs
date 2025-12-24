@@ -32,7 +32,6 @@ using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Tools;
 using LunaDraw.Logic.Constants;
 using LunaDraw.Components;
-using CommunityToolkit.Maui.Views;
 
 using ReactiveUI;
 using SkiaSharp;
@@ -133,6 +132,13 @@ public class MainViewModel : ReactiveObject
     }
   }
 
+  private bool isPlaybackControlsVisible;
+  public bool IsPlaybackControlsVisible
+  {
+    get => isPlaybackControlsVisible;
+    set => this.RaiseAndSetIfChanged(ref isPlaybackControlsVisible, value);
+  }
+
   // Facades for View/CodeBehind access
   public ObservableCollection<Layer> Layers => LayerFacade.Layers;
 
@@ -228,6 +234,11 @@ public class MainViewModel : ReactiveObject
       {
         await page.ShowPopupAsync(popup);
       }
+    });
+
+    this.messageBus.Listen<TogglePlaybackControlsMessage>().Subscribe(_ =>
+    {
+      IsPlaybackControlsVisible = !IsPlaybackControlsVisible;
     });
 
     // Auto-save on changes

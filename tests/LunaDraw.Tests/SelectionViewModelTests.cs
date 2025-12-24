@@ -51,7 +51,8 @@ namespace LunaDraw.Tests
       mockBus.Setup(x => x.Listen<DrawingStateChangedMessage>()).Returns(Observable.Empty<DrawingStateChangedMessage>());
       mockBus.Setup(x => x.Listen<SelectionChangedMessage>()).Returns(Observable.Empty<SelectionChangedMessage>());
 
-      layerFacade = new LayerFacade(mockBus.Object);
+      var mockRecordingHandler = new Moq.Mock<LunaDraw.Logic.Handlers.IRecordingHandler>();
+      layerFacade = new LayerFacade(mockBus.Object, mockRecordingHandler.Object);
       selectionObserver = new SelectionObserver();
       clipboardMemento = new ClipboardMemento();
 

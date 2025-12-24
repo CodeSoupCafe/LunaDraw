@@ -78,6 +78,7 @@ namespace LunaDraw.Tests
         private class TestDrawableElement : IDrawableElement
         {
             public Guid Id { get; init; } = Guid.NewGuid();
+            public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.Now;
             public SKRect Bounds => new SKRect(0, 0, 20, 20);
             public SKMatrix TransformMatrix { get; set; } = SKMatrix.CreateIdentity();
             public bool IsVisible { get; set; }
@@ -90,6 +91,7 @@ namespace LunaDraw.Tests
             public bool IsGlowEnabled { get; set; }
             public SKColor GlowColor { get; set; }
             public float GlowRadius { get; set; }
+            public float AnimationProgress { get; set; } = 1.0f;
             public bool HitTestResult { get; set; }
 
             public void Draw(SKCanvas canvas) { }

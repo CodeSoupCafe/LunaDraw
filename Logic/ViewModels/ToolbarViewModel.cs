@@ -186,6 +186,7 @@ public class ToolbarViewModel : ReactiveObject
   public ReactiveCommand<BrushShape, Unit> SelectBrushShapeCommand { get; }
   public ReactiveCommand<Unit, Unit> ImportImageCommand { get; }
   public ReactiveCommand<Unit, Unit> ShowAdvancedSettingsCommand { get; }
+  public ReactiveCommand<Unit, Unit> ShowMovieModeCommand { get; }
 
   // UI state properties
   private bool isSettingsOpen = false;
@@ -403,6 +404,11 @@ public class ToolbarViewModel : ReactiveObject
     ShowAdvancedSettingsCommand = ReactiveCommand.Create(() =>
     {
       messageBus.SendMessage(new ShowAdvancedSettingsMessage());
+    });
+
+    ShowMovieModeCommand = ReactiveCommand.Create(() =>
+    {
+      messageBus.SendMessage(new TogglePlaybackControlsMessage());
     });
 
     SelectRectangleCommand = ReactiveCommand.Create(() =>

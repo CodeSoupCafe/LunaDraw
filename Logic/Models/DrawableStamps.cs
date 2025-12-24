@@ -35,6 +35,7 @@ public class DrawableStamps : IDrawableElement
   private bool isCacheDirty = true;
 
   public Guid Id { get; init; } = Guid.NewGuid();
+  public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.Now;
 
   private List<SKPoint> points = [];
   public List<SKPoint> Points
@@ -255,6 +256,8 @@ public class DrawableStamps : IDrawableElement
     }
   }
 
+  public float AnimationProgress { get; set; } = 1.0f;
+
   private void InvalidateCache()
   {
     isCacheDirty = true;
@@ -316,6 +319,14 @@ public class DrawableStamps : IDrawableElement
   {
     if (Points == null || !Points.Any() || Shape?.Path == null) return;
 
+    // Progressive Drawing: Determine how many points to draw
+    int countToDraw = Points.Count;
+    if (AnimationProgress < 1.0f && AnimationProgress >= 0f)
+    {
+        countToDraw = (int)(Points.Count * AnimationProgress);
+    }
+    if (countToDraw <= 0) return;
+
     float baseScale = Size / 20f;
     using var scaledPath = new SKPath(Shape.Path);
     var scaleMatrix = SKMatrix.CreateScale(baseScale, baseScale);
@@ -343,22 +354,18 @@ public class DrawableStamps : IDrawableElement
 
       canvas.SaveLayer(glowLayerPaint);
 
-      int index = 0;
-      foreach (var point in Points)
+      for (int index = 0; index < countToDraw; index++)
       {
-        DrawSingleStamp(canvas, scaledPath, point, index, true, sharedPaint);
-        index++;
+        DrawSingleStamp(canvas, scaledPath, Points[index], index, true, sharedPaint);
       }
 
       canvas.Restore(); // Apply blur
     }
 
     // Main pass
-    int i = 0;
-    foreach (var point in Points)
+    for (int i = 0; i < countToDraw; i++)
     {
-      DrawSingleStamp(canvas, scaledPath, point, i, false, sharedPaint);
-      i++;
+      DrawSingleStamp(canvas, scaledPath, Points[i], i, false, sharedPaint);
     }
   }
 
@@ -440,44 +447,65 @@ public class DrawableStamps : IDrawableElement
   public void Draw(SKCanvas canvas)
   {
     if (!IsVisible) return;
+    if (AnimationProgress <= 0f) return;
 
     canvas.Save();
     var matrix = TransformMatrix;
     canvas.Concat(in matrix);
+    
+    try {
+        if (IsSelected)
+        {
+          // Draw selection highlight based on simple bounds (ignoring glow for the box)
+          float halfSize = Size;
+          float minX = Points.Min(p => p.X);
+          float minY = Points.Min(p => p.Y);
+          float maxX = Points.Max(p => p.X);
+          float maxY = Points.Max(p => p.Y);
+          var localBounds = new SKRect(minX - halfSize, minY - halfSize, maxX + halfSize, maxY + halfSize);
 
-    if (IsSelected)
-    {
-      // Draw selection highlight based on simple bounds (ignoring glow for the box)
-      float halfSize = Size;
-      float minX = Points.Min(p => p.X);
-      float minY = Points.Min(p => p.Y);
-      float maxX = Points.Max(p => p.X);
-      float maxY = Points.Max(p => p.Y);
-      var localBounds = new SKRect(minX - halfSize, minY - halfSize, maxX + halfSize, maxY + halfSize);
+          using var highlightPaint = new SKPaint
+          {
+            Style = SKPaintStyle.Stroke,
+            Color = SKColors.DodgerBlue.WithAlpha(128),
+            StrokeWidth = 2,
+            IsAntialias = true
+          };
+          canvas.DrawRect(localBounds, highlightPaint);
+        }
 
-      using var highlightPaint = new SKPaint
-      {
-        Style = SKPaintStyle.Stroke,
-        Color = SKColors.DodgerBlue.WithAlpha(128),
-        StrokeWidth = 2,
-        IsAntialias = true
-      };
-      canvas.DrawRect(localBounds, highlightPaint);
+        // Always try to use cache for content
+        // Note: Cache invalidation logic needs to know about AnimationProgress if we cache full bitmap
+        // Current InvalidateCache() only triggers on property changes, not Draw calls.
+        // If AnimationProgress changes, we need to redraw content.
+        // Option 1: Disable caching during animation (check progress < 1.0)
+        // Option 2: Add AnimationProgress to cache key (complex)
+        // We will skip cache if animating.
+        
+        bool isAnimating = AnimationProgress < 1.0f;
+        
+        if (!isAnimating)
+        {
+            UpdateCache();
+            if (cachedBitmap != null)
+            {
+              canvas.DrawBitmap(cachedBitmap, cacheOffset);
+            }
+            else
+            {
+              DrawContent(canvas);
+            }
+        }
+        else
+        {
+            // Bypass cache during animation to show progressive updates
+            DrawContent(canvas);
+        }
     }
-
-    // Always try to use cache for content
-    UpdateCache();
-    if (cachedBitmap != null)
+    finally
     {
-      canvas.DrawBitmap(cachedBitmap, cacheOffset);
+        canvas.Restore();
     }
-    else
-    {
-      // Fallback
-      DrawContent(canvas);
-    }
-
-    canvas.Restore();
   }
 
   public bool HitTest(SKPoint point)

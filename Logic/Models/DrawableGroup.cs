@@ -31,6 +31,7 @@ namespace LunaDraw.Logic.Models;
 public class DrawableGroup : IDrawableElement
 {
   public Guid Id { get; init; } = Guid.NewGuid();
+  public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.Now;
   public List<IDrawableElement> Children { get; } = [];
   public SKMatrix TransformMatrix { get; set; } = SKMatrix.CreateIdentity();
 
@@ -58,6 +59,7 @@ public class DrawableGroup : IDrawableElement
   public bool IsGlowEnabled { get; set; } = false;
   public SKColor GlowColor { get; set; } = SKColors.Transparent;
   public float GlowRadius { get; set; } = 0f;
+  public float AnimationProgress { get; set; } = 1.0f;
 
   public SKRect Bounds
   {
@@ -77,6 +79,7 @@ public class DrawableGroup : IDrawableElement
   public void Draw(SKCanvas canvas)
   {
     if (!IsVisible) return;
+    if (AnimationProgress < 1.0f) return;
 
     // Check if isolation is needed (if any child uses Clear blend mode)
     var needsIsolation = Children.OfType<DrawablePath>().Any(dp => dp.BlendMode == SKBlendMode.Clear);

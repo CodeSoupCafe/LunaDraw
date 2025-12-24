@@ -28,6 +28,7 @@ namespace LunaDraw.Logic.Models;
 public class DrawableImage(SKBitmap bitmap) : IDrawableElement
 {
   public Guid Id { get; init; } = Guid.NewGuid();
+  public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.Now;
   public string? SourcePath { get; set; }
   public SKBitmap Bitmap { get; set; } = bitmap;
   public SKMatrix TransformMatrix { get; set; } = SKMatrix.CreateIdentity();
@@ -48,75 +49,81 @@ public class DrawableImage(SKBitmap bitmap) : IDrawableElement
   public bool IsGlowEnabled { get; set; } = false;
   public SKColor GlowColor { get; set; } = SKColors.Transparent;
   public float GlowRadius { get; set; } = 0f;
+  public float AnimationProgress { get; set; } = 1.0f;
 
   public SKRect Bounds => TransformMatrix.MapRect(new SKRect(0, 0, Bitmap.Width, Bitmap.Height));
 
   public void Draw(SKCanvas canvas)
   {
     if (!IsVisible || Bitmap == null) return;
+    if (AnimationProgress < 1.0f) return;
 
     canvas.Save();
     var matrix = TransformMatrix;
     canvas.Concat(in matrix);
 
-    var bounds = new SKRect(0, 0, Bitmap.Width, Bitmap.Height);
+    try {
+        var bounds = new SKRect(0, 0, Bitmap.Width, Bitmap.Height);
 
-    using var paint = new SKPaint
-    {
-      IsAntialias = true,
-      Color = SKColors.White.WithAlpha(Opacity) // Alpha affects the bitmap draw
-    };
+        using var paint = new SKPaint
+        {
+          IsAntialias = true,
+          Color = SKColors.White.WithAlpha(Opacity) // Alpha affects the bitmap draw
+        };
 
-    // Draw selection highlight
-    if (IsSelected)
-    {
-      using var highlightPaint = new SKPaint
-      {
-        Style = SKPaintStyle.Stroke,
-        Color = SKColors.DodgerBlue.WithAlpha(128),
-        StrokeWidth = 4 / matrix.ScaleX, // Adjust for scale
-        IsAntialias = true
-      };
-      // Draw slightly outside
-      var highlightRect = bounds;
-      highlightRect.Inflate(2, 2);
-      canvas.DrawRect(highlightRect, highlightPaint);
+        // Draw selection highlight
+        if (IsSelected)
+        {
+          using var highlightPaint = new SKPaint
+          {
+            Style = SKPaintStyle.Stroke,
+            Color = SKColors.DodgerBlue.WithAlpha(128),
+            StrokeWidth = 4 / matrix.ScaleX, // Adjust for scale
+            IsAntialias = true
+          };
+          // Draw slightly outside
+          var highlightRect = bounds;
+          highlightRect.Inflate(2, 2);
+          canvas.DrawRect(highlightRect, highlightPaint);
+        }
+
+        // Draw Glow
+        if (IsGlowEnabled && GlowRadius > 0)
+        {
+          using var glowPaint = new SKPaint
+          {
+            Style = SKPaintStyle.StrokeAndFill,
+            Color = GlowColor.WithAlpha(Opacity),
+            MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, GlowRadius),
+            IsAntialias = true
+          };
+          // We draw the rect as the glow source
+          canvas.DrawRect(bounds, glowPaint);
+        }
+
+        // Draw the Bitmap
+        using (var image = SKImage.FromBitmap(Bitmap))
+        {
+          canvas.DrawImage(image, bounds, new SKSamplingOptions(SKCubicResampler.Mitchell), paint);
+        }
+
+        // Draw Border if set
+        if (StrokeWidth > 0 && StrokeColor.Alpha > 0)
+        {
+          using var borderPaint = new SKPaint
+          {
+            Style = SKPaintStyle.Stroke,
+            Color = StrokeColor.WithAlpha(Opacity),
+            StrokeWidth = StrokeWidth,
+            IsAntialias = true
+          };
+          canvas.DrawRect(bounds, borderPaint);
+        }
     }
-
-    // Draw Glow
-    if (IsGlowEnabled && GlowRadius > 0)
+    finally
     {
-      using var glowPaint = new SKPaint
-      {
-        Style = SKPaintStyle.StrokeAndFill,
-        Color = GlowColor.WithAlpha(Opacity),
-        MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, GlowRadius),
-        IsAntialias = true
-      };
-      // We draw the rect as the glow source
-      canvas.DrawRect(bounds, glowPaint);
+        canvas.Restore();
     }
-
-    // Draw the Bitmap
-    using (var image = SKImage.FromBitmap(Bitmap))
-    {
-      canvas.DrawImage(image, bounds, new SKSamplingOptions(SKCubicResampler.Mitchell), paint);
-    }
-
-    // Draw Border if set
-    if (StrokeWidth > 0 && StrokeColor.Alpha > 0)
-    {
-      using var borderPaint = new SKPaint
-      {
-        Style = SKPaintStyle.Stroke,
-        Color = StrokeColor.WithAlpha(Opacity),
-        StrokeWidth = StrokeWidth,
-        IsAntialias = true
-      };
-      canvas.DrawRect(bounds, borderPaint);
-    }
-
-    canvas.Restore();
   }
 
   public bool HitTest(SKPoint point)

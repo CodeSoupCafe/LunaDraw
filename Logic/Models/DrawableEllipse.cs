@@ -31,6 +31,7 @@ namespace LunaDraw.Logic.Models;
 public class DrawableEllipse : IDrawableElement
 {
   public Guid Id { get; init; } = Guid.NewGuid();
+  public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.Now;
   public SKRect Oval { get; set; }
   public SKMatrix TransformMatrix { get; set; } = SKMatrix.CreateIdentity();
 
@@ -44,67 +45,73 @@ public class DrawableEllipse : IDrawableElement
   public bool IsGlowEnabled { get; set; } = false;
   public SKColor GlowColor { get; set; } = SKColors.Transparent;
   public float GlowRadius { get; set; } = 0f;
+  public float AnimationProgress { get; set; } = 1.0f;
 
   public SKRect Bounds => TransformMatrix.MapRect(Oval);
 
   public void Draw(SKCanvas canvas)
   {
     if (!IsVisible) return;
+    if (AnimationProgress < 1.0f) return;
 
     canvas.Save();
     var matrix = TransformMatrix;
     canvas.Concat(in matrix);
 
-    // Draw selection highlight
-    if (IsSelected)
-    {
-      using var highlightPaint = new SKPaint
-      {
-        Style = SKPaintStyle.Stroke,
-        Color = SKColors.DodgerBlue.WithAlpha(128),
-        StrokeWidth = StrokeWidth + 4,
-        IsAntialias = true
-      };
-      canvas.DrawOval(Oval, highlightPaint);
+    try {
+        // Draw selection highlight
+        if (IsSelected)
+        {
+          using var highlightPaint = new SKPaint
+          {
+            Style = SKPaintStyle.Stroke,
+            Color = SKColors.DodgerBlue.WithAlpha(128),
+            StrokeWidth = StrokeWidth + 4,
+            IsAntialias = true
+          };
+          canvas.DrawOval(Oval, highlightPaint);
+        }
+
+        // Draw glow if enabled
+        if (IsGlowEnabled && GlowRadius > 0)
+        {
+          using var glowPaint = new SKPaint
+          {
+            Style = FillColor.HasValue ? SKPaintStyle.Fill : SKPaintStyle.Stroke,
+            Color = GlowColor.WithAlpha(Opacity),
+            StrokeWidth = FillColor.HasValue ? 0 : StrokeWidth,
+            IsAntialias = true,
+            MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, GlowRadius)
+          };
+          canvas.DrawOval(Oval, glowPaint);
+        }
+
+        // Draw fill if specified
+        if (FillColor.HasValue)
+        {
+          using var fillPaint = new SKPaint
+          {
+            Style = SKPaintStyle.Fill,
+            Color = FillColor.Value.WithAlpha(Opacity),
+            IsAntialias = true
+          };
+          canvas.DrawOval(Oval, fillPaint);
+        }
+
+        // Draw stroke
+        using var strokePaint = new SKPaint
+        {
+          Style = SKPaintStyle.Stroke,
+          Color = StrokeColor.WithAlpha(Opacity),
+          StrokeWidth = StrokeWidth,
+          IsAntialias = true
+        };
+        canvas.DrawOval(Oval, strokePaint);
     }
-
-    // Draw glow if enabled
-    if (IsGlowEnabled && GlowRadius > 0)
+    finally
     {
-      using var glowPaint = new SKPaint
-      {
-        Style = FillColor.HasValue ? SKPaintStyle.Fill : SKPaintStyle.Stroke,
-        Color = GlowColor.WithAlpha(Opacity),
-        StrokeWidth = FillColor.HasValue ? 0 : StrokeWidth,
-        IsAntialias = true,
-        MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, GlowRadius)
-      };
-      canvas.DrawOval(Oval, glowPaint);
+        canvas.Restore();
     }
-
-    // Draw fill if specified
-    if (FillColor.HasValue)
-    {
-      using var fillPaint = new SKPaint
-      {
-        Style = SKPaintStyle.Fill,
-        Color = FillColor.Value.WithAlpha(Opacity),
-        IsAntialias = true
-      };
-      canvas.DrawOval(Oval, fillPaint);
-    }
-
-    // Draw stroke
-    using var strokePaint = new SKPaint
-    {
-      Style = SKPaintStyle.Stroke,
-      Color = StrokeColor.WithAlpha(Opacity),
-      StrokeWidth = StrokeWidth,
-      IsAntialias = true
-    };
-    canvas.DrawOval(Oval, strokePaint);
-
-    canvas.Restore();
   }
 
   public bool HitTest(SKPoint point)

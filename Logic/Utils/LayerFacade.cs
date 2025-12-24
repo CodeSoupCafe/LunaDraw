@@ -22,6 +22,8 @@
  */
 
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using LunaDraw.Logic.Handlers;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using ReactiveUI;
@@ -41,23 +43,55 @@ public class LayerFacade : ReactiveObject, ILayerFacade
   }
 
   private readonly IMessageBus messageBus;
+  private readonly IRecordingHandler recordingHandler;
 
-  public LayerFacade(IMessageBus messageBus)
+  public LayerFacade(IMessageBus messageBus, IRecordingHandler recordingHandler)
   {
     this.messageBus = messageBus;
+    this.recordingHandler = recordingHandler;
+
     // Initialize with a default layer
     var initialLayer = new Layer { Name = "Layer 1" };
+    SetupLayerMonitoring(initialLayer);
     Layers.Add(initialLayer);
     CurrentLayer = initialLayer;
+
+    Layers.CollectionChanged += OnLayersCollectionChanged;
 
     this.messageBus.Listen<DrawingStateChangedMessage>().Subscribe(_ => SaveState());
 
     SaveState();
   }
 
+  private void OnLayersCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+  {
+    if (e.NewItems != null)
+    {
+      foreach (Layer layer in e.NewItems)
+      {
+        SetupLayerMonitoring(layer);
+      }
+    }
+  }
+
+  private void SetupLayerMonitoring(Layer layer)
+  {
+      layer.Elements.CollectionChanged += (s, args) =>
+      {
+          if (args.NewItems != null)
+          {
+              foreach (IDrawableElement element in args.NewItems)
+              {
+                  recordingHandler.RecordCreation(element);
+              }
+          }
+      };
+  }
+
   public void AddLayer()
   {
     var newLayer = new Layer { Name = $"Layer {Layers.Count + 1}" };
+    // SetupLayerMonitoring is handled by CollectionChanged
     Layers.Add(newLayer);
     CurrentLayer = newLayer;
     SaveState();

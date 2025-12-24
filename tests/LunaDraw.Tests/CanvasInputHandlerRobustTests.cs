@@ -92,11 +92,13 @@ namespace LunaDraw.Tests
 
       mockLayerFacade.Setup(m => m.CurrentLayer).Returns(new Layer());
 
+      var mockPlaybackHandler = new Moq.Mock<LunaDraw.Logic.Handlers.IPlaybackHandler>();
       handler = new CanvasInputHandler(
           mockToolbarViewModel.Object,
           mockLayerFacade.Object,
           selectionObserver,
           navigationModel,
+          mockPlaybackHandler.Object,
           mockMessageBus.Object
       );
     }

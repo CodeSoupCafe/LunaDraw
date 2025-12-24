@@ -1,18 +1,23 @@
-.vs
-packages
-bin
-obj
-binaries
-Debug
+# .gitignore for LunaDraw (.NET MAUI)
 
+# Build results
+[Bb]in/
+[Oo]bj/
+.vs/
+.vscode/
+
+# User-specific files
+*.user
+*.userosscache
+*.sln.docstates
+
+# Test results
+TestResults/
+
+# NuGet
+packages/
+*.nupkg
+
+# OS generated files
 .DS_Store
-.AppleDouble
-.LSOverride
-._*
-*.psd
-*.ipa
-*.so
-**/*.so
-/tbsa-burn-calc/tbsa-burn-calc.Android/logcat.txt
-/logcat.txt
-legacy
+Thumbs.db

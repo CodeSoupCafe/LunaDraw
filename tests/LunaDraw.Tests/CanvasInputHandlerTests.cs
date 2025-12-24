@@ -98,11 +98,13 @@ namespace LunaDraw.Tests
             // Inject mock tool
             toolbarViewModel.ActiveTool = mockDrawingTool.Object;
 
+            var mockPlaybackHandler = new Mock<LunaDraw.Logic.Handlers.IPlaybackHandler>();
             canvasInputHandler = new CanvasInputHandler(
                 toolbarViewModel,
                 mockLayerFacade.Object,
                 selectionObserver,
                 navigationModel,
+                mockPlaybackHandler.Object,
                 mockMessageBus.Object
             );
         }
@@ -133,11 +135,13 @@ namespace LunaDraw.Tests
             // Mock active tool inside the local VM
             localToolbarVM.ActiveTool = new Mock<IDrawingTool>().Object;
 
+            var mockPlaybackHandler = new Mock<LunaDraw.Logic.Handlers.IPlaybackHandler>();
             var handler = new CanvasInputHandler(
                 localToolbarVM,
                 mockLayerFacade.Object,
                 selectionObserver,
                 navigationModel,
+                mockPlaybackHandler.Object,
                 mockMessageBus.Object
             );
 
