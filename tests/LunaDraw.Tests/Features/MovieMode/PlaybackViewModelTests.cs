@@ -26,6 +26,7 @@ using LunaDraw.Logic.Handlers;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.ViewModels;
 using Moq;
+using Plugin.Maui.ScreenRecording;
 using System.Reactive.Subjects;
 using Xunit;
 
@@ -33,33 +34,35 @@ namespace LunaDraw.Tests.Features.MovieMode;
 
 public class PlaybackViewModelTests
 {
-    private readonly Mock<IPlaybackHandler> _mockHandler;
-    private readonly PlaybackViewModel _vm;
+  private readonly Mock<IPlaybackHandler> mockHandler;
+  private readonly Mock<IScreenRecording> mockScreenRecording;
+  private readonly PlaybackViewModel vm;
 
-    public PlaybackViewModelTests()
-    {
-        _mockHandler = new Mock<IPlaybackHandler>();
-        _mockHandler.SetupGet(h => h.CurrentState).Returns(new BehaviorSubject<PlaybackState>(PlaybackState.Stopped));
-        _vm = new PlaybackViewModel(_mockHandler.Object);
-    }
+  public PlaybackViewModelTests()
+  {
+    mockHandler = new Mock<IPlaybackHandler>();
+    mockScreenRecording = new Mock<IScreenRecording>();
+    mockHandler.SetupGet(h => h.CurrentState).Returns(new BehaviorSubject<PlaybackState>(PlaybackState.Stopped));
+    vm = new PlaybackViewModel(mockHandler.Object, mockScreenRecording.Object);
+  }
 
-    [Fact]
-    public void PlayCommand_Should_Call_Handler_Play()
-    {
-        // Act
-        _vm.PlayCommand.Execute(System.Reactive.Unit.Default);
+  [Fact]
+  public void PlayCommand_Should_Call_Handler_Play()
+  {
+    // Act
+    vm.PlayCommand.Execute(System.Reactive.Unit.Default);
 
-        // Assert
-        _mockHandler.Verify(h => h.PlayAsync(It.IsAny<PlaybackSpeed>()), Times.Once);
-    }
+    // Assert
+    mockHandler.Verify(h => h.PlayAsync(It.IsAny<PlaybackSpeed>()), Times.Once);
+  }
 
-    [Fact]
-    public void StopCommand_Should_Call_Handler_Stop()
-    {
-        // Act
-        _vm.StopCommand.Execute(System.Reactive.Unit.Default);
+  [Fact]
+  public void StopCommand_Should_Call_Handler_Stop()
+  {
+    // Act
+    vm.StopCommand.Execute(System.Reactive.Unit.Default);
 
-        // Assert
-        _mockHandler.Verify(h => h.StopAsync(), Times.Once);
-    }
+    // Assert
+    mockHandler.Verify(h => h.StopAsync(), Times.Once);
+  }
 }

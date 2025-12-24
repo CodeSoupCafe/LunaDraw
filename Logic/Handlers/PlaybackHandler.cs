@@ -32,37 +32,35 @@ namespace LunaDraw.Logic.Handlers;
 
 public class PlaybackHandler : IPlaybackHandler
 {
-  private readonly BehaviorSubject<PlaybackState> _currentState = new(PlaybackState.Stopped);
-  private readonly ILayerFacade _layerFacade;
-  private readonly IMessageBus _messageBus;
-  private readonly IDispatcherTimer _timer;
+  private readonly BehaviorSubject<PlaybackState> currentState = new(PlaybackState.Stopped);
+  private readonly ILayerFacade layerFacade;
+  private readonly IMessageBus messageBus;
+  private readonly IDispatcherTimer timer;
 
-  private List<IDrawableElement> _playbackQueue = new();
-  private int _currentIndex = 0;
+  private List<IDrawableElement> playbackQueue = new();
+  private int currentIndex = 0;
 
   // Playback configuration
-  private float _playbackSpeedMultiplier = 1.0f;
+  private float playbackSpeedMultiplier = 1.0f;
   private const float BaseSpeedPixelsPerSecond = 200f; // Speed for paths (Reduced from 500)
   private const float FrameTimeSeconds = 0.016f; // ~60 FPS
 
-  public IObservable<PlaybackState> CurrentState => _currentState;
-  public bool IsPlaying => _currentState.Value == PlaybackState.Playing;
+  public IObservable<PlaybackState> CurrentState => currentState;
+  public bool IsPlaying => currentState.Value == PlaybackState.Playing;
 
   public PlaybackHandler(ILayerFacade layerFacade, IMessageBus messageBus, IDispatcher? dispatcher = null)
   {
-    _layerFacade = layerFacade;
-    _messageBus = messageBus;
+    this.layerFacade = layerFacade;
+    this.messageBus = messageBus;
 
     var effectiveDispatcher = dispatcher ?? Dispatcher.GetForCurrentThread();
-    _timer = effectiveDispatcher!.CreateTimer();
-    _timer.Interval = TimeSpan.FromSeconds(FrameTimeSeconds);
-    _timer.Tick += OnTimerTick;
+    timer = effectiveDispatcher!.CreateTimer();
+    timer.Interval = TimeSpan.FromSeconds(FrameTimeSeconds);
+    timer.Tick += OnTimerTick;
 
-    _messageBus.Listen<AppSleepingMessage>().Subscribe(async _ => await PauseAsync());
+    messageBus.Listen<AppSleepingMessage>().Subscribe(async _ => await PauseAsync());
   }
 
-  // Default constructor for tests if needed
-  public PlaybackHandler() : this(null!, null!) { }
 
   public void Load(IEnumerable<Layer> layers)
   {
@@ -70,57 +68,57 @@ public class PlaybackHandler : IPlaybackHandler
 
     // Flatten all elements from all layers
     // Sort by CreatedAt, fallback to ZIndex/List Order for legacy support
-    _playbackQueue = layers
+    playbackQueue = layers
         .SelectMany(l => l.Elements)
         .OrderBy(e => e.CreatedAt)
         .ThenBy(e => e.ZIndex)
         .ToList();
 
-    _currentIndex = 0;
-    _currentState.OnNext(PlaybackState.Stopped);
+    currentIndex = 0;
+    currentState.OnNext(PlaybackState.Stopped);
   }
 
   public async Task PlayAsync(PlaybackSpeed speed)
   {
     // If we are not paused (i.e., Stopped or Completed), we should treat this as a fresh start.
     // We reload the layers to ensure we have the latest drawing state (handling new drawings, undos, etc.)
-    if (_currentState.Value != PlaybackState.Paused)
+    if (currentState.Value != PlaybackState.Paused)
     {
-      Load(_layerFacade.Layers);
+      Load(layerFacade.Layers);
       PrepareCanvasForPlayback();
     }
 
-    if (_playbackQueue.Count == 0) return;
+    if (playbackQueue.Count == 0) return;
 
     SetPlaybackSpeed(speed);
 
-    _timer.Start();
+    timer.Start();
 
-    _currentState.OnNext(PlaybackState.Playing);
+    currentState.OnNext(PlaybackState.Playing);
     await Task.CompletedTask;
   }
 
   public async Task PauseAsync()
   {
-    _timer.Stop();
-    _currentState.OnNext(PlaybackState.Paused);
+    timer.Stop();
+    currentState.OnNext(PlaybackState.Paused);
     await Task.CompletedTask;
   }
 
   public async Task StopAsync()
   {
-    _timer.Stop();
-    _currentIndex = 0;
+    timer.Stop();
+    currentIndex = 0;
 
     RestoreFullDrawing();
 
-    _currentState.OnNext(PlaybackState.Stopped);
+    currentState.OnNext(PlaybackState.Stopped);
     await Task.CompletedTask;
   }
 
   private void SetPlaybackSpeed(PlaybackSpeed speed)
   {
-    _playbackSpeedMultiplier = speed switch
+    playbackSpeedMultiplier = speed switch
     {
       PlaybackSpeed.Slow => 0.5f,
       PlaybackSpeed.Quick => 2.0f,
@@ -131,36 +129,41 @@ public class PlaybackHandler : IPlaybackHandler
 
   private void PrepareCanvasForPlayback()
   {
-    // Reset all elements to invisible/start state
-    foreach (var element in _playbackQueue)
+    // Reset elements to invisible/start state
+    // Only animate paths, stamps, and lines - shapes should pop-in immediately
+    foreach (var element in playbackQueue)
     {
-      element.AnimationProgress = 0f;
+      bool shouldAnimate = element is DrawablePath ||
+                          element is DrawableStamps ||
+                          element is DrawableLine;
+
+      element.AnimationProgress = shouldAnimate ? 0f : 1.0f;
     }
 
-    _currentIndex = 0;
-    _messageBus.SendMessage(new CanvasInvalidateMessage());
+    currentIndex = 0;
+    messageBus.SendMessage(new CanvasInvalidateMessage());
   }
 
   private void RestoreFullDrawing()
   {
     // Ensure all elements are fully visible
-    foreach (var element in _playbackQueue)
+    foreach (var element in playbackQueue)
     {
       element.AnimationProgress = 1.0f;
     }
-    _messageBus.SendMessage(new CanvasInvalidateMessage());
+    messageBus.SendMessage(new CanvasInvalidateMessage());
   }
 
   private async void OnTimerTick(object? sender, EventArgs e)
   {
-    if (_currentIndex >= _playbackQueue.Count)
+    if (currentIndex >= playbackQueue.Count)
     {
       await StopAsync();
-      _currentState.OnNext(PlaybackState.Completed);
+      currentState.OnNext(PlaybackState.Completed);
       return;
     }
 
-    var currentElement = _playbackQueue[_currentIndex];
+    var currentElement = playbackQueue[currentIndex];
 
     // Identify if this element should be DRAWN or if it should just POP-IN
     // DRAWN: Paths, Stamps, Lines (User strokes)
@@ -185,7 +188,7 @@ public class PlaybackHandler : IPlaybackHandler
 
         if (length > 0)
         {
-          float speedPxPerSec = BaseSpeedPixelsPerSecond * _playbackSpeedMultiplier;
+          float speedPxPerSec = BaseSpeedPixelsPerSecond * playbackSpeedMultiplier;
           float calcDuration = length / speedPxPerSec;
           targetDuration = Math.Max(calcDuration, 0.1f);
         }
@@ -193,12 +196,12 @@ public class PlaybackHandler : IPlaybackHandler
       else if (currentElement is DrawableStamps stamps)
       {
         // Stamps also take time to draw
-        targetDuration = 0.5f / _playbackSpeedMultiplier;
+        targetDuration = 0.5f / playbackSpeedMultiplier;
       }
       else if (currentElement is DrawableLine line)
       {
         // Lines also take time to draw
-        targetDuration = 0.2f / _playbackSpeedMultiplier;
+        targetDuration = 0.2f / playbackSpeedMultiplier;
       }
 
       float increment = FrameTimeSeconds / targetDuration;
@@ -207,16 +210,16 @@ public class PlaybackHandler : IPlaybackHandler
       if (currentElement.AnimationProgress >= 1.0f)
       {
         currentElement.AnimationProgress = 1.0f;
-        _currentIndex++;
+        currentIndex++;
       }
     }
     else
     {
       // POP-IN: Just show it immediately and move to next item in queue
       currentElement.AnimationProgress = 1.0f;
-      _currentIndex++;
+      currentIndex++;
     }
 
-    _messageBus.SendMessage(new CanvasInvalidateMessage());
+    messageBus.SendMessage(new CanvasInvalidateMessage());
   }
 }

@@ -25,40 +25,97 @@ using System.Reactive;
 using LunaDraw.Logic.Handlers;
 using LunaDraw.Logic.Models;
 using ReactiveUI;
+using Plugin.Maui.ScreenRecording;
 
 namespace LunaDraw.Logic.ViewModels;
 
 public class PlaybackViewModel : ReactiveObject
 {
-    private readonly IPlaybackHandler _playbackHandler;
-    
-    private PlaybackSpeed _selectedSpeed = PlaybackSpeed.Quick;
-    public PlaybackSpeed SelectedSpeed
+  private readonly IPlaybackHandler playbackHandler;
+
+  private PlaybackSpeed selectedSpeed = PlaybackSpeed.Quick;
+  public PlaybackSpeed SelectedSpeed
+  {
+    get => selectedSpeed;
+    set => this.RaiseAndSetIfChanged(ref selectedSpeed, value);
+  }
+
+  private PlaybackState currentState;
+  public PlaybackState CurrentState
+  {
+    get => currentState;
+    private set => this.RaiseAndSetIfChanged(ref currentState, value);
+  }
+
+  public ReactiveCommand<Unit, Unit> PlayCommand { get; }
+  public ReactiveCommand<Unit, Unit> PauseCommand { get; }
+  public ReactiveCommand<Unit, Unit> StopCommand { get; }
+  public ReactiveCommand<Unit, Unit> ExportVideoCommand { get; }
+
+  private readonly IScreenRecording screenRecording;
+
+  public PlaybackViewModel(IPlaybackHandler playbackHandler, IScreenRecording screenRecording)
+  {
+    this.playbackHandler = playbackHandler;
+    this.screenRecording = screenRecording;
+
+    playbackHandler.CurrentState
+        .Subscribe(state => CurrentState = state);
+
+    PlayCommand = ReactiveCommand.CreateFromTask(() => playbackHandler.PlayAsync(SelectedSpeed));
+    PauseCommand = ReactiveCommand.CreateFromTask(() => playbackHandler.PauseAsync());
+    StopCommand = ReactiveCommand.CreateFromTask(() => playbackHandler.StopAsync());
+    ExportVideoCommand = ReactiveCommand.CreateFromTask(ExportVideoAsync);
+  }
+
+  private async Task ExportVideoAsync()
+  {
+    try
     {
-        get => _selectedSpeed;
-        set => this.RaiseAndSetIfChanged(ref _selectedSpeed, value);
-    }
+      // Start screen recording
+      var started = await screenRecording.StartRecording();
+      if (!started)
+      {
+        await Application.Current?.MainPage?.DisplayAlertAsync(
+            "Error",
+            "Failed to start screen recording. Please check permissions.",
+            "OK");
+        return;
+      }
 
-    private PlaybackState _currentState;
-    public PlaybackState CurrentState
+      // Play the animation
+      await playbackHandler.PlayAsync(SelectedSpeed);
+
+      // Wait for playback to complete
+      while (CurrentState == PlaybackState.Playing)
+      {
+        await Task.Delay(100);
+      }
+
+      // Stop recording and save
+      var result = await screenRecording.StopRecording();
+
+      if (result != null && !string.IsNullOrEmpty(result.FullPath))
+      {
+        await Application.Current?.MainPage?.DisplayAlertAsync(
+            "Success",
+            $"Video exported successfully to:\n{result.FullPath}",
+            "OK");
+      }
+      else
+      {
+        await Application.Current?.MainPage?.DisplayAlertAsync(
+            "Error",
+            "Failed to export video.",
+            "OK");
+      }
+    }
+    catch (Exception ex)
     {
-        get => _currentState;
-        private set => this.RaiseAndSetIfChanged(ref _currentState, value);
+      await Application.Current?.MainPage?.DisplayAlertAsync(
+          "Error",
+          $"An error occurred: {ex.Message}",
+          "OK");
     }
-
-    public ReactiveCommand<Unit, Unit> PlayCommand { get; }
-    public ReactiveCommand<Unit, Unit> PauseCommand { get; }
-    public ReactiveCommand<Unit, Unit> StopCommand { get; }
-
-    public PlaybackViewModel(IPlaybackHandler playbackHandler)
-    {
-        _playbackHandler = playbackHandler;
-
-        _playbackHandler.CurrentState
-            .Subscribe(state => CurrentState = state);
-
-        PlayCommand = ReactiveCommand.CreateFromTask(() => _playbackHandler.PlayAsync(SelectedSpeed));
-        PauseCommand = ReactiveCommand.CreateFromTask(() => _playbackHandler.PauseAsync());
-        StopCommand = ReactiveCommand.CreateFromTask(() => _playbackHandler.StopAsync());
-    }
+  }
 }
