@@ -53,7 +53,9 @@
 	<ItemGroup> 
     <Compile Remove="Legacy\**\*.cs" />
     <None Include="Legacy\**\*" /> 
-	</ItemGroup>
+    <Compile Remove="specs\**\*.cs" />
+    <None Include="specs\**\*" /> 
+  </ItemGroup>
 
 	<ItemGroup>
 		<!-- App Icon -->
@@ -75,7 +77,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-    <PackageReference Include="CodeSoupCafe.Maui" Version="1.0.4" />
+    <PackageReference Include="CodeSoupCafe.Maui" Version="2.0.0" />
     <PackageReference Include="CommunityToolkit.Maui" Version="13.0.0" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="Microsoft.Maui.Controls" Version="10.0.11" />

@@ -48,6 +48,7 @@
       <controls:ItemGalleryView Grid.Row="1"
                                 x:Name="GalleryView"
                                 ItemsSource="{Binding DrawingItems}"
+                                ItemContextCommands="{Binding ContextCommands}"
                                 ItemAppearingAction="{Binding OnItemAppearing}"
                                 ItemDisappearingAction="{Binding OnItemDisappearing}"
                                 RemainingItemsThreshold="10"
