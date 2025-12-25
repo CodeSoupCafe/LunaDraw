@@ -22,10 +22,10 @@
  */
 
 using System.Reactive.Linq;
-using LunaDraw.Logic.Handlers;
+using LunaDraw.Logic.Playback;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
-using LunaDraw.Logic.Utils;
+using LunaDraw.Logic.Drawing;
 using Microsoft.Maui.Dispatching;
 using Moq;
 using ReactiveUI;

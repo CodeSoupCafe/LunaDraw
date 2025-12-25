@@ -26,7 +26,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
 using LunaDraw.Logic.Models;
-using LunaDraw.Logic.Utils;
+using LunaDraw.Logic.Drawing;
 using Moq;
 using SkiaSharp;
 using Xunit;

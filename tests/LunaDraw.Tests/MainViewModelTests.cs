@@ -24,7 +24,9 @@
 using System.Collections.ObjectModel;
 using System.Reactive.Linq;
 
-using LunaDraw.Logic.Utils;
+using LunaDraw.Logic.Drawing;
+using LunaDraw.Logic.Caching;
+using LunaDraw.Logic.Storage;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.ViewModels;
@@ -86,8 +88,12 @@ namespace LunaDraw.Tests
 
       // Additional message types needed by MainViewModel
       messageBusMock.Setup(x => x.Listen<OpenDrawingMessage>()).Returns(Observable.Empty<OpenDrawingMessage>());
+      messageBusMock.Setup(x => x.Listen<NewDrawingMessage>()).Returns(Observable.Empty<NewDrawingMessage>());
       messageBusMock.Setup(x => x.Listen<ShowGalleryMessage>()).Returns(Observable.Empty<ShowGalleryMessage>());
+      messageBusMock.Setup(x => x.Listen<TogglePlaybackControlsMessage>()).Returns(Observable.Empty<TogglePlaybackControlsMessage>());
       messageBusMock.Setup(x => x.Listen<CanvasInvalidateMessage>()).Returns(Observable.Empty<CanvasInvalidateMessage>());
+
+      var drawingStorageMomentoMock = new Mock<IDrawingStorageMomento>();
 
       mockToolbarViewModel = new Mock<ToolbarViewModel>(
           layerFacadeMock.Object,
@@ -97,14 +103,14 @@ namespace LunaDraw.Tests
           new Mock<IBitmapCache>().Object,
           navigationModel,
           new Mock<IFileSaver>().Object,
-          preferencesFacadeMock.Object
+          preferencesFacadeMock.Object,
+          drawingStorageMomentoMock.Object
       );
 
       // Setup property change notifications for ToolStateManager
       mockToolbarViewModel.As<System.ComponentModel.INotifyPropertyChanged>();
 
-      var drawingStorageMomentoMock = new Mock<IDrawingStorageMomento>();
-      var drawingThumbnailFacadeMock = new Mock<IDrawingThumbnailFacade>();
+      var drawingThumbnailFacadeMock = new Mock<IDrawingThumbnailHandler>();
       var galleryViewModelMock = new Mock<GalleryViewModel>(drawingStorageMomentoMock.Object);
       var serviceProviderMock = new Mock<IServiceProvider>();
 
@@ -121,7 +127,6 @@ namespace LunaDraw.Tests
           layerPanelVM,
           selectionVM,
           historyVM,
-          galleryViewModelMock.Object,
           serviceProviderMock.Object
       );
     }

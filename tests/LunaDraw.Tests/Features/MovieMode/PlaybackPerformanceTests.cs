@@ -22,9 +22,9 @@
  */
 
 using FluentAssertions;
-using LunaDraw.Logic.Handlers;
+using LunaDraw.Logic.Playback;
 using LunaDraw.Logic.Models;
-using LunaDraw.Logic.Utils;
+using LunaDraw.Logic.Drawing;
 using LunaDraw.Logic.Messages;
 using Moq;
 using ReactiveUI;

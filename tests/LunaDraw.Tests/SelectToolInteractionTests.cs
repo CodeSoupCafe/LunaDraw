@@ -21,7 +21,7 @@
  *  
  */
 
-using LunaDraw.Logic.Utils;
+using LunaDraw.Logic.Drawing;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Tools;
 using LunaDraw.Logic.Messages;

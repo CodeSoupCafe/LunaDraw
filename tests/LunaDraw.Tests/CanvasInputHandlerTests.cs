@@ -32,7 +32,10 @@ using SkiaSharp.Views.Maui;
 using ReactiveUI;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
-using LunaDraw.Logic.Utils;
+using LunaDraw.Logic.Drawing;
+using LunaDraw.Logic.Playback;
+using LunaDraw.Logic.Caching;
+using LunaDraw.Logic.Storage;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Tools;
@@ -83,6 +86,7 @@ namespace LunaDraw.Tests
             var selectionVM = new SelectionViewModel(selectionObserver, mockLayerFacade.Object, clipboardMemento, mockMessageBus.Object);
             var historyVM = new HistoryViewModel(mockLayerFacade.Object, mockMessageBus.Object);
             var mockPreferences = new Mock<IPreferencesFacade>();
+            var mockDrawingStorage = new Mock<IDrawingStorageMomento>();
 
             toolbarViewModel = new ToolbarViewModel(
                 mockLayerFacade.Object,
@@ -92,13 +96,14 @@ namespace LunaDraw.Tests
                 mockBitmapCache.Object,
                 navigationModel,
                 mockFileSaver.Object,
-                mockPreferences.Object
+                mockPreferences.Object,
+                mockDrawingStorage.Object
             );
 
             // Inject mock tool
             toolbarViewModel.ActiveTool = mockDrawingTool.Object;
 
-            var mockPlaybackHandler = new Mock<LunaDraw.Logic.Handlers.IPlaybackHandler>();
+            var mockPlaybackHandler = new Mock<IPlaybackHandler>();
             canvasInputHandler = new CanvasInputHandler(
                 toolbarViewModel,
                 mockLayerFacade.Object,
@@ -120,6 +125,7 @@ namespace LunaDraw.Tests
             var localSelectionVM = new SelectionViewModel(selectionObserver, mockLayerFacade.Object, clipboardMemento, mockMessageBus.Object);
             var localHistoryVM = new HistoryViewModel(mockLayerFacade.Object, mockMessageBus.Object);
             var mockPreferences = new Mock<IPreferencesFacade>();
+            var mockDrawingStorage = new Mock<IDrawingStorageMomento>();
             
             var localToolbarVM = new ToolbarViewModel(
                 mockLayerFacade.Object,
@@ -129,13 +135,14 @@ namespace LunaDraw.Tests
                 mockBitmapCache.Object,
                 navigationModel,
                 mockFileSaver.Object,
-                mockPreferences.Object
+                mockPreferences.Object,
+                mockDrawingStorage.Object
             );
             
             // Mock active tool inside the local VM
             localToolbarVM.ActiveTool = new Mock<IDrawingTool>().Object;
 
-            var mockPlaybackHandler = new Mock<LunaDraw.Logic.Handlers.IPlaybackHandler>();
+            var mockPlaybackHandler = new Mock<IPlaybackHandler>();
             var handler = new CanvasInputHandler(
                 localToolbarVM,
                 mockLayerFacade.Object,

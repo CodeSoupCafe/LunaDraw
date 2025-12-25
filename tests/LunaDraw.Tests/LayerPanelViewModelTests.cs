@@ -25,7 +25,9 @@ using System;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
-using LunaDraw.Logic.Utils;
+using LunaDraw.Logic.Drawing;
+using LunaDraw.Logic.Storage;
+using LunaDraw.Logic.Playback;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.ViewModels;
@@ -58,7 +60,7 @@ namespace LunaDraw.Tests
       drawingStateSubject = new Subject<DrawingStateChangedMessage>();
       mockBus.Setup(x => x.Listen<DrawingStateChangedMessage>()).Returns(drawingStateSubject);
 
-      var mockRecordingHandler = new Moq.Mock<LunaDraw.Logic.Handlers.IRecordingHandler>();
+      var mockRecordingHandler = new Moq.Mock<IRecordingHandler>();
       layerFacade = new LayerFacade(mockBus.Object, mockRecordingHandler.Object);
       viewModel = new LayerPanelViewModel(layerFacade, mockBus.Object, mockPreferences.Object);
     }

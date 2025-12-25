@@ -25,7 +25,7 @@ using System;
 using System.Collections.Generic;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Tools;
-using LunaDraw.Logic.Utils;
+using LunaDraw.Logic.Drawing;
 using LunaDraw.Logic.Messages;
 using ReactiveUI;
 using Xunit;

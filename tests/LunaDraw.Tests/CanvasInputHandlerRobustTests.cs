@@ -26,7 +26,10 @@ using Moq;
 using Xunit;
 using SkiaSharp;
 using SkiaSharp.Views.Maui;
-using LunaDraw.Logic.Utils;
+using LunaDraw.Logic.Drawing;
+using LunaDraw.Logic.Playback;
+using LunaDraw.Logic.Caching;
+using LunaDraw.Logic.Storage;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Tools;
 using LunaDraw.Logic.Messages;
@@ -69,6 +72,7 @@ namespace LunaDraw.Tests
       var mockBitmapCache = new Mock<IBitmapCache>();
       var mockFileSaver = new Mock<IFileSaver>();
       var mockPreferences = new Mock<IPreferencesFacade>();
+      var mockDrawingStorage = new Mock<IDrawingStorageMomento>();
 
       // Ensure MessageBus returns observables for ToolbarViewModel constructor
       mockMessageBus.Setup(x => x.Listen<BrushSettingsChangedMessage>()).Returns(Observable.Empty<BrushSettingsChangedMessage>());
@@ -83,7 +87,8 @@ namespace LunaDraw.Tests
           mockBitmapCache.Object,
           navigationModel,
           mockFileSaver.Object,
-          mockPreferences.Object
+          mockPreferences.Object,
+          mockDrawingStorage.Object
       );
 
       // Setup default behavior
@@ -92,7 +97,7 @@ namespace LunaDraw.Tests
 
       mockLayerFacade.Setup(m => m.CurrentLayer).Returns(new Layer());
 
-      var mockPlaybackHandler = new Moq.Mock<LunaDraw.Logic.Handlers.IPlaybackHandler>();
+var mockPlaybackHandler = new Mock<IPlaybackHandler>();
       handler = new CanvasInputHandler(
           mockToolbarViewModel.Object,
           mockLayerFacade.Object,

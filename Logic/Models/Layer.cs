@@ -105,7 +105,17 @@ public class Layer : ReactiveObject
       }
     }
 
-    RebuildQuadTree();
+    if (e.Action == NotifyCollectionChangedAction.Add && e.NewItems != null)
+    {
+      foreach (IDrawableElement item in e.NewItems)
+      {
+        quadTree.Insert(item);
+      }
+    }
+    else
+    {
+      RebuildQuadTree();
+    }
   }
 
   private void RebuildQuadTree()
