@@ -34,56 +34,56 @@ namespace LunaDraw.Tests.Features.MovieMode;
 
 public class PlaybackPerformanceTests
 {
-    private readonly PlaybackHandler _handler;
-    private readonly Mock<ILayerFacade> _mockLayerFacade;
-    private readonly Mock<IMessageBus> _mockMessageBus;
-    private readonly Mock<IDispatcher> _mockDispatcher;
-    private readonly Mock<IDispatcherTimer> _mockTimer;
+  private readonly PlaybackHandler handler;
+  private readonly Mock<ILayerFacade> mockLayerFacade;
+  private readonly Mock<IMessageBus> mockMessageBus;
+  private readonly Mock<IDispatcher> mockDispatcher;
+  private readonly Mock<IDispatcherTimer> mockTimer;
 
-    public PlaybackPerformanceTests()
+  public PlaybackPerformanceTests()
+  {
+    mockLayerFacade = new Mock<ILayerFacade>();
+    mockMessageBus = new Mock<IMessageBus>();
+    mockDispatcher = new Mock<IDispatcher>();
+    mockTimer = new Mock<IDispatcherTimer>();
+
+    mockMessageBus.Setup(m => m.Listen<AppSleepingMessage>()).Returns(System.Reactive.Linq.Observable.Empty<AppSleepingMessage>());
+    mockDispatcher.Setup(d => d.CreateTimer()).Returns(mockTimer.Object);
+
+    handler = new PlaybackHandler(mockLayerFacade.Object, mockMessageBus.Object, mockDispatcher.Object);
+  }
+
+  [Fact]
+  public void Load_With_Zero_Elements_Should_Not_Throw()
+  {
+    // Arrange
+    var layer = new Layer();
+    var layers = new[] { layer };
+
+    // Act
+    Action act = () => handler.Load(layers);
+
+    // Assert
+    act.Should().NotThrow();
+  }
+
+  [Fact]
+  public void Load_With_10000_Elements_Should_Be_Fast()
+  {
+    // Arrange
+    var layer = new Layer();
+    for (int i = 0; i < 10000; i++)
     {
-        _mockLayerFacade = new Mock<ILayerFacade>();
-        _mockMessageBus = new Mock<IMessageBus>();
-        _mockDispatcher = new Mock<IDispatcher>();
-        _mockTimer = new Mock<IDispatcherTimer>();
-
-        _mockMessageBus.Setup(m => m.Listen<AppSleepingMessage>()).Returns(System.Reactive.Linq.Observable.Empty<AppSleepingMessage>());
-        _mockDispatcher.Setup(d => d.CreateTimer()).Returns(_mockTimer.Object);
-
-        _handler = new PlaybackHandler(_mockLayerFacade.Object, _mockMessageBus.Object, _mockDispatcher.Object);
+      layer.Elements.Add(new DrawablePath { CreatedAt = DateTimeOffset.Now.AddMilliseconds(i), Path = null! });
     }
+    var layers = new[] { layer };
 
-    [Fact]
-    public void Load_With_Zero_Elements_Should_Not_Throw()
-    {
-        // Arrange
-        var layer = new Layer();
-        var layers = new[] { layer };
+    // Act
+    var watch = System.Diagnostics.Stopwatch.StartNew();
+    handler.Load(layers);
+    watch.Stop();
 
-        // Act
-        Action act = () => _handler.Load(layers);
-
-        // Assert
-        act.Should().NotThrow();
-    }
-
-    [Fact]
-    public void Load_With_10000_Elements_Should_Be_Fast()
-    {
-        // Arrange
-        var layer = new Layer();
-        for (int i = 0; i < 10000; i++)
-        {
-            layer.Elements.Add(new DrawablePath { CreatedAt = DateTimeOffset.Now.AddMilliseconds(i), Path = null! });
-        }
-        var layers = new[] { layer };
-
-        // Act
-        var watch = System.Diagnostics.Stopwatch.StartNew();
-        _handler.Load(layers);
-        watch.Stop();
-
-        // Assert
-        watch.ElapsedMilliseconds.Should().BeLessThan(500); // Sorting 10k items should be sub-500ms
-    }
+    // Assert
+    watch.ElapsedMilliseconds.Should().BeLessThan(500); // Sorting 10k items should be sub-500ms
+  }
 }

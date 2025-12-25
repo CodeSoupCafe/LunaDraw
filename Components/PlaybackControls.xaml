@@ -38,9 +38,13 @@
                     IsVisible="{Binding CurrentState, Converter={StaticResource PlaybackStateToPauseVisibleConverter}}" />
 
             <!-- Stop Button -->
-            <Button Text="Stop" 
+            <Button Text="Stop"
                     Command="{Binding StopCommand}" />
-            
+
+            <!-- Export Button -->
+            <Button Text="Export Video"
+                    Command="{Binding ExportVideoCommand}" />
+
         </HorizontalStackLayout>
     </Border>
 </ContentView>

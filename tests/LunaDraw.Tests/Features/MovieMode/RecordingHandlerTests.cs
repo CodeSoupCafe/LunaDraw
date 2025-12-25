@@ -32,42 +32,42 @@ namespace LunaDraw.Tests.Features.MovieMode;
 
 public class RecordingHandlerTests
 {
-    private readonly RecordingHandler _handler;
+  private readonly RecordingHandler handler;
 
-    public RecordingHandlerTests()
-    {
-        _handler = new RecordingHandler();
-    }
+  public RecordingHandlerTests()
+  {
+    handler = new RecordingHandler();
+  }
 
-    [Fact]
-    public void RecordCreation_Should_Set_CreatedAt_Timestamp()
-    {
-        // Arrange
-        var elementMock = new Mock<IDrawableElement>();
-        elementMock.SetupProperty(e => e.CreatedAt);
-        var element = elementMock.Object;
+  [Fact]
+  public void RecordCreation_Should_Set_CreatedAt_Timestamp()
+  {
+    // Arrange
+    var elementMock = new Mock<IDrawableElement>();
+    elementMock.SetupProperty(e => e.CreatedAt);
+    var element = elementMock.Object;
 
-        // Act
-        _handler.RecordCreation(element);
+    // Act
+    handler.RecordCreation(element);
 
-        // Assert
-        element.CreatedAt.Should().BeCloseTo(DateTimeOffset.Now, TimeSpan.FromSeconds(1));
-        element.CreatedAt.Should().NotBe(default(DateTimeOffset));
-    }
+    // Assert
+    element.CreatedAt.Should().BeCloseTo(DateTimeOffset.Now, TimeSpan.FromSeconds(1));
+    element.CreatedAt.Should().NotBe(default(DateTimeOffset));
+  }
 
-    [Fact]
-    public void RecordCreation_Should_Not_Overwrite_Existing_Timestamp()
-    {
-        // Arrange
-        var existingTime = DateTimeOffset.Now.AddHours(-1);
-        var elementMock = new Mock<IDrawableElement>();
-        elementMock.SetupProperty(e => e.CreatedAt, existingTime);
-        var element = elementMock.Object;
+  [Fact]
+  public void RecordCreation_Should_Not_Overwrite_Existing_Timestamp()
+  {
+    // Arrange
+    var existingTime = DateTimeOffset.Now.AddHours(-1);
+    var elementMock = new Mock<IDrawableElement>();
+    elementMock.SetupProperty(e => e.CreatedAt, existingTime);
+    var element = elementMock.Object;
 
-        // Act
-        _handler.RecordCreation(element);
+    // Act
+    handler.RecordCreation(element);
 
-        // Assert
-        element.CreatedAt.Should().Be(existingTime);
-    }
+    // Assert
+    element.CreatedAt.Should().Be(existingTime);
+  }
 }

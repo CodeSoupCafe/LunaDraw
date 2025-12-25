@@ -51,7 +51,7 @@ public class MainViewModel : ReactiveObject
   private readonly IMessageBus messageBus;
   private readonly IPreferencesFacade preferencesFacade;
   private readonly IDrawingStorageMomento drawingStorageMomento;
-  private readonly IDrawingThumbnailFacade drawingThumbnailFacade;
+  private readonly IDrawingThumbnailHandler drawingThumbnailFacade;
   private readonly IServiceProvider serviceProvider;
 
   // Properties for current drawing state
@@ -62,11 +62,11 @@ public class MainViewModel : ReactiveObject
     private set => this.RaiseAndSetIfChanged(ref currentDrawingId, value);
   }
 
-  private string _currentDrawingName = AppConstants.Defaults.UntitledDrawingName;
+  private string currentDrawingName = AppConstants.Defaults.UntitledDrawingName;
   public string CurrentDrawingName
   {
-    get => _currentDrawingName;
-    set => this.RaiseAndSetIfChanged(ref _currentDrawingName, value);
+    get => currentDrawingName;
+    set => this.RaiseAndSetIfChanged(ref currentDrawingName, value);
   }
 
   // Sub-ViewModels
@@ -157,7 +157,7 @@ public class MainViewModel : ReactiveObject
     IMessageBus messageBus,
     IPreferencesFacade preferencesFacade,
     IDrawingStorageMomento drawingStorageMomento,
-    IDrawingThumbnailFacade drawingThumbnailFacade,
+    IDrawingThumbnailHandler drawingThumbnailFacade,
     LayerPanelViewModel layerPanelVM,
     SelectionViewModel selectionVM,
     HistoryViewModel historyVM,
@@ -196,6 +196,13 @@ public class MainViewModel : ReactiveObject
         .Subscribe(msg =>
         {
           LoadDrawingCommand.Execute(msg.Drawing).Subscribe();
+        });
+
+    this.messageBus.Listen<NewDrawingMessage>()
+        .ObserveOn(RxApp.MainThreadScheduler)
+        .Subscribe(_ =>
+        {
+          NewDrawingCommand.Execute().Subscribe();
         });
 
     // Initial drawing state

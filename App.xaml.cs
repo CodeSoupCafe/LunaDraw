@@ -29,11 +29,11 @@ namespace LunaDraw;
 
 public partial class App : Application
 {
-  private readonly IMessageBus _messageBus;
+  private readonly IMessageBus messageBus;
 
   public App(IPreferencesFacade preferencesFacade, IMessageBus messageBus)
   {
-    _messageBus = messageBus;
+    messageBus = messageBus;
     InitializeComponent();
 
     var theme = preferencesFacade.Get(AppPreference.AppTheme);
@@ -53,6 +53,6 @@ public partial class App : Application
   protected override void OnSleep()
   {
     base.OnSleep();
-    _messageBus.SendMessage(new AppSleepingMessage());
+    messageBus.SendMessage(new AppSleepingMessage());
   }
 }

@@ -34,173 +34,173 @@ using Xunit;
 
 namespace LunaDraw.Tests
 {
-    public class PlaybackHandlerTests
+  public class PlaybackHandlerTests
+  {
+    private readonly Mock<ILayerFacade> mockLayerFacade;
+    private readonly Mock<IMessageBus> mockMessageBus;
+    private readonly Mock<IDispatcher> mockDispatcher;
+    private readonly Mock<IDispatcherTimer> mockTimer;
+    private readonly PlaybackHandler handler;
+
+    public PlaybackHandlerTests()
     {
-        private readonly Mock<ILayerFacade> _mockLayerFacade;
-        private readonly Mock<IMessageBus> _mockMessageBus;
-        private readonly Mock<IDispatcher> _mockDispatcher;
-        private readonly Mock<IDispatcherTimer> _mockTimer;
-        private readonly PlaybackHandler _handler;
+      mockLayerFacade = new Mock<ILayerFacade>();
+      mockMessageBus = new Mock<IMessageBus>();
+      mockDispatcher = new Mock<IDispatcher>();
+      mockTimer = new Mock<IDispatcherTimer>();
 
-        public PlaybackHandlerTests()
-        {
-            _mockLayerFacade = new Mock<ILayerFacade>();
-            _mockMessageBus = new Mock<IMessageBus>();
-            _mockDispatcher = new Mock<IDispatcher>();
-            _mockTimer = new Mock<IDispatcherTimer>();
+      mockDispatcher.Setup(d => d.CreateTimer()).Returns(mockTimer.Object);
 
-            _mockDispatcher.Setup(d => d.CreateTimer()).Returns(_mockTimer.Object);
+      // Mock Listen for AppSleepingMessage
+      mockMessageBus.Setup(m => m.Listen<AppSleepingMessage>())
+          .Returns(Observable.Never<AppSleepingMessage>());
 
-            // Mock Listen for AppSleepingMessage
-            _mockMessageBus.Setup(m => m.Listen<AppSleepingMessage>())
-                .Returns(Observable.Never<AppSleepingMessage>());
-
-            _handler = new PlaybackHandler(_mockLayerFacade.Object, _mockMessageBus.Object, _mockDispatcher.Object);
-        }
-
-        [Fact]
-        public void Load_ShouldSortElementsByCreatedAt()
-        {
-            // Arrange
-            var now = DateTimeOffset.Now;
-            var element1 = new DrawablePath { CreatedAt = now.AddMinutes(1), Path = new SKPath() };
-            var element2 = new DrawablePath { CreatedAt = now, Path = new SKPath() };
-            
-            var layer = new Layer();
-            layer.Elements.Add(element1);
-            layer.Elements.Add(element2);
-            
-            var layers = new List<Layer> { layer };
-
-            // Act
-            _handler.Load(layers);
-
-            // Assert
-            // We need to inspect private state or verify behavior. 
-            // Since we can't easily inspect private _playbackQueue, we can start play and see what updates first.
-            // But verify Load didn't crash is a start.
-        }
-
-        [Fact]
-        public async Task PlayAsync_ShouldStartTimer_AndResetProgress()
-        {
-            // Arrange
-            var element = new DrawablePath { Path = new SKPath(), AnimationProgress = 1.0f };
-            var layer = new Layer();
-            layer.Elements.Add(element);
-            _mockLayerFacade.Setup(l => l.Layers).Returns(new System.Collections.ObjectModel.ObservableCollection<Layer> { layer });
-
-            // Act
-            await _handler.PlayAsync(PlaybackSpeed.Quick);
-
-            // Assert
-            Assert.Equal(0f, element.AnimationProgress); // Should be reset to 0
-            _mockTimer.Verify(t => t.Start(), Times.Once);
-            Assert.True(_handler.IsPlaying);
-        }
-
-        [Fact]
-        public async Task StopAsync_ShouldResetProgressToOne_AndStopTimer()
-        {
-            // Arrange
-            var element = new DrawablePath { Path = new SKPath(), AnimationProgress = 0.5f };
-            var layer = new Layer();
-            layer.Elements.Add(element);
-            _mockLayerFacade.Setup(l => l.Layers).Returns(new System.Collections.ObjectModel.ObservableCollection<Layer> { layer });
-            _handler.Load(new[] { layer });
-
-            // Act
-            await _handler.StopAsync();
-
-            // Assert
-            Assert.Equal(1.0f, element.AnimationProgress);
-            _mockTimer.Verify(t => t.Stop(), Times.Once);
-            _mockMessageBus.Verify(m => m.SendMessage(It.IsAny<CanvasInvalidateMessage>()), Times.Once);
-        }
-        
-        [Fact]
-        public async Task Playback_ShouldIncrementProgressForPaths()
-        {
-            // Arrange
-            using var path = new SKPath();
-            path.MoveTo(0, 0);
-            path.LineTo(100, 0); // Length 100
-            
-            var element = new DrawablePath { Path = path, AnimationProgress = 1.0f };
-            var layer = new Layer();
-            layer.Elements.Add(element);
-            _mockLayerFacade.Setup(l => l.Layers).Returns(new System.Collections.ObjectModel.ObservableCollection<Layer> { layer });
-            
-            await _handler.PlayAsync(PlaybackSpeed.Quick); // Resets to 0
-
-            // Capture the tick handler
-            // Note: In a real unit test for the timer loop logic, we might extract the "Tick" logic or invoke the event.
-            // Using reflection to trigger the private OnTimerTick for validation
-            var methodInfo = typeof(PlaybackHandler).GetMethod("OnTimerTick", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            
-            // Act: Simulate one frame
-            methodInfo!.Invoke(_handler, new object[] { null!, EventArgs.Empty });
-
-            // Assert
-            Assert.True(element.AnimationProgress > 0f, "Progress should have incremented");
-            Assert.True(element.AnimationProgress < 1.0f, "Progress should not be complete in one frame for 100px line at normal speed");
-        }
-        
-        [Fact]
-        public async Task Playback_ShouldAnimateNonPaths()
-        {
-             // Arrange
-            var element = new DrawableStamps { AnimationProgress = 1.0f };
-            var layer = new Layer();
-            layer.Elements.Add(element);
-            _mockLayerFacade.Setup(l => l.Layers).Returns(new System.Collections.ObjectModel.ObservableCollection<Layer> { layer });
-            
-            await _handler.PlayAsync(PlaybackSpeed.Quick); // Resets to 0
-            
-            var methodInfo = typeof(PlaybackHandler).GetMethod("OnTimerTick", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-
-            // Act: Simulate one frame
-            methodInfo!.Invoke(_handler, new object[] { null!, EventArgs.Empty });
-
-            // Assert
-            Assert.True(element.AnimationProgress > 0f, "Should have started animation");
-            Assert.True(element.AnimationProgress < 1.0f, "Should not complete instantly");
-        }
-
-        [Fact]
-        public async Task PlayAsync_ShouldRestart_WhenStateIsCompleted()
-        {
-            // Arrange
-            var element = new DrawablePath { Path = new SKPath(), AnimationProgress = 1.0f };
-            var layer = new Layer();
-            layer.Elements.Add(element);
-            _mockLayerFacade.Setup(l => l.Layers).Returns(new System.Collections.ObjectModel.ObservableCollection<Layer> { layer });
-            
-            // First run to completion
-            await _handler.PlayAsync(PlaybackSpeed.Quick);
-            
-            // Simulate timer finishing
-            var methodInfo = typeof(PlaybackHandler).GetMethod("OnTimerTick", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            
-            // Tick to finish (since list has 1 element and we start at 0)
-            // The logic: if (currentElement.AnimationProgress >= 1.0f) _currentIndex++;
-            // element starts at 0 (from PlayAsync->PrepareCanvas).
-            // First tick increments it.
-            // We need enough ticks or set it to 1.0 manually to finish.
-            element.AnimationProgress = 1.0f; 
-            // Call tick to advance index
-            methodInfo!.Invoke(_handler, new object[] { null!, EventArgs.Empty }); 
-            // Now index is 1 (>= count), next tick completes it
-            methodInfo!.Invoke(_handler, new object[] { null!, EventArgs.Empty }); 
-
-            Assert.Equal(PlaybackState.Completed, await _handler.CurrentState.FirstAsync());
-
-            // Act - Play again
-            await _handler.PlayAsync(PlaybackSpeed.Quick);
-
-            // Assert
-            Assert.Equal(PlaybackState.Playing, await _handler.CurrentState.FirstAsync());
-            Assert.Equal(0f, element.AnimationProgress); // Should be reset to 0
-        }
+      handler = new PlaybackHandler(mockLayerFacade.Object, mockMessageBus.Object, mockDispatcher.Object);
     }
+
+    [Fact]
+    public void Load_ShouldSortElementsByCreatedAt()
+    {
+      // Arrange
+      var now = DateTimeOffset.Now;
+      var element1 = new DrawablePath { CreatedAt = now.AddMinutes(1), Path = new SKPath() };
+      var element2 = new DrawablePath { CreatedAt = now, Path = new SKPath() };
+
+      var layer = new Layer();
+      layer.Elements.Add(element1);
+      layer.Elements.Add(element2);
+
+      var layers = new List<Layer> { layer };
+
+      // Act
+      handler.Load(layers);
+
+      // Assert
+      // We need to inspect private state or verify behavior. 
+      // Since we can't easily inspect private playbackQueue, we can start play and see what updates first.
+      // But verify Load didn't crash is a start.
+    }
+
+    [Fact]
+    public async Task PlayAsync_ShouldStartTimer_AndResetProgress()
+    {
+      // Arrange
+      var element = new DrawablePath { Path = new SKPath(), AnimationProgress = 1.0f };
+      var layer = new Layer();
+      layer.Elements.Add(element);
+      mockLayerFacade.Setup(l => l.Layers).Returns(new System.Collections.ObjectModel.ObservableCollection<Layer> { layer });
+
+      // Act
+      await handler.PlayAsync(PlaybackSpeed.Quick);
+
+      // Assert
+      Assert.Equal(0f, element.AnimationProgress); // Should be reset to 0
+      mockTimer.Verify(t => t.Start(), Times.Once);
+      Assert.True(handler.IsPlaying);
+    }
+
+    [Fact]
+    public async Task StopAsync_ShouldResetProgressToOne_AndStopTimer()
+    {
+      // Arrange
+      var element = new DrawablePath { Path = new SKPath(), AnimationProgress = 0.5f };
+      var layer = new Layer();
+      layer.Elements.Add(element);
+      mockLayerFacade.Setup(l => l.Layers).Returns(new System.Collections.ObjectModel.ObservableCollection<Layer> { layer });
+      handler.Load(new[] { layer });
+
+      // Act
+      await handler.StopAsync();
+
+      // Assert
+      Assert.Equal(1.0f, element.AnimationProgress);
+      mockTimer.Verify(t => t.Stop(), Times.Once);
+      mockMessageBus.Verify(m => m.SendMessage(It.IsAny<CanvasInvalidateMessage>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Playback_ShouldIncrementProgressForPaths()
+    {
+      // Arrange
+      using var path = new SKPath();
+      path.MoveTo(0, 0);
+      path.LineTo(100, 0); // Length 100
+
+      var element = new DrawablePath { Path = path, AnimationProgress = 1.0f };
+      var layer = new Layer();
+      layer.Elements.Add(element);
+      mockLayerFacade.Setup(l => l.Layers).Returns(new System.Collections.ObjectModel.ObservableCollection<Layer> { layer });
+
+      await handler.PlayAsync(PlaybackSpeed.Quick); // Resets to 0
+
+      // Capture the tick handler
+      // Note: In a real unit test for the timer loop logic, we might extract the "Tick" logic or invoke the event.
+      // Using reflection to trigger the private OnTimerTick for validation
+      var methodInfo = typeof(PlaybackHandler).GetMethod("OnTimerTick", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+      // Act: Simulate one frame
+      methodInfo!.Invoke(handler, new object[] { null!, EventArgs.Empty });
+
+      // Assert
+      Assert.True(element.AnimationProgress > 0f, "Progress should have incremented");
+      Assert.True(element.AnimationProgress < 1.0f, "Progress should not be complete in one frame for 100px line at normal speed");
+    }
+
+    [Fact]
+    public async Task Playback_ShouldAnimateNonPaths()
+    {
+      // Arrange
+      var element = new DrawableStamps { AnimationProgress = 1.0f };
+      var layer = new Layer();
+      layer.Elements.Add(element);
+      mockLayerFacade.Setup(l => l.Layers).Returns(new System.Collections.ObjectModel.ObservableCollection<Layer> { layer });
+
+      await handler.PlayAsync(PlaybackSpeed.Quick); // Resets to 0
+
+      var methodInfo = typeof(PlaybackHandler).GetMethod("OnTimerTick", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+      // Act: Simulate one frame
+      methodInfo!.Invoke(handler, new object[] { null!, EventArgs.Empty });
+
+      // Assert
+      Assert.True(element.AnimationProgress > 0f, "Should have started animation");
+      Assert.True(element.AnimationProgress < 1.0f, "Should not complete instantly");
+    }
+
+    [Fact]
+    public async Task PlayAsync_ShouldRestart_WhenStateIsCompleted()
+    {
+      // Arrange
+      var element = new DrawablePath { Path = new SKPath(), AnimationProgress = 1.0f };
+      var layer = new Layer();
+      layer.Elements.Add(element);
+      mockLayerFacade.Setup(l => l.Layers).Returns(new System.Collections.ObjectModel.ObservableCollection<Layer> { layer });
+
+      // First run to completion
+      await handler.PlayAsync(PlaybackSpeed.Quick);
+
+      // Simulate timer finishing
+      var methodInfo = typeof(PlaybackHandler).GetMethod("OnTimerTick", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+      // Tick to finish (since list has 1 element and we start at 0)
+      // The logic: if (currentElement.AnimationProgress >= 1.0f) currentIndex++;
+      // element starts at 0 (from PlayAsync->PrepareCanvas).
+      // First tick increments it.
+      // We need enough ticks or set it to 1.0 manually to finish.
+      element.AnimationProgress = 1.0f;
+      // Call tick to advance index
+      methodInfo!.Invoke(handler, new object[] { null!, EventArgs.Empty });
+      // Now index is 1 (>= count), next tick completes it
+      methodInfo!.Invoke(handler, new object[] { null!, EventArgs.Empty });
+
+      Assert.Equal(PlaybackState.Completed, await handler.CurrentState.FirstAsync());
+
+      // Act - Play again
+      await handler.PlayAsync(PlaybackSpeed.Quick);
+
+      // Assert
+      Assert.Equal(PlaybackState.Playing, await handler.CurrentState.FirstAsync());
+      Assert.Equal(0f, element.AnimationProgress); // Should be reset to 0
+    }
+  }
 }

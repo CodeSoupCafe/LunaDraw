@@ -21,8 +21,6 @@
  *  
  */
 
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using LunaDraw.Logic.Models;
 
 namespace LunaDraw.Logic.Handlers;
@@ -32,33 +30,33 @@ namespace LunaDraw.Logic.Handlers;
 /// </summary>
 public interface IPlaybackHandler
 {
-    /// <summary>
-    /// Current state of playback.
-    /// </summary>
-    IObservable<PlaybackState> CurrentState { get; }
+  /// <summary>
+  /// Current state of playback.
+  /// </summary>
+  IObservable<PlaybackState> CurrentState { get; }
 
-    bool IsPlaying { get; }
+  bool IsPlaying { get; }
 
-    /// <summary>
-    /// Prepares the playback sequence from a list of layers.
-    /// Extracts all elements, sorts by CreatedAt, and prepares the queue.
-    /// </summary>
-    /// <param name="layers">The layers to reconstruct.</param>
-    void Load(IEnumerable<Layer> layers);
+  /// <summary>
+  /// Prepares the playback sequence from a list of layers.
+  /// Extracts all elements, sorts by CreatedAt, and prepares the queue.
+  /// </summary>
+  /// <param name="layers">The layers to reconstruct.</param>
+  void Load(IEnumerable<Layer> layers);
 
-    /// <summary>
-    /// Starts or Resumes playback.
-    /// </summary>
-    /// <param name="speed">Desired playback speed.</param>
-    Task PlayAsync(PlaybackSpeed speed);
+  /// <summary>
+  /// Starts or Resumes playback.
+  /// </summary>
+  /// <param name="speed">Desired playback speed.</param>
+  Task PlayAsync(PlaybackSpeed speed);
 
-    /// <summary>
-    /// Pauses playback.
-    /// </summary>
-    Task PauseAsync();
+  /// <summary>
+  /// Pauses playback.
+  /// </summary>
+  Task PauseAsync();
 
-    /// <summary>
-    /// Stops playback and resets to the final state (or initial state depending on UX).
-    /// </summary>
-    Task StopAsync();
+  /// <summary>
+  /// Stops playback and resets to the final state (or initial state depending on UX).
+  /// </summary>
+  Task StopAsync();
 }

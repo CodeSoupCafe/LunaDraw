@@ -37,7 +37,7 @@ namespace LunaDraw.Logic.ViewModels;
 public class DrawingGalleryPopupViewModel : ReactiveObject, IDisposable
 {
   private readonly GalleryViewModel galleryViewModel;
-  private readonly IDrawingThumbnailFacade thumbnailService;
+  private readonly IDrawingThumbnailHandler thumbnailService;
   private readonly IMessageBus messageBus;
   private IDisposable? drawingListChangedSubscription;
 
@@ -74,7 +74,7 @@ public class DrawingGalleryPopupViewModel : ReactiveObject, IDisposable
 
   public DrawingGalleryPopupViewModel(
     GalleryViewModel galleryViewModel,
-    IDrawingThumbnailFacade thumbnailService,
+    IDrawingThumbnailHandler thumbnailService,
     IMessageBus messageBus)
   {
     this.galleryViewModel = galleryViewModel;
@@ -360,7 +360,7 @@ public class DrawingItemViewModel : CodeSoupCafe.Maui.Models.ItemState, INotifyP
   /// Loads the thumbnail asynchronously when the item appears in view.
   /// Called by the lifecycle callback from the gallery control.
   /// </summary>
-  public async Task LoadThumbnailAsync(IDrawingThumbnailFacade thumbnailService)
+  public async Task LoadThumbnailAsync(IDrawingThumbnailHandler thumbnailService)
   {
     if (ThumbnailBase64 != null || IsLoadingThumbnail)
     {

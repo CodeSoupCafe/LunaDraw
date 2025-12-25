@@ -1,4 +1,4 @@
-/* 
+﻿/* 
  *  Copyright (c) 2025 CodeSoupCafe LLC
  *  
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -21,19 +21,17 @@
  *  
  */
 
-using Microsoft.Extensions.DependencyInjection;
-
 namespace CarouselPerformance;
 
 public partial class App : Application
 {
-	public App()
-	{
-		InitializeComponent();
-	}
+  public App()
+  {
+    InitializeComponent();
+  }
 
-	protected override Window CreateWindow(IActivationState? activationState)
-	{
-		return new Window(new AppShell());
-	}
+  protected override Window CreateWindow(IActivationState? activationState)
+  {
+    return new Window(new AppShell());
+  }
 }

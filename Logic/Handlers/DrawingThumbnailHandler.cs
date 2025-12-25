@@ -28,13 +28,13 @@ using System.Collections.Concurrent;
 
 namespace LunaDraw.Logic.Utils;
 
-public class DrawingThumbnailFacade : IDrawingThumbnailFacade
+public class DrawingThumbnailHandler : IDrawingThumbnailHandler
 {
   private readonly IDrawingStorageMomento drawingStorageMomento;
   private readonly IThumbnailCacheFacade thumbnailCacheFacade;
   private readonly ConcurrentDictionary<Guid, ImageSource> inMemoryImageSourceCache = new();
 
-  public DrawingThumbnailFacade(
+  public DrawingThumbnailHandler(
     IDrawingStorageMomento drawingStorageMomento,
     IThumbnailCacheFacade thumbnailCacheFacade)
   {
@@ -224,6 +224,18 @@ public class DrawingThumbnailFacade : IDrawingThumbnailFacade
     {
       RenderStamps(canvas, stampsElement, paint);
     }
+    else if (element is External.Rectangle rectangleElement)
+    {
+      RenderRectangle(canvas, rectangleElement, paint);
+    }
+    else if (element is External.Ellipse ellipseElement)
+    {
+      RenderEllipse(canvas, ellipseElement, paint);
+    }
+    else if (element is External.Line lineElement)
+    {
+      RenderLine(canvas, lineElement, paint);
+    }
   }
 
   private void RenderPath(SKCanvas canvas, External.Path pathElement, SKPaint paint)
@@ -296,6 +308,125 @@ public class DrawingThumbnailFacade : IDrawingThumbnailFacade
       canvas.DrawPath(shapePath, paint);
       canvas.Restore();
     }
+  }
+
+  private void RenderRectangle(SKCanvas canvas, External.Rectangle rectangleElement, SKPaint paint)
+  {
+    var rect = new SKRect(rectangleElement.Left, rectangleElement.Top, rectangleElement.Right, rectangleElement.Bottom);
+
+    canvas.Save();
+    if (rectangleElement.TransformMatrix != null && rectangleElement.TransformMatrix.Length == 9)
+    {
+      var matrix = new SKMatrix
+      {
+        ScaleX = rectangleElement.TransformMatrix[0],
+        SkewX = rectangleElement.TransformMatrix[1],
+        TransX = rectangleElement.TransformMatrix[2],
+        SkewY = rectangleElement.TransformMatrix[3],
+        ScaleY = rectangleElement.TransformMatrix[4],
+        TransY = rectangleElement.TransformMatrix[5],
+        Persp0 = rectangleElement.TransformMatrix[6],
+        Persp1 = rectangleElement.TransformMatrix[7],
+        Persp2 = rectangleElement.TransformMatrix[8]
+      };
+      canvas.Concat(in matrix);
+    }
+
+    if (!string.IsNullOrEmpty(rectangleElement.FillColor))
+    {
+      SKColor.TryParse(rectangleElement.FillColor, out var fillColor);
+      paint.Color = fillColor.WithAlpha(rectangleElement.Opacity);
+      paint.Style = SKPaintStyle.Fill;
+      canvas.DrawRect(rect, paint);
+    }
+
+    if (!string.IsNullOrEmpty(rectangleElement.StrokeColor) && rectangleElement.StrokeWidth > 0)
+    {
+      SKColor.TryParse(rectangleElement.StrokeColor, out var strokeColor);
+      paint.Color = strokeColor.WithAlpha(rectangleElement.Opacity);
+      paint.StrokeWidth = rectangleElement.StrokeWidth;
+      paint.Style = SKPaintStyle.Stroke;
+      canvas.DrawRect(rect, paint);
+    }
+
+    canvas.Restore();
+  }
+
+  private void RenderEllipse(SKCanvas canvas, External.Ellipse ellipseElement, SKPaint paint)
+  {
+    var oval = new SKRect(ellipseElement.Left, ellipseElement.Top, ellipseElement.Right, ellipseElement.Bottom);
+
+    canvas.Save();
+    if (ellipseElement.TransformMatrix != null && ellipseElement.TransformMatrix.Length == 9)
+    {
+      var matrix = new SKMatrix
+      {
+        ScaleX = ellipseElement.TransformMatrix[0],
+        SkewX = ellipseElement.TransformMatrix[1],
+        TransX = ellipseElement.TransformMatrix[2],
+        SkewY = ellipseElement.TransformMatrix[3],
+        ScaleY = ellipseElement.TransformMatrix[4],
+        TransY = ellipseElement.TransformMatrix[5],
+        Persp0 = ellipseElement.TransformMatrix[6],
+        Persp1 = ellipseElement.TransformMatrix[7],
+        Persp2 = ellipseElement.TransformMatrix[8]
+      };
+      canvas.Concat(in matrix);
+    }
+
+    if (!string.IsNullOrEmpty(ellipseElement.FillColor))
+    {
+      SKColor.TryParse(ellipseElement.FillColor, out var fillColor);
+      paint.Color = fillColor.WithAlpha(ellipseElement.Opacity);
+      paint.Style = SKPaintStyle.Fill;
+      canvas.DrawOval(oval, paint);
+    }
+
+    if (!string.IsNullOrEmpty(ellipseElement.StrokeColor) && ellipseElement.StrokeWidth > 0)
+    {
+      SKColor.TryParse(ellipseElement.StrokeColor, out var strokeColor);
+      paint.Color = strokeColor.WithAlpha(ellipseElement.Opacity);
+      paint.StrokeWidth = ellipseElement.StrokeWidth;
+      paint.Style = SKPaintStyle.Stroke;
+      canvas.DrawOval(oval, paint);
+    }
+
+    canvas.Restore();
+  }
+
+  private void RenderLine(SKCanvas canvas, External.Line lineElement, SKPaint paint)
+  {
+    var startPoint = new SKPoint(lineElement.StartX, lineElement.StartY);
+    var endPoint = new SKPoint(lineElement.EndX, lineElement.EndY);
+
+    canvas.Save();
+    if (lineElement.TransformMatrix != null && lineElement.TransformMatrix.Length == 9)
+    {
+      var matrix = new SKMatrix
+      {
+        ScaleX = lineElement.TransformMatrix[0],
+        SkewX = lineElement.TransformMatrix[1],
+        TransX = lineElement.TransformMatrix[2],
+        SkewY = lineElement.TransformMatrix[3],
+        ScaleY = lineElement.TransformMatrix[4],
+        TransY = lineElement.TransformMatrix[5],
+        Persp0 = lineElement.TransformMatrix[6],
+        Persp1 = lineElement.TransformMatrix[7],
+        Persp2 = lineElement.TransformMatrix[8]
+      };
+      canvas.Concat(in matrix);
+    }
+
+    if (!string.IsNullOrEmpty(lineElement.StrokeColor) && lineElement.StrokeWidth > 0)
+    {
+      SKColor.TryParse(lineElement.StrokeColor, out var strokeColor);
+      paint.Color = strokeColor.WithAlpha(lineElement.Opacity);
+      paint.StrokeWidth = lineElement.StrokeWidth;
+      paint.Style = SKPaintStyle.Stroke;
+      canvas.DrawLine(startPoint, endPoint, paint);
+    }
+
+    canvas.Restore();
   }
 
   private SKPath? GetShapePath(BrushShapeType shapeType)

@@ -23,7 +23,7 @@
 
 namespace LunaDraw.Logic.Utils;
 
-public interface IDrawingThumbnailFacade
+public interface IDrawingThumbnailHandler
 {
   Task<string?> GetThumbnailBase64Async(Guid drawingId, int width, int height, Logic.Models.External.Drawing? drawing = null);
   Task<ImageSource?> GetThumbnailAsync(Guid drawingId, int width, int height);

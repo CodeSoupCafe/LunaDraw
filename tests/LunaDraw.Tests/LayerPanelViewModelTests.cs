@@ -123,7 +123,7 @@ namespace LunaDraw.Tests
       // Arrange
       var invalidationCount = 0;
       mockBus.Setup(x => x.SendMessage(It.IsAny<CanvasInvalidateMessage>(), It.IsAny<string>()))
-             .Callback<CanvasInvalidateMessage, string>((_, __) => invalidationCount++);
+             .Callback<CanvasInvalidateMessage, string>((_, _) => invalidationCount++);
 
       // Initial state check (defaults to true)
       Assert.True(viewModel.IsTransparentBackground);

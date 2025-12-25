@@ -38,14 +38,14 @@ namespace LunaDraw.Tests;
 
 public class DrawingStorageMomentoTests : IDisposable
 {
-  private readonly string _testStoragePath;
-  private readonly DrawingStorageMomento _sut; // System Under Test
+  private readonly string testStoragePath;
+  private readonly DrawingStorageMomento sut; // System Under Test
 
   public DrawingStorageMomentoTests()
   {
     // Use a temporary directory for tests
-    _testStoragePath = Path.Combine(Path.GetTempPath(), "LunaDrawTestGallery", Guid.NewGuid().ToString());
-    Directory.CreateDirectory(_testStoragePath);
+    testStoragePath = Path.Combine(Path.GetTempPath(), "LunaDrawTestGallery", Guid.NewGuid().ToString());
+    Directory.CreateDirectory(testStoragePath);
 
     // Mock FileSystem.AppDataDirectory for tests
     // This requires some trickery as FileSystem.AppDataDirectory is static.
@@ -66,7 +66,7 @@ public class DrawingStorageMomentoTests : IDisposable
     // Let's mock FileSystem.AppDataDirectory instead.
     // This is a MAUI specific static class, so mocking it directly is hard.
     // I will change the DrawingStorageMomento constructor to take a path for testing.
-    _sut = new DrawingStorageMomento(_testStoragePath);
+    sut = new DrawingStorageMomento(testStoragePath);
   }
 
   [Fact]
@@ -109,11 +109,11 @@ public class DrawingStorageMomentoTests : IDisposable
 
     var layers = new List<Layer> { layer };
 
-    var savedDrawing = _sut.CreateExternalDrawingFromCurrent(layers, canvasWidth, canvasHeight, drawingName, drawingId);
+    var savedDrawing = sut.CreateExternalDrawingFromCurrent(layers, canvasWidth, canvasHeight, drawingName, drawingId);
 
     // Act
-    await _sut.ExternalDrawingAsync(savedDrawing);
-    var loadedDrawing = await _sut.LoadDrawingAsync(drawingId);
+    await sut.ExternalDrawingAsync(savedDrawing);
+    var loadedDrawing = await sut.LoadDrawingAsync(drawingId);
 
     // Assert
     loadedDrawing.Should().NotBeNull();
@@ -142,7 +142,7 @@ public class DrawingStorageMomentoTests : IDisposable
     loadedElement.ZIndex.Should().Be(drawablePath.ZIndex);
 
     // Restore layers and check actual SKPath data
-    var restoredLayers = _sut.RestoreLayers(loadedDrawing);
+    var restoredLayers = sut.RestoreLayers(loadedDrawing);
     restoredLayers.Should().NotBeEmpty();
     var restoredLayer = restoredLayers.First();
     var restoredDrawablePath = restoredLayer.Elements.First().Should().BeOfType<DrawablePath>().Which;
@@ -151,12 +151,182 @@ public class DrawingStorageMomentoTests : IDisposable
     restoredDrawablePath.Path.ToSvgPathData().Should().Be(drawablePath.Path.ToSvgPathData());
   }
 
+  [Fact]
+  public async Task Should_PreserveRectangleType_When_SerializingAndDeserializing()
+  {
+    // Arrange
+    var drawingId = Guid.NewGuid();
+    var rectangle = new SKRect(10, 20, 100, 80);
+
+    var drawableRectangle = new DrawableRectangle
+    {
+      Id = Guid.NewGuid(),
+      Rectangle = rectangle,
+      IsVisible = true,
+      Opacity = 255,
+      FillColor = SKColors.Green,
+      StrokeColor = SKColors.Black,
+      StrokeWidth = 3,
+      ZIndex = 0
+    };
+
+    var layer = new Layer
+    {
+      Id = Guid.NewGuid(),
+      Name = "Rectangle Layer",
+      IsVisible = true,
+      IsLocked = false,
+      MaskingMode = MaskingMode.None
+    };
+    layer.Elements.Add(drawableRectangle);
+
+    var savedDrawing = sut.CreateExternalDrawingFromCurrent(new List<Layer> { layer }, 800, 600, "Rectangle Test", drawingId);
+
+    // Act
+    await sut.ExternalDrawingAsync(savedDrawing);
+    var loadedDrawing = await sut.LoadDrawingAsync(drawingId);
+
+    // Assert
+    loadedDrawing.Should().NotBeNull();
+    var loadedElement = loadedDrawing.Layers.First().Elements.First();
+    loadedElement.Should().BeOfType<External.Rectangle>();
+
+    var externalRectangle = (External.Rectangle)loadedElement;
+    externalRectangle.Left.Should().Be(rectangle.Left);
+    externalRectangle.Top.Should().Be(rectangle.Top);
+    externalRectangle.Right.Should().Be(rectangle.Right);
+    externalRectangle.Bottom.Should().Be(rectangle.Bottom);
+
+    // Restore and verify it becomes DrawableRectangle
+    var restoredLayers = sut.RestoreLayers(loadedDrawing);
+    var restoredElement = restoredLayers.First().Elements.First();
+    restoredElement.Should().BeOfType<DrawableRectangle>();
+
+    var restoredRectangle = (DrawableRectangle)restoredElement;
+    restoredRectangle.Rectangle.Should().Be(rectangle);
+    restoredRectangle.AnimationProgress.Should().Be(1.0f);
+  }
+
+  [Fact]
+  public async Task Should_PreserveEllipseType_When_SerializingAndDeserializing()
+  {
+    // Arrange
+    var drawingId = Guid.NewGuid();
+    var oval = new SKRect(20, 30, 120, 90);
+
+    var drawableEllipse = new DrawableEllipse
+    {
+      Id = Guid.NewGuid(),
+      Oval = oval,
+      IsVisible = true,
+      Opacity = 200,
+      FillColor = SKColors.Yellow,
+      StrokeColor = SKColors.Red,
+      StrokeWidth = 2,
+      ZIndex = 1
+    };
+
+    var layer = new Layer
+    {
+      Id = Guid.NewGuid(),
+      Name = "Ellipse Layer",
+      IsVisible = true,
+      IsLocked = false,
+      MaskingMode = MaskingMode.None
+    };
+    layer.Elements.Add(drawableEllipse);
+
+    var savedDrawing = sut.CreateExternalDrawingFromCurrent(new List<Layer> { layer }, 800, 600, "Ellipse Test", drawingId);
+
+    // Act
+    await sut.ExternalDrawingAsync(savedDrawing);
+    var loadedDrawing = await sut.LoadDrawingAsync(drawingId);
+
+    // Assert
+    loadedDrawing.Should().NotBeNull();
+    var loadedElement = loadedDrawing.Layers.First().Elements.First();
+    loadedElement.Should().BeOfType<External.Ellipse>();
+
+    var externalEllipse = (External.Ellipse)loadedElement;
+    externalEllipse.Left.Should().Be(oval.Left);
+    externalEllipse.Top.Should().Be(oval.Top);
+    externalEllipse.Right.Should().Be(oval.Right);
+    externalEllipse.Bottom.Should().Be(oval.Bottom);
+
+    // Restore and verify it becomes DrawableEllipse
+    var restoredLayers = sut.RestoreLayers(loadedDrawing);
+    var restoredElement = restoredLayers.First().Elements.First();
+    restoredElement.Should().BeOfType<DrawableEllipse>();
+
+    var restoredEllipse = (DrawableEllipse)restoredElement;
+    restoredEllipse.Oval.Should().Be(oval);
+    restoredEllipse.AnimationProgress.Should().Be(1.0f);
+  }
+
+  [Fact]
+  public async Task Should_PreserveLineType_When_SerializingAndDeserializing()
+  {
+    // Arrange
+    var drawingId = Guid.NewGuid();
+    var startPoint = new SKPoint(10, 20);
+    var endPoint = new SKPoint(100, 120);
+
+    var drawableLine = new DrawableLine
+    {
+      Id = Guid.NewGuid(),
+      StartPoint = startPoint,
+      EndPoint = endPoint,
+      IsVisible = true,
+      Opacity = 255,
+      StrokeColor = SKColors.Blue,
+      StrokeWidth = 5,
+      ZIndex = 2
+    };
+
+    var layer = new Layer
+    {
+      Id = Guid.NewGuid(),
+      Name = "Line Layer",
+      IsVisible = true,
+      IsLocked = false,
+      MaskingMode = MaskingMode.None
+    };
+    layer.Elements.Add(drawableLine);
+
+    var savedDrawing = sut.CreateExternalDrawingFromCurrent(new List<Layer> { layer }, 800, 600, "Line Test", drawingId);
+
+    // Act
+    await sut.ExternalDrawingAsync(savedDrawing);
+    var loadedDrawing = await sut.LoadDrawingAsync(drawingId);
+
+    // Assert
+    loadedDrawing.Should().NotBeNull();
+    var loadedElement = loadedDrawing.Layers.First().Elements.First();
+    loadedElement.Should().BeOfType<External.Line>();
+
+    var externalLine = (External.Line)loadedElement;
+    externalLine.StartX.Should().Be(startPoint.X);
+    externalLine.StartY.Should().Be(startPoint.Y);
+    externalLine.EndX.Should().Be(endPoint.X);
+    externalLine.EndY.Should().Be(endPoint.Y);
+
+    // Restore and verify it becomes DrawableLine
+    var restoredLayers = sut.RestoreLayers(loadedDrawing);
+    var restoredElement = restoredLayers.First().Elements.First();
+    restoredElement.Should().BeOfType<DrawableLine>();
+
+    var restoredLine = (DrawableLine)restoredElement;
+    restoredLine.StartPoint.Should().Be(startPoint);
+    restoredLine.EndPoint.Should().Be(endPoint);
+    restoredLine.AnimationProgress.Should().Be(1.0f);
+  }
+
   public void Dispose()
   {
     // Clean up the temporary directory after tests
-    if (Directory.Exists(_testStoragePath))
+    if (Directory.Exists(testStoragePath))
     {
-      Directory.Delete(_testStoragePath, true);
+      Directory.Delete(testStoragePath, true);
     }
   }
 }

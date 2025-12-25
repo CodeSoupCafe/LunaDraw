@@ -52,7 +52,7 @@ public class BitmapCache : IBitmapCache
     {
       cache.AddOrUpdate(key,
           new WeakReference<SKBitmap>(newBitmap),
-          (_, __) => new WeakReference<SKBitmap>(newBitmap));
+          (_, _) => new WeakReference<SKBitmap>(newBitmap));
     }
 
     return newBitmap ?? new SKBitmap();
@@ -74,7 +74,7 @@ public class BitmapCache : IBitmapCache
       {
         cache.AddOrUpdate(key,
                    new WeakReference<SKBitmap>(newBitmap),
-                   (_, __) => new WeakReference<SKBitmap>(newBitmap));
+                   (_, _) => new WeakReference<SKBitmap>(newBitmap));
       }
 
       return newBitmap ?? new SKBitmap();

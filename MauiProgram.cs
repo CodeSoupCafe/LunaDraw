@@ -90,7 +90,7 @@ public static class MauiProgram
     builder.Services.AddSingleton<IFileSaver>(FileSaver.Default);
     builder.Services.AddSingleton<IDrawingStorageMomento, DrawingStorageMomento>();
     builder.Services.AddSingleton<LunaDraw.Logic.Services.IThumbnailCacheFacade, LunaDraw.Logic.Services.ThumbnailCacheFacade>();
-    builder.Services.AddSingleton<IDrawingThumbnailFacade, DrawingThumbnailFacade>();
+    builder.Services.AddSingleton<IDrawingThumbnailHandler, DrawingThumbnailHandler>();
 
     // Movie Mode Handlers
     builder.Services.AddSingleton<LunaDraw.Logic.Handlers.IRecordingHandler, LunaDraw.Logic.Handlers.RecordingHandler>();

@@ -71,6 +71,9 @@ public class External
 
   [JsonDerivedType(typeof(Path), typeDiscriminator: "P")]
   [JsonDerivedType(typeof(Stamps), typeDiscriminator: "S")]
+  [JsonDerivedType(typeof(Rectangle), typeDiscriminator: "R")]
+  [JsonDerivedType(typeof(Ellipse), typeDiscriminator: "E")]
+  [JsonDerivedType(typeof(Line), typeDiscriminator: "L")]
   public class Element
   {
     [JsonPropertyName("i")]
@@ -133,5 +136,41 @@ public class External
     public float AngleJitter { get; set; }
     [JsonPropertyName("hj")]
     public float HueJitter { get; set; }
+  }
+
+  public class Rectangle : Element
+  {
+    [JsonPropertyName("l")]
+    public float Left { get; set; }
+    [JsonPropertyName("t")]
+    public float Top { get; set; }
+    [JsonPropertyName("r")]
+    public float Right { get; set; }
+    [JsonPropertyName("b")]
+    public float Bottom { get; set; }
+  }
+
+  public class Ellipse : Element
+  {
+    [JsonPropertyName("l")]
+    public float Left { get; set; }
+    [JsonPropertyName("t")]
+    public float Top { get; set; }
+    [JsonPropertyName("r")]
+    public float Right { get; set; }
+    [JsonPropertyName("b")]
+    public float Bottom { get; set; }
+  }
+
+  public class Line : Element
+  {
+    [JsonPropertyName("sx")]
+    public float StartX { get; set; }
+    [JsonPropertyName("sy")]
+    public float StartY { get; set; }
+    [JsonPropertyName("ex")]
+    public float EndX { get; set; }
+    [JsonPropertyName("ey")]
+    public float EndY { get; set; }
   }
 }

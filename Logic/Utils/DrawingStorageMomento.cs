@@ -296,36 +296,32 @@ public class DrawingStorageMomento : IDrawingStorageMomento
         }
         else if (element is DrawableRectangle drawableRect)
         {
-          using var path = new SKPath();
-          path.AddRect(drawableRect.Rectangle);
-          externelElement = new External.Path
+          externelElement = new External.Rectangle
           {
-            PathData = path.ToSvgPathData(),
-            IsFilled = drawableRect.FillColor.HasValue,
-            BlendMode = (int)SKBlendMode.SrcOver
+            Left = drawableRect.Rectangle.Left,
+            Top = drawableRect.Rectangle.Top,
+            Right = drawableRect.Rectangle.Right,
+            Bottom = drawableRect.Rectangle.Bottom
           };
         }
         else if (element is DrawableEllipse drawableEllipse)
         {
-          using var path = new SKPath();
-          path.AddOval(drawableEllipse.Oval);
-          externelElement = new External.Path
+          externelElement = new External.Ellipse
           {
-            PathData = path.ToSvgPathData(),
-            IsFilled = drawableEllipse.FillColor.HasValue,
-            BlendMode = (int)SKBlendMode.SrcOver
+            Left = drawableEllipse.Oval.Left,
+            Top = drawableEllipse.Oval.Top,
+            Right = drawableEllipse.Oval.Right,
+            Bottom = drawableEllipse.Oval.Bottom
           };
         }
         else if (element is DrawableLine drawableLine)
         {
-          using var path = new SKPath();
-          path.MoveTo(drawableLine.StartPoint);
-          path.LineTo(drawableLine.EndPoint);
-          externelElement = new External.Path
+          externelElement = new External.Line
           {
-            PathData = path.ToSvgPathData(),
-            IsFilled = false,
-            BlendMode = (int)SKBlendMode.SrcOver
+            StartX = drawableLine.StartPoint.X,
+            StartY = drawableLine.StartPoint.Y,
+            EndX = drawableLine.EndPoint.X,
+            EndY = drawableLine.EndPoint.Y
           };
         }
         else if (element is DrawableStamps drawableStamps)
@@ -412,6 +408,31 @@ public class DrawingStorageMomento : IDrawingStorageMomento
               Path = SKPath.ParseSvgPathData(savedPath.PathData),
               IsFilled = savedPath.IsFilled,
               BlendMode = (SKBlendMode)savedPath.BlendMode
+            };
+          }
+          else if (savedElement is External.Rectangle savedRectangle)
+          {
+            element = new DrawableRectangle
+            {
+              Id = savedElement.Id,
+              Rectangle = new SKRect(savedRectangle.Left, savedRectangle.Top, savedRectangle.Right, savedRectangle.Bottom)
+            };
+          }
+          else if (savedElement is External.Ellipse savedEllipse)
+          {
+            element = new DrawableEllipse
+            {
+              Id = savedElement.Id,
+              Oval = new SKRect(savedEllipse.Left, savedEllipse.Top, savedEllipse.Right, savedEllipse.Bottom)
+            };
+          }
+          else if (savedElement is External.Line savedLine)
+          {
+            element = new DrawableLine
+            {
+              Id = savedElement.Id,
+              StartPoint = new SKPoint(savedLine.StartX, savedLine.StartY),
+              EndPoint = new SKPoint(savedLine.EndX, savedLine.EndY)
             };
           }
           else if (savedElement is External.Stamps savedStamps)

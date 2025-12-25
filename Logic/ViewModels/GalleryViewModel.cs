@@ -23,6 +23,7 @@
 
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Utils;
+using LunaDraw.Logic.Messages;
 using ReactiveUI;
 using System.Collections.ObjectModel;
 using System.Reactive;
@@ -32,33 +33,27 @@ namespace LunaDraw.Logic.ViewModels;
 public class GalleryViewModel : ReactiveObject
 {
   private readonly IDrawingStorageMomento drawingStorageMomento;
-  private ObservableCollection<External.Drawing> _drawings = new();
-  private External.Drawing? _selectedDrawing;
-  private bool _isLoading;
+  private readonly IMessageBus messageBus;
+  private ObservableCollection<External.Drawing> drawings = new();
+  private External.Drawing? selectedDrawing;
+  private bool isLoading;
 
   public ObservableCollection<External.Drawing> Drawings
   {
-    get => _drawings;
-    set => this.RaiseAndSetIfChanged(ref _drawings, value);
-  }
-
-  private bool _isNewDrawingRequested;
-  public bool IsNewDrawingRequested
-  {
-    get => _isNewDrawingRequested;
-    set => this.RaiseAndSetIfChanged(ref _isNewDrawingRequested, value);
+    get => drawings;
+    set => this.RaiseAndSetIfChanged(ref drawings, value);
   }
 
   public External.Drawing? SelectedDrawing
   {
-    get => _selectedDrawing;
-    set => this.RaiseAndSetIfChanged(ref _selectedDrawing, value);
+    get => selectedDrawing;
+    set => this.RaiseAndSetIfChanged(ref selectedDrawing, value);
   }
 
   public bool IsLoading
   {
-    get => _isLoading;
-    set => this.RaiseAndSetIfChanged(ref _isLoading, value);
+    get => isLoading;
+    set => this.RaiseAndSetIfChanged(ref isLoading, value);
   }
 
   public ReactiveCommand<Unit, Unit> LoadDrawingsCommand { get; }
@@ -71,12 +66,13 @@ public class GalleryViewModel : ReactiveObject
   // but we can have a command to trigger the flow if needed. 
   // For now, let's keep Export logic local to the ViewCell or pass a Func provider.
 
-  public GalleryViewModel(IDrawingStorageMomento drawingStorageMomento)
+  public GalleryViewModel(IDrawingStorageMomento drawingStorageMomento, IMessageBus messageBus)
   {
     this.drawingStorageMomento = drawingStorageMomento;
+    this.messageBus = messageBus;
 
     LoadDrawingsCommand = ReactiveCommand.CreateFromTask(LoadDrawingsAsync);
-    NewDrawingCommand = ReactiveCommand.Create(() => { });
+    NewDrawingCommand = ReactiveCommand.Create(() => messageBus.SendMessage(new NewDrawingMessage()));
     OpenDrawingCommand = ReactiveCommand.Create(() => SelectedDrawing);
     DeleteDrawingCommand = ReactiveCommand.CreateFromTask<External.Drawing>(DeleteDrawingAsync);
     DuplicateDrawingCommand = ReactiveCommand.CreateFromTask<External.Drawing>(DuplicateDrawingAsync);

@@ -1,4 +1,4 @@
-/* 
+﻿/* 
  *  Copyright (c) 2025 CodeSoupCafe LLC
  *  
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -23,7 +23,6 @@
 
 using Android.App;
 using Android.Content.PM;
-using Android.OS;
 
 namespace CarouselPerformance;
 

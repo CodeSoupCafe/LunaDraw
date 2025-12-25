@@ -35,46 +35,46 @@ namespace LunaDraw.Tests.Features.MovieMode;
 
 public class SerializationTests : IDisposable
 {
-    private readonly DrawingStorageMomento _storage;
-    private readonly string _tempPath;
+  private readonly DrawingStorageMomento storage;
+  private readonly string tempPath;
 
-    public SerializationTests()
+  public SerializationTests()
+  {
+    tempPath = Path.Combine(Path.GetTempPath(), "LunaDrawTests_" + Guid.NewGuid());
+    Directory.CreateDirectory(tempPath);
+    storage = new DrawingStorageMomento(tempPath);
+  }
+
+  [Fact]
+  public void CreateExternalDrawing_Should_Persist_CreatedAt_Timestamp()
+  {
+    // Arrange
+    var createdAt = DateTimeOffset.Now.AddMinutes(-5);
+    var layer = new Layer { Id = Guid.NewGuid(), Name = "TestLayer" };
+    var element = new DrawablePath
     {
-        _tempPath = Path.Combine(Path.GetTempPath(), "LunaDrawTests_" + Guid.NewGuid());
-        Directory.CreateDirectory(_tempPath);
-        _storage = new DrawingStorageMomento(_tempPath);
-    }
+      Id = Guid.NewGuid(),
+      CreatedAt = createdAt,
+      Path = new SKPath()
+    };
+    layer.Elements.Add(element);
+    var layers = new List<Layer> { layer };
 
-    [Fact]
-    public void CreateExternalDrawing_Should_Persist_CreatedAt_Timestamp()
+    // Act
+    var externalDrawing = storage.CreateExternalDrawingFromCurrent(layers, 100, 100, "TestDrawing", Guid.NewGuid());
+    var restoredLayers = storage.RestoreLayers(externalDrawing);
+
+    // Assert
+    restoredLayers.Should().ContainSingle();
+    restoredLayers[0].Elements.Should().ContainSingle();
+    restoredLayers[0].Elements[0].CreatedAt.Should().Be(createdAt);
+  }
+
+  public void Dispose()
+  {
+    if (Directory.Exists(tempPath))
     {
-        // Arrange
-        var createdAt = DateTimeOffset.Now.AddMinutes(-5);
-        var layer = new Layer { Id = Guid.NewGuid(), Name = "TestLayer" };
-        var element = new DrawablePath
-        {
-            Id = Guid.NewGuid(),
-            CreatedAt = createdAt,
-            Path = new SKPath()
-        };
-        layer.Elements.Add(element);
-        var layers = new List<Layer> { layer };
-
-        // Act
-        var externalDrawing = _storage.CreateExternalDrawingFromCurrent(layers, 100, 100, "TestDrawing", Guid.NewGuid());
-        var restoredLayers = _storage.RestoreLayers(externalDrawing);
-        
-        // Assert
-        restoredLayers.Should().ContainSingle();
-        restoredLayers[0].Elements.Should().ContainSingle();
-        restoredLayers[0].Elements[0].CreatedAt.Should().Be(createdAt);
+      Directory.Delete(tempPath, true);
     }
-
-    public void Dispose()
-    {
-        if (Directory.Exists(_tempPath))
-        {
-            Directory.Delete(_tempPath, true);
-        }
-    }
+  }
 }
