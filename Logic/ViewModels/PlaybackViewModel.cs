@@ -72,11 +72,18 @@ public class PlaybackViewModel : ReactiveObject
   {
     try
     {
+      // Navigate to PlaybackPage to hide UI
+      await Shell.Current.GoToAsync(nameof(Pages.PlaybackPage));
+      
+      // Give it a moment to render the initial state (blank canvas)
+      await Task.Delay(1000);
+
       // Start screen recording
       var started = await screenRecording.StartRecording();
       if (!started)
       {
-        await Application.Current?.MainPage?.DisplayAlertAsync(
+        await Shell.Current.GoToAsync(".."); // Go back
+        await Shell.Current.CurrentPage.DisplayAlert(
             "Error",
             "Failed to start screen recording. Please check permissions.",
             "OK");
@@ -91,20 +98,26 @@ public class PlaybackViewModel : ReactiveObject
       {
         await Task.Delay(100);
       }
+      
+      // Allow a moment for the final frame to be recorded
+      await Task.Delay(1000);
 
       // Stop recording and save
       var result = await screenRecording.StopRecording();
 
+      // Go back to main page
+      await Shell.Current.GoToAsync("..");
+
       if (result != null && !string.IsNullOrEmpty(result.FullPath))
       {
-        await Application.Current?.MainPage?.DisplayAlertAsync(
+        await Shell.Current.CurrentPage.DisplayAlert(
             "Success",
             $"Video exported successfully to:\n{result.FullPath}",
             "OK");
       }
       else
       {
-        await Application.Current?.MainPage?.DisplayAlertAsync(
+        await Shell.Current.CurrentPage.DisplayAlert(
             "Error",
             "Failed to export video.",
             "OK");
@@ -112,7 +125,10 @@ public class PlaybackViewModel : ReactiveObject
     }
     catch (Exception ex)
     {
-      await Application.Current?.MainPage?.DisplayAlertAsync(
+      // Attempt to go back if we stuck
+      try { await Shell.Current.GoToAsync(".."); } catch {}
+
+      await Shell.Current.CurrentPage.DisplayAlert(
           "Error",
           $"An error occurred: {ex.Message}",
           "OK");

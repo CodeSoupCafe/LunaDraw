@@ -95,6 +95,7 @@ public static class MauiProgram
     // Movie Mode Handlers
     builder.Services.AddSingleton<LunaDraw.Logic.Handlers.IRecordingHandler, LunaDraw.Logic.Handlers.RecordingHandler>();
     builder.Services.AddSingleton<LunaDraw.Logic.Handlers.IPlaybackHandler, LunaDraw.Logic.Handlers.PlaybackHandler>();
+    builder.Services.AddSingleton<Plugin.Maui.ScreenRecording.IScreenRecording>(Plugin.Maui.ScreenRecording.ScreenRecording.Default);
 
     // Register ViewModels
     builder.Services.AddSingleton<LayerPanelViewModel>();
@@ -109,6 +110,7 @@ public static class MauiProgram
 
     // Register Pages
     builder.Services.AddTransient<MainPage>();
+    builder.Services.AddTransient<PlaybackPage>();
 
 #if DEBUG
     builder.Logging.AddDebug();

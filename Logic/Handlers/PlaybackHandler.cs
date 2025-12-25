@@ -130,14 +130,10 @@ public class PlaybackHandler : IPlaybackHandler
   private void PrepareCanvasForPlayback()
   {
     // Reset elements to invisible/start state
-    // Only animate paths, stamps, and lines - shapes should pop-in immediately
+    // All elements start invisible and either animate in or pop in
     foreach (var element in playbackQueue)
     {
-      bool shouldAnimate = element is DrawablePath ||
-                          element is DrawableStamps ||
-                          element is DrawableLine;
-
-      element.AnimationProgress = shouldAnimate ? 0f : 1.0f;
+      element.AnimationProgress = 0f;
     }
 
     currentIndex = 0;
@@ -166,11 +162,10 @@ public class PlaybackHandler : IPlaybackHandler
     var currentElement = playbackQueue[currentIndex];
 
     // Identify if this element should be DRAWN or if it should just POP-IN
-    // DRAWN: Paths, Stamps, Lines (User strokes)
-    // POP-IN: Rectangles, Ellipses, Images, Groups
+    // DRAWN: Paths, Stamps (User strokes)
+    // POP-IN: Rectangles, Ellipses, Images, Groups, Lines
     bool shouldDraw = currentElement is DrawablePath ||
-                      currentElement is DrawableStamps ||
-                      currentElement is DrawableLine;
+                      currentElement is DrawableStamps;
 
     if (shouldDraw)
     {
@@ -197,11 +192,6 @@ public class PlaybackHandler : IPlaybackHandler
       {
         // Stamps also take time to draw
         targetDuration = 0.5f / playbackSpeedMultiplier;
-      }
-      else if (currentElement is DrawableLine line)
-      {
-        // Lines also take time to draw
-        targetDuration = 0.2f / playbackSpeedMultiplier;
       }
 
       float increment = FrameTimeSeconds / targetDuration;
