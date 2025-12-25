@@ -22,10 +22,10 @@
  */
 
 using System.Reactive;
-using LunaDraw.Logic.Handlers;
 using LunaDraw.Logic.Models;
 using ReactiveUI;
 using Plugin.Maui.ScreenRecording;
+using LunaDraw.Logic.Playback;
 
 namespace LunaDraw.Logic.ViewModels;
 
@@ -74,16 +74,21 @@ public class PlaybackViewModel : ReactiveObject
     {
       // Navigate to PlaybackPage to hide UI
       await Shell.Current.GoToAsync(nameof(Pages.PlaybackPage));
-      
+
       // Give it a moment to render the initial state (blank canvas)
       await Task.Delay(1000);
 
       // Start screen recording
-      var started = await screenRecording.StartRecording();
+      var started = await screenRecording.StartRecording(new()
+      {
+        EnableMicrophone = false,
+        SaveToGallery = true
+      });
+
       if (!started)
       {
         await Shell.Current.GoToAsync(".."); // Go back
-        await Shell.Current.CurrentPage.DisplayAlert(
+        await Shell.Current.CurrentPage.DisplayAlertAsync(
             "Error",
             "Failed to start screen recording. Please check permissions.",
             "OK");
@@ -98,7 +103,7 @@ public class PlaybackViewModel : ReactiveObject
       {
         await Task.Delay(100);
       }
-      
+
       // Allow a moment for the final frame to be recorded
       await Task.Delay(1000);
 
@@ -110,14 +115,14 @@ public class PlaybackViewModel : ReactiveObject
 
       if (result != null && !string.IsNullOrEmpty(result.FullPath))
       {
-        await Shell.Current.CurrentPage.DisplayAlert(
+        await Shell.Current.CurrentPage.DisplayAlertAsync(
             "Success",
             $"Video exported successfully to:\n{result.FullPath}",
             "OK");
       }
       else
       {
-        await Shell.Current.CurrentPage.DisplayAlert(
+        await Shell.Current.CurrentPage.DisplayAlertAsync(
             "Error",
             "Failed to export video.",
             "OK");
@@ -126,9 +131,9 @@ public class PlaybackViewModel : ReactiveObject
     catch (Exception ex)
     {
       // Attempt to go back if we stuck
-      try { await Shell.Current.GoToAsync(".."); } catch {}
+      try { await Shell.Current.GoToAsync(".."); } catch { }
 
-      await Shell.Current.CurrentPage.DisplayAlert(
+      await Shell.Current.CurrentPage.DisplayAlertAsync(
           "Error",
           $"An error occurred: {ex.Message}",
           "OK");

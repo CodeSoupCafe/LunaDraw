@@ -22,9 +22,10 @@
  */
 
 using System.Reactive;
-using LunaDraw.Logic.Utils;
+using LunaDraw.Logic.Drawing;
 using ReactiveUI;
 using LunaDraw.Logic.Models;
+using LunaDraw.Logic.Storage;
 
 namespace LunaDraw.Logic.ViewModels;
 
@@ -90,6 +91,6 @@ public class HistoryViewModel : ReactiveObject
     var currentLayerId = layerFacade.CurrentLayer?.Id;
     layerFacade.CurrentLayer = layerFacade.Layers.FirstOrDefault(l => l.Id == currentLayerId) ?? layerFacade.Layers.FirstOrDefault();
 
-    messageBus.SendMessage(new LunaDraw.Logic.Messages.CanvasInvalidateMessage());
+    messageBus.SendMessage(new Messages.CanvasInvalidateMessage());
   }
 }

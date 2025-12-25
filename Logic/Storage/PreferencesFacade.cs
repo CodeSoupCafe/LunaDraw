@@ -23,7 +23,7 @@
 
 using CodeSoupCafe.Maui.Models;
 
-namespace LunaDraw.Logic.Utils;
+namespace LunaDraw.Logic.Storage;
 
 public enum AppPreference
 {

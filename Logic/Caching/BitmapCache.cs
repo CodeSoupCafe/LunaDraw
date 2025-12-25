@@ -25,7 +25,7 @@ using SkiaSharp;
 using System.Collections.Concurrent;
 using LunaDraw.Logic.Extensions;
 
-namespace LunaDraw.Logic.Utils;
+namespace LunaDraw.Logic.Caching;
 
 public interface IBitmapCache : IDisposable
 {

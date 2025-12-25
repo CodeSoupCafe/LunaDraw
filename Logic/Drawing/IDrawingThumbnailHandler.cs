@@ -21,21 +21,13 @@
  *  
  */
 
-namespace LunaDraw.Logic.Models;
+namespace LunaDraw.Logic.Drawing;
 
-/// <summary>
-/// Represents a single recorded action in the drawing history.
-/// Currently wraps an IDrawableElement with its creation timestamp.
-/// </summary>
-public class DrawingEvent
+public interface IDrawingThumbnailHandler
 {
-  public DateTimeOffset Timestamp { get; set; }
-  public string EventType { get; set; } = "Add"; // Default to "Add" for now
-  public IDrawableElement Element { get; set; }
-
-  public DrawingEvent(IDrawableElement element)
-  {
-    Element = element;
-    Timestamp = element.CreatedAt;
-  }
+  Task<string?> GetThumbnailBase64Async(Guid drawingId, int width, int height, Models.External.Drawing? drawing = null);
+  Task<ImageSource?> GetThumbnailAsync(Guid drawingId, int width, int height);
+  Task<ImageSource?> GenerateThumbnailAsync(Models.External.Drawing drawing, int width, int height);
+  Task InvalidateThumbnailAsync(Guid drawingId);
+  Task ClearCacheAsync();
 }

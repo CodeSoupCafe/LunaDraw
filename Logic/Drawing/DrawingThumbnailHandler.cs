@@ -21,12 +21,12 @@
  *  
  */
 
+using LunaDraw.Logic.Caching;
 using LunaDraw.Logic.Models;
-using LunaDraw.Logic.Services;
 using SkiaSharp;
 using System.Collections.Concurrent;
 
-namespace LunaDraw.Logic.Utils;
+namespace LunaDraw.Logic.Drawing;
 
 public class DrawingThumbnailHandler : IDrawingThumbnailHandler
 {
@@ -42,7 +42,7 @@ public class DrawingThumbnailHandler : IDrawingThumbnailHandler
     this.thumbnailCacheFacade = thumbnailCacheFacade;
   }
 
-  public async Task<string?> GetThumbnailBase64Async(Guid drawingId, int width, int height, Logic.Models.External.Drawing? drawing = null)
+  public async Task<string?> GetThumbnailBase64Async(Guid drawingId, int width, int height, External.Drawing? drawing = null)
   {
     // Check persistent cache first
     var cachedBase64 = await thumbnailCacheFacade.GetThumbnailBase64Async(drawingId);
@@ -95,7 +95,7 @@ public class DrawingThumbnailHandler : IDrawingThumbnailHandler
     return thumbnail;
   }
 
-  public Task<ImageSource?> GenerateThumbnailAsync(Logic.Models.External.Drawing drawing, int width, int height)
+  public Task<ImageSource?> GenerateThumbnailAsync(External.Drawing drawing, int width, int height)
   {
     try
     {
@@ -152,7 +152,7 @@ public class DrawingThumbnailHandler : IDrawingThumbnailHandler
     }
   }
 
-  private Task<string?> GenerateThumbnailBase64Async(Logic.Models.External.Drawing drawing, int width, int height)
+  private Task<string?> GenerateThumbnailBase64Async(External.Drawing drawing, int width, int height)
   {
     try
     {
@@ -238,7 +238,7 @@ public class DrawingThumbnailHandler : IDrawingThumbnailHandler
     }
   }
 
-  private void RenderPath(SKCanvas canvas, External.Path pathElement, SKPaint paint)
+  private static void RenderPath(SKCanvas canvas, External.Path pathElement, SKPaint paint)
   {
     if (string.IsNullOrEmpty(pathElement.PathData))
     {
@@ -352,7 +352,7 @@ public class DrawingThumbnailHandler : IDrawingThumbnailHandler
     canvas.Restore();
   }
 
-  private void RenderEllipse(SKCanvas canvas, External.Ellipse ellipseElement, SKPaint paint)
+  private static void RenderEllipse(SKCanvas canvas, External.Ellipse ellipseElement, SKPaint paint)
   {
     var oval = new SKRect(ellipseElement.Left, ellipseElement.Top, ellipseElement.Right, ellipseElement.Bottom);
 

@@ -94,6 +94,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Folder Include="Logic\Drawing\" />
 	  <Folder Include="Logic\Services\" />
 	</ItemGroup>
 </Project>

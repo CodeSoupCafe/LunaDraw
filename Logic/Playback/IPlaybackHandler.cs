@@ -21,14 +21,42 @@
  *  
  */
 
-using SkiaSharp;
-using SkiaSharp.Views.Maui;
+using LunaDraw.Logic.Models;
 
-// For SKCanvasView
+namespace LunaDraw.Logic.Playback;
 
-namespace LunaDraw.Logic.Utils;
-
-public interface ICanvasInputHandler
+/// <summary>
+/// Controls the playback of the drawing history.
+/// </summary>
+public interface IPlaybackHandler
 {
-  void ProcessTouch(SKTouchEventArgs e, SKRect canvasViewPort);
+  /// <summary>
+  /// Current state of playback.
+  /// </summary>
+  IObservable<PlaybackState> CurrentState { get; }
+
+  bool IsPlaying { get; }
+
+  /// <summary>
+  /// Prepares the playback sequence from a list of layers.
+  /// Extracts all elements, sorts by CreatedAt, and prepares the queue.
+  /// </summary>
+  /// <param name="layers">The layers to reconstruct.</param>
+  void Load(IEnumerable<Layer> layers);
+
+  /// <summary>
+  /// Starts or Resumes playback.
+  /// </summary>
+  /// <param name="speed">Desired playback speed.</param>
+  Task PlayAsync(PlaybackSpeed speed);
+
+  /// <summary>
+  /// Pauses playback.
+  /// </summary>
+  Task PauseAsync();
+
+  /// <summary>
+  /// Stops playback and resets to the final state (or initial state depending on UX).
+  /// </summary>
+  Task StopAsync();
 }

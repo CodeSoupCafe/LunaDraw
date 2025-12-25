@@ -21,16 +21,22 @@
  *  
  */
 
-namespace LunaDraw.Logic.Utils;
+using System.Collections.ObjectModel;
+using LunaDraw.Logic.Models;
+using LunaDraw.Logic.Storage;
 
-public interface IPreferencesFacade
+namespace LunaDraw.Logic.Drawing;
+
+public interface ILayerFacade
 {
-
-  string Get(AppPreference key);
-
-  T Get<T>(AppPreference key);
-
-  void Set(AppPreference key, bool value);
-
-  void Set<T>(AppPreference key, T? value) => Preferences.Set(key.ToString(), value?.ToString());
+  ObservableCollection<Layer> Layers { get; }
+  Layer? CurrentLayer { get; set; }
+  HistoryMemento HistoryMemento { get; }
+  void AddLayer();
+  void RemoveLayer(Layer layer);
+  void MoveLayerForward(Layer layer);
+  void MoveLayerBackward(Layer layer);
+  void MoveLayer(int oldIndex, int newIndex);
+  void MoveElementsToLayer(IEnumerable<IDrawableElement> elements, Layer targetLayer);
+  void SaveState();
 }

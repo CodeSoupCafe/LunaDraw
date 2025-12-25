@@ -27,7 +27,7 @@ using System.Reactive.Linq;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using LunaDraw.Logic.Models;
-using LunaDraw.Logic.Utils;
+using LunaDraw.Logic.Drawing;
 using LunaDraw.Logic.Messages;
 using CodeSoupCafe.Maui.Infrastructure;
 using CodeSoupCafe.Maui.Models;
@@ -200,10 +200,10 @@ public class DrawingGalleryPopupViewModel : ReactiveObject, IDisposable
 
   public event EventHandler? RequestClose;
 
-  public Action<CodeSoupCafe.Maui.Models.ISortable> OnItemAppearing => HandleItemAppearing;
-  public Action<CodeSoupCafe.Maui.Models.ISortable> OnItemDisappearing => HandleItemDisappearing;
+  public Action<ISortable> OnItemAppearing => HandleItemAppearing;
+  public Action<ISortable> OnItemDisappearing => HandleItemDisappearing;
 
-  private void HandleItemAppearing(CodeSoupCafe.Maui.Models.ISortable item)
+  private void HandleItemAppearing(ISortable item)
   {
     if (item is DrawingItemViewModel viewModel)
     {
@@ -212,7 +212,7 @@ public class DrawingGalleryPopupViewModel : ReactiveObject, IDisposable
     }
   }
 
-  private void HandleItemDisappearing(CodeSoupCafe.Maui.Models.ISortable item)
+  private void HandleItemDisappearing(ISortable item)
   {
     // Optional: unload thumbnail to save memory for very large galleries
     // For now, keep thumbnails loaded once fetched (they're cached)
@@ -266,31 +266,39 @@ public class DrawingGalleryPopupViewModel : ReactiveObject, IDisposable
   {
     if (item?.Drawing == null) return;
 
-    bool confirmed = await Application.Current?.MainPage?.DisplayAlertAsync(
+    var page = Application.Current?.Windows[0]?.Page;
+    if (page != null)
+    {
+      var confirmed = await page.DisplayAlertAsync(
         "Delete Drawing",
         $"Are you sure you want to delete '{item.Title}'?",
         "Delete",
         "Cancel");
 
-    if (!confirmed) return;
-    await galleryViewModel.DeleteDrawingCommand.Execute(item.Drawing).GetAwaiter();
+      if (!confirmed) return;
+      await galleryViewModel.DeleteDrawingCommand.Execute(item.Drawing).GetAwaiter();
+    }
   }
 
   private async Task RenameDrawingAsync(DrawingItemViewModel item)
   {
     if (item?.Drawing == null) return;
 
-    string newName = await Application.Current?.MainPage?.DisplayPromptAsync(
-        "Rename Drawing",
-        "Enter new name:",
-        initialValue: item.Title,
-        maxLength: 50,
-        placeholder: "Drawing name") ?? string.Empty;
+    var page = Application.Current?.Windows[0]?.Page;
+    if (page != null)
+    {
+      var newName = await page.DisplayPromptAsync(
+          "Rename Drawing",
+          "Enter new name:",
+          initialValue: item.Title,
+          maxLength: 50,
+          placeholder: "Drawing name") ?? string.Empty;
 
-    if (string.IsNullOrWhiteSpace(newName)) return;
+      if (string.IsNullOrWhiteSpace(newName)) return;
 
-    await galleryViewModel.RenameDrawing(item.Drawing, newName);
-    messageBus.SendMessage(new DrawingListChangedMessage(item.Drawing.Id));
+      await galleryViewModel.RenameDrawing(item.Drawing, newName);
+      messageBus.SendMessage(new DrawingListChangedMessage(item.Drawing.Id));
+    }
   }
 
   public void Dispose()
@@ -304,7 +312,7 @@ public class DrawingGalleryPopupViewModel : ReactiveObject, IDisposable
 /// Wrapper class that provides lazy thumbnail loading for External.Drawing.
 /// Inherits from ItemState for compatibility with CodeSoupCafe.Maui.Carousel library.
 /// </summary>
-public class DrawingItemViewModel : CodeSoupCafe.Maui.Models.ItemState, INotifyPropertyChanged
+public class DrawingItemViewModel : ItemState, INotifyPropertyChanged
 {
   private readonly External.Drawing drawing;
   private string? thumbnailBase64;

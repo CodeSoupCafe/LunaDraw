@@ -25,7 +25,6 @@ using System.Reactive.Linq;
 
 using LunaDraw.Logic.Extensions;
 using LunaDraw.Logic.Messages;
-using LunaDraw.Logic.Utils;
 using LunaDraw.Logic.ViewModels;
 
 using ReactiveUI;
@@ -33,6 +32,7 @@ using ReactiveUI;
 using SkiaSharp;
 using SkiaSharp.Views.Maui;
 using SkiaSharp.Views.Maui.Controls;
+using LunaDraw.Logic.Storage;
 
 namespace LunaDraw.Components;
 

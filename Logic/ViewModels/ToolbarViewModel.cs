@@ -26,13 +26,15 @@ using System.Reactive.Linq;
 using CommunityToolkit.Maui.Storage;
 
 using LunaDraw.Logic.Models;
-using LunaDraw.Logic.Utils;
+using LunaDraw.Logic.Drawing;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Tools;
 
 using ReactiveUI;
 
 using SkiaSharp;
+using LunaDraw.Logic.Caching;
+using LunaDraw.Logic.Storage;
 
 namespace LunaDraw.Logic.ViewModels;
 

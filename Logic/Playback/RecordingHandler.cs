@@ -21,21 +21,20 @@
  *  
  */
 
-using System.Collections.ObjectModel;
 using LunaDraw.Logic.Models;
 
-namespace LunaDraw.Logic.Utils;
+namespace LunaDraw.Logic.Playback;
 
-public interface ILayerFacade
+public class RecordingHandler : IRecordingHandler
 {
-  ObservableCollection<Layer> Layers { get; }
-  Layer? CurrentLayer { get; set; }
-  HistoryMemento HistoryMemento { get; }
-  void AddLayer();
-  void RemoveLayer(Layer layer);
-  void MoveLayerForward(Layer layer);
-  void MoveLayerBackward(Layer layer);
-  void MoveLayer(int oldIndex, int newIndex);
-  void MoveElementsToLayer(IEnumerable<IDrawableElement> elements, Layer targetLayer);
-  void SaveState();
+  public void RecordCreation(IDrawableElement element)
+  {
+    if (element == null) return;
+
+    // If the element doesn't have a timestamp yet, give it one.
+    if (element.CreatedAt == default)
+    {
+      element.CreatedAt = DateTimeOffset.Now;
+    }
+  }
 }

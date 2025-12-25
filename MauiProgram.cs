@@ -24,7 +24,7 @@
 using CommunityToolkit.Maui;
 using CommunityToolkit.Maui.Storage;
 using Microsoft.Maui.LifecycleEvents;
-using LunaDraw.Logic.Utils;
+using LunaDraw.Logic.Drawing;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.ViewModels;
 using LunaDraw.Pages;
@@ -33,6 +33,9 @@ using Microsoft.Extensions.Logging;
 using ReactiveUI;
 using SkiaSharp.Views.Maui.Controls.Hosting;
 using Splat;
+using LunaDraw.Logic.Caching;
+using LunaDraw.Logic.Storage;
+using LunaDraw.Logic.Playback;
 
 #if WINDOWS
 using Microsoft.UI.Xaml.Media;
@@ -85,17 +88,17 @@ public static class MauiProgram
     // Register Logic Services
     builder.Services.AddSingleton<ICanvasInputHandler, CanvasInputHandler>();
     builder.Services.AddSingleton<ClipboardMemento>();
-    builder.Services.AddSingleton<IBitmapCache, LunaDraw.Logic.Utils.BitmapCache>();
+    builder.Services.AddSingleton<IBitmapCache, Logic.Caching.BitmapCache>();
     builder.Services.AddSingleton<IPreferencesFacade, PreferencesFacade>();
-    builder.Services.AddSingleton<IFileSaver>(FileSaver.Default);
+    builder.Services.AddSingleton(FileSaver.Default);
     builder.Services.AddSingleton<IDrawingStorageMomento, DrawingStorageMomento>();
-    builder.Services.AddSingleton<LunaDraw.Logic.Services.IThumbnailCacheFacade, LunaDraw.Logic.Services.ThumbnailCacheFacade>();
+    builder.Services.AddSingleton<IThumbnailCacheFacade, ThumbnailCacheFacade>();
     builder.Services.AddSingleton<IDrawingThumbnailHandler, DrawingThumbnailHandler>();
 
     // Movie Mode Handlers
-    builder.Services.AddSingleton<LunaDraw.Logic.Handlers.IRecordingHandler, LunaDraw.Logic.Handlers.RecordingHandler>();
-    builder.Services.AddSingleton<LunaDraw.Logic.Handlers.IPlaybackHandler, LunaDraw.Logic.Handlers.PlaybackHandler>();
-    builder.Services.AddSingleton<Plugin.Maui.ScreenRecording.IScreenRecording>(Plugin.Maui.ScreenRecording.ScreenRecording.Default);
+    builder.Services.AddSingleton<IRecordingHandler, RecordingHandler>();
+    builder.Services.AddSingleton<IPlaybackHandler, PlaybackHandler>();
+    builder.Services.AddSingleton(Plugin.Maui.ScreenRecording.ScreenRecording.Default);
 
     // Register ViewModels
     builder.Services.AddSingleton<LayerPanelViewModel>();

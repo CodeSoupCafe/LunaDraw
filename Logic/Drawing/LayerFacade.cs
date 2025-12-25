@@ -23,12 +23,13 @@
 
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using LunaDraw.Logic.Handlers;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
+using LunaDraw.Logic.Playback;
+using LunaDraw.Logic.Storage;
 using ReactiveUI;
 
-namespace LunaDraw.Logic.Utils;
+namespace LunaDraw.Logic.Drawing;
 
 public class LayerFacade : ReactiveObject, ILayerFacade
 {
@@ -76,16 +77,16 @@ public class LayerFacade : ReactiveObject, ILayerFacade
 
   private void SetupLayerMonitoring(Layer layer)
   {
-      layer.Elements.CollectionChanged += (s, args) =>
+    layer.Elements.CollectionChanged += (s, args) =>
+    {
+      if (args.NewItems != null)
       {
-          if (args.NewItems != null)
-          {
-              foreach (IDrawableElement element in args.NewItems)
-              {
-                  recordingHandler.RecordCreation(element);
-              }
-          }
-      };
+        foreach (IDrawableElement element in args.NewItems)
+        {
+          recordingHandler.RecordCreation(element);
+        }
+      }
+    };
   }
 
   public void AddLayer()

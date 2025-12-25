@@ -23,7 +23,7 @@
 
 using SkiaSharp;
 
-namespace LunaDraw.Logic.Utils;
+namespace LunaDraw.Logic.Caching;
 
 public class QuadTreeMemento<T>(int level, SKRect bounds, Func<T, SKRect> getBounds) where T : class
 {

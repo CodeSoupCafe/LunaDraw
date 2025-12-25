@@ -22,7 +22,7 @@
  */
 
 using LunaDraw.Logic.Messages;
-using LunaDraw.Logic.Utils;
+using LunaDraw.Logic.Drawing;
 using LunaDraw.Logic.ViewModels;
 using LunaDraw.Logic.Extensions;
 using LunaDraw.Logic.Constants;
@@ -31,6 +31,7 @@ using ReactiveUI;
 
 using SkiaSharp;
 using SkiaSharp.Views.Maui;
+using LunaDraw.Logic.Storage;
 
 namespace LunaDraw.Pages;
 

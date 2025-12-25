@@ -21,7 +21,7 @@
  *
  *  */
 
-namespace LunaDraw.Logic.Services;
+namespace LunaDraw.Logic.Caching;
 
 public class ThumbnailCacheFacade : IThumbnailCacheFacade
 {

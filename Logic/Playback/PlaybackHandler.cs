@@ -23,12 +23,12 @@
 
 using System.Reactive.Subjects;
 using LunaDraw.Logic.Models;
-using LunaDraw.Logic.Utils;
+using LunaDraw.Logic.Drawing;
 using LunaDraw.Logic.Messages;
 using ReactiveUI;
 using SkiaSharp;
 
-namespace LunaDraw.Logic.Handlers;
+namespace LunaDraw.Logic.Playback;
 
 public class PlaybackHandler : IPlaybackHandler
 {

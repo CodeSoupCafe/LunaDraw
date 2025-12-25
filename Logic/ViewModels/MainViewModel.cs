@@ -26,7 +26,7 @@ using System.Windows.Input;
 using System.Reactive.Linq;
 using System.Reactive;
 
-using LunaDraw.Logic.Utils;
+using LunaDraw.Logic.Drawing;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Tools;
@@ -37,6 +37,7 @@ using ReactiveUI;
 using SkiaSharp;
 using SkiaSharp.Views.Maui;
 using CommunityToolkit.Maui.Extensions;
+using LunaDraw.Logic.Storage;
 
 namespace LunaDraw.Logic.ViewModels;
 
@@ -223,7 +224,7 @@ public class MainViewModel : ReactiveObject
     // Listen for ShowAdvancedSettingsMessage
     this.messageBus.Listen<ShowAdvancedSettingsMessage>().Subscribe(async _ =>
     {
-      var popup = new Components.AdvancedSettingsPopup(this);
+      var popup = new AdvancedSettingsPopup(this);
       var page = Application.Current?.Windows[0]?.Page;
       if (page != null)
       {

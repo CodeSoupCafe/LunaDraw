@@ -22,41 +22,24 @@
  */
 
 using LunaDraw.Logic.Models;
+using ReactiveUI;
 
-namespace LunaDraw.Logic.Handlers;
+namespace LunaDraw.Logic.Storage;
 
-/// <summary>
-/// Controls the playback of the drawing history.
-/// </summary>
-public interface IPlaybackHandler
+public class ClipboardMemento : ReactiveObject
 {
-  /// <summary>
-  /// Current state of playback.
-  /// </summary>
-  IObservable<PlaybackState> CurrentState { get; }
+  private List<IDrawableElement> clipboard = new();
 
-  bool IsPlaying { get; }
+  public void Copy(IEnumerable<IDrawableElement> elements)
+  {
+    clipboard = elements.Select(e => e.Clone()).ToList();
+    this.RaisePropertyChanged(nameof(HasItems));
+  }
 
-  /// <summary>
-  /// Prepares the playback sequence from a list of layers.
-  /// Extracts all elements, sorts by CreatedAt, and prepares the queue.
-  /// </summary>
-  /// <param name="layers">The layers to reconstruct.</param>
-  void Load(IEnumerable<Layer> layers);
+  public IEnumerable<IDrawableElement> Paste()
+  {
+    return clipboard.Select(e => e.Clone());
+  }
 
-  /// <summary>
-  /// Starts or Resumes playback.
-  /// </summary>
-  /// <param name="speed">Desired playback speed.</param>
-  Task PlayAsync(PlaybackSpeed speed);
-
-  /// <summary>
-  /// Pauses playback.
-  /// </summary>
-  Task PauseAsync();
-
-  /// <summary>
-  /// Stops playback and resets to the final state (or initial state depending on UX).
-  /// </summary>
-  Task StopAsync();
+  public bool HasItems => clipboard.Count > 0;
 }

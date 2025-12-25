@@ -21,20 +21,14 @@
  *  
  */
 
-using LunaDraw.Logic.Models;
+using SkiaSharp;
+using SkiaSharp.Views.Maui;
 
-namespace LunaDraw.Logic.Handlers;
+// For SKCanvasView
 
-public class RecordingHandler : IRecordingHandler
+namespace LunaDraw.Logic.Drawing;
+
+public interface ICanvasInputHandler
 {
-    public void RecordCreation(IDrawableElement element)
-    {
-        if (element == null) return;
-        
-        // If the element doesn't have a timestamp yet, give it one.
-        if (element.CreatedAt == default)
-        {
-            element.CreatedAt = DateTimeOffset.Now;
-        }
-    }
+  void ProcessTouch(SKTouchEventArgs e, SKRect canvasViewPort);
 }

@@ -21,18 +21,16 @@
  *  
  */
 
-using LunaDraw.Logic.Models;
+namespace LunaDraw.Logic.Storage;
 
-namespace LunaDraw.Logic.Handlers;
-
-/// <summary>
-/// Manages the recording of drawing events (creation timestamps).
-/// </summary>
-public interface IRecordingHandler
+public interface IPreferencesFacade
 {
-    /// <summary>
-    /// Stamps the element with the current time.
-    /// Call this when a new element is added to the canvas.
-    /// </summary>
-    void RecordCreation(IDrawableElement element);
+
+  string Get(AppPreference key);
+
+  T Get<T>(AppPreference key);
+
+  void Set(AppPreference key, bool value);
+
+  void Set<T>(AppPreference key, T? value) => Preferences.Set(key.ToString(), value?.ToString());
 }

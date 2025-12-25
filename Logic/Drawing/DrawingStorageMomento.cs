@@ -27,7 +27,7 @@ using SkiaSharp;
 using System.Text.Json.Serialization;
 using LunaDraw.Logic.Constants;
 
-namespace LunaDraw.Logic.Utils;
+namespace LunaDraw.Logic.Drawing;
 
 public interface IDrawingStorageMomento
 {

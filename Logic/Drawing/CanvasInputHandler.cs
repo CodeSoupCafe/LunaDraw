@@ -25,12 +25,12 @@ using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Tools;
 using LunaDraw.Logic.ViewModels;
-using LunaDraw.Logic.Handlers;
+using LunaDraw.Logic.Playback;
 using ReactiveUI;
 using SkiaSharp;
 using SkiaSharp.Views.Maui;
 
-namespace LunaDraw.Logic.Utils;
+namespace LunaDraw.Logic.Drawing;
 
 public class CanvasInputHandler(
     ToolbarViewModel toolbarViewModel,

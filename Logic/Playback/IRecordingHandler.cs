@@ -21,13 +21,18 @@
  *  
  */
 
-namespace LunaDraw.Logic.Utils;
+using LunaDraw.Logic.Models;
 
-public interface IDrawingThumbnailHandler
+namespace LunaDraw.Logic.Playback;
+
+/// <summary>
+/// Manages the recording of drawing events (creation timestamps).
+/// </summary>
+public interface IRecordingHandler
 {
-  Task<string?> GetThumbnailBase64Async(Guid drawingId, int width, int height, Logic.Models.External.Drawing? drawing = null);
-  Task<ImageSource?> GetThumbnailAsync(Guid drawingId, int width, int height);
-  Task<ImageSource?> GenerateThumbnailAsync(Logic.Models.External.Drawing drawing, int width, int height);
-  Task InvalidateThumbnailAsync(Guid drawingId);
-  Task ClearCacheAsync();
+  /// <summary>
+  /// Stamps the element with the current time.
+  /// Call this when a new element is added to the canvas.
+  /// </summary>
+  void RecordCreation(IDrawableElement element);
 }

@@ -24,9 +24,10 @@
 using System.Collections.ObjectModel;
 using System.Reactive;
 using System.Reactive.Linq;
-using LunaDraw.Logic.Utils;
+using LunaDraw.Logic.Drawing;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
+using LunaDraw.Logic.Storage;
 using ReactiveUI;
 using SkiaSharp;
 

@@ -21,8 +21,8 @@
  *  
  */
 
-using LunaDraw.Logic.Utils;
 using LunaDraw.Logic.Messages;
+using LunaDraw.Logic.Storage;
 using ReactiveUI;
 
 namespace LunaDraw;
@@ -33,7 +33,7 @@ public partial class App : Application
 
   public App(IPreferencesFacade preferencesFacade, IMessageBus messageBus)
   {
-    messageBus = messageBus;
+    this.messageBus = messageBus;
     InitializeComponent();
 
     var theme = preferencesFacade.Get(AppPreference.AppTheme);

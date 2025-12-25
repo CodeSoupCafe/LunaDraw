@@ -29,7 +29,7 @@ using System.Windows.Input;
 
 namespace CarouselPerformance;
 
-public class MainViewModel : INotifyPropertyChanged
+public partial class MainViewModel : INotifyPropertyChanged
 {
   private bool isBusy;
   private string status;
@@ -150,8 +150,8 @@ public class MainViewModel : INotifyPropertyChanged
     });
   }
 
-  public event PropertyChangedEventHandler PropertyChanged;
-  protected void OnPropertyChanged([CallerMemberName] string name = null)
+  public event PropertyChangedEventHandler? PropertyChanged;
+  protected void OnPropertyChanged([CallerMemberName] string name = default!)
   {
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
   }
