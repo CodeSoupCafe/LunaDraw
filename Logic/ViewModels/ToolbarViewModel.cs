@@ -47,6 +47,7 @@ public class ToolbarViewModel : ReactiveObject
   private readonly IBitmapCache bitmapCacheManager;
   private readonly NavigationModel navigationModel;
   private readonly IFileSaver fileSaver;
+  private readonly IDrawingStorageMomento drawingStorageMomento;
 
   // Tool State Properties
   private IDrawingTool activeTool;
@@ -187,6 +188,7 @@ public class ToolbarViewModel : ReactiveObject
   public ReactiveCommand<Unit, Unit> ShowBrushesFlyoutCommand { get; }
   public ReactiveCommand<BrushShape, Unit> SelectBrushShapeCommand { get; }
   public ReactiveCommand<Unit, Unit> ImportImageCommand { get; }
+  public ReactiveCommand<Unit, Unit> ShowGalleryCommand { get; }
   public ReactiveCommand<Unit, Unit> ShowAdvancedSettingsCommand { get; }
   public ReactiveCommand<Unit, Unit> ShowMovieModeCommand { get; }
 
@@ -237,7 +239,8 @@ public class ToolbarViewModel : ReactiveObject
       IBitmapCache bitmapCacheManager,
       NavigationModel navigationModel,
       IFileSaver fileSaver,
-      IPreferencesFacade preferencesFacade)
+      IPreferencesFacade preferencesFacade,
+      IDrawingStorageMomento drawingStorageMomento)
   {
     this.layerFacade = layerFacade;
     this.selectionVM = selectionVM;
@@ -246,6 +249,7 @@ public class ToolbarViewModel : ReactiveObject
     this.bitmapCacheManager = bitmapCacheManager;
     this.navigationModel = navigationModel;
     this.fileSaver = fileSaver;
+    this.drawingStorageMomento = drawingStorageMomento;
 
     // Listen for ViewOptions changes
     this.messageBus.Listen<ViewOptionsChangedMessage>().Subscribe(msg =>
@@ -406,6 +410,11 @@ public class ToolbarViewModel : ReactiveObject
     ShowAdvancedSettingsCommand = ReactiveCommand.Create(() =>
     {
       messageBus.SendMessage(new ShowAdvancedSettingsMessage());
+    });
+
+    ShowGalleryCommand = ReactiveCommand.CreateFromTask(async () =>
+    {
+      messageBus.SendMessage(new ShowGalleryMessage());
     });
 
     ShowMovieModeCommand = ReactiveCommand.Create(() =>

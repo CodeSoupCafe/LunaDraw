@@ -81,11 +81,6 @@
                 Style="{StaticResource ZoomButtonStyle}"
                 Command="{Binding ZoomInCommand}"
                 ToolTipProperties.Text="Zoom In"/>
-        <Button Text="G"
-                Style="{StaticResource ZoomButtonStyle}"
-                Command="{Binding ShowGalleryCommand}"
-                ToolTipProperties.Text="Gallery"
-                IsVisible="true"/>
       </HorizontalStackLayout>
 
       <!-- Mini Map -->
@@ -108,7 +103,8 @@
     <!-- Playback Controls (Bottom Center) -->
     <components:PlaybackControls AbsoluteLayout.LayoutBounds="0.5, 1, -1, -1"
                                  AbsoluteLayout.LayoutFlags="PositionProportional"
-                                 IsVisible="{Binding IsPlaybackControlsVisible}" />
+                                 BindingContext="{Binding PlaybackViewModel}"
+                                 IsVisible="{Binding Source={RelativeSource AncestorType={x:Type viewModels:MainViewModel}}, Path=IsPlaybackControlsVisible}" />
 
   </AbsoluteLayout>
 </ContentPage>

@@ -56,7 +56,8 @@
                                 SearchPlaceholder="Search drawings..."
                                 EmptyMessage="No drawings yet. Start creating!"
                                 GridSpanCount="3"
-                                IsGridMode="True">
+                                IsGridMode="True"
+                                VerticalOptions="FillAndExpand">
         <controls:ItemGalleryView.ItemTemplate>
           <DataTemplate x:DataType="viewModels:DrawingItemViewModel">
             <!-- Custom drawing thumbnail template -->
@@ -133,7 +134,9 @@
       <!-- Footer buttons -->
       <Grid Grid.Row="2"
             ColumnDefinitions="*, *"
-            ColumnSpacing="15">
+            ColumnSpacing="15"
+            ZIndex="99"
+            BackgroundColor="{AppThemeBinding Light={StaticResource PopupBackgroundLight}, Dark={StaticResource PopupBackgroundDark}}">
 
         <Button Grid.Column="0"
                 Text="New Drawing"

@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LunaDraw", "LunaDraw.csproj
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CarouselPerformance", "tests\CarouselPerformance\CarouselPerformance.csproj", "{21BC460B-7DA2-4CCF-B6C4-F535C4A223D1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LunaDraw.Tests", "tests\LunaDraw.Tests\LunaDraw.Tests.csproj", "{21BC460B-7DA2-4CCF-B6C4-F535C4A223D1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

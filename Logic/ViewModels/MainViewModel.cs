@@ -74,14 +74,12 @@ public class MainViewModel : ReactiveObject
   public LayerPanelViewModel LayerPanelVM { get; }
   public SelectionViewModel SelectionVM { get; }
   public HistoryViewModel HistoryVM { get; }
-  private readonly GalleryViewModel galleryViewModel;
 
   // Commands
   public ICommand ZoomInCommand { get; }
   public ICommand ZoomOutCommand { get; }
   public ICommand ResetZoomCommand { get; }
 
-  public ReactiveCommand<Unit, Unit> ShowGalleryCommand { get; }
   public ReactiveCommand<External.Drawing, Unit> LoadDrawingCommand { get; }
   public ReactiveCommand<string?, Unit> ExternaDrawingCommand { get; }
   public ReactiveCommand<Unit, Unit> NewDrawingCommand { get; }
@@ -162,7 +160,6 @@ public class MainViewModel : ReactiveObject
     LayerPanelViewModel layerPanelVM,
     SelectionViewModel selectionVM,
     HistoryViewModel historyVM,
-    GalleryViewModel galleryViewModel,
     IServiceProvider serviceProvider)
   {
     ToolbarViewModel = toolbarViewModel;
@@ -177,19 +174,12 @@ public class MainViewModel : ReactiveObject
     LayerPanelVM = layerPanelVM;
     SelectionVM = selectionVM;
     HistoryVM = historyVM;
-    this.galleryViewModel = galleryViewModel;
     this.serviceProvider = serviceProvider;
 
     // Initialize Drawing Commands
     LoadDrawingCommand = ReactiveCommand.CreateFromTask<External.Drawing>(LoadDrawingAsync);
     ExternaDrawingCommand = ReactiveCommand.CreateFromTask<string?>(ExternalDrawingAsync);
     NewDrawingCommand = ReactiveCommand.CreateFromTask(NewDrawingAsync);
-    ShowGalleryCommand = ReactiveCommand.CreateFromTask(async () =>
-    {
-      // Ensure the latest changes are saved before opening the gallery
-      await ExternalDrawingAsync(null);
-      messageBus.SendMessage(new ShowGalleryMessage());
-    });
 
     this.messageBus.Listen<OpenDrawingMessage>()
         .ObserveOn(RxApp.MainThreadScheduler)

@@ -61,9 +61,29 @@
       <ScrollView Orientation="Vertical"
                   VerticalScrollBarVisibility="Never"
                   HorizontalScrollBarVisibility="Never">
-        <VerticalStackLayout HorizontalOptions="Center"
-                             Spacing="8">
-          <StackLayout HorizontalOptions="Center">
+        <Grid ColumnDefinitions="*, *"
+              RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto"
+              ColumnSpacing="8"
+              RowSpacing="8"
+              HorizontalOptions="Center">
+
+          <!-- Row 0 -->
+          <StackLayout Grid.Row="0"
+                       Grid.Column="0"
+                       HorizontalOptions="Center">
+            <Button x:Name="GalleryButton"
+                    Style="{StaticResource ToolbarButtonStyle}"
+                    Text="📂"
+                    ToolTipProperties.Text="Gallery"
+                    Command="{Binding ShowGalleryCommand}"/>
+            <Label Text="Gallery"
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding ShowButtonLabels}"/>
+          </StackLayout>
+
+          <StackLayout Grid.Row="0"
+                       Grid.Column="1"
+                       HorizontalOptions="Center">
             <Button x:Name="SelectButton"
                     Style="{StaticResource ToolbarButtonStyle}"
                     Text="⬚"
@@ -89,7 +109,11 @@
                    HorizontalTextAlignment="Center"
                    IsVisible="{Binding ShowButtonLabels}"/>
           </StackLayout>
-          <StackLayout HorizontalOptions="Center">
+
+          <!-- Row 1 -->
+          <StackLayout Grid.Row="1"
+                       Grid.Column="0"
+                       HorizontalOptions="Center">
             <Button x:Name="SettingsButton"
                     Style="{StaticResource ToolbarButtonStyle}"
                     Text="🌈"
@@ -99,7 +123,10 @@
                    HorizontalTextAlignment="Center"
                    IsVisible="{Binding ShowButtonLabels}"/>
           </StackLayout>
-          <StackLayout HorizontalOptions="Center">
+
+          <StackLayout Grid.Row="1"
+                       Grid.Column="1"
+                       HorizontalOptions="Center">
             <Border x:Name="BrushButton"
                     WidthRequest="72"
                     HeightRequest="72"
@@ -134,7 +161,24 @@
                    HorizontalTextAlignment="Center"
                    IsVisible="{Binding ShowButtonLabels}"/>
           </StackLayout>
-          <StackLayout HorizontalOptions="Center">
+
+          <!-- Row 2 -->
+          <StackLayout Grid.Row="2"
+                       Grid.Column="0"
+                       HorizontalOptions="Center">
+            <Button x:Name="ImageButton"
+                    Style="{StaticResource ToolbarButtonStyle}"
+                    Text="🖼️"
+                    ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_ImportImage}"
+                    Command="{Binding ImportImageCommand}"/>
+            <Label Text="{x:Static strings:AppResources.Label_Image}"
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding ShowButtonLabels}"/>
+          </StackLayout>
+
+          <StackLayout Grid.Row="2"
+                       Grid.Column="1"
+                       HorizontalOptions="Center">
             <Border x:Name="ShapesButton"
                     WidthRequest="72"
                     HeightRequest="72"
@@ -172,18 +216,23 @@
                    IsVisible="{Binding ShowButtonLabels}"/>
           </StackLayout>
 
-          <StackLayout HorizontalOptions="Center">
-            <Button x:Name="ImageButton"
+          <!-- Row 3 -->
+          <StackLayout Grid.Row="3"
+                       Grid.Column="0"
+                       HorizontalOptions="Center">
+            <Button x:Name="MovieModeButton"
                     Style="{StaticResource ToolbarButtonStyle}"
-                    Text="🖼️"
-                    ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_ImportImage}"
-                    Command="{Binding ImportImageCommand}"/>
-            <Label Text="{x:Static strings:AppResources.Label_Image}"
+                    Text="🎬"
+                    ToolTipProperties.Text="Movie Mode"
+                    Command="{Binding ShowMovieModeCommand}"/>
+            <Label Text="Movie"
                    HorizontalTextAlignment="Center"
                    IsVisible="{Binding ShowButtonLabels}"/>
           </StackLayout>
 
-          <StackLayout HorizontalOptions="Center">
+          <StackLayout Grid.Row="3"
+                       Grid.Column="1"
+                       HorizontalOptions="Center">
             <Button x:Name="EraserButton"
                     Style="{StaticResource ToolbarButtonStyle}"
                     Text="🧽"
@@ -210,18 +259,24 @@
                    IsVisible="{Binding ShowButtonLabels}"/>
           </StackLayout>
 
-          <StackLayout HorizontalOptions="Center">
-            <Button x:Name="MovieModeButton"
+          <!-- Row 4 -->
+          <StackLayout Grid.Row="4"
+                       Grid.Column="0"
+                       HorizontalOptions="Center">
+            <Button x:Name="ViewOptionsButton"
                     Style="{StaticResource ToolbarButtonStyle}"
-                    Text="🎬"
-                    ToolTipProperties.Text="Movie Mode"
-                    Command="{Binding ShowMovieModeCommand}"/>
-            <Label Text="Movie"
+                    Text="⚙️"
+                    ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_ViewOptions}"
+                    Command="{Binding ShowAdvancedSettingsCommand}">
+            </Button>
+            <Label Text="{x:Static strings:AppResources.Label_ViewOptions}"
                    HorizontalTextAlignment="Center"
                    IsVisible="{Binding ShowButtonLabels}"/>
           </StackLayout>
 
-          <StackLayout HorizontalOptions="Center">
+          <StackLayout Grid.Row="4"
+                       Grid.Column="1"
+                       HorizontalOptions="Center">
             <Button x:Name="DeleteButton"
                     Style="{StaticResource ToolbarButtonStyle}"
                     Text="🗑️"
@@ -232,11 +287,17 @@
                    IsVisible="{Binding ShowButtonLabels}"/>
           </StackLayout>
 
-          <BoxView HeightRequest="2"
+          <!-- Row 5: Separator -->
+          <BoxView Grid.Row="5"
+                   Grid.ColumnSpan="2"
+                   HeightRequest="2"
                    Color="Gray"
                    Margin="0,4"/>
 
-          <StackLayout HorizontalOptions="Center">
+          <!-- Row 6 -->
+          <StackLayout Grid.Row="6"
+                       Grid.Column="0"
+                       HorizontalOptions="Center">
             <Button x:Name="UndoButton"
                     Style="{StaticResource ToolbarButtonStyle}"
                     Text="↺"
@@ -247,7 +308,10 @@
                    HorizontalTextAlignment="Center"
                    IsVisible="{Binding ShowButtonLabels}"/>
           </StackLayout>
-          <StackLayout HorizontalOptions="Center">
+
+          <StackLayout Grid.Row="6"
+                       Grid.Column="1"
+                       HorizontalOptions="Center">
             <Button x:Name="RedoButton"
                     Style="{StaticResource ToolbarButtonStyle}"
                     Text="↻"
@@ -259,22 +323,14 @@
                    IsVisible="{Binding ShowButtonLabels}"/>
           </StackLayout>
 
-          <BoxView HeightRequest="2"
+          <!-- Row 7: Separator -->
+          <BoxView Grid.Row="7"
+                   Grid.ColumnSpan="2"
+                   HeightRequest="2"
                    Color="Gray"
                    Margin="0,4"/>
 
-          <StackLayout HorizontalOptions="Center">
-            <Button x:Name="ViewOptionsButton"
-                    Style="{StaticResource ToolbarButtonStyle}"
-                    Text="⚙️"
-                    ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_ViewOptions}"
-                    Command="{Binding ShowAdvancedSettingsCommand}">
-            </Button>
-            <Label Text="{x:Static strings:AppResources.Label_ViewOptions}"
-                   HorizontalTextAlignment="Center"
-                   IsVisible="{Binding ShowButtonLabels}"/>
-          </StackLayout>
-        </VerticalStackLayout>
+        </Grid>
       </ScrollView>
     </Border>
   </ScrollView>
