@@ -67,7 +67,15 @@
 		<!-- Images -->
 		<MauiImage Include="Resources\Images\*" />
     <MauiImage Update="Resources\Images\icon_more_vert.svg" Resize="True" BaseSize="24,24" TintColor="#000000" />
-		
+    <MauiImage Update="Resources\Images\icon_select.svg" Resize="True" BaseSize="42,42" />
+    <MauiImage Update="Resources\Images\icon_selected.svg" Resize="True" BaseSize="42,42" />
+    <MauiImage Update="Resources\Images\icon_movie.svg" Resize="True" BaseSize="42,42" />
+    <MauiImage Update="Resources\Images\icon_colors.svg" Resize="True" BaseSize="42,42" />
+    <MauiImage Update="Resources\Images\icon_gallery.svg" Resize="True" BaseSize="50,50" />
+    <MauiImage Update="Resources\Images\icon_image.svg" Resize="True" BaseSize="42,42" />
+    <MauiImage Update="Resources\Images\icon_eraser.svg" Resize="True" BaseSize="42,42" />
+    <MauiImage Update="Resources\Images\icon_settings.svg" Resize="True" BaseSize="36,36" />
+    
 		<!-- Custom Fonts -->
 		<MauiFont Include="Resources\Fonts\*" />
 

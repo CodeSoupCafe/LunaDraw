@@ -73,8 +73,8 @@
                        HorizontalOptions="Center">
             <Button x:Name="GalleryButton"
                     Style="{StaticResource ToolbarButtonStyle}"
-                    Text="📂"
-                    ToolTipProperties.Text="Gallery"
+                    ImageSource="icon_gallery.png"
+                    ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_Gallery}"
                     Command="{Binding ShowGalleryCommand}"/>
             <Label Text="Gallery"
                    HorizontalTextAlignment="Center"
@@ -86,8 +86,8 @@
                        HorizontalOptions="Center">
             <Button x:Name="SelectButton"
                     Style="{StaticResource ToolbarButtonStyle}"
-                    Text="⬚"
-                    ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_SelectTool}"
+                    ImageSource="icon_select.png"
+                    ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_Select}"
                     Command="{Binding SelectToolCommand}"
                     CommandParameter="{Binding AvailableTools[0]}">
               <Button.Triggers>
@@ -96,6 +96,8 @@
                              Value="True">
                   <Setter Property="BackgroundColor"
                           Value="{StaticResource Secondary}"/>
+                  <Setter Property="ImageSource"
+                          Value="icon_selected.png"/>
                 </DataTrigger>
                 <DataTrigger TargetType="Button"
                              Binding="{Binding ActiveTool, Converter={StaticResource IsToolActiveConverter}, ConverterParameter='SelectTool'}"
@@ -116,8 +118,8 @@
                        HorizontalOptions="Center">
             <Button x:Name="SettingsButton"
                     Style="{StaticResource ToolbarButtonStyle}"
-                    Text="🌈"
                     ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_Styles}"
+                    ImageSource="icon_colors.png"
                     Command="{Binding ShowSettingsCommand}"/>
             <Label Text="{x:Static strings:AppResources.Label_Styles}"
                    HorizontalTextAlignment="Center"
@@ -168,8 +170,8 @@
                        HorizontalOptions="Center">
             <Button x:Name="ImageButton"
                     Style="{StaticResource ToolbarButtonStyle}"
-                    Text="🖼️"
                     ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_ImportImage}"
+                    ImageSource="icon_image.png"
                     Command="{Binding ImportImageCommand}"/>
             <Label Text="{x:Static strings:AppResources.Label_Image}"
                    HorizontalTextAlignment="Center"
@@ -222,8 +224,8 @@
                        HorizontalOptions="Center">
             <Button x:Name="MovieModeButton"
                     Style="{StaticResource ToolbarButtonStyle}"
-                    Text="🎬"
-                    ToolTipProperties.Text="Movie Mode"
+                    ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_MovieMode}"
+                    ImageSource="icon_movie.png"
                     Command="{Binding ShowMovieModeCommand}"/>
             <Label Text="Movie"
                    HorizontalTextAlignment="Center"
@@ -235,8 +237,8 @@
                        HorizontalOptions="Center">
             <Button x:Name="EraserButton"
                     Style="{StaticResource ToolbarButtonStyle}"
-                    Text="🧽"
                     ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_Eraser}"
+                    ImageSource="icon_eraser.png"
                     Command="{Binding SelectToolCommand}"
                     CommandParameter="{Binding AvailableTools[6]}">
               <Button.Triggers>
@@ -265,8 +267,8 @@
                        HorizontalOptions="Center">
             <Button x:Name="ViewOptionsButton"
                     Style="{StaticResource ToolbarButtonStyle}"
-                    Text="⚙️"
                     ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_ViewOptions}"
+                    ImageSource="icon_settings.png"
                     Command="{Binding ShowAdvancedSettingsCommand}">
             </Button>
             <Label Text="{x:Static strings:AppResources.Label_ViewOptions}"
