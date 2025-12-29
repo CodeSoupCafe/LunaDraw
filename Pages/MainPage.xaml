@@ -17,16 +17,27 @@
         <ColumnDefinition Width="Auto"/>
         <ColumnDefinition Width="*"/>
       </Grid.ColumnDefinitions>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="*"/>
+      </Grid.RowDefinitions>
 
-      <views:ToolbarView Grid.Column="0"
+      <views:ToolbarView Grid.RowSpan="2"
                          x:Name="toolbarView"/>
 
-      <skiasharp:SKGLView Grid.Column="1"
-                          x:Name="canvasView"
-                          PaintSurface="OnCanvasViewPaintSurface"
-                          EnableTouchEvents="True"
-                          Touch="OnTouch"
-                          IgnorePixelScaling="False">
+      <!--Top Toolbar(only above canvas)-->
+      <components:TopToolbarView x:Name="TopToolbar"
+                                 Grid.Column="1"
+                                 BindingContext="{Binding ToolbarViewModel}"/>
+
+      <skiasharp:SKGLView
+        Grid.Row="1"
+        Grid.Column="1"
+        x:Name="canvasView"
+        PaintSurface="OnCanvasViewPaintSurface"
+        EnableTouchEvents="True"
+        Touch="OnTouch"
+        IgnorePixelScaling="False">
         <skiasharp:SKGLView.GestureRecognizers>
           <TapGestureRecognizer Tapped="OnCanvasTapped"/>
         </skiasharp:SKGLView.GestureRecognizers>
@@ -81,11 +92,7 @@
                 Style="{StaticResource ZoomButtonStyle}"
                 Command="{Binding ZoomInCommand}"
                 ToolTipProperties.Text="Zoom In"/>
-        <Button Text="G"
-                Style="{StaticResource ZoomButtonStyle}"
-                Command="{Binding ShowGalleryCommand}"
-                ToolTipProperties.Text="Gallery"
-                IsVisible="true"/>
+
       </HorizontalStackLayout>
 
       <!-- Mini Map -->
@@ -108,7 +115,7 @@
     <!-- Playback Controls (Bottom Center) -->
     <components:PlaybackControls AbsoluteLayout.LayoutBounds="0.5, 1, -1, -1"
                                  AbsoluteLayout.LayoutFlags="PositionProportional"
-                                 IsVisible="{Binding IsPlaybackControlsVisible}" />
+                                 IsVisible="{Binding IsPlaybackControlsVisible}"/>
 
   </AbsoluteLayout>
 </ContentPage>

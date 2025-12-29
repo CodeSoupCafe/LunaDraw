@@ -29,6 +29,7 @@ using LunaDraw.Logic.Handlers;
 using ReactiveUI;
 using SkiaSharp;
 using SkiaSharp.Views.Maui;
+using LunaDraw.Logic.Drawing;
 
 namespace LunaDraw.Logic.Utils;
 

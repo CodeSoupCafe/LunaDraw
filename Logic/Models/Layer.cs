@@ -23,7 +23,7 @@
 
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using LunaDraw.Logic.Utils;
+using LunaDraw.Logic.Caching;
 using ReactiveUI;
 using SkiaSharp;
 

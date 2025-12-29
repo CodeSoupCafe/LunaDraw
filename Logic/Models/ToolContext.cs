@@ -21,7 +21,7 @@
  *  
  */
 
-using LunaDraw.Logic.Utils;
+using LunaDraw.Logic.Drawing;
 using SkiaSharp;
 
 namespace LunaDraw.Logic.Models;

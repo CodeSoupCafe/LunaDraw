@@ -51,6 +51,51 @@ public class NavigationModel : ReactiveObject
     set => this.RaiseAndSetIfChanged(ref canvasHeight, value);
   }
 
+  /// <summary>
+  /// Gets the current scale (zoom level) from the ViewMatrix.
+  /// A value of 1.0 means 100% (no zoom), 2.0 means 200% (zoomed in 2x), etc.
+  /// </summary>
+  public float Scale => viewMatrix.ScaleX;
+
+  /// <summary>
+  /// Zooms in by increasing the scale by 25%.
+  /// </summary>
+  public void ZoomIn()
+  {
+    var newScale = viewMatrix.ScaleX * 1.25f;
+    newScale = Math.Min(newScale, 10.0f); // Max 1000% zoom
+    ApplyScale(newScale);
+  }
+
+  /// <summary>
+  /// Zooms out by decreasing the scale by 20%.
+  /// </summary>
+  public void ZoomOut()
+  {
+    var newScale = viewMatrix.ScaleX * 0.8f;
+    newScale = Math.Max(newScale, 0.1f); // Min 10% zoom
+    ApplyScale(newScale);
+  }
+
+  /// <summary>
+  /// Resets zoom to 100% (scale = 1.0) while preserving pan offset.
+  /// </summary>
+  public void ResetZoom()
+  {
+    ApplyScale(1.0f);
+  }
+
+  /// <summary>
+  /// Applies a new scale to the ViewMatrix while preserving translation.
+  /// </summary>
+  private void ApplyScale(float newScale)
+  {
+    var currentTranslateX = viewMatrix.TransX;
+    var currentTranslateY = viewMatrix.TransY;
+
+    ViewMatrix = SKMatrix.CreateScaleTranslation(newScale, newScale, currentTranslateX, currentTranslateY);
+  }
+
   public void Reset()
   {
     ViewMatrix = SKMatrix.CreateIdentity();

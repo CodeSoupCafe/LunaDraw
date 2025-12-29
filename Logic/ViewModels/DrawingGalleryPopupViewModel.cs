@@ -119,8 +119,6 @@ public class DrawingGalleryPopupViewModel : ReactiveObject, IDisposable
       .ObserveOn(RxApp.MainThreadScheduler)
       .Subscribe(async msg =>
       {
-        System.Diagnostics.Debug.WriteLine($"[DrawingGalleryPopup] DrawingListChangedMessage received. DrawingId: {msg.DrawingId}");
-
         if (msg.DrawingId.HasValue)
         {
           var drawingId = msg.DrawingId.Value;
@@ -146,8 +144,6 @@ public class DrawingGalleryPopupViewModel : ReactiveObject, IDisposable
 
           if (existingItem != null)
           {
-            System.Diagnostics.Debug.WriteLine($"[DrawingGalleryPopup] Updating existing item: {drawingId}");
-
             // Update metadata
             existingItem.UpdateDrawingMetadata(updatedDrawing);
             existingItem.ThumbnailBase64 = null; // Force reload on next appear
@@ -179,8 +175,6 @@ public class DrawingGalleryPopupViewModel : ReactiveObject, IDisposable
           }
           else
           {
-            System.Diagnostics.Debug.WriteLine($"[DrawingGalleryPopup] Adding new item: {drawingId}");
-
             // New drawing created externally
             var newItem = new DrawingItemViewModel(updatedDrawing);
             DrawingItems.Insert(0, newItem); // Assume newest
@@ -192,7 +186,6 @@ public class DrawingGalleryPopupViewModel : ReactiveObject, IDisposable
         else
         {
           // Full reload requested
-          System.Diagnostics.Debug.WriteLine($"[DrawingGalleryPopup] Full reload requested via message");
           await LoadDrawingsAsync();
         }
       });
@@ -224,10 +217,7 @@ public class DrawingGalleryPopupViewModel : ReactiveObject, IDisposable
 
     try
     {
-      System.Diagnostics.Debug.WriteLine("[DrawingGalleryPopup] Loading drawings...");
       await galleryViewModel.LoadDrawingsCommand.Execute().GetAwaiter();
-
-      System.Diagnostics.Debug.WriteLine($"[DrawingGalleryPopup] GalleryViewModel.Drawings count: {galleryViewModel.Drawings.Count}");
 
       DrawingItems.ClearAndStaySilent();
 
@@ -236,20 +226,13 @@ public class DrawingGalleryPopupViewModel : ReactiveObject, IDisposable
         .Select(drawing => new DrawingItemViewModel(drawing))
         .ToList();
 
-      System.Diagnostics.Debug.WriteLine($"[DrawingGalleryPopup] Created {items.Count} DrawingItemViewModels");
-
       DrawingItems.AddRange(items);
-
-      System.Diagnostics.Debug.WriteLine($"[DrawingGalleryPopup] DrawingItems.Count after AddRange: {DrawingItems.Count}");
 
       // Force property change notification to trigger ItemGalleryView binding
       this.RaisePropertyChanged(nameof(DrawingItems));
-      System.Diagnostics.Debug.WriteLine($"[DrawingGalleryPopup] Raised property changed for DrawingItems");
     }
-    catch (Exception ex)
+    catch //(Exception ex)
     {
-      System.Diagnostics.Debug.WriteLine($"[DrawingGalleryPopup] ERROR: {ex.Message}");
-      System.Diagnostics.Debug.WriteLine($"[DrawingGalleryPopup] Stack: {ex.StackTrace}");
     }
     finally
     {
@@ -266,7 +249,7 @@ public class DrawingGalleryPopupViewModel : ReactiveObject, IDisposable
   {
     if (item?.Drawing == null) return;
 
-    bool confirmed = await Application.Current?.MainPage?.DisplayAlertAsync(
+    bool confirmed = await Shell.Current.CurrentPage.DisplayAlertAsync(
         "Delete Drawing",
         $"Are you sure you want to delete '{item.Title}'?",
         "Delete",
@@ -280,7 +263,7 @@ public class DrawingGalleryPopupViewModel : ReactiveObject, IDisposable
   {
     if (item?.Drawing == null) return;
 
-    string newName = await Application.Current?.MainPage?.DisplayPromptAsync(
+    string newName = await Shell.Current.CurrentPage.DisplayPromptAsync(
         "Rename Drawing",
         "Enter new name:",
         initialValue: item.Title,

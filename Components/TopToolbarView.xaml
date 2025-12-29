@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewModels="clr-namespace:LunaDraw.Logic.ViewModels"
+             xmlns:local="clr-namespace:LunaDraw.Components"
+             xmlns:strings="clr-namespace:LunaDraw.Resources.Strings"
+             x:Class="LunaDraw.Components.TopToolbarView"
+             x:DataType="viewModels:ToolbarViewModel">
+  <ContentView.Resources>
+    <ResourceDictionary>
+      <!-- Top toolbar button style - consistent with existing 72x72px standard -->
+      <Style x:Key="TopToolbarButtonStyle"
+          TargetType="Button">
+        <Setter Property="WidthRequest"
+            Value="72"/>
+        <Setter Property="HeightRequest"
+            Value="72"/>
+        <Setter Property="Padding"
+            Value="8"/>
+        <Setter Property="Margin"
+            Value="4,0"/>
+        <Setter Property="CornerRadius"
+            Value="12"/>
+        <Setter Property="BackgroundColor"
+                Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"/>
+        <Setter Property="TextColor"
+                Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"/>
+      </Style>
+    </ResourceDictionary>
+  </ContentView.Resources>
+
+  <Border BackgroundColor="#3A3A3A"
+          Padding="8,5">
+    <Grid ColumnSpacing="10">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="*"/>
+      </Grid.ColumnDefinitions>
+
+      <!-- Left side: Preview, Color, Style, Effects, Size -->
+      <HorizontalStackLayout Grid.Column="0"
+          Spacing="10">
+        <!-- Brush Stroke Preview (shows for Brushes/Stamps only) -->
+        <local:BrushStrokePreviewControl
+          HeightRequest="35"
+          WidthRequest="200"
+          Margin="0,0,10,0"
+          VerticalOptions="Center"
+          IsVisible="{Binding IsBrushPreviewVisible}"
+          StrokeColor="{Binding StrokeColor}"
+          StrokeWidth="{Binding StrokeWidth}"
+          BrushShape="{Binding CurrentBrushShape}"
+          IsGlowEnabled="{Binding IsGlowEnabled}"
+          GlowColor="{Binding GlowColor}"
+          GlowRadius="{Binding GlowRadius}"
+          IsRainbowEnabled="{Binding IsRainbowEnabled}"
+          ScatterRadius="{Binding ScatterRadius}"
+          SizeJitter="{Binding SizeJitter}"
+          AngleJitter="{Binding AngleJitter}"
+          HueJitter="{Binding HueJitter}"/>
+
+        <!-- Stroke Color Button (Solid filled circle) -->
+        <Button x:Name="StrokeColorButton"
+                IsVisible="{Binding IsStrokeColorVisible}"
+                Command="{Binding ToggleColorPopoverCommand}"
+                WidthRequest="48"
+                HeightRequest="48"
+                Margin="4,0"
+                CornerRadius="24"
+                Padding="0"
+                BackgroundColor="{Binding StrokeColor}"
+                ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_StrokeColor}"/>
+
+        <!-- Style Button (Icon: current brush shape preview, 72x72px standard) -->
+        <Border x:Name="StyleButton"
+                IsVisible="{Binding IsStyleVisible}"
+                WidthRequest="72"
+                HeightRequest="72"
+                Padding="12"
+                Margin="4,0"
+                StrokeShape="RoundRectangle 12"
+                BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}"
+                ToolTipProperties.Text="{x:Static strings:AppResources.Label_Style}">
+          <Border.GestureRecognizers>
+            <TapGestureRecognizer Command="{Binding ToggleStylePopoverCommand}"/>
+          </Border.GestureRecognizers>
+          <local:BrushPreviewControl WidthRequest="48"
+                                     HeightRequest="48"
+                                     BrushShape="{Binding CurrentBrushShape}"
+                                     StrokeColor="{Binding StrokeColor}"/>
+        </Border>
+
+        <!-- Effects Button (Icon only, 72x72px standard) -->
+        <Button x:Name="EffectsButton"
+                IsVisible="{Binding IsEffectsVisible}"
+                Command="{Binding ToggleEffectsPopoverCommand}"
+                Style="{StaticResource TopToolbarButtonStyle}"
+                ImageSource="icon_effects.svg"
+                ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_Effects}"/>
+
+        <!-- Size Slider -->
+        <HorizontalStackLayout IsVisible="{Binding IsSizeVisible}"
+            Spacing="5">
+          <Label Text="{x:Static strings:AppResources.Label_Size}"
+                 IsVisible="{Binding ShowButtonLabels}"
+                 FontSize="16"
+                 VerticalOptions="Center"
+                 TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"/>
+          <Slider Minimum="1"
+                  Maximum="100"
+                  Value="{Binding StrokeWidth}"
+                  WidthRequest="150"
+                  ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_SizeSlider}"/>
+          <Label Text="{Binding StrokeWidth, StringFormat='{0:F0}'}"
+                 FontSize="14"
+                 VerticalOptions="Center"
+                 MinimumWidthRequest="30"
+                 TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"/>
+        </HorizontalStackLayout>
+      </HorizontalStackLayout>
+
+      <!-- Right side: Undo, Redo, Zoom, Layers -->
+      <HorizontalStackLayout Grid.Column="1"
+          Spacing="10"
+          HorizontalOptions="End">
+        <!-- Undo Button -->
+        <Button Command="{Binding UndoCommand}"
+                Style="{StaticResource TopToolbarButtonStyle}"
+                ImageSource="icon_undo.svg"
+                ToolTipProperties.Text="{x:Static strings:AppResources.Label_Undo}"/>
+
+        <!-- Redo Button -->
+        <Button Command="{Binding RedoCommand}"
+                Style="{StaticResource TopToolbarButtonStyle}"
+                ImageSource="icon_redo.svg"
+                ToolTipProperties.Text="{x:Static strings:AppResources.Label_Redo}"/>
+
+        <!-- Zoom Controls (72x72px buttons) -->
+        <HorizontalStackLayout Spacing="5">
+          <Button Command="{Binding ZoomOutCommand}"
+                  Style="{StaticResource TopToolbarButtonStyle}"
+                  ImageSource="icon_zoom_out.svg"
+                  ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_ZoomOut}"/>
+          <Label Text="{Binding ZoomPercentage, StringFormat='{0}%'}"
+                 FontSize="16"
+                 VerticalOptions="Center"
+                 MinimumWidthRequest="60"
+                 HorizontalTextAlignment="Center"
+                 TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"/>
+          <Button Command="{Binding ZoomInCommand}"
+                  Style="{StaticResource TopToolbarButtonStyle}"
+                  ImageSource="icon_zoom_in.svg"
+                  ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_ZoomIn}"/>
+        </HorizontalStackLayout>
+
+        <!-- Layers Button (Icon only, 72x72px standard) -->
+        <Button x:Name="LayersButton"
+                Command="{Binding ToggleLayersPopoverCommand}"
+                Style="{StaticResource TopToolbarButtonStyle}"
+                ImageSource="icon_layers.svg"
+                ToolTipProperties.Text="{x:Static strings:AppResources.ToolTip_Layers}"/>
+      </HorizontalStackLayout>
+
+    </Grid>
+  </Border>
+</ContentView>

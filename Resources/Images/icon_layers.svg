@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+  <!-- Layers icon (stacked rectangles) -->
+  <path d="M12 3L2 8L12 13L22 8L12 3Z" opacity="0.6"/>
+  <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" fill="none" opacity="0.8"/>
+  <path d="M2 16L12 21L22 16" stroke="currentColor" stroke-width="2" fill="none"/>
+</svg>

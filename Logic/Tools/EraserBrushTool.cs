@@ -24,7 +24,7 @@
 using LunaDraw.Logic.Extensions;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
-using LunaDraw.Logic.Utils;
+using LunaDraw.Logic.Storage;
 using ReactiveUI;
 
 using SkiaSharp;

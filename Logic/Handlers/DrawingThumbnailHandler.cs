@@ -21,8 +21,9 @@
  *  
  */
 
+using LunaDraw.Logic.Caching;
 using LunaDraw.Logic.Models;
-using LunaDraw.Logic.Services;
+using LunaDraw.Logic.Storage;
 using SkiaSharp;
 using System.Collections.Concurrent;
 

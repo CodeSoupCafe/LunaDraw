@@ -37,6 +37,8 @@ using ReactiveUI;
 using SkiaSharp;
 using SkiaSharp.Views.Maui;
 using CommunityToolkit.Maui.Extensions;
+using LunaDraw.Logic.Drawing;
+using LunaDraw.Logic.Storage;
 
 namespace LunaDraw.Logic.ViewModels;
 

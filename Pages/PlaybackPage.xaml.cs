@@ -1,10 +1,10 @@
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.ViewModels;
-using LunaDraw.Logic.Utils;
 using LunaDraw.Logic.Extensions;
 using SkiaSharp;
 using SkiaSharp.Views.Maui;
 using ReactiveUI;
+using LunaDraw.Logic.Storage;
 
 namespace LunaDraw.Pages;
 
@@ -53,7 +53,7 @@ public partial class PlaybackPage : ContentPage
       }
       catch (Exception)
       {
-         // Handle potential EGL context lost issues
+        // Handle potential EGL context lost issues
       }
     });
   }

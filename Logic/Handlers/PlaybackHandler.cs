@@ -23,10 +23,10 @@
 
 using System.Reactive.Subjects;
 using LunaDraw.Logic.Models;
-using LunaDraw.Logic.Utils;
 using LunaDraw.Logic.Messages;
 using ReactiveUI;
 using SkiaSharp;
+using LunaDraw.Logic.Drawing;
 
 namespace LunaDraw.Logic.Handlers;
 
