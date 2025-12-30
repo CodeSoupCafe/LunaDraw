@@ -53,8 +53,6 @@
 	<ItemGroup> 
     <Compile Remove="Legacy\**\*.cs" />
     <None Include="Legacy\**\*" /> 
-    <Compile Remove="specs\**\*.cs" />
-    <None Include="specs\**\*" /> 
   </ItemGroup>
 
 	<ItemGroup>
