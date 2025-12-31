@@ -24,7 +24,10 @@
 using System.Collections.ObjectModel;
 using System.Reactive.Linq;
 
-using LunaDraw.Logic.Utils;
+using LunaDraw.Logic.Handlers;
+using LunaDraw.Logic.Drawing;
+using LunaDraw.Logic.Caching;
+using LunaDraw.Logic.Storage;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.ViewModels;
@@ -86,9 +89,11 @@ namespace LunaDraw.Tests
 
       // Additional message types needed by MainViewModel
       messageBusMock.Setup(x => x.Listen<OpenDrawingMessage>()).Returns(Observable.Empty<OpenDrawingMessage>());
+      messageBusMock.Setup(x => x.Listen<NewDrawingMessage>()).Returns(Observable.Empty<NewDrawingMessage>());
       messageBusMock.Setup(x => x.Listen<ShowGalleryMessage>()).Returns(Observable.Empty<ShowGalleryMessage>());
       messageBusMock.Setup(x => x.Listen<CanvasInvalidateMessage>()).Returns(Observable.Empty<CanvasInvalidateMessage>());
 
+      var mockDrawingStorageForToolbar = new Mock<IDrawingStorageMomento>();
       mockToolbarViewModel = new Mock<ToolbarViewModel>(
           layerFacadeMock.Object,
           selectionVM,
@@ -97,15 +102,16 @@ namespace LunaDraw.Tests
           new Mock<IBitmapCache>().Object,
           navigationModel,
           new Mock<IFileSaver>().Object,
-          preferencesFacadeMock.Object
+          preferencesFacadeMock.Object,
+          mockDrawingStorageForToolbar.Object
       );
 
       // Setup property change notifications for ToolStateManager
       mockToolbarViewModel.As<System.ComponentModel.INotifyPropertyChanged>();
 
       var drawingStorageMomentoMock = new Mock<IDrawingStorageMomento>();
-      var drawingThumbnailFacadeMock = new Mock<IDrawingThumbnailFacade>();
-      var galleryViewModelMock = new Mock<GalleryViewModel>(drawingStorageMomentoMock.Object);
+      var drawingThumbnailFacadeMock = new Mock<IDrawingThumbnailHandler>();
+      var galleryViewModelMock = new Mock<GalleryViewModel>(drawingStorageMomentoMock.Object, messageBusMock.Object);
       var serviceProviderMock = new Mock<IServiceProvider>();
 
       viewModel = new MainViewModel(

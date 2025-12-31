@@ -55,7 +55,8 @@ public class EraserBrushTool(IMessageBus messageBus, IPreferencesFacade preferen
       StrokeWidth = context.StrokeWidth * 2, // Eraser usually wider
       Opacity = 255,
       BlendMode = SKBlendMode.SrcOver,
-      ZIndex = context.CurrentLayer?.Elements.Count > 0 ? context.CurrentLayer.Elements.Max(e => e.ZIndex) + 1 : 0
+      ZIndex = context.CurrentLayer?.Elements.Count > 0 ? context.CurrentLayer.Elements.Max(e => e.ZIndex) + 1 : 0,
+      ViewportSnapshot = ViewportSnapshot.FromNavigationModel(context.Navigation)
     };
 
     context.CurrentLayer?.Elements.Add(currentDrawablePath);

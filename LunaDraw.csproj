@@ -93,5 +93,6 @@
 
 	<ItemGroup>
 	  <Folder Include="Logic\Services\" />
+	  <Folder Include="Logic\Utils\" />
 	</ItemGroup>
 </Project>

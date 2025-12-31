@@ -46,6 +46,7 @@ public class DrawableRectangle : IDrawableElement
   public SKColor GlowColor { get; set; } = SKColors.Transparent;
   public float GlowRadius { get; set; } = 0f;
   public float AnimationProgress { get; set; } = 1.0f;
+  public ViewportSnapshot? ViewportSnapshot { get; set; } = null;
 
   public SKRect Bounds => TransformMatrix.MapRect(Rectangle);
 

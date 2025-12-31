@@ -24,7 +24,9 @@
 using FluentAssertions;
 using LunaDraw.Logic.Handlers;
 using LunaDraw.Logic.Models;
-using LunaDraw.Logic.Utils;
+using LunaDraw.Logic.Drawing;
+using LunaDraw.Logic.Caching;
+using LunaDraw.Logic.Storage;
 using LunaDraw.Logic.Messages;
 using Moq;
 using ReactiveUI;
@@ -38,6 +40,7 @@ public class PlaybackHandlerTests
   private readonly PlaybackHandler handler;
   private readonly Mock<ILayerFacade> mockLayerFacade;
   private readonly Mock<IMessageBus> mockMessageBus;
+  private readonly NavigationModel navigationModel;
   private readonly Mock<IDispatcher> mockDispatcher;
   private readonly Mock<IDispatcherTimer> mockTimer;
 
@@ -45,13 +48,14 @@ public class PlaybackHandlerTests
   {
     mockLayerFacade = new Mock<ILayerFacade>();
     mockMessageBus = new Mock<IMessageBus>();
+    navigationModel = new NavigationModel();
     mockDispatcher = new Mock<IDispatcher>();
     mockTimer = new Mock<IDispatcherTimer>();
 
     mockMessageBus.Setup(m => m.Listen<AppSleepingMessage>()).Returns(System.Reactive.Linq.Observable.Empty<AppSleepingMessage>());
     mockDispatcher.Setup(d => d.CreateTimer()).Returns(mockTimer.Object);
 
-    handler = new PlaybackHandler(mockLayerFacade.Object, mockMessageBus.Object, mockDispatcher.Object);
+    handler = new PlaybackHandler(mockLayerFacade.Object, mockMessageBus.Object, navigationModel, mockDispatcher.Object);
   }
 
   [Fact]

@@ -49,7 +49,7 @@ using FluentAssertions;
 using System;
 using System.IO;
 using System.Threading.Tasks;
-using LunaDraw.Logic.Services;
+using LunaDraw.Logic.Caching;
 
 namespace LunaDraw.Tests;
 

@@ -26,7 +26,10 @@ using Moq;
 using Xunit;
 using SkiaSharp;
 using SkiaSharp.Views.Maui;
-using LunaDraw.Logic.Utils;
+using LunaDraw.Logic.Handlers;
+using LunaDraw.Logic.Drawing;
+using LunaDraw.Logic.Caching;
+using LunaDraw.Logic.Storage;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Tools;
 using LunaDraw.Logic.Messages;
@@ -75,6 +78,7 @@ namespace LunaDraw.Tests
       mockMessageBus.Setup(x => x.Listen<BrushShapeChangedMessage>()).Returns(Observable.Empty<BrushShapeChangedMessage>());
       mockMessageBus.Setup(x => x.Listen<ViewOptionsChangedMessage>()).Returns(Observable.Empty<ViewOptionsChangedMessage>());
 
+      var mockDrawingStorageForToolbar = new Mock<IDrawingStorageMomento>();
       mockToolbarViewModel = new Mock<ToolbarViewModel>(
           mockLayerFacade.Object,
           selectionVM,
@@ -83,7 +87,8 @@ namespace LunaDraw.Tests
           mockBitmapCache.Object,
           navigationModel,
           mockFileSaver.Object,
-          mockPreferences.Object
+          mockPreferences.Object,
+          mockDrawingStorageForToolbar.Object
       );
 
       // Setup default behavior

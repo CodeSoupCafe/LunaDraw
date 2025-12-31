@@ -100,6 +100,8 @@ public class External
     public float GlowRadius { get; set; }
     [JsonPropertyName("tm")]
     public float[] TransformMatrix { get; set; } = new float[9];
+    [JsonPropertyName("vs")]
+    public float[]? ViewportMatrix { get; set; } // Optional viewport snapshot matrix (9 floats for SKMatrix)
   }
 
   public class Path : Element

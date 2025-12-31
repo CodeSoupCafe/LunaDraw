@@ -31,7 +31,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using LunaDraw.Logic.Models;
 using SkiaSharp;
-using LunaDraw.Logic.Utils;
+using LunaDraw.Logic.Handlers;
+using LunaDraw.Logic.Drawing;
+using LunaDraw.Logic.Caching;
+using LunaDraw.Logic.Storage;
 using Microsoft.Maui.ApplicationModel;
 
 namespace LunaDraw.Tests;

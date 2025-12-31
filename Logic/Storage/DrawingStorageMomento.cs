@@ -361,6 +361,13 @@ public class DrawingStorageMomento : IDrawingStorageMomento
           externelElement.TransformMatrix = new float[9];
           element.TransformMatrix.GetValues(externelElement.TransformMatrix);
 
+          // Save viewport snapshot if present
+          if (element.ViewportSnapshot.HasValue)
+          {
+            externelElement.ViewportMatrix = new float[9];
+            element.ViewportSnapshot.Value.ViewMatrix.GetValues(externelElement.ViewportMatrix);
+          }
+
           externalLayer.Elements.Add(externelElement);
         }
       }
@@ -518,6 +525,29 @@ public class DrawingStorageMomento : IDrawingStorageMomento
                 Persp2 = matValues[8]
               };
               element.TransformMatrix = matrix;
+            }
+
+            // Restore viewport snapshot if present
+            if (savedElement.ViewportMatrix != null && savedElement.ViewportMatrix.Length == 9)
+            {
+              var viewportValues = savedElement.ViewportMatrix;
+              var viewportMatrix = new SKMatrix
+              {
+                ScaleX = viewportValues[0],
+                SkewX = viewportValues[1],
+                TransX = viewportValues[2],
+                SkewY = viewportValues[3],
+                ScaleY = viewportValues[4],
+                TransY = viewportValues[5],
+                Persp0 = viewportValues[6],
+                Persp1 = viewportValues[7],
+                Persp2 = viewportValues[8]
+              };
+              element.ViewportSnapshot = new ViewportSnapshot
+              {
+                ViewMatrix = viewportMatrix,
+                Timestamp = savedElement.CreatedAt
+              };
             }
 
             layer.Elements.Add(element);

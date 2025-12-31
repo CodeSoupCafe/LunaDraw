@@ -257,6 +257,7 @@ public class DrawableStamps : IDrawableElement
   }
 
   public float AnimationProgress { get; set; } = 1.0f;
+  public ViewportSnapshot? ViewportSnapshot { get; set; } = null;
 
   private void InvalidateCache()
   {

@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet build:*)",
+      "Bash(Select-Object -First 50)",
+      "Bash(ls:*)",
+      "Bash(dotnet test:*)",
+      "Bash(dotnet clean:*)",
+      "Bash(find:*)",
+      "Bash(powershell -ExecutionPolicy Bypass -File fix-namespaces.ps1)",
+      "Bash(grep:*)",
+      "Bash(timeout 90 dotnet test:*)"
+    ]
+  }
+}

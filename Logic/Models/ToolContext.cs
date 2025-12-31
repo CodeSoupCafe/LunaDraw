@@ -42,6 +42,7 @@ public class ToolContext
   public required IEnumerable<IDrawableElement> AllElements { get; set; }
   public IEnumerable<Layer> Layers { get; set; } = [];
   public required SelectionObserver SelectionObserver { get; set; }
+  public required NavigationModel Navigation { get; set; }
   public float Scale { get; set; } = 1.0f;
   public bool IsGlowEnabled { get; init; }
   public SKColor GlowColor { get; init; }

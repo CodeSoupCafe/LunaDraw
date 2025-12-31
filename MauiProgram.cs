@@ -24,7 +24,7 @@
 using CommunityToolkit.Maui;
 using CommunityToolkit.Maui.Storage;
 using Microsoft.Maui.LifecycleEvents;
-using LunaDraw.Logic.Utils;
+using LunaDraw.Logic.Handlers;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.ViewModels;
 using LunaDraw.Pages;

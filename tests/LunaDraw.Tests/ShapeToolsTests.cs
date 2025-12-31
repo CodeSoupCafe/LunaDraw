@@ -27,7 +27,10 @@ using System.Linq;
 
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Tools;
-using LunaDraw.Logic.Utils;
+using LunaDraw.Logic.Handlers;
+using LunaDraw.Logic.Drawing;
+using LunaDraw.Logic.Caching;
+using LunaDraw.Logic.Storage;
 using ReactiveUI;
 using SkiaSharp;
 using Xunit;
@@ -35,122 +38,124 @@ using Moq; // ADDED: Required for Mock<>
 
 namespace LunaDraw.Tests
 {
-    public class ShapeToolsTests
-    {
-        private static readonly Mock<IMessageBus> MockBus = new Mock<IMessageBus>();
+  public class ShapeToolsTests
+  {
+    private static readonly Mock<IMessageBus> MockBus = new Mock<IMessageBus>();
 
-        public static TheoryData<IDrawingTool> ToolData =>
-            new TheoryData<IDrawingTool>
-            {
+    public static TheoryData<IDrawingTool> ToolData =>
+        new TheoryData<IDrawingTool>
+        {
                 { new RectangleTool(MockBus.Object)},
                 { new EllipseTool(MockBus.Object) },
                 { new LineTool(MockBus.Object) }
-            };
+        };
 
-        public static TheoryData<IDrawingTool, Type> ToolTypesData =>
-            new TheoryData<IDrawingTool, Type>
-            {
+    public static TheoryData<IDrawingTool, Type> ToolTypesData =>
+        new TheoryData<IDrawingTool, Type>
+        {
                 { new RectangleTool(MockBus.Object), typeof(DrawableRectangle) },
                 { new EllipseTool(MockBus.Object), typeof(DrawableEllipse) },
                 { new LineTool(MockBus.Object), typeof(DrawableLine) }
-            };
+        };
 
-        private void PerformDrawAction(IDrawingTool tool, Layer layer)
-        {
-            // Arrange
-            var context = new ToolContext
-            {
-                CurrentLayer = layer,
-                AllElements = new List<IDrawableElement>(),
-                SelectionObserver = new SelectionObserver(),
-                BrushShape = BrushShape.Circle(),
-                StrokeColor = SKColors.Red,
-                StrokeWidth = 2f
-            };
+    private void PerformDrawAction(IDrawingTool tool, Layer layer)
+    {
+      // Arrange
+      var context = new ToolContext
+      {
+        CurrentLayer = layer,
+        AllElements = new List<IDrawableElement>(),
+        SelectionObserver = new SelectionObserver(),
+        BrushShape = BrushShape.Circle(),
+        StrokeColor = SKColors.Red,
+        StrokeWidth = 2f,
+        Navigation = new NavigationModel()
+      };
 
-            // Act
-            tool.OnTouchPressed(new SKPoint(10, 10), context);
-            tool.OnTouchMoved(new SKPoint(50, 50), context);
-            tool.OnTouchReleased(new SKPoint(50, 50), context);
-        }
-
-        [Theory]
-        [MemberData(nameof(ToolData))]
-        public void OnTouchReleased_ShouldAddOneElement(IDrawingTool tool)
-        {
-            // Arrange
-            var layer = new Layer();
-
-            // Act
-            PerformDrawAction(tool, layer);
-
-            // Assert
-            Assert.Single(layer.Elements);
-        }
-
-        [Theory]
-        [MemberData(nameof(ToolTypesData))]
-        public void OnTouchReleased_ShouldAddCorrectType(IDrawingTool tool, Type expectedElementType)
-        {
-            // Arrange
-            var layer = new Layer();
-
-            // Act
-            PerformDrawAction(tool, layer);
-
-            // Assert
-            Assert.IsType(expectedElementType, layer.Elements.First());
-        }
-
-        [Theory]
-        [MemberData(nameof(ToolData))]
-        public void OnTouchReleased_ShouldSetStrokeColor(IDrawingTool tool)
-        {
-            // Arrange
-            var layer = new Layer();
-
-            // Act
-            PerformDrawAction(tool, layer);
-
-            // Assert
-            Assert.Equal(SKColors.Red, layer.Elements.First().StrokeColor);
-        }
-
-        [Theory]
-        [MemberData(nameof(ToolData))]
-        public void OnTouchReleased_ShouldSetStrokeWidth(IDrawingTool tool)
-        {
-            // Arrange
-            var layer = new Layer();
-
-            // Act
-            PerformDrawAction(tool, layer);
-
-            // Assert
-            Assert.Equal(2f, layer.Elements.First().StrokeWidth);
-        }
-
-        [Theory]
-        [MemberData(nameof(ToolData))]
-        public void OnTouchCancelled_ShouldNotAddShape(IDrawingTool tool)
-        {
-            // Arrange
-            var layer = new Layer();
-            var context = new ToolContext
-            {
-                CurrentLayer = layer,
-                AllElements = new List<IDrawableElement>(),
-                SelectionObserver = new SelectionObserver(),
-                BrushShape = BrushShape.Circle()
-            };
-
-            // Act
-            tool.OnTouchPressed(new SKPoint(10, 10), context);
-            tool.OnTouchMoved(new SKPoint(50, 50), context);
-            tool.OnTouchCancelled(context);
-
-            // Assert
-            Assert.Empty(layer.Elements);
-        }
+      // Act
+      tool.OnTouchPressed(new SKPoint(10, 10), context);
+      tool.OnTouchMoved(new SKPoint(50, 50), context);
+      tool.OnTouchReleased(new SKPoint(50, 50), context);
     }
+
+    [Theory]
+    [MemberData(nameof(ToolData))]
+    public void OnTouchReleased_ShouldAddOneElement(IDrawingTool tool)
+    {
+      // Arrange
+      var layer = new Layer();
+
+      // Act
+      PerformDrawAction(tool, layer);
+
+      // Assert
+      Assert.Single(layer.Elements);
+    }
+
+    [Theory]
+    [MemberData(nameof(ToolTypesData))]
+    public void OnTouchReleased_ShouldAddCorrectType(IDrawingTool tool, Type expectedElementType)
+    {
+      // Arrange
+      var layer = new Layer();
+
+      // Act
+      PerformDrawAction(tool, layer);
+
+      // Assert
+      Assert.IsType(expectedElementType, layer.Elements.First());
+    }
+
+    [Theory]
+    [MemberData(nameof(ToolData))]
+    public void OnTouchReleased_ShouldSetStrokeColor(IDrawingTool tool)
+    {
+      // Arrange
+      var layer = new Layer();
+
+      // Act
+      PerformDrawAction(tool, layer);
+
+      // Assert
+      Assert.Equal(SKColors.Red, layer.Elements.First().StrokeColor);
+    }
+
+    [Theory]
+    [MemberData(nameof(ToolData))]
+    public void OnTouchReleased_ShouldSetStrokeWidth(IDrawingTool tool)
+    {
+      // Arrange
+      var layer = new Layer();
+
+      // Act
+      PerformDrawAction(tool, layer);
+
+      // Assert
+      Assert.Equal(2f, layer.Elements.First().StrokeWidth);
+    }
+
+    [Theory]
+    [MemberData(nameof(ToolData))]
+    public void OnTouchCancelled_ShouldNotAddShape(IDrawingTool tool)
+    {
+      // Arrange
+      var layer = new Layer();
+      var context = new ToolContext
+      {
+        CurrentLayer = layer,
+        AllElements = new List<IDrawableElement>(),
+        SelectionObserver = new SelectionObserver(),
+        BrushShape = BrushShape.Circle(),
+        Navigation = new NavigationModel()
+      };
+
+      // Act
+      tool.OnTouchPressed(new SKPoint(10, 10), context);
+      tool.OnTouchMoved(new SKPoint(50, 50), context);
+      tool.OnTouchCancelled(context);
+
+      // Assert
+      Assert.Empty(layer.Elements);
+    }
+  }
 }

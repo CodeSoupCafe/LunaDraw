@@ -21,7 +21,10 @@
  *  
  */
 
-using LunaDraw.Logic.Utils;
+using LunaDraw.Logic.Handlers;
+using LunaDraw.Logic.Drawing;
+using LunaDraw.Logic.Caching;
+using LunaDraw.Logic.Storage;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Tools;
 using LunaDraw.Logic.Messages;
@@ -53,6 +56,7 @@ namespace LunaDraw.Tests
       public SKColor GlowColor { get; set; }
       public float GlowRadius { get; set; }
       public float AnimationProgress { get; set; } = 1.0f;
+      public ViewportSnapshot? ViewportSnapshot { get; set; }
 
       public void Draw(SKCanvas canvas) { }
       public bool HitTest(SKPoint point) => Bounds.Contains(point);
@@ -92,7 +96,8 @@ namespace LunaDraw.Tests
         AllElements = elements,
         Layers = new List<Layer> { layer },
         SelectionObserver = selectionObserver,
-        BrushShape = BrushShape.Circle()
+        BrushShape = BrushShape.Circle(),
+        Navigation = new NavigationModel()
       };
       var tool = new SelectTool(mockBus.Object);
 
@@ -127,7 +132,8 @@ namespace LunaDraw.Tests
         AllElements = elements,
         Layers = new List<Layer> { layer },
         SelectionObserver = selectionObserver,
-        BrushShape = BrushShape.Circle()
+        BrushShape = BrushShape.Circle(),
+        Navigation = new NavigationModel()
       };
       var tool = new SelectTool(mockBus.Object);
 

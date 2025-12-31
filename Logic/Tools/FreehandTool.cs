@@ -125,7 +125,8 @@ public class FreehandTool(IMessageBus messageBus) : IDrawingTool
         IsRainbowEnabled = context.IsRainbowEnabled,
         SizeJitter = context.SizeJitter,
         AngleJitter = context.AngleJitter,
-        HueJitter = context.HueJitter
+        HueJitter = context.HueJitter,
+        ViewportSnapshot = ViewportSnapshot.FromNavigationModel(context.Navigation)
       };
 
       context.CurrentLayer.Elements.Add(element);

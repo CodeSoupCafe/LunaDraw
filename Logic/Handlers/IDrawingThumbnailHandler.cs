@@ -21,7 +21,7 @@
  *  
  */
 
-namespace LunaDraw.Logic.Utils;
+namespace LunaDraw.Logic.Handlers;
 
 public interface IDrawingThumbnailHandler
 {

@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: '2025-12-30'
 tags:
   - movie-mode
@@ -9,11 +9,15 @@ tags:
   - animation
 priority: high
 created_at: '2025-12-30T01:42:41.846Z'
+updated_at: '2025-12-30T02:22:25.026Z'
+transitions:
+  - status: in-progress
+    at: '2025-12-30T02:22:25.026Z'
 ---
 
 # Movie Mode Viewport Tracking
 
-> **Status**: 📅 Planned · **Priority**: High · **Created**: 2025-12-30
+> **Status**: ⏳ In progress · **Priority**: High · **Created**: 2025-12-30 · **Tags**: movie-mode, viewport, playback, ux, animation
 
 ## Overview
 

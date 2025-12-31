@@ -26,7 +26,7 @@ using System.Windows.Input;
 using System.Reactive.Linq;
 using System.Reactive;
 
-using LunaDraw.Logic.Utils;
+using LunaDraw.Logic.Handlers;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Tools;
@@ -300,6 +300,7 @@ public class MainViewModel : ReactiveObject
       AllElements = LayerFacade.Layers.SelectMany(l => l.Elements),
       Layers = LayerFacade.Layers,
       SelectionObserver = SelectionObserver,
+      Navigation = NavigationModel,
       Scale = NavigationModel.ViewMatrix.ScaleX,
       IsGlowEnabled = ToolbarViewModel.IsGlowEnabled,
       GlowColor = ToolbarViewModel.GlowColor,

@@ -31,7 +31,7 @@ using SkiaSharp;
 using SkiaSharp.Views.Maui;
 using LunaDraw.Logic.Drawing;
 
-namespace LunaDraw.Logic.Utils;
+namespace LunaDraw.Logic.Handlers;
 
 public class CanvasInputHandler(
     ToolbarViewModel toolbarViewModel,
@@ -375,6 +375,7 @@ public class CanvasInputHandler(
       AllElements = layerFacade.Layers.SelectMany(l => l.Elements),
       Layers = layerFacade.Layers,
       SelectionObserver = selectionObserver,
+      Navigation = navigationModel,
       Scale = navigationModel.ViewMatrix.ScaleX,
       IsGlowEnabled = toolbarViewModel.IsGlowEnabled,
       GlowColor = toolbarViewModel.GlowColor,

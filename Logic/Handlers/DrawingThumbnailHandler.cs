@@ -27,7 +27,7 @@ using LunaDraw.Logic.Storage;
 using SkiaSharp;
 using System.Collections.Concurrent;
 
-namespace LunaDraw.Logic.Utils;
+namespace LunaDraw.Logic.Handlers;
 
 public class DrawingThumbnailHandler : IDrawingThumbnailHandler
 {

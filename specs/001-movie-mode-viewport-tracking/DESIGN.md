@@ -7,6 +7,7 @@ This feature extends the existing Movie Mode playback system to record and repla
 ### Current Architecture (Baseline)
 
 **Existing Components**:
+
 - `NavigationModel`: Manages viewport state via `ViewMatrix` (SKMatrix) for pan/zoom
 - `IDrawableElement`: Base interface for all drawable objects, includes `CreatedAt` timestamp
 - `PlaybackHandler`: Orchestrates playback, animates elements based on `AnimationProgress`
@@ -14,6 +15,7 @@ This feature extends the existing Movie Mode playback system to record and repla
 - `CanvasInputHandler`: Handles user input, delegates to active tool
 
 **Current Playback Flow**:
+
 1. User clicks "Play Movie Mode"
 2. `PlaybackHandler.Load()` collects all elements, sorts by `CreatedAt`
 3. `PlaybackHandler.PlayAsync()` starts timer (60 FPS)
@@ -24,10 +26,12 @@ This feature extends the existing Movie Mode playback system to record and repla
 ### Proposed Architecture Changes
 
 **New Components**:
+
 - `ViewportSnapshot` (struct): Immutable snapshot of viewport state at a moment in time
 - `ViewportInterpolator` (static utility): Interpolates between two `ViewportSnapshot` instances
 
 **Modified Components**:
+
 - `IDrawableElement`: Add optional `ViewportSnapshot?` property
 - `PlaybackHandler`: Track viewport state during playback, apply interpolated transforms to `NavigationModel`
 
@@ -42,6 +46,7 @@ This feature extends the existing Movie Mode playback system to record and repla
 **Location**: `Logic/Models/ViewportSnapshot.cs`
 
 **Signature**:
+
 ```csharp
 namespace LunaDraw.Logic.Models;
 
@@ -85,6 +90,7 @@ public readonly struct ViewportSnapshot
 ```
 
 **Test Scenarios**:
+
 - `Should_Create_Snapshot_From_NavigationModel_When_Valid_State`
 - `Should_Return_Identity_Snapshot_When_No_Transformation`
 - `Should_Preserve_Matrix_Values_When_Created`
@@ -98,8 +104,9 @@ public readonly struct ViewportSnapshot
 **Location**: `Logic/Utils/ViewportInterpolator.cs`
 
 **Signature**:
+
 ```csharp
-namespace LunaDraw.Logic.Utils;
+namespace LunaDraw.Logic.Handlers;
 
 /// <summary>
 /// Provides interpolation between viewport snapshots for smooth transitions.
@@ -151,6 +158,7 @@ public static class ViewportInterpolator
 ```
 
 **Test Scenarios**:
+
 - `Should_Return_From_Snapshot_When_Progress_Is_Zero`
 - `Should_Return_To_Snapshot_When_Progress_Is_One`
 - `Should_Interpolate_Scale_When_Progress_Is_Half`
@@ -168,6 +176,7 @@ public static class ViewportInterpolator
 **Location**: `Logic/Models/IDrawableElement.cs`
 
 **New Property**:
+
 ```csharp
 /// <summary>
 /// Optional snapshot of the viewport state when this element was created.
@@ -178,11 +187,13 @@ ViewportSnapshot? ViewportSnapshot { get; set; }
 ```
 
 **Implementation Notes**:
+
 - Default to `null` for backward compatibility
 - All existing `IDrawableElement` implementations must add this property
 - Serialization must handle `null` gracefully
 
 **Test Scenarios** (per implementation):
+
 - `Should_Allow_Null_ViewportSnapshot_When_Legacy_Element`
 - `Should_Store_ViewportSnapshot_When_Provided`
 - `Should_Clone_ViewportSnapshot_When_Element_Cloned`
@@ -198,12 +209,14 @@ ViewportSnapshot? ViewportSnapshot { get; set; }
 **Location**: `Logic/Handlers/PlaybackHandler.cs`
 
 **New Fields**:
+
 ```csharp
 private readonly NavigationModel navigationModel;
 private ViewportSnapshot? savedViewportState; // Captured before playback starts
 ```
 
 **Constructor Modification**:
+
 ```csharp
 public PlaybackHandler(
     ILayerFacade layerFacade,
@@ -222,6 +235,7 @@ public PlaybackHandler(
 **Method Modifications**:
 
 #### PrepareCanvasForPlayback (Modified)
+
 ```csharp
 private void PrepareCanvasForPlayback()
 {
@@ -246,6 +260,7 @@ private void PrepareCanvasForPlayback()
 ```
 
 #### RestoreFullDrawing (Modified)
+
 ```csharp
 private void RestoreFullDrawing()
 {
@@ -266,6 +281,7 @@ private void RestoreFullDrawing()
 ```
 
 #### OnTimerTick (Modified)
+
 ```csharp
 private async void OnTimerTick(object? sender, EventArgs e)
 {
@@ -298,6 +314,7 @@ private async void OnTimerTick(object? sender, EventArgs e)
 ```
 
 #### ApplyViewportTransformation (New)
+
 ```csharp
 /// <summary>
 /// Applies viewport transformation by interpolating between previous and current snapshots.
@@ -337,6 +354,7 @@ private void ApplyViewportTransformation(IDrawableElement currentElement)
 ```
 
 **Test Scenarios**:
+
 - `Should_Save_Viewport_State_When_Playback_Starts`
 - `Should_Restore_Viewport_State_When_Playback_Stops`
 - `Should_Apply_First_Viewport_Snapshot_When_Playback_Starts`
@@ -358,6 +376,7 @@ private void ApplyViewportTransformation(IDrawableElement currentElement)
 **Location**: `Logic/Models/ToolContext.cs`
 
 **Existing Field** (verify):
+
 ```csharp
 public NavigationModel Navigation { get; init; }
 ```
@@ -365,6 +384,7 @@ public NavigationModel Navigation { get; init; }
 **Usage in Tools**: When creating drawable elements, capture viewport snapshot.
 
 **Example** (FreehandTool.OnTouchUp):
+
 ```csharp
 // Existing code creates DrawablePath
 var path = new DrawablePath
@@ -379,6 +399,7 @@ var path = new DrawablePath
 ```
 
 **Affected Tools**:
+
 - `FreehandTool`
 - `EraserBrushTool`
 - `LineTool`
@@ -389,6 +410,7 @@ var path = new DrawablePath
 - `ImageTool`
 
 **Test Scenarios** (per tool):
+
 - `Should_Capture_Viewport_Snapshot_When_Element_Created`
 - `Should_Use_Current_NavigationModel_Matrix_When_Capturing_Snapshot`
 
@@ -403,6 +425,7 @@ var path = new DrawablePath
 **Strategy**: Use nullable property, serialize as optional field.
 
 **JSON Structure** (example):
+
 ```json
 {
   "id": "guid",
@@ -426,10 +449,12 @@ var path = new DrawablePath
 ```
 
 **Backward Compatibility**:
+
 - If `viewportSnapshot` field is missing, property remains `null`
 - Legacy drawings load correctly without viewport data
 
 **Test Scenarios**:
+
 - `Should_Serialize_ViewportSnapshot_When_Present`
 - `Should_Deserialize_Null_ViewportSnapshot_When_Missing`
 - `Should_Preserve_ViewportSnapshot_When_Save_And_Load_Roundtrip`
@@ -443,11 +468,13 @@ var path = new DrawablePath
 **Change**: Inject `NavigationModel` into `PlaybackHandler`.
 
 **Before**:
+
 ```csharp
 builder.Services.AddSingleton<IPlaybackHandler, PlaybackHandler>();
 ```
 
 **After**:
+
 ```csharp
 // NavigationModel is already registered as Singleton
 builder.Services.AddSingleton<IPlaybackHandler, PlaybackHandler>();
@@ -461,21 +488,25 @@ builder.Services.AddSingleton<IPlaybackHandler, PlaybackHandler>();
 ## Edge Cases & Error Handling
 
 ### Edge Case 1: No Viewport Snapshots (Legacy Drawings)
+
 - **Scenario**: Playback of drawing created before this feature
 - **Behavior**: Viewport remains static throughout playback
 - **Implementation**: Check for `null` viewport snapshots, skip interpolation
 
 ### Edge Case 2: Partial Viewport Data
+
 - **Scenario**: Some elements have snapshots, others don't
 - **Behavior**: Interpolate when snapshots available, hold previous state otherwise
 - **Implementation**: Walk backward to find last valid snapshot
 
 ### Edge Case 3: Rapid Viewport Changes
+
 - **Scenario**: User zooms/pans rapidly while drawing
 - **Behavior**: Smooth interpolation between snapshots may appear "jumpy"
 - **Mitigation**: Accept as limitation for MVP; future enhancement could add easing
 
 ### Edge Case 4: Playback Stop/Pause/Resume
+
 - **Scenario**: User stops or pauses playback mid-way
 - **Behavior**: Viewport should restore to saved state on Stop, remain current on Pause
 - **Implementation**:
@@ -488,16 +519,19 @@ builder.Services.AddSingleton<IPlaybackHandler, PlaybackHandler>();
 ## Performance Considerations
 
 ### Viewport Updates (60 FPS)
+
 - **Cost**: Single matrix assignment per frame (`NavigationModel.ViewMatrix = ...`)
 - **Impact**: Negligible - matrix is already applied every frame during rendering
 - **Optimization**: None needed for MVP
 
 ### Interpolation Calculation
+
 - **Cost**: 3 float lerps per frame (scale, transX, transY)
 - **Impact**: Negligible - simple arithmetic operations
 - **Optimization**: None needed for MVP
 
 ### Memory Overhead
+
 - **Per Element**: 1 optional `ViewportSnapshot` struct (≈48 bytes: 9 floats + timestamp)
 - **Per Drawing**: ~48 bytes × element count (e.g., 500 elements = 24 KB)
 - **Impact**: Minimal compared to path geometry data
@@ -507,6 +541,7 @@ builder.Services.AddSingleton<IPlaybackHandler, PlaybackHandler>();
 ## User Experience Flow
 
 ### Recording Flow (Drawing Session)
+
 1. User starts drawing
 2. User zooms in to add details (e.g., eyes on a face)
 3. User creates several strokes → Each stroke captures current viewport
@@ -514,6 +549,7 @@ builder.Services.AddSingleton<IPlaybackHandler, PlaybackHandler>();
 5. User adds background elements → Elements capture zoomed-out viewport
 
 ### Playback Flow (Movie Mode)
+
 1. User clicks "Play Movie Mode"
 2. Playback starts:
    - Canvas resets to first viewport snapshot
@@ -526,6 +562,7 @@ builder.Services.AddSingleton<IPlaybackHandler, PlaybackHandler>();
    - All elements fully visible
 
 ### Stop/Pause Behavior
+
 - **Pause**: Viewport remains at current playback state, ready to resume
 - **Stop**: Viewport restores to pre-playback state, all elements fully visible
 
@@ -534,18 +571,21 @@ builder.Services.AddSingleton<IPlaybackHandler, PlaybackHandler>();
 ## Success Criteria
 
 ### Functional Requirements
+
 - ✅ Viewport snapshots captured when elements created
 - ✅ Playback interpolates viewport smoothly between snapshots
 - ✅ Legacy drawings play without errors (null snapshot handling)
 - ✅ Viewport restores to original state after playback
 
 ### Non-Functional Requirements
+
 - ✅ Maintains 60 FPS playback performance
 - ✅ No breaking changes to existing serialization format
 - ✅ All existing tests continue to pass
 - ✅ New tests achieve >80% code coverage for new code
 
 ### User Acceptance
+
 - ✅ Playback feels immersive and context-rich
 - ✅ No jarring viewport jumps (smooth interpolation)
 - ✅ Child-friendly: Simple, no configuration required
@@ -555,17 +595,20 @@ builder.Services.AddSingleton<IPlaybackHandler, PlaybackHandler>();
 ## Testing Strategy Summary
 
 ### Unit Tests (xUnit + Moq)
+
 - `ViewportSnapshotTests`: Creation, identity, serialization
 - `ViewportInterpolatorTests`: Lerp behavior, edge cases
 - `PlaybackHandlerTests`: Viewport application, restoration, edge cases
 - `DrawableElement*Tests`: Snapshot property, cloning, serialization
 
 ### Integration Tests
+
 - End-to-end playback with viewport snapshots
 - Serialization roundtrip with viewport data
 - Legacy drawing compatibility
 
 ### Manual Testing
+
 - Create drawing with varied zoom/pan → Verify playback follows viewport
 - Load legacy drawing → Verify static viewport playback
 - Stop/Pause/Resume → Verify viewport behavior
@@ -575,9 +618,11 @@ builder.Services.AddSingleton<IPlaybackHandler, PlaybackHandler>();
 ## Open Technical Questions
 
 1. **Easing Functions**: Should interpolation use easing (ease-in/out) instead of linear?
+
    - **Decision**: Linear for MVP, easing in Phase 4 if time permits
 
 2. **Snapshot Frequency**: Should snapshots be captured only on significant viewport changes?
+
    - **Decision**: Capture per element for simplicity; optimize if performance issues arise
 
 3. **Matrix Decomposition**: Current implementation assumes uniform scale and no rotation. Handle rotation?

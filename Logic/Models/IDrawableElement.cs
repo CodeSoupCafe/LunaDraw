@@ -97,6 +97,13 @@ public interface IDrawableElement
   float AnimationProgress { get; set; }
 
   /// <summary>
+  /// Optional snapshot of the viewport state when this element was created.
+  /// Used for Movie Mode playback to replay viewport transformations.
+  /// Null for legacy drawings created before viewport tracking.
+  /// </summary>
+  ViewportSnapshot? ViewportSnapshot { get; set; }
+
+  /// <summary>
   /// Draws the element on the provided canvas.
   /// </summary>
   /// <param name="canvas">The SKCanvas to draw on.</param>
