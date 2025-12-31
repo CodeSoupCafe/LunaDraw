@@ -42,7 +42,7 @@ using LunaDraw.Logic.Storage;
 
 namespace LunaDraw.Logic.ViewModels;
 
-public class MainViewModel : ReactiveObject
+public class MainViewModel : ReactiveObject, IDisposable
 {
   // Dependencies
   public ToolbarViewModel ToolbarViewModel { get; }
@@ -55,6 +55,7 @@ public class MainViewModel : ReactiveObject
   private readonly IDrawingStorageMomento drawingStorageMomento;
   private readonly IDrawingThumbnailHandler drawingThumbnailFacade;
   private readonly IServiceProvider serviceProvider;
+  private readonly List<IDisposable> subscriptions = new List<IDisposable>();
 
   // Properties for current drawing state
   private Guid currentDrawingId = Guid.Empty;
@@ -192,20 +193,20 @@ public class MainViewModel : ReactiveObject
       messageBus.SendMessage(new ShowGalleryMessage());
     });
 
-    this.messageBus.Listen<OpenDrawingMessage>()
+    subscriptions.Add(this.messageBus.Listen<OpenDrawingMessage>()
         .ObserveOn(RxApp.MainThreadScheduler)
-        .Delay(TimeSpan.FromMilliseconds(100))
+        .Delay(TimeSpan.FromMilliseconds(100), RxApp.MainThreadScheduler)
         .Subscribe(msg =>
         {
           LoadDrawingCommand.Execute(msg.Drawing).Subscribe();
-        });
+        }));
 
-    this.messageBus.Listen<NewDrawingMessage>()
+    subscriptions.Add(this.messageBus.Listen<NewDrawingMessage>()
         .ObserveOn(RxApp.MainThreadScheduler)
         .Subscribe(_ =>
         {
           NewDrawingCommand.Execute().Subscribe();
-        });
+        }));
 
     // Initial drawing state
     // Do not auto-create a new drawing file on startup. 
@@ -223,7 +224,7 @@ public class MainViewModel : ReactiveObject
     ResetZoomCommand = ReactiveCommand.Create(ResetZoom);
 
     // Listen for ShowAdvancedSettingsMessage
-    this.messageBus.Listen<ShowAdvancedSettingsMessage>().Subscribe(async _ =>
+    subscriptions.Add(this.messageBus.Listen<ShowAdvancedSettingsMessage>().Subscribe(async _ =>
     {
       var popup = new Components.AdvancedSettingsPopup(this);
       var page = Application.Current?.Windows[0]?.Page;
@@ -231,9 +232,9 @@ public class MainViewModel : ReactiveObject
       {
         await page.ShowPopupAsync(popup);
       }
-    });
+    }));
 
-    this.messageBus.Listen<ShowGalleryMessage>().Subscribe(async _ =>
+    subscriptions.Add(this.messageBus.Listen<ShowGalleryMessage>().Subscribe(async _ =>
     {
       var popupViewModel = serviceProvider.GetRequiredService<DrawingGalleryPopupViewModel>();
       var popup = new DrawingGalleryPopup(popupViewModel);
@@ -243,21 +244,20 @@ public class MainViewModel : ReactiveObject
       {
         await page.ShowPopupAsync(popup);
       }
-    });
+    }));
 
-    this.messageBus.Listen<TogglePlaybackControlsMessage>().Subscribe(_ =>
+    subscriptions.Add(this.messageBus.Listen<TogglePlaybackControlsMessage>().Subscribe(_ =>
     {
       IsPlaybackControlsVisible = !IsPlaybackControlsVisible;
-    });
+    }));
 
     // Auto-save on changes
-    this.messageBus.Listen<CanvasInvalidateMessage>()
-        .Throttle(TimeSpan.FromSeconds(2))
-        .ObserveOn(RxApp.MainThreadScheduler)
+    subscriptions.Add(this.messageBus.Listen<CanvasInvalidateMessage>()
+        .Throttle(TimeSpan.FromSeconds(2), RxApp.MainThreadScheduler)
         .Subscribe(_ =>
         {
           ExternaDrawingCommand.Execute(null).Subscribe();
-        });
+        }));
   }
 
   public IDrawingTool ActiveTool
@@ -453,5 +453,14 @@ public class MainViewModel : ReactiveObject
 
     NavigationModel.Reset();
     messageBus.SendMessage(new CanvasInvalidateMessage());
+  }
+
+  public void Dispose()
+  {
+    foreach (var subscription in subscriptions)
+    {
+      subscription?.Dispose();
+    }
+    subscriptions.Clear();
   }
 }

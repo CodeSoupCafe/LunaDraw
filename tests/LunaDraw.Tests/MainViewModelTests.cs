@@ -40,7 +40,7 @@ using Xunit;
 
 namespace LunaDraw.Tests
 {
-  public class MainViewModelTests
+  public class MainViewModelTests : IDisposable
   {
     private readonly Mock<ToolbarViewModel> mockToolbarViewModel;
     private readonly Mock<ILayerFacade> layerFacadeMock;
@@ -92,6 +92,7 @@ namespace LunaDraw.Tests
       messageBusMock.Setup(x => x.Listen<NewDrawingMessage>()).Returns(Observable.Empty<NewDrawingMessage>());
       messageBusMock.Setup(x => x.Listen<ShowGalleryMessage>()).Returns(Observable.Empty<ShowGalleryMessage>());
       messageBusMock.Setup(x => x.Listen<CanvasInvalidateMessage>()).Returns(Observable.Empty<CanvasInvalidateMessage>());
+      messageBusMock.Setup(x => x.Listen<TogglePlaybackControlsMessage>()).Returns(Observable.Empty<TogglePlaybackControlsMessage>());
 
       var mockDrawingStorageForToolbar = new Mock<IDrawingStorageMomento>();
       mockToolbarViewModel = new Mock<ToolbarViewModel>(
@@ -207,6 +208,11 @@ namespace LunaDraw.Tests
       // Assert
       Assert.Equal(2, layer.Elements.Count);
       messageBusMock.Verify(x => x.SendMessage(It.IsAny<CanvasInvalidateMessage>()), Times.AtLeastOnce);
+    }
+
+    public void Dispose()
+    {
+      viewModel?.Dispose();
     }
   }
 }
