@@ -24,7 +24,7 @@
 using CommunityToolkit.Maui;
 using CommunityToolkit.Maui.Storage;
 using Microsoft.Maui.LifecycleEvents;
-using LunaDraw.Logic.Handlers;
+using LunaDraw.Logic.Drawing;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.ViewModels;
 using LunaDraw.Pages;
@@ -35,9 +35,8 @@ using SkiaSharp.Views.Maui.Controls.Hosting;
 using Splat;
 using LunaDraw.Logic.Storage;
 using LunaDraw.Logic.Caching;
-using LunaDraw.Logic.Handlers;
+using LunaDraw.Logic.Playback;
 using Plugin.Maui.ScreenRecording;
-using LunaDraw.Logic.Drawing;
 
 #if WINDOWS
 using Microsoft.UI.Xaml.Media;

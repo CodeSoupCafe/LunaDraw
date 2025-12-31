@@ -92,7 +92,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Logic\Services\" />
-	  <Folder Include="Logic\Utils\" />
+	  <Folder Include="Logic\Playback\" />
 	</ItemGroup>
 </Project>

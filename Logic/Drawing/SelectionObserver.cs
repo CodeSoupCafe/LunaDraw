@@ -22,11 +22,8 @@
  */
 
 using System.Collections.ObjectModel;
-
 using LunaDraw.Logic.Models;
-
 using ReactiveUI;
-
 using SkiaSharp;
 
 namespace LunaDraw.Logic.Drawing;
