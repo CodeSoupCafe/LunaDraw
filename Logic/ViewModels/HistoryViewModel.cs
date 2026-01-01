@@ -22,9 +22,10 @@
  */
 
 using System.Reactive;
-using LunaDraw.Logic.Utils;
 using ReactiveUI;
 using LunaDraw.Logic.Models;
+using LunaDraw.Logic.Caching;
+using LunaDraw.Logic.Drawing;
 
 namespace LunaDraw.Logic.ViewModels;
 

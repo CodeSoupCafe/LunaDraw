@@ -1,0 +1,661 @@
+/* 
+ *  Copyright (c) 2025 CodeSoupCafe LLC
+ *  
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *  
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *  
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
+ *  
+ */
+
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+using Moq;
+using Xunit;
+using SkiaSharp;
+using SkiaSharp.Views.Maui;
+using ReactiveUI;
+using System.Reactive.Concurrency;
+using System.Reactive.Linq;
+using LunaDraw.Logic.Playback;
+using LunaDraw.Logic.Drawing;
+using LunaDraw.Logic.Caching;
+using LunaDraw.Logic.Storage;
+using LunaDraw.Logic.Messages;
+using LunaDraw.Logic.Models;
+using LunaDraw.Logic.Tools;
+using LunaDraw.Logic.ViewModels;
+using CommunityToolkit.Maui.Storage;
+
+namespace LunaDraw.Tests.Logic.Drawing
+{
+  public class CanvasInputHandlerTests
+  {
+    private readonly ToolbarViewModel toolbarViewModel;
+    private readonly Mock<ILayerFacade> mockLayerFacade;
+    private readonly Mock<IMessageBus> mockMessageBus;
+    private readonly Mock<IDrawingTool> mockDrawingTool;
+    private readonly Mock<IBitmapCache> mockBitmapCache;
+    private readonly Mock<IFileSaver> mockFileSaver;
+    private readonly SelectionObserver selectionObserver;
+    private readonly NavigationModel navigationModel;
+    private readonly CanvasInputHandler canvasInputHandler;
+
+    private const float SmoothingFactor = 0.1f;
+
+    public CanvasInputHandlerTests()
+    {
+      RxApp.MainThreadScheduler = Scheduler.Immediate;
+
+      mockLayerFacade = new Mock<ILayerFacade>();
+      mockMessageBus = new Mock<IMessageBus>();
+      mockDrawingTool = new Mock<IDrawingTool>();
+      mockBitmapCache = new Mock<IBitmapCache>();
+      mockFileSaver = new Mock<IFileSaver>();
+
+      mockLayerFacade.Setup(m => m.CurrentLayer).Returns(new Layer());
+      mockLayerFacade.Setup(m => m.Layers).Returns(new ObservableCollection<Layer>());
+      mockLayerFacade.Setup(m => m.HistoryMemento).Returns(new HistoryMemento());
+      mockDrawingTool.Setup(t => t.Type).Returns(ToolType.Freehand);
+
+      // Ensure MessageBus returns observables for ToolbarViewModel constructor
+      mockMessageBus.Setup(x => x.Listen<BrushSettingsChangedMessage>()).Returns(Observable.Empty<BrushSettingsChangedMessage>());
+      mockMessageBus.Setup(x => x.Listen<BrushShapeChangedMessage>()).Returns(Observable.Empty<BrushShapeChangedMessage>());
+      mockMessageBus.Setup(x => x.Listen<ViewOptionsChangedMessage>()).Returns(Observable.Empty<ViewOptionsChangedMessage>());
+
+      selectionObserver = new SelectionObserver();
+      navigationModel = new NavigationModel();
+
+      // Instantiate real ViewModels
+      var clipboardMemento = new ClipboardMemento();
+      var selectionVM = new SelectionViewModel(selectionObserver, mockLayerFacade.Object, clipboardMemento, mockMessageBus.Object);
+      var historyVM = new HistoryViewModel(mockLayerFacade.Object, mockMessageBus.Object);
+      var mockPreferences = new Mock<IPreferencesFacade>();
+
+      var mockDrawingStorage = new Mock<IDrawingStorageMomento>();
+      toolbarViewModel = new ToolbarViewModel(
+          mockLayerFacade.Object,
+          selectionVM,
+          historyVM,
+          mockMessageBus.Object,
+          mockBitmapCache.Object,
+          navigationModel,
+          mockFileSaver.Object,
+          mockPreferences.Object,
+          mockDrawingStorage.Object
+      );
+
+      // Inject mock tool
+      toolbarViewModel.ActiveTool = mockDrawingTool.Object;
+
+      var mockPlaybackHandler = new Mock<IPlaybackHandler>();
+      canvasInputHandler = new CanvasInputHandler(
+          toolbarViewModel,
+          mockLayerFacade.Object,
+          selectionObserver,
+          navigationModel,
+          mockPlaybackHandler.Object,
+          mockMessageBus.Object
+      );
+    }
+
+    [Fact]
+    public void HandleMultiTouch_MissingTouchKey_IgnoresTouch()
+    {
+      // Arrange
+      // Create a local handler with clean state if needed, or use the class one.
+      // The original test created a new one. We can do the same.
+
+      var clipboardMemento = new ClipboardMemento();
+      var localSelectionVM = new SelectionViewModel(selectionObserver, mockLayerFacade.Object, clipboardMemento, mockMessageBus.Object);
+      var localHistoryVM = new HistoryViewModel(mockLayerFacade.Object, mockMessageBus.Object);
+      var mockPreferences = new Mock<IPreferencesFacade>();
+
+      var mockDrawingStorage2 = new Mock<IDrawingStorageMomento>();
+      var localToolbarVM = new ToolbarViewModel(
+          mockLayerFacade.Object,
+          localSelectionVM,
+          localHistoryVM,
+          mockMessageBus.Object,
+          mockBitmapCache.Object,
+          navigationModel,
+          mockFileSaver.Object,
+          mockPreferences.Object,
+          mockDrawingStorage2.Object
+      );
+
+      // Mock active tool inside the local VM
+      localToolbarVM.ActiveTool = new Mock<IDrawingTool>().Object;
+
+      var mockPlaybackHandler = new Mock<IPlaybackHandler>();
+      var handler = new CanvasInputHandler(
+          localToolbarVM,
+          mockLayerFacade.Object,
+          selectionObserver,
+          navigationModel,
+          mockPlaybackHandler.Object,
+          mockMessageBus.Object
+      );
+
+      var touch1 = new SKTouchEventArgs(1, SKTouchAction.Pressed, new SKPoint(10, 10), true);
+      handler.ProcessTouch(touch1, SKRect.Empty);
+
+      var touch2 = new SKTouchEventArgs(2, SKTouchAction.Pressed, new SKPoint(20, 20), true);
+      handler.ProcessTouch(touch2, SKRect.Empty);
+
+      var touch3 = new SKTouchEventArgs(3, SKTouchAction.Moved, new SKPoint(30, 30), true);
+
+      // Act
+      var exception = Record.Exception(() => handler.ProcessTouch(touch3, SKRect.Empty));
+
+      // Assert
+      Assert.Null(exception);
+    }
+
+    [Fact]
+    public void ProcessTouch_Pressed_ShouldCallActiveToolOnTouchPressed()
+    {
+      // Arrange
+      var touchLocation = new SKPoint(100, 100);
+      var eventArgs = new SKTouchEventArgs(1, SKTouchAction.Pressed, touchLocation, true);
+
+      // Act
+      canvasInputHandler.ProcessTouch(eventArgs, SKRect.Empty);
+
+      // Assert
+      mockDrawingTool.Verify(x => x.OnTouchPressed(It.IsAny<SKPoint>(), It.IsAny<ToolContext>()), Times.Once);
+    }
+
+    [Fact]
+    public void ProcessTouch_Moved_ShouldCallActiveToolOnTouchMoved()
+    {
+      // Arrange
+      var touchLocation = new SKPoint(100, 100);
+      var eventArgsPressed = new SKTouchEventArgs(1, SKTouchAction.Pressed, touchLocation, true);
+      canvasInputHandler.ProcessTouch(eventArgsPressed, SKRect.Empty);
+
+      var newTouchLocation = new SKPoint(110, 110);
+      var eventArgsMoved = new SKTouchEventArgs(1, SKTouchAction.Moved, newTouchLocation, true);
+
+      // Act
+      canvasInputHandler.ProcessTouch(eventArgsMoved, SKRect.Empty);
+
+      // Assert
+      mockDrawingTool.Verify(x => x.OnTouchMoved(It.IsAny<SKPoint>(), It.IsAny<ToolContext>()), Times.Once);
+    }
+
+    [Fact]
+    public void ProcessTouch_Released_ShouldCallActiveToolOnTouchReleased()
+    {
+      // Arrange
+      var touchLocation = new SKPoint(100, 100);
+      var eventArgsPressed = new SKTouchEventArgs(1, SKTouchAction.Pressed, touchLocation, true);
+      canvasInputHandler.ProcessTouch(eventArgsPressed, SKRect.Empty);
+
+      var eventArgsReleased = new SKTouchEventArgs(1, SKTouchAction.Released, touchLocation, true);
+
+      // Act
+      canvasInputHandler.ProcessTouch(eventArgsReleased, SKRect.Empty);
+
+      // Assert
+      mockDrawingTool.Verify(x => x.OnTouchReleased(It.IsAny<SKPoint>(), It.IsAny<ToolContext>()), Times.Once);
+    }
+
+    [Fact]
+    public void ProcessTouch_WhenLayerIsNull_ShouldNotProcessTouch()
+    {
+      // Arrange
+      mockLayerFacade.Setup(m => m.CurrentLayer).Returns(default(Layer));
+      var touchLocation = new SKPoint(100, 100);
+      var eventArgs = new SKTouchEventArgs(1, SKTouchAction.Pressed, touchLocation, true);
+
+      // Act
+      canvasInputHandler.ProcessTouch(eventArgs, SKRect.Empty);
+
+      // Assert
+      mockDrawingTool.Verify(x => x.OnTouchPressed(It.IsAny<SKPoint>(), It.IsAny<ToolContext>()), Times.Never);
+      mockDrawingTool.Verify(x => x.OnTouchMoved(It.IsAny<SKPoint>(), It.IsAny<ToolContext>()), Times.Never);
+      mockDrawingTool.Verify(x => x.OnTouchReleased(It.IsAny<SKPoint>(), It.IsAny<ToolContext>()), Times.Never);
+    }
+
+    [Fact]
+    public void ProcessTouch_MultiTouchStarts_ShouldCallActiveToolOnTouchCancelled()
+    {
+      // Arrange
+      var touch1 = new SKTouchEventArgs(1, SKTouchAction.Pressed, new SKPoint(10, 10), true);
+      canvasInputHandler.ProcessTouch(touch1, SKRect.Empty);
+
+      var touch2 = new SKTouchEventArgs(2, SKTouchAction.Pressed, new SKPoint(20, 20), true);
+
+      // Act
+      canvasInputHandler.ProcessTouch(touch2, SKRect.Empty);
+
+      // Assert
+      mockDrawingTool.Verify(x => x.OnTouchCancelled(It.IsAny<ToolContext>()), Times.Once);
+    }
+
+    [Fact]
+    public void ProcessTouch_TwoFingersPan_ShouldUpdateNavigationModelUserMatrixTranslationX()
+    {
+      // Arrange
+      var initialMatrix = navigationModel.ViewMatrix;
+      var touch1Start = new SKPoint(100, 100);
+      var touch2Start = new SKPoint(200, 100);
+
+      // Simulate two fingers pressed
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Pressed, touch1Start, true), SKRect.Empty);
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Pressed, touch2Start, true), SKRect.Empty);
+
+      // Move both fingers in parallel
+      var touch1Move = new SKPoint(110, 110);
+      var touch2Move = new SKPoint(210, 110);
+
+      // Act
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Moved, touch1Move, true), SKRect.Empty);
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Moved, touch2Move, true), SKRect.Empty);
+
+      // Assert
+      var finalMatrix = navigationModel.ViewMatrix;
+      Assert.Equal(1.9f, finalMatrix.TransX, 0.001f);
+    }
+
+    [Fact]
+    public void ProcessTouch_TwoFingersPan_ShouldUpdateNavigationModelUserMatrixTranslationY()
+    {
+      // Arrange
+      var initialMatrix = navigationModel.ViewMatrix;
+      var touch1Start = new SKPoint(100, 100);
+      var touch2Start = new SKPoint(200, 100);
+
+      // Simulate two fingers pressed
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Pressed, touch1Start, true), SKRect.Empty);
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Pressed, touch2Start, true), SKRect.Empty);
+
+      // Move both fingers in parallel
+      var touch1Move = new SKPoint(110, 110);
+      var touch2Move = new SKPoint(210, 110);
+
+      // Act
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Moved, touch1Move, true), SKRect.Empty);
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Moved, touch2Move, true), SKRect.Empty);
+
+      // Assert
+      var finalMatrix = navigationModel.ViewMatrix;
+      Assert.Equal(3.7f, finalMatrix.TransY, 0.001f);
+    }
+
+    [Fact]
+    public void ProcessTouch_TwoFingersPinchZoom_ShouldUpdateNavigationModelUserMatrixScaleX()
+    {
+      // Arrange
+      var initialMatrix = navigationModel.ViewMatrix;
+      var touch1Start = new SKPoint(100, 100);
+      var touch2Start = new SKPoint(200, 100);
+
+      // Simulate two fingers pressed
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Pressed, touch1Start, true), SKRect.Empty);
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Pressed, touch2Start, true), SKRect.Empty);
+
+      // Simulate pinch out (increase distance)
+      var touch1Move = new SKPoint(75, 100);
+      var touch2Move = new SKPoint(225, 100);
+
+      // Act
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Moved, touch1Move, true), SKRect.Empty);
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Moved, touch2Move, true), SKRect.Empty);
+
+      // Assert
+      var finalMatrix = navigationModel.ViewMatrix;
+      Assert.Equal(initialMatrix.ScaleX + (initialMatrix.ScaleX * 0.5f * SmoothingFactor), finalMatrix.ScaleX, 0.1f);
+    }
+
+    [Fact]
+    public void ProcessTouch_TwoFingersPinchZoom_ShouldUpdateNavigationModelUserMatrixScaleY()
+    {
+      // Arrange
+      var initialMatrix = navigationModel.ViewMatrix;
+      var touch1Start = new SKPoint(100, 100);
+      var touch2Start = new SKPoint(200, 100);
+
+      // Simulate two fingers pressed
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Pressed, touch1Start, true), SKRect.Empty);
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Pressed, touch2Start, true), SKRect.Empty);
+
+      // Simulate pinch out (increase distance)
+      var touch1Move = new SKPoint(75, 100);
+      var touch2Move = new SKPoint(225, 100);
+
+      // Act
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Moved, touch1Move, true), SKRect.Empty);
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Moved, touch2Move, true), SKRect.Empty);
+
+      // Assert
+      var finalMatrix = navigationModel.ViewMatrix;
+      Assert.Equal(initialMatrix.ScaleY + (initialMatrix.ScaleY * 0.5f * SmoothingFactor), finalMatrix.ScaleY, 0.1f);
+    }
+
+    [Fact]
+    public void ProcessTouch_TwoFingersRotate_ShouldUpdateNavigationModelUserMatrixRotation()
+    {
+      // Arrange
+      var initialMatrix = navigationModel.ViewMatrix;
+      var touch1Start = new SKPoint(100, 100);
+      var touch2Start = new SKPoint(200, 100);
+
+      // Simulate two fingers pressed
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Pressed, touch1Start, true), SKRect.Empty);
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Pressed, touch2Start, true), SKRect.Empty);
+
+      // Simulate rotation
+      var touch1Move = new SKPoint(100, 50);
+      var touch2Move = new SKPoint(200, 150);
+
+      // Act
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Moved, touch1Move, true), SKRect.Empty);
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Moved, touch2Move, true), SKRect.Empty);
+
+      // Assert
+      var finalMatrix = navigationModel.ViewMatrix;
+      Assert.NotEqual(initialMatrix, finalMatrix);
+    }
+
+    [Fact]
+    public void ProcessTouch_TwoFingersRotate_ShouldNotChangeScale()
+    {
+      // Arrange
+      var initialMatrix = navigationModel.ViewMatrix;
+      var touch1Start = new SKPoint(100, 100);
+      var touch2Start = new SKPoint(200, 100);
+
+      // Simulate two fingers pressed
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Pressed, touch1Start, true), SKRect.Empty);
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Pressed, touch2Start, true), SKRect.Empty);
+
+      // Simulate rotation
+      var touch1Move = new SKPoint(100, 50);
+      var touch2Move = new SKPoint(200, 150);
+
+      // Act
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Moved, touch1Move, true), SKRect.Empty);
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Moved, touch2Move, true), SKRect.Empty);
+
+      // Assert
+      var finalMatrix = navigationModel.ViewMatrix;
+      Assert.Equal(initialMatrix.ScaleX, finalMatrix.ScaleX, 0.1f);
+    }
+
+    [Fact]
+    public void ProcessTouch_TwoFingersPanSelectedElements_ShouldUpdateElementTransformMatrixX()
+    {
+      // Arrange
+      mockDrawingTool.Setup(t => t.Type).Returns(ToolType.Select);
+      mockLayerFacade.Setup(m => m.CurrentLayer).Returns(new Layer { IsLocked = false });
+
+      var mockElement = new Mock<IDrawableElement>();
+      mockElement.SetupProperty(e => e.TransformMatrix);
+      mockElement.Object.TransformMatrix = SKMatrix.CreateIdentity();
+      mockElement.Setup(e => e.HitTest(It.IsAny<SKPoint>())).Returns(true);
+      selectionObserver.Add(mockElement.Object);
+
+      navigationModel.ViewMatrix = SKMatrix.CreateIdentity();
+      navigationModel.ViewMatrix = SKMatrix.CreateIdentity();
+
+      var touch1Start = new SKPoint(100, 100);
+      var touch2Start = new SKPoint(200, 100);
+
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Pressed, touch1Start, true), SKRect.Empty);
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Pressed, touch2Start, true), SKRect.Empty);
+
+      var initialElementMatrix = mockElement.Object.TransformMatrix;
+
+      // Move both fingers in parallel
+      var touch1Move = new SKPoint(110, 110);
+      var touch2Move = new SKPoint(210, 110);
+
+      // Act
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Moved, touch1Move, true), SKRect.Empty);
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Moved, touch2Move, true), SKRect.Empty);
+
+      // Assert
+      var finalElementMatrix = mockElement.Object.TransformMatrix;
+      Assert.Equal(1.9f, finalElementMatrix.TransX, 0.001f);
+    }
+
+    [Fact]
+    public void ProcessTouch_TwoFingersPanSelectedElements_ShouldUpdateElementTransformMatrixY()
+    {
+      // Arrange
+      mockDrawingTool.Setup(t => t.Type).Returns(ToolType.Select);
+      mockLayerFacade.Setup(m => m.CurrentLayer).Returns(new Layer { IsLocked = false });
+
+      var mockElement = new Mock<IDrawableElement>();
+      mockElement.SetupProperty(e => e.TransformMatrix);
+      mockElement.Object.TransformMatrix = SKMatrix.CreateIdentity();
+      mockElement.Setup(e => e.HitTest(It.IsAny<SKPoint>())).Returns(true);
+      selectionObserver.Add(mockElement.Object);
+
+      navigationModel.ViewMatrix = SKMatrix.CreateIdentity();
+      navigationModel.ViewMatrix = SKMatrix.CreateIdentity();
+
+      var touch1Start = new SKPoint(100, 100);
+      var touch2Start = new SKPoint(200, 100);
+
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Pressed, touch1Start, true), SKRect.Empty);
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Pressed, touch2Start, true), SKRect.Empty);
+
+      var initialElementMatrix = mockElement.Object.TransformMatrix;
+
+      // Move both fingers in parallel
+      var touch1Move = new SKPoint(110, 110);
+      var touch2Move = new SKPoint(210, 110);
+
+      // Act
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Moved, touch1Move, true), SKRect.Empty);
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Moved, touch2Move, true), SKRect.Empty);
+
+      // Assert
+      var finalElementMatrix = mockElement.Object.TransformMatrix;
+      Assert.Equal(3.7f, finalElementMatrix.TransY, 0.001f);
+    }
+
+    [Fact]
+    public void ProcessTouch_TwoFingersPinchZoomSelectedElements_ShouldUpdateElementTransformMatrixX()
+    {
+      // Arrange
+      mockDrawingTool.Setup(t => t.Type).Returns(ToolType.Select);
+      mockLayerFacade.Setup(m => m.CurrentLayer).Returns(new Layer { IsLocked = false });
+
+      var mockElement = new Mock<IDrawableElement>();
+      mockElement.SetupProperty(e => e.TransformMatrix);
+      mockElement.Object.TransformMatrix = SKMatrix.CreateIdentity();
+      mockElement.Setup(e => e.HitTest(It.IsAny<SKPoint>())).Returns(true);
+      selectionObserver.Add(mockElement.Object);
+
+      navigationModel.ViewMatrix = SKMatrix.CreateIdentity();
+      navigationModel.ViewMatrix = SKMatrix.CreateIdentity();
+
+      var touch1Start = new SKPoint(100, 100);
+      var touch2Start = new SKPoint(200, 100);
+
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Pressed, touch1Start, true), SKRect.Empty);
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Pressed, touch2Start, true), SKRect.Empty);
+
+      var initialElementMatrix = mockElement.Object.TransformMatrix;
+
+      // Simulate pinch out (increase distance)
+      var touch1Move = new SKPoint(75, 100);
+      var touch2Move = new SKPoint(225, 100);
+
+      // Act
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Moved, touch1Move, true), SKRect.Empty);
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Moved, touch2Move, true), SKRect.Empty);
+
+      // Assert
+      var finalElementMatrix = mockElement.Object.TransformMatrix;
+      Assert.Equal(initialElementMatrix.ScaleX + (initialElementMatrix.ScaleX * 0.5f * SmoothingFactor), finalElementMatrix.ScaleX, 0.1f);
+    }
+
+    [Fact]
+    public void ProcessTouch_TwoFingersPinchZoomSelectedElements_ShouldUpdateElementTransformMatrixY()
+    {
+      // Arrange
+      mockDrawingTool.Setup(t => t.Type).Returns(ToolType.Select);
+      mockLayerFacade.Setup(m => m.CurrentLayer).Returns(new Layer { IsLocked = false });
+
+      var mockElement = new Mock<IDrawableElement>();
+      mockElement.SetupProperty(e => e.TransformMatrix);
+      mockElement.Object.TransformMatrix = SKMatrix.CreateIdentity();
+      mockElement.Setup(e => e.HitTest(It.IsAny<SKPoint>())).Returns(true);
+      selectionObserver.Add(mockElement.Object);
+
+      navigationModel.ViewMatrix = SKMatrix.CreateIdentity();
+      navigationModel.ViewMatrix = SKMatrix.CreateIdentity();
+
+      var touch1Start = new SKPoint(100, 100);
+      var touch2Start = new SKPoint(200, 100);
+
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Pressed, touch1Start, true), SKRect.Empty);
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Pressed, touch2Start, true), SKRect.Empty);
+
+      var initialElementMatrix = mockElement.Object.TransformMatrix;
+
+      // Simulate pinch out (increase distance)
+      var touch1Move = new SKPoint(75, 100);
+      var touch2Move = new SKPoint(225, 100);
+
+      // Act
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Moved, touch1Move, true), SKRect.Empty);
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Moved, touch2Move, true), SKRect.Empty);
+
+      // Assert
+      var finalElementMatrix = mockElement.Object.TransformMatrix;
+      Assert.Equal(initialElementMatrix.ScaleY + (initialElementMatrix.ScaleY * 0.5f * SmoothingFactor), finalElementMatrix.ScaleY, 0.1f);
+    }
+
+    [Fact]
+    public void ProcessTouch_TwoFingersRotateSelectedElements_ShouldUpdateElementTransformMatrixRotation()
+    {
+      // Arrange
+      mockDrawingTool.Setup(t => t.Type).Returns(ToolType.Select);
+      mockLayerFacade.Setup(m => m.CurrentLayer).Returns(new Layer { IsLocked = false });
+
+      var mockElement = new Mock<IDrawableElement>();
+      mockElement.SetupProperty(e => e.TransformMatrix);
+      mockElement.Object.TransformMatrix = SKMatrix.CreateIdentity();
+      mockElement.Setup(e => e.HitTest(It.IsAny<SKPoint>())).Returns(true);
+      selectionObserver.Add(mockElement.Object);
+
+      navigationModel.ViewMatrix = SKMatrix.CreateIdentity();
+      navigationModel.ViewMatrix = SKMatrix.CreateIdentity();
+
+      var touch1Start = new SKPoint(100, 100);
+      var touch2Start = new SKPoint(200, 100);
+
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Pressed, touch1Start, true), SKRect.Empty);
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Pressed, touch2Start, true), SKRect.Empty);
+
+      var initialElementMatrix = mockElement.Object.TransformMatrix;
+
+      // Simulate rotation
+      var touch1Move = new SKPoint(100, 50);
+      var touch2Move = new SKPoint(200, 150);
+
+      // Act
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Moved, touch1Move, true), SKRect.Empty);
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Moved, touch2Move, true), SKRect.Empty);
+
+      // Assert
+      var finalElementMatrix = mockElement.Object.TransformMatrix;
+      Assert.NotEqual(initialElementMatrix, finalElementMatrix);
+    }
+
+    [Fact]
+    public void ProcessTouch_TwoFingersRotateSelectedElements_ShouldNotChangeScaleX()
+    {
+      // Arrange
+      mockDrawingTool.Setup(t => t.Type).Returns(ToolType.Select);
+      mockLayerFacade.Setup(m => m.CurrentLayer).Returns(new Layer { IsLocked = false });
+
+      var mockElement = new Mock<IDrawableElement>();
+      mockElement.SetupProperty(e => e.TransformMatrix);
+      mockElement.Object.TransformMatrix = SKMatrix.CreateIdentity();
+      mockElement.Setup(e => e.HitTest(It.IsAny<SKPoint>())).Returns(true);
+      selectionObserver.Add(mockElement.Object);
+
+      navigationModel.ViewMatrix = SKMatrix.CreateIdentity();
+      navigationModel.ViewMatrix = SKMatrix.CreateIdentity();
+
+      var touch1Start = new SKPoint(100, 100);
+      var touch2Start = new SKPoint(200, 100);
+
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Pressed, touch1Start, true), SKRect.Empty);
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Pressed, touch2Start, true), SKRect.Empty);
+
+      var initialElementMatrix = mockElement.Object.TransformMatrix;
+
+      // Simulate rotation
+      var touch1Move = new SKPoint(100, 50);
+      var touch2Move = new SKPoint(200, 150);
+
+      // Act
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Moved, touch1Move, true), SKRect.Empty);
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Moved, touch2Move, true), SKRect.Empty);
+
+      // Assert
+      var finalElementMatrix = mockElement.Object.TransformMatrix;
+      Assert.Equal(initialElementMatrix.ScaleX, finalElementMatrix.ScaleX, 0.1f);
+    }
+
+    [Fact]
+    public void ProcessTouch_TwoFingersRotateSelectedElements_ShouldNotChangeScaleY()
+    {
+      // Arrange
+      mockDrawingTool.Setup(t => t.Type).Returns(ToolType.Select);
+      mockLayerFacade.Setup(m => m.CurrentLayer).Returns(new Layer { IsLocked = false });
+
+      var mockElement = new Mock<IDrawableElement>();
+      mockElement.SetupProperty(e => e.TransformMatrix);
+      mockElement.Object.TransformMatrix = SKMatrix.CreateIdentity();
+      mockElement.Setup(e => e.HitTest(It.IsAny<SKPoint>())).Returns(true);
+      selectionObserver.Add(mockElement.Object);
+
+      navigationModel.ViewMatrix = SKMatrix.CreateIdentity();
+      navigationModel.ViewMatrix = SKMatrix.CreateIdentity();
+
+      var touch1Start = new SKPoint(100, 100);
+      var touch2Start = new SKPoint(200, 100);
+
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Pressed, touch1Start, true), SKRect.Empty);
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Pressed, touch2Start, true), SKRect.Empty);
+
+      var initialElementMatrix = mockElement.Object.TransformMatrix;
+
+      // Simulate rotation
+      var touch1Move = new SKPoint(100, 50);
+      var touch2Move = new SKPoint(200, 150);
+
+      // Act
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(1, SKTouchAction.Moved, touch1Move, true), SKRect.Empty);
+      canvasInputHandler.ProcessTouch(new SKTouchEventArgs(2, SKTouchAction.Moved, touch2Move, true), SKRect.Empty);
+
+      // Assert
+      var finalElementMatrix = mockElement.Object.TransformMatrix;
+      Assert.Equal(initialElementMatrix.ScaleY, finalElementMatrix.ScaleY, 0.1f);
+    }
+  }
+}

@@ -23,7 +23,7 @@
 
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using LunaDraw.Logic.Utils;
+using LunaDraw.Logic.Caching;
 using ReactiveUI;
 using SkiaSharp;
 
@@ -102,10 +102,17 @@ public class Layer : ReactiveObject
           item.ZIndex = maxZIndex + 1; // Assign a ZIndex higher than any existing element
           maxZIndex = item.ZIndex; // Update maxZIndex for subsequent new items in this batch
         }
+
+        // Insert new items directly into QuadTree instead of full rebuild
+        quadTree.Insert(item);
       }
     }
 
-    RebuildQuadTree();
+    if (e.OldItems != null)
+    {
+      // Handle removals by rebuilding (removal is less common than addition)
+      RebuildQuadTree();
+    }
   }
 
   private void RebuildQuadTree()

@@ -21,14 +21,19 @@
  *  
  */
 
-using LunaDraw.Logic.Utils;
+using LunaDraw.Logic.Messages;
+using ReactiveUI;
+using LunaDraw.Logic.Storage;
 
 namespace LunaDraw;
 
 public partial class App : Application
 {
-  public App(IPreferencesFacade preferencesFacade)
+  private readonly IMessageBus messageBus;
+
+  public App(IPreferencesFacade preferencesFacade, IMessageBus messageBus)
   {
+    this.messageBus = messageBus;
     InitializeComponent();
 
     var theme = preferencesFacade.Get(AppPreference.AppTheme);
@@ -43,5 +48,11 @@ public partial class App : Application
   protected override Window CreateWindow(IActivationState? activationState)
   {
     return new Window(new AppShell());
+  }
+
+  protected override void OnSleep()
+  {
+    base.OnSleep();
+    messageBus.SendMessage(new AppSleepingMessage());
   }
 }

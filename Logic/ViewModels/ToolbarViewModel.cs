@@ -26,13 +26,15 @@ using System.Reactive.Linq;
 using CommunityToolkit.Maui.Storage;
 
 using LunaDraw.Logic.Models;
-using LunaDraw.Logic.Utils;
+using LunaDraw.Logic.Drawing;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Tools;
 
 using ReactiveUI;
 
 using SkiaSharp;
+using LunaDraw.Logic.Caching;
+using LunaDraw.Logic.Storage;
 
 namespace LunaDraw.Logic.ViewModels;
 
@@ -45,6 +47,7 @@ public class ToolbarViewModel : ReactiveObject
   private readonly IBitmapCache bitmapCacheManager;
   private readonly NavigationModel navigationModel;
   private readonly IFileSaver fileSaver;
+  private readonly IDrawingStorageMomento drawingStorageMomento;
 
   // Tool State Properties
   private IDrawingTool activeTool;
@@ -185,7 +188,19 @@ public class ToolbarViewModel : ReactiveObject
   public ReactiveCommand<Unit, Unit> ShowBrushesFlyoutCommand { get; }
   public ReactiveCommand<BrushShape, Unit> SelectBrushShapeCommand { get; }
   public ReactiveCommand<Unit, Unit> ImportImageCommand { get; }
+  public ReactiveCommand<Unit, Unit> ShowGalleryCommand { get; }
   public ReactiveCommand<Unit, Unit> ShowAdvancedSettingsCommand { get; }
+  public ReactiveCommand<Unit, Unit> ShowMovieModeCommand { get; }
+
+  // Top Toolbar Commands
+  public ReactiveCommand<Unit, Unit> ToggleColorPopoverCommand { get; }
+  public ReactiveCommand<Unit, Unit> ToggleEffectsPopoverCommand { get; }
+  public ReactiveCommand<Unit, Unit> ToggleBrushSettingsPopoverCommand { get; }
+  public ReactiveCommand<Unit, Unit> ToggleStylePopoverCommand { get; }  // Renamed from ToggleBrushSettingsPopoverCommand
+  public ReactiveCommand<Unit, Unit> ToggleLayersPopoverCommand { get; }
+  public ReactiveCommand<Unit, Unit> ZoomInCommand { get; }
+  public ReactiveCommand<Unit, Unit> ZoomOutCommand { get; }
+  public ReactiveCommand<Unit, Unit> ResetZoomCommand { get; }
 
   // UI state properties
   private bool isSettingsOpen = false;
@@ -226,6 +241,62 @@ public class ToolbarViewModel : ReactiveObject
     set => this.RaiseAndSetIfChanged(ref lastActiveShapeTool, value);
   }
 
+  // Top Toolbar Popover States
+  private bool isColorPopoverOpen = false;
+  public bool IsColorPopoverOpen
+  {
+    get => isColorPopoverOpen;
+    set => this.RaiseAndSetIfChanged(ref isColorPopoverOpen, value);
+  }
+
+  private bool isEffectsPopoverOpen = false;
+  public bool IsEffectsPopoverOpen
+  {
+    get => isEffectsPopoverOpen;
+    set => this.RaiseAndSetIfChanged(ref isEffectsPopoverOpen, value);
+  }
+
+  private bool isBrushSettingsPopoverOpen = false;
+  public bool IsBrushSettingsPopoverOpen
+  {
+    get => isBrushSettingsPopoverOpen;
+    set => this.RaiseAndSetIfChanged(ref isBrushSettingsPopoverOpen, value);
+  }
+
+  private bool isLayersPopoverOpen = false;
+  public bool IsLayersPopoverOpen
+  {
+    get => isLayersPopoverOpen;
+    set => this.RaiseAndSetIfChanged(ref isLayersPopoverOpen, value);
+  }
+
+  // Context-Aware Visibility Properties (per CORRECTED spec)
+  public bool IsStrokeColorVisible => ActiveTool is FreehandTool or RectangleTool or EllipseTool or LineTool or FillTool;
+  public bool IsSizeVisible => ActiveTool is FreehandTool or EraserTool or RectangleTool or EllipseTool or LineTool;
+  public bool IsBrushSettingsVisible => ActiveTool is FreehandTool;
+  public bool IsStyleVisible => ActiveTool is FreehandTool;  // Only Brushes/Stamps, NOT Shapes
+  public bool IsEffectsVisible => ActiveTool is FreehandTool;  // Only Brushes/Stamps, NOT Shapes
+  public bool IsBrushPreviewVisible => ActiveTool is FreehandTool;  // Show brush stroke preview for Brushes/Stamps
+
+  // Active Tool Name for Display
+  public string ActiveToolName => ActiveTool?.Type.ToString() ?? "Select";
+
+  // Zoom Percentage Display
+  public int ZoomPercentage => (int)(navigationModel.Scale * 100);
+
+  // Tool Presets for Brush vs Stamps Differentiation
+  public ToolPreset BrushPreset { get; } = new ToolPreset
+  {
+    Spacing = 0.2f,
+    AllowedShapes = new[] { BrushShapeType.Circle, BrushShapeType.Square, BrushShapeType.Triangle }
+  };
+
+  public ToolPreset StampsPreset { get; } = new ToolPreset
+  {
+    Spacing = 1.0f,
+    AllowedShapes = Enum.GetValues<BrushShapeType>()
+  };
+
   public ToolbarViewModel(
       ILayerFacade layerFacade,
       SelectionViewModel selectionVM,
@@ -234,7 +305,8 @@ public class ToolbarViewModel : ReactiveObject
       IBitmapCache bitmapCacheManager,
       NavigationModel navigationModel,
       IFileSaver fileSaver,
-      IPreferencesFacade preferencesFacade)
+      IPreferencesFacade preferencesFacade,
+      IDrawingStorageMomento drawingStorageMomento)
   {
     this.layerFacade = layerFacade;
     this.selectionVM = selectionVM;
@@ -243,6 +315,7 @@ public class ToolbarViewModel : ReactiveObject
     this.bitmapCacheManager = bitmapCacheManager;
     this.navigationModel = navigationModel;
     this.fileSaver = fileSaver;
+    this.drawingStorageMomento = drawingStorageMomento;
 
     // Listen for ViewOptions changes
     this.messageBus.Listen<ViewOptionsChangedMessage>().Subscribe(msg =>
@@ -405,6 +478,16 @@ public class ToolbarViewModel : ReactiveObject
       messageBus.SendMessage(new ShowAdvancedSettingsMessage());
     });
 
+    ShowGalleryCommand = ReactiveCommand.CreateFromTask(async () =>
+    {
+      messageBus.SendMessage(new ShowGalleryMessage());
+    });
+
+    ShowMovieModeCommand = ReactiveCommand.Create(() =>
+    {
+      messageBus.SendMessage(new TogglePlaybackControlsMessage());
+    });
+
     SelectRectangleCommand = ReactiveCommand.Create(() =>
     {
       var tool = AvailableTools.FirstOrDefault(t => t is RectangleTool) ?? new RectangleTool(messageBus);
@@ -472,5 +555,87 @@ public class ToolbarViewModel : ReactiveObject
       {
       }
     });
+
+    // Top Toolbar Popover Toggle Commands
+    ToggleColorPopoverCommand = ReactiveCommand.Create(() =>
+    {
+      CloseAllPopoversExcept(nameof(IsColorPopoverOpen));
+      IsColorPopoverOpen = !IsColorPopoverOpen;
+    });
+
+    ToggleEffectsPopoverCommand = ReactiveCommand.Create(() =>
+    {
+      CloseAllPopoversExcept(nameof(IsEffectsPopoverOpen));
+      IsEffectsPopoverOpen = !IsEffectsPopoverOpen;
+    });
+
+    ToggleBrushSettingsPopoverCommand = ReactiveCommand.Create(() =>
+    {
+      CloseAllPopoversExcept(nameof(IsBrushSettingsPopoverOpen));
+      IsBrushSettingsPopoverOpen = !IsBrushSettingsPopoverOpen;
+    });
+
+    // Alias for renamed button
+    ToggleStylePopoverCommand = ToggleBrushSettingsPopoverCommand;
+
+    ToggleLayersPopoverCommand = ReactiveCommand.Create(() =>
+    {
+      CloseAllPopoversExcept(nameof(IsLayersPopoverOpen));
+      IsLayersPopoverOpen = !IsLayersPopoverOpen;
+    });
+
+    // Zoom Commands (delegate to NavigationModel)
+    ZoomInCommand = ReactiveCommand.Create(() =>
+    {
+      navigationModel.ZoomIn();
+      this.RaisePropertyChanged(nameof(ZoomPercentage));
+    });
+
+    ZoomOutCommand = ReactiveCommand.Create(() =>
+    {
+      navigationModel.ZoomOut();
+      this.RaisePropertyChanged(nameof(ZoomPercentage));
+    });
+
+    ResetZoomCommand = ReactiveCommand.Create(() =>
+    {
+      navigationModel.ResetZoom();
+      this.RaisePropertyChanged(nameof(ZoomPercentage));
+    });
+
+    // Subscribe to ActiveTool changes to raise property changed for visibility properties
+    this.WhenAnyValue(x => x.ActiveTool)
+        .Subscribe(_ =>
+        {
+          this.RaisePropertyChanged(nameof(IsStrokeColorVisible));
+          this.RaisePropertyChanged(nameof(IsSizeVisible));
+          this.RaisePropertyChanged(nameof(IsBrushSettingsVisible));
+          this.RaisePropertyChanged(nameof(IsStyleVisible));
+          this.RaisePropertyChanged(nameof(IsEffectsVisible));
+          this.RaisePropertyChanged(nameof(IsBrushPreviewVisible));
+          this.RaisePropertyChanged(nameof(ActiveToolName));
+
+          // Close all top toolbar popovers when tool changes
+          CloseAllPopoversExcept(null);
+        });
+
+    // Subscribe to NavigationModel ViewMatrix changes for ZoomPercentage
+    navigationModel.WhenAnyValue(x => x.ViewMatrix)
+        .Subscribe(_ =>
+        {
+          this.RaisePropertyChanged(nameof(ZoomPercentage));
+        });
+  }
+
+  /// <summary>
+  /// Helper method to close all top toolbar popovers except the specified one.
+  /// </summary>
+  /// <param name="except">Name of the popover property to keep open, or null to close all.</param>
+  private void CloseAllPopoversExcept(string? except)
+  {
+    if (except != nameof(IsColorPopoverOpen)) IsColorPopoverOpen = false;
+    if (except != nameof(IsEffectsPopoverOpen)) IsEffectsPopoverOpen = false;
+    if (except != nameof(IsBrushSettingsPopoverOpen)) IsBrushSettingsPopoverOpen = false;
+    if (except != nameof(IsLayersPopoverOpen)) IsLayersPopoverOpen = false;
   }
 }

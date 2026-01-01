@@ -26,22 +26,22 @@ using System.Windows.Input;
 using System.Reactive.Linq;
 using System.Reactive;
 
-using LunaDraw.Logic.Utils;
+using LunaDraw.Logic.Drawing;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.Tools;
 using LunaDraw.Logic.Constants;
 using LunaDraw.Components;
-using CommunityToolkit.Maui.Views;
 
 using ReactiveUI;
 using SkiaSharp;
 using SkiaSharp.Views.Maui;
 using CommunityToolkit.Maui.Extensions;
+using LunaDraw.Logic.Storage;
 
 namespace LunaDraw.Logic.ViewModels;
 
-public class MainViewModel : ReactiveObject
+public class MainViewModel : ReactiveObject, IDisposable
 {
   // Dependencies
   public ToolbarViewModel ToolbarViewModel { get; }
@@ -52,8 +52,9 @@ public class MainViewModel : ReactiveObject
   private readonly IMessageBus messageBus;
   private readonly IPreferencesFacade preferencesFacade;
   private readonly IDrawingStorageMomento drawingStorageMomento;
-  private readonly IDrawingThumbnailFacade drawingThumbnailFacade;
+  private readonly IDrawingThumbnailHandler drawingThumbnailFacade;
   private readonly IServiceProvider serviceProvider;
+  private readonly List<IDisposable> subscriptions = new List<IDisposable>();
 
   // Properties for current drawing state
   private Guid currentDrawingId = Guid.Empty;
@@ -63,11 +64,11 @@ public class MainViewModel : ReactiveObject
     private set => this.RaiseAndSetIfChanged(ref currentDrawingId, value);
   }
 
-  private string _currentDrawingName = AppConstants.Defaults.UntitledDrawingName;
+  private string currentDrawingName = AppConstants.Defaults.UntitledDrawingName;
   public string CurrentDrawingName
   {
-    get => _currentDrawingName;
-    set => this.RaiseAndSetIfChanged(ref _currentDrawingName, value);
+    get => currentDrawingName;
+    set => this.RaiseAndSetIfChanged(ref currentDrawingName, value);
   }
 
   // Sub-ViewModels
@@ -133,6 +134,13 @@ public class MainViewModel : ReactiveObject
     }
   }
 
+  private bool isPlaybackControlsVisible;
+  public bool IsPlaybackControlsVisible
+  {
+    get => isPlaybackControlsVisible;
+    set => this.RaiseAndSetIfChanged(ref isPlaybackControlsVisible, value);
+  }
+
   // Facades for View/CodeBehind access
   public ObservableCollection<Layer> Layers => LayerFacade.Layers;
 
@@ -151,7 +159,7 @@ public class MainViewModel : ReactiveObject
     IMessageBus messageBus,
     IPreferencesFacade preferencesFacade,
     IDrawingStorageMomento drawingStorageMomento,
-    IDrawingThumbnailFacade drawingThumbnailFacade,
+    IDrawingThumbnailHandler drawingThumbnailFacade,
     LayerPanelViewModel layerPanelVM,
     SelectionViewModel selectionVM,
     HistoryViewModel historyVM,
@@ -184,13 +192,20 @@ public class MainViewModel : ReactiveObject
       messageBus.SendMessage(new ShowGalleryMessage());
     });
 
-    this.messageBus.Listen<OpenDrawingMessage>()
+    subscriptions.Add(this.messageBus.Listen<OpenDrawingMessage>()
         .ObserveOn(RxApp.MainThreadScheduler)
-        .Delay(TimeSpan.FromMilliseconds(100))
+        .Delay(TimeSpan.FromMilliseconds(100), RxApp.MainThreadScheduler)
         .Subscribe(msg =>
         {
           LoadDrawingCommand.Execute(msg.Drawing).Subscribe();
-        });
+        }));
+
+    subscriptions.Add(this.messageBus.Listen<NewDrawingMessage>()
+        .ObserveOn(RxApp.MainThreadScheduler)
+        .Subscribe(_ =>
+        {
+          NewDrawingCommand.Execute().Subscribe();
+        }));
 
     // Initial drawing state
     // Do not auto-create a new drawing file on startup. 
@@ -208,7 +223,7 @@ public class MainViewModel : ReactiveObject
     ResetZoomCommand = ReactiveCommand.Create(ResetZoom);
 
     // Listen for ShowAdvancedSettingsMessage
-    this.messageBus.Listen<ShowAdvancedSettingsMessage>().Subscribe(async _ =>
+    subscriptions.Add(this.messageBus.Listen<ShowAdvancedSettingsMessage>().Subscribe(async _ =>
     {
       var popup = new Components.AdvancedSettingsPopup(this);
       var page = Application.Current?.Windows[0]?.Page;
@@ -216,9 +231,9 @@ public class MainViewModel : ReactiveObject
       {
         await page.ShowPopupAsync(popup);
       }
-    });
+    }));
 
-    this.messageBus.Listen<ShowGalleryMessage>().Subscribe(async _ =>
+    subscriptions.Add(this.messageBus.Listen<ShowGalleryMessage>().Subscribe(async _ =>
     {
       var popupViewModel = serviceProvider.GetRequiredService<DrawingGalleryPopupViewModel>();
       var popup = new DrawingGalleryPopup(popupViewModel);
@@ -228,16 +243,20 @@ public class MainViewModel : ReactiveObject
       {
         await page.ShowPopupAsync(popup);
       }
-    });
+    }));
+
+    subscriptions.Add(this.messageBus.Listen<TogglePlaybackControlsMessage>().Subscribe(_ =>
+    {
+      IsPlaybackControlsVisible = !IsPlaybackControlsVisible;
+    }));
 
     // Auto-save on changes
-    this.messageBus.Listen<CanvasInvalidateMessage>()
-        .Throttle(TimeSpan.FromSeconds(2))
-        .ObserveOn(RxApp.MainThreadScheduler)
+    subscriptions.Add(this.messageBus.Listen<CanvasInvalidateMessage>()
+        .Throttle(TimeSpan.FromSeconds(2), RxApp.MainThreadScheduler)
         .Subscribe(_ =>
         {
           ExternaDrawingCommand.Execute(null).Subscribe();
-        });
+        }));
   }
 
   public IDrawingTool ActiveTool
@@ -280,6 +299,7 @@ public class MainViewModel : ReactiveObject
       AllElements = LayerFacade.Layers.SelectMany(l => l.Elements),
       Layers = LayerFacade.Layers,
       SelectionObserver = SelectionObserver,
+      Navigation = NavigationModel,
       Scale = NavigationModel.ViewMatrix.ScaleX,
       IsGlowEnabled = ToolbarViewModel.IsGlowEnabled,
       GlowColor = ToolbarViewModel.GlowColor,
@@ -432,5 +452,14 @@ public class MainViewModel : ReactiveObject
 
     NavigationModel.Reset();
     messageBus.SendMessage(new CanvasInvalidateMessage());
+  }
+
+  public void Dispose()
+  {
+    foreach (var subscription in subscriptions)
+    {
+      subscription?.Dispose();
+    }
+    subscriptions.Clear();
   }
 }

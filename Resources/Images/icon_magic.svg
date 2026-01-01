@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+  <!-- Magic wand icon -->
+  <path d="M3 21L9 15L6 12L0 18L3 21Z"/>
+  <path d="M10 14L14 10L21 17L17 21L10 14Z"/>
+  <circle cx="16" cy="5" r="1"/>
+  <circle cx="19" cy="3" r="1"/>
+  <circle cx="21" cy="6" r="1"/>
+  <path d="M18 4L18.5 5.5L20 6L18.5 6.5L18 8L17.5 6.5L16 6L17.5 5.5L18 4Z"/>
+</svg>

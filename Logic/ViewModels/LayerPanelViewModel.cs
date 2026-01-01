@@ -25,11 +25,11 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Reactive;
 using System.Reactive.Linq;
-using LunaDraw.Logic.Utils;
 using LunaDraw.Logic.Messages;
 using LunaDraw.Logic.Models;
 using ReactiveUI;
-using System.Windows.Input;
+using LunaDraw.Logic.Drawing;
+using LunaDraw.Logic.Storage;
 
 namespace LunaDraw.Logic.ViewModels;
 

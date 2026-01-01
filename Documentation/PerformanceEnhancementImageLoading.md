@@ -193,7 +193,7 @@ private void CacheDrawing(SKBitmap bitmap)
 
 protected override void OnPaintSurface(SKPaintGLSurfaceEventArgs e)
 {
-    e.Surface.Canvas.DrawPicture(_cachedPicture);
+    e.Surface.Canvas.DrawPicture(cachedPicture);
 }
 ```
 

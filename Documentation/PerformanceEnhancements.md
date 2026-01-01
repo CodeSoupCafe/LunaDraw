@@ -3,7 +3,7 @@ Most of these principles apply broadly to **all SkiaSharp rendering**, not just 
 ## Universal SkiaSharp Performance Principles
 
 **Memory Management & Disposal**
-This is critical for _everything_ in SkiaSharp - not just images. Any `IDisposable` object (SKPaint, SKPath, SKShader, SKTypeface, SKSurface, etc.) must be disposed properly. Failure to do so causes:
+This is critical for everything\_ in SkiaSharp - not just images. Any `IDisposable` object (SKPaint, SKPath, SKShader, SKTypeface, SKSurface, etc.) must be disposed properly. Failure to do so causes:
 
 - Memory leaks in managed memory
 - Native memory leaks (SkiaSharp is a wrapper around native Skia)
@@ -81,7 +81,7 @@ private SKPoint[] points = new SKPoint[100];
 
 protected override void OnPaintSurface(SKPaintGLSurfaceEventArgs e)
 {
-    canvas.DrawRect(_rect, paint);
+    canvas.DrawRect(rect, paint);
 }
 ```
 
@@ -107,7 +107,7 @@ private SKPicture CacheComplexDrawing()
 }
 
 // Then just replay the picture
-canvas.DrawPicture(_cachedPicture);
+canvas.DrawPicture(cachedPicture);
 ```
 
 **Async Operations for Heavy Work**
@@ -146,7 +146,7 @@ private SKSurface offscreenSurface;
 
 private void EnsureSurface(SKImageInfo info)
 {
-    if (_offscreenSurface == null || offscreenSurface.Canvas.LocalClipBounds.Width != info.Width)
+    if (offscreenSurface == null || offscreenSurface.Canvas.LocalClipBounds.Width != info.Width)
     {
         offscreenSurface?.Dispose();
         offscreenSurface = SKSurface.Create(info);
@@ -212,4 +212,4 @@ Take advantage of GPU capabilities:
 - Codec management
 - Image format considerations
 
-The performance principles for images are just more _visible_ because images are large and make the problems obvious faster. But the same issues affect all SkiaSharp rendering - they just manifest at different scales.
+The performance principles for images are just more visible\_ because images are large and make the problems obvious faster. But the same issues affect all SkiaSharp rendering - they just manifest at different scales.

@@ -24,7 +24,7 @@
 using CommunityToolkit.Maui;
 using CommunityToolkit.Maui.Storage;
 using Microsoft.Maui.LifecycleEvents;
-using LunaDraw.Logic.Utils;
+using LunaDraw.Logic.Drawing;
 using LunaDraw.Logic.Models;
 using LunaDraw.Logic.ViewModels;
 using LunaDraw.Pages;
@@ -33,6 +33,10 @@ using Microsoft.Extensions.Logging;
 using ReactiveUI;
 using SkiaSharp.Views.Maui.Controls.Hosting;
 using Splat;
+using LunaDraw.Logic.Storage;
+using LunaDraw.Logic.Caching;
+using LunaDraw.Logic.Playback;
+using Plugin.Maui.ScreenRecording;
 
 #if WINDOWS
 using Microsoft.UI.Xaml.Media;
@@ -85,18 +89,24 @@ public static class MauiProgram
     // Register Logic Services
     builder.Services.AddSingleton<ICanvasInputHandler, CanvasInputHandler>();
     builder.Services.AddSingleton<ClipboardMemento>();
-    builder.Services.AddSingleton<IBitmapCache, LunaDraw.Logic.Utils.BitmapCache>();
+    builder.Services.AddSingleton<LunaDraw.Logic.Caching.IBitmapCache, LunaDraw.Logic.Caching.BitmapCache>();
     builder.Services.AddSingleton<IPreferencesFacade, PreferencesFacade>();
-    builder.Services.AddSingleton<IFileSaver>(FileSaver.Default);
+    builder.Services.AddSingleton(FileSaver.Default);
     builder.Services.AddSingleton<IDrawingStorageMomento, DrawingStorageMomento>();
-    builder.Services.AddSingleton<LunaDraw.Logic.Services.IThumbnailCacheFacade, LunaDraw.Logic.Services.ThumbnailCacheFacade>();
-    builder.Services.AddSingleton<IDrawingThumbnailFacade, DrawingThumbnailFacade>();
+    builder.Services.AddSingleton<IThumbnailCacheFacade, ThumbnailCacheFacade>();
+    builder.Services.AddSingleton<IDrawingThumbnailHandler, DrawingThumbnailHandler>();
+
+    // Movie Mode Handlers
+    builder.Services.AddSingleton<IRecordingHandler, RecordingHandler>();
+    builder.Services.AddSingleton<IPlaybackHandler, PlaybackHandler>();
+    builder.Services.AddSingleton(ScreenRecording.Default);
 
     // Register ViewModels
     builder.Services.AddSingleton<LayerPanelViewModel>();
     builder.Services.AddSingleton<SelectionViewModel>();
     builder.Services.AddSingleton<HistoryViewModel>();
     builder.Services.AddSingleton<GalleryViewModel>();
+    builder.Services.AddSingleton<PlaybackViewModel>();
     builder.Services.AddTransient<DrawingGalleryPopupViewModel>();
 
     builder.Services.AddTransient<MainViewModel>();
@@ -104,6 +114,7 @@ public static class MauiProgram
 
     // Register Pages
     builder.Services.AddTransient<MainPage>();
+    builder.Services.AddTransient<PlaybackPage>();
 
 #if DEBUG
     builder.Logging.AddDebug();

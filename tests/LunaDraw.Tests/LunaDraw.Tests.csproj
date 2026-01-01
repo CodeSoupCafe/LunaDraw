@@ -30,4 +30,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\LunaDraw.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Logic\Drawing\" />
+  </ItemGroup>
 </Project>

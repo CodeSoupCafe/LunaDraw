@@ -27,16 +27,17 @@ using System.Reactive.Linq;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using LunaDraw.Logic.Models;
-using LunaDraw.Logic.Utils;
+using LunaDraw.Logic.Drawing;
 using LunaDraw.Logic.Messages;
 using CodeSoupCafe.Maui.Infrastructure;
+using CodeSoupCafe.Maui.Models;
 
 namespace LunaDraw.Logic.ViewModels;
 
 public class DrawingGalleryPopupViewModel : ReactiveObject, IDisposable
 {
   private readonly GalleryViewModel galleryViewModel;
-  private readonly IDrawingThumbnailFacade thumbnailService;
+  private readonly IDrawingThumbnailHandler thumbnailService;
   private readonly IMessageBus messageBus;
   private IDisposable? drawingListChangedSubscription;
 
@@ -59,10 +60,21 @@ public class DrawingGalleryPopupViewModel : ReactiveObject, IDisposable
   public ReactiveCommand<Unit, Unit> CancelCommand { get; }
   public ReactiveCommand<DrawingItemViewModel, Unit> OpenDrawingCommand { get; }
   public ReactiveCommand<Unit, Unit> LoadDrawingsCommand { get; }
+  public ReactiveCommand<DrawingItemViewModel, Unit> DuplicateDrawingCommand { get; }
+  public ReactiveCommand<DrawingItemViewModel, Unit> DeleteDrawingCommand { get; }
+  public ReactiveCommand<DrawingItemViewModel, Unit> RenameDrawingCommand { get; }
+
+  private List<GalleryContextCommand>? contextCommands;
+  public List<GalleryContextCommand>? ContextCommands
+  {
+    get => contextCommands;
+    set => this.RaiseAndSetIfChanged(ref contextCommands, value);
+  }
+
 
   public DrawingGalleryPopupViewModel(
     GalleryViewModel galleryViewModel,
-    IDrawingThumbnailFacade thumbnailService,
+    IDrawingThumbnailHandler thumbnailService,
     IMessageBus messageBus)
   {
     this.galleryViewModel = galleryViewModel;
@@ -92,12 +104,21 @@ public class DrawingGalleryPopupViewModel : ReactiveObject, IDisposable
     LoadDrawingsCommand = ReactiveCommand.CreateFromTask(LoadDrawingsAsync);
     LoadDrawingsCommand.Execute().Subscribe();
 
+
+    DuplicateDrawingCommand = ReactiveCommand.CreateFromTask<DrawingItemViewModel>(DuplicateDrawingAsync);
+    DeleteDrawingCommand = ReactiveCommand.CreateFromTask<DrawingItemViewModel>(DeleteDrawingAsync);
+    RenameDrawingCommand = ReactiveCommand.CreateFromTask<DrawingItemViewModel>(RenameDrawingAsync);
+
+    ContextCommands = new List<GalleryContextCommand>
+    {
+      new("Duplicate", DuplicateDrawingCommand),
+      new("Rename", RenameDrawingCommand),
+      new("Delete", DeleteDrawingCommand, isDestructive: true)
+    };
     drawingListChangedSubscription = messageBus.Listen<DrawingListChangedMessage>()
       .ObserveOn(RxApp.MainThreadScheduler)
       .Subscribe(async msg =>
       {
-        System.Diagnostics.Debug.WriteLine($"[DrawingGalleryPopup] DrawingListChangedMessage received. DrawingId: {msg.DrawingId}");
-
         if (msg.DrawingId.HasValue)
         {
           var drawingId = msg.DrawingId.Value;
@@ -123,8 +144,6 @@ public class DrawingGalleryPopupViewModel : ReactiveObject, IDisposable
 
           if (existingItem != null)
           {
-            System.Diagnostics.Debug.WriteLine($"[DrawingGalleryPopup] Updating existing item: {drawingId}");
-
             // Update metadata
             existingItem.UpdateDrawingMetadata(updatedDrawing);
             existingItem.ThumbnailBase64 = null; // Force reload on next appear
@@ -156,8 +175,6 @@ public class DrawingGalleryPopupViewModel : ReactiveObject, IDisposable
           }
           else
           {
-            System.Diagnostics.Debug.WriteLine($"[DrawingGalleryPopup] Adding new item: {drawingId}");
-
             // New drawing created externally
             var newItem = new DrawingItemViewModel(updatedDrawing);
             DrawingItems.Insert(0, newItem); // Assume newest
@@ -169,7 +186,6 @@ public class DrawingGalleryPopupViewModel : ReactiveObject, IDisposable
         else
         {
           // Full reload requested
-          System.Diagnostics.Debug.WriteLine($"[DrawingGalleryPopup] Full reload requested via message");
           await LoadDrawingsAsync();
         }
       });
@@ -201,10 +217,7 @@ public class DrawingGalleryPopupViewModel : ReactiveObject, IDisposable
 
     try
     {
-      System.Diagnostics.Debug.WriteLine("[DrawingGalleryPopup] Loading drawings...");
       await galleryViewModel.LoadDrawingsCommand.Execute().GetAwaiter();
-
-      System.Diagnostics.Debug.WriteLine($"[DrawingGalleryPopup] GalleryViewModel.Drawings count: {galleryViewModel.Drawings.Count}");
 
       DrawingItems.ClearAndStaySilent();
 
@@ -213,26 +226,56 @@ public class DrawingGalleryPopupViewModel : ReactiveObject, IDisposable
         .Select(drawing => new DrawingItemViewModel(drawing))
         .ToList();
 
-      System.Diagnostics.Debug.WriteLine($"[DrawingGalleryPopup] Created {items.Count} DrawingItemViewModels");
-
       DrawingItems.AddRange(items);
-
-      System.Diagnostics.Debug.WriteLine($"[DrawingGalleryPopup] DrawingItems.Count after AddRange: {DrawingItems.Count}");
 
       // Force property change notification to trigger ItemGalleryView binding
       this.RaisePropertyChanged(nameof(DrawingItems));
-      System.Diagnostics.Debug.WriteLine($"[DrawingGalleryPopup] Raised property changed for DrawingItems");
     }
-    catch (Exception ex)
+    catch //(Exception ex)
     {
-      System.Diagnostics.Debug.WriteLine($"[DrawingGalleryPopup] ERROR: {ex.Message}");
-      System.Diagnostics.Debug.WriteLine($"[DrawingGalleryPopup] Stack: {ex.StackTrace}");
     }
     finally
     {
       IsLoading = false;
     }
   }
+  private async Task DuplicateDrawingAsync(DrawingItemViewModel item)
+  {
+    if (item?.Drawing == null) return;
+    await galleryViewModel.DuplicateDrawingCommand.Execute(item.Drawing).GetAwaiter();
+  }
+
+  private async Task DeleteDrawingAsync(DrawingItemViewModel item)
+  {
+    if (item?.Drawing == null) return;
+
+    bool confirmed = await Shell.Current.CurrentPage.DisplayAlertAsync(
+        "Delete Drawing",
+        $"Are you sure you want to delete '{item.Title}'?",
+        "Delete",
+        "Cancel");
+
+    if (!confirmed) return;
+    await galleryViewModel.DeleteDrawingCommand.Execute(item.Drawing).GetAwaiter();
+  }
+
+  private async Task RenameDrawingAsync(DrawingItemViewModel item)
+  {
+    if (item?.Drawing == null) return;
+
+    string newName = await Shell.Current.CurrentPage.DisplayPromptAsync(
+        "Rename Drawing",
+        "Enter new name:",
+        initialValue: item.Title,
+        maxLength: 50,
+        placeholder: "Drawing name") ?? string.Empty;
+
+    if (string.IsNullOrWhiteSpace(newName)) return;
+
+    await galleryViewModel.RenameDrawing(item.Drawing, newName);
+    messageBus.SendMessage(new DrawingListChangedMessage(item.Drawing.Id));
+  }
+
   public void Dispose()
   {
     drawingListChangedSubscription?.Dispose();
@@ -300,7 +343,7 @@ public class DrawingItemViewModel : CodeSoupCafe.Maui.Models.ItemState, INotifyP
   /// Loads the thumbnail asynchronously when the item appears in view.
   /// Called by the lifecycle callback from the gallery control.
   /// </summary>
-  public async Task LoadThumbnailAsync(IDrawingThumbnailFacade thumbnailService)
+  public async Task LoadThumbnailAsync(IDrawingThumbnailHandler thumbnailService)
   {
     if (ThumbnailBase64 != null || IsLoadingThumbnail)
     {

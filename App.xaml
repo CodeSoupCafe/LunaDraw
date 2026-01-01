@@ -16,6 +16,8 @@
       <converters:IsNullConverter x:Key="IsNullConverter"/>
       <converters:InverseBoolConverter x:Key="InverseBoolConverter"/>
       <converters:Base64ToImageConverter x:Key="Base64ToImageConverter"/>
+      <converters:PlaybackStateToPlayVisibleConverter x:Key="PlaybackStateToPlayVisibleConverter"/>
+      <converters:PlaybackStateToPauseVisibleConverter x:Key="PlaybackStateToPauseVisibleConverter"/>
     </ResourceDictionary>
   </Application.Resources>
 </Application>

@@ -66,6 +66,7 @@ public abstract class ShapeTool<T>(IMessageBus messageBus) : IDrawingTool where 
 
     if (IsShapeValid(CurrentShape))
     {
+      CurrentShape.ViewportSnapshot = ViewportSnapshot.FromNavigationModel(context.Navigation);
       context.CurrentLayer.Elements.Add(CurrentShape);
       MessageBus.SendMessage(new DrawingStateChangedMessage());
     }

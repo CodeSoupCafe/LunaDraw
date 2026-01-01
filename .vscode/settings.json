@@ -1,0 +1,6 @@
+{
+  "cucumberautocomplete.steps": ["LunaDraw.Tests/Steps/*.cs"],
+  "cucumberautocomplete.syncfeatures": "LunaDraw.Tests/Features/*.feature",
+  "cucumberautocomplete.strictGherkinCompletion": true,
+  "cucumberautocomplete.onStepDefinitionNotFound": "recommend"
+}

@@ -71,10 +71,15 @@ public class External
 
   [JsonDerivedType(typeof(Path), typeDiscriminator: "P")]
   [JsonDerivedType(typeof(Stamps), typeDiscriminator: "S")]
+  [JsonDerivedType(typeof(Rectangle), typeDiscriminator: "R")]
+  [JsonDerivedType(typeof(Ellipse), typeDiscriminator: "E")]
+  [JsonDerivedType(typeof(Line), typeDiscriminator: "L")]
   public class Element
   {
     [JsonPropertyName("i")]
     public Guid Id { get; set; }
+    [JsonPropertyName("ca")]
+    public DateTimeOffset CreatedAt { get; set; }
     [JsonPropertyName("v")]
     public bool IsVisible { get; set; }
     [JsonPropertyName("z")]
@@ -84,17 +89,19 @@ public class External
     [JsonPropertyName("fc")]
     public string? FillColor { get; set; }
     [JsonPropertyName("sc")]
-    public string StrokeColor { get; set; }
+    public string StrokeColor { get; set; } = "Black";
     [JsonPropertyName("sw")]
     public float StrokeWidth { get; set; }
     [JsonPropertyName("ge")]
     public bool IsGlowEnabled { get; set; }
     [JsonPropertyName("gc")]
-    public string GlowColor { get; set; }
+    public string GlowColor { get; set; } = "Transparent";
     [JsonPropertyName("gr")]
     public float GlowRadius { get; set; }
     [JsonPropertyName("tm")]
     public float[] TransformMatrix { get; set; } = new float[9];
+    [JsonPropertyName("vs")]
+    public float[]? ViewportMatrix { get; set; } // Optional viewport snapshot matrix (9 floats for SKMatrix)
   }
 
   public class Path : Element
@@ -131,5 +138,41 @@ public class External
     public float AngleJitter { get; set; }
     [JsonPropertyName("hj")]
     public float HueJitter { get; set; }
+  }
+
+  public class Rectangle : Element
+  {
+    [JsonPropertyName("l")]
+    public float Left { get; set; }
+    [JsonPropertyName("t")]
+    public float Top { get; set; }
+    [JsonPropertyName("r")]
+    public float Right { get; set; }
+    [JsonPropertyName("b")]
+    public float Bottom { get; set; }
+  }
+
+  public class Ellipse : Element
+  {
+    [JsonPropertyName("l")]
+    public float Left { get; set; }
+    [JsonPropertyName("t")]
+    public float Top { get; set; }
+    [JsonPropertyName("r")]
+    public float Right { get; set; }
+    [JsonPropertyName("b")]
+    public float Bottom { get; set; }
+  }
+
+  public class Line : Element
+  {
+    [JsonPropertyName("sx")]
+    public float StartX { get; set; }
+    [JsonPropertyName("sy")]
+    public float StartY { get; set; }
+    [JsonPropertyName("ex")]
+    public float EndX { get; set; }
+    [JsonPropertyName("ey")]
+    public float EndY { get; set; }
   }
 }
